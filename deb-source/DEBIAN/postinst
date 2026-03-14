@@ -1,0 +1,34 @@
+#!/bin/bash
+set -e
+
+case "$1" in
+    configure)
+        # Set executable permissions
+        chmod +x /usr/local/bin/reportforge
+        chmod +x /opt/reportforge/server.py
+
+        # Update icon cache
+        if command -v gtk-update-icon-cache &>/dev/null; then
+            gtk-update-icon-cache -f -t /usr/share/icons/hicolor/ 2>/dev/null || true
+        fi
+
+        # Update desktop database
+        if command -v update-desktop-database &>/dev/null; then
+            update-desktop-database /usr/share/applications 2>/dev/null || true
+        fi
+
+        echo ""
+        echo "┌─────────────────────────────────────────────────┐"
+        echo "│         ReportForge instalado exitosamente      │"
+        echo "│                                                  │"
+        echo "│  Iniciar:  reportforge                           │"
+        echo "│  O busca 'ReportForge' en el menú de apps        │"
+        echo "│                                                  │"
+        echo "│  Pipeline PDF:                                   │"
+        echo "│  .rfd.json → Jinja2 → HTML → WeasyPrint → PDF   │"
+        echo "└─────────────────────────────────────────────────┘"
+        echo ""
+        ;;
+esac
+
+exit 0

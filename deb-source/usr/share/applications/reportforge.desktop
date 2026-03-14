@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=ReportForge
+GenericName=Diseñador de Reportes
+Comment=Diseñador de reportes estilo Crystal Reports con exportación PDF via WeasyPrint
+Exec=/usr/local/bin/reportforge
+Icon=reportforge
+Terminal=false
+Categories=Office;Productivity;Database;
+Keywords=reporte;report;crystal;pdf;factura;invoice;diseño;
+StartupNotify=true
+StartupWMClass=ReportForge
+MimeType=application/x-reportforge;

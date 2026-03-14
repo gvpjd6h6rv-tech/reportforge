@@ -1,0 +1,129 @@
+{
+  "name": "Factura Electrónica Ecuador v3",
+  "version": "1.0",
+  "pageWidth": 794,
+  "pageSize": "A4",
+  "margins": { "top": 15, "bottom": 15, "left": 20, "right": 20 },
+
+  "sections": [
+    { "id": "s-rh",  "stype": "rh",  "abbr": "RH", "label": "Report Header",  "height": 130 },
+    { "id": "s-ph",  "stype": "ph",  "abbr": "PH", "label": "Page Header",    "height": 60  },
+    { "id": "s-det", "stype": "det", "abbr": "D",  "label": "Detail",         "height": 14,
+      "iterates": "items" },
+    { "id": "s-pf",  "stype": "pf",  "abbr": "PF", "label": "Page Footer",    "height": 110 },
+    { "id": "s-rf",  "stype": "rf",  "abbr": "RF", "label": "Report Footer",  "height": 30  }
+  ],
+
+  "elements": [
+    { "id": "rh-01", "type": "field", "x": 4,   "y": 4,  "w": 380, "h": 16,
+      "fieldPath": "empresa.razon_social", "fontSize": 11, "bold": true,
+      "content": "empresa.razon_social" },
+
+    { "id": "rh-02", "type": "field", "x": 4,   "y": 22, "w": 200, "h": 12,
+      "fieldPath": "empresa.ruc", "fieldFmt": "ruc_mask", "fontSize": 8,
+      "content": "empresa.ruc" },
+
+    { "id": "rh-03", "type": "field", "x": 4,   "y": 34, "w": 380, "h": 12,
+      "fieldPath": "empresa.direccion_matriz", "fontSize": 8,
+      "content": "empresa.direccion_matriz" },
+
+    { "id": "rh-04", "type": "field", "x": 4,   "y": 46, "w": 200, "h": 12,
+      "fieldPath": "empresa.obligado_contabilidad", "fontSize": 7,
+      "content": "empresa.obligado_contabilidad" },
+
+    { "id": "rh-doc", "type": "field", "x": 520, "y": 4,  "w": 200, "h": 18,
+      "fieldPath": "fiscal.numero_documento", "fontSize": 10, "bold": true, "align": "center",
+      "content": "fiscal.numero_documento" },
+
+    { "id": "rh-amb", "type": "field", "x": 520, "y": 25, "w": 200, "h": 12,
+      "fieldPath": "fiscal.ambiente", "fontSize": 8, "align": "center",
+      "content": "fiscal.ambiente" },
+
+    { "id": "rh-emi", "type": "field", "x": 520, "y": 38, "w": 200, "h": 12,
+      "fieldPath": "fiscal.tipo_emision", "fontSize": 8, "align": "center",
+      "content": "fiscal.tipo_emision" },
+
+    { "id": "rh-auth","type": "field", "x": 390, "y": 60, "w": 330, "h": 10,
+      "fieldPath": "fiscal.numero_autorizacion", "fontSize": 6,
+      "content": "fiscal.numero_autorizacion" },
+
+    { "id": "rh-clave","type": "field","x": 390, "y": 72, "w": 330, "h": 10,
+      "fieldPath": "fiscal.clave_acceso", "fieldFmt": "clave_acceso", "fontSize": 6,
+      "content": "fiscal.clave_acceso" },
+
+    { "id": "ph-01", "type": "text",  "x": 4,   "y": 135,"w": 80,  "h": 12,
+      "content": "Cliente:", "fontSize": 8, "bold": true },
+
+    { "id": "ph-02", "type": "field", "x": 90,  "y": 135,"w": 340, "h": 12,
+      "fieldPath": "cliente.razon_social", "fontSize": 8,
+      "content": "cliente.razon_social" },
+
+    { "id": "ph-03", "type": "text",  "x": 4,   "y": 148,"w": 80,  "h": 12,
+      "content": "RUC/CI:", "fontSize": 8, "bold": true },
+
+    { "id": "ph-04", "type": "field", "x": 90,  "y": 148,"w": 150, "h": 12,
+      "fieldPath": "cliente.identificacion", "fontSize": 8,
+      "content": "cliente.identificacion" },
+
+    { "id": "ph-05", "type": "text",  "x": 4,   "y": 161,"w": 80,  "h": 12,
+      "content": "Dirección:", "fontSize": 8, "bold": true },
+
+    { "id": "ph-06", "type": "field", "x": 90,  "y": 161,"w": 340, "h": 12,
+      "fieldPath": "cliente.direccion", "fontSize": 8,
+      "content": "cliente.direccion" },
+
+    { "id": "det-01", "type": "field", "x": 4,   "y": 0,  "w": 55,  "h": 14,
+      "fieldPath": "item.codigo", "fontSize": 7,
+      "content": "item.codigo" },
+
+    { "id": "det-02", "type": "field", "x": 63,  "y": 0,  "w": 355, "h": 14,
+      "fieldPath": "item.descripcion", "fontSize": 7,
+      "content": "item.descripcion" },
+
+    { "id": "det-03", "type": "field", "x": 422, "y": 0,  "w": 45,  "h": 14,
+      "fieldPath": "item.cantidad", "fieldFmt": "float2",
+      "fontSize": 7, "align": "right", "content": "item.cantidad" },
+
+    { "id": "det-04", "type": "field", "x": 471, "y": 0,  "w": 65,  "h": 14,
+      "fieldPath": "item.precio_unitario", "fieldFmt": "currency",
+      "fontSize": 7, "align": "right", "content": "item.precio_unitario" },
+
+    { "id": "det-05", "type": "field", "x": 540, "y": 0,  "w": 50,  "h": 14,
+      "fieldPath": "item.descuento", "fieldFmt": "currency",
+      "fontSize": 7, "align": "right", "content": "item.descuento" },
+
+    { "id": "det-06", "type": "field", "x": 594, "y": 0,  "w": 60,  "h": 14,
+      "fieldPath": "item.subtotal", "fieldFmt": "currency",
+      "fontSize": 7, "align": "right", "bold": true, "content": "item.subtotal" },
+
+    { "id": "pf-01", "type": "text",  "x": 440, "y": 204,"w": 120, "h": 12,
+      "content": "SUBTOTAL IVA 12%:", "fontSize": 7, "bold": true, "align": "right" },
+    { "id": "pf-02", "type": "field", "x": 564, "y": 204,"w": 70,  "h": 12,
+      "fieldPath": "totales.subtotal_12", "fieldFmt": "currency",
+      "fontSize": 7, "align": "right", "content": "totales.subtotal_12" },
+
+    { "id": "pf-03", "type": "text",  "x": 440, "y": 217,"w": 120, "h": 12,
+      "content": "SUBTOTAL IVA 0%:", "fontSize": 7, "bold": true, "align": "right" },
+    { "id": "pf-04", "type": "field", "x": 564, "y": 217,"w": 70,  "h": 12,
+      "fieldPath": "totales.subtotal_0", "fieldFmt": "currency",
+      "fontSize": 7, "align": "right", "content": "totales.subtotal_0" },
+
+    { "id": "pf-05", "type": "text",  "x": 440, "y": 230,"w": 120, "h": 12,
+      "content": "SUBTOTAL:", "fontSize": 7, "bold": true, "align": "right" },
+    { "id": "pf-06", "type": "field", "x": 564, "y": 230,"w": 70,  "h": 12,
+      "fieldPath": "totales.subtotal_sin_impuestos", "fieldFmt": "currency",
+      "fontSize": 7, "align": "right", "content": "totales.subtotal_sin_impuestos" },
+
+    { "id": "pf-07", "type": "text",  "x": 440, "y": 244,"w": 120, "h": 12,
+      "content": "IVA 12%:", "fontSize": 7, "bold": true, "align": "right" },
+    { "id": "pf-08", "type": "field", "x": 564, "y": 244,"w": 70,  "h": 12,
+      "fieldPath": "totales.iva_12", "fieldFmt": "currency",
+      "fontSize": 7, "align": "right", "content": "totales.iva_12" },
+
+    { "id": "pf-09", "type": "text",  "x": 440, "y": 258,"w": 120, "h": 16,
+      "content": "VALOR TOTAL:", "fontSize": 9, "bold": true, "align": "right" },
+    { "id": "pf-10", "type": "field", "x": 564, "y": 258,"w": 70,  "h": 16,
+      "fieldPath": "totales.importe_total", "fieldFmt": "currency",
+      "fontSize": 9, "bold": true, "align": "right", "content": "totales.importe_total" }
+  ]
+}

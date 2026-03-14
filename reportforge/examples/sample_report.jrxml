@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Sample JRXML Report — Compatible with JasperReports 6.x -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              name="SalesReport"
+              pageWidth="595" pageHeight="842"
+              leftMargin="20" rightMargin="20"
+              topMargin="30" bottomMargin="30">
+
+  <!-- Parameters -->
+  <parameter name="startDate" class="java.lang.String"/>
+  <parameter name="endDate"   class="java.lang.String"/>
+  <parameter name="company"   class="java.lang.String"/>
+
+  <!-- Fields -->
+  <field name="code"       class="java.lang.String"/>
+  <field name="name"       class="java.lang.String"/>
+  <field name="category"   class="java.lang.String"/>
+  <field name="qty"        class="java.lang.Integer"/>
+  <field name="unit_price" class="java.lang.Double"/>
+  <field name="total"      class="java.lang.Double"/>
+  <field name="stock"      class="java.lang.Integer"/>
+
+  <!-- Variables -->
+  <variable name="GRAND_TOTAL" class="java.lang.Double"
+            calculation="Sum">
+    <variableExpression>$F{total}</variableExpression>
+  </variable>
+
+  <!-- Group -->
+  <group name="CategoryGroup">
+    <groupExpression>$F{category}</groupExpression>
+    <groupHeader>
+      <band height="22">
+        <rectangle>
+          <reportElement x="0" y="0" width="555" height="22"/>
+          <graphicElement>
+            <pen lineWidth="0"/>
+          </graphicElement>
+          <box>
+            <pen lineWidth="0"/>
+          </box>
+        </rectangle>
+        <staticText>
+          <reportElement x="4" y="4" width="300" height="14"/>
+          <textElement>
+            <font fontName="Arial" size="9" isBold="true"/>
+          </textElement>
+          <text>Category: </text>
+        </staticText>
+        <textField>
+          <reportElement x="70" y="4" width="200" height="14"/>
+          <textElement>
+            <font fontName="Arial" size="9" isBold="true"/>
+          </textElement>
+          <textFieldExpression>$F{category}</textFieldExpression>
+        </textField>
+      </band>
+    </groupHeader>
+    <groupFooter>
+      <band height="18">
+        <staticText>
+          <reportElement x="4" y="2" width="300" height="14"/>
+          <textElement>
+            <font fontName="Arial" size="8" isBold="true"/>
+          </textElement>
+          <text>Subtotal:</text>
+        </staticText>
+        <textField pattern="#,##0.00">
+          <reportElement x="440" y="2" width="110" height="14"/>
+          <textElement textAlignment="Right">
+            <font fontName="Arial" size="8" isBold="true"/>
+          </textElement>
+          <textFieldExpression>$F{total}</textFieldExpression>
+        </textField>
+      </band>
+    </groupFooter>
+  </group>
+
+  <!-- Title (Report Header) -->
+  <title>
+    <band height="60">
+      <staticText>
+        <reportElement x="0" y="4" width="400" height="20"/>
+        <textElement>
+          <font fontName="Arial" size="14" isBold="true"/>
+        </textElement>
+        <text>Sales Report</text>
+      </staticText>
+      <textField>
+        <reportElement x="0" y="26" width="400" height="14"/>
+        <textElement>
+          <font fontName="Arial" size="9"/>
+        </textElement>
+        <textFieldExpression>"Period: " + $P{startDate} + " to " + $P{endDate}</textFieldExpression>
+      </textField>
+      <line>
+        <reportElement x="0" y="52" width="555" height="1"/>
+        <graphicElement>
+          <pen lineWidth="1.5"/>
+        </graphicElement>
+      </line>
+    </band>
+  </title>
+
+  <!-- Page Header -->
+  <pageHeader>
+    <band height="24">
+      <staticText>
+        <reportElement x="4" y="4" width="100" height="14"/>
+        <textElement><font fontName="Arial" size="7" isBold="true"/></textElement>
+        <text>CODE</text>
+      </staticText>
+      <staticText>
+        <reportElement x="108" y="4" width="180" height="14"/>
+        <textElement><font fontName="Arial" size="7" isBold="true"/></textElement>
+        <text>PRODUCT</text>
+      </staticText>
+      <staticText>
+        <reportElement x="292" y="4" width="60" height="14"/>
+        <textElement textAlignment="Right"><font fontName="Arial" size="7" isBold="true"/></textElement>
+        <text>QTY</text>
+      </staticText>
+      <staticText>
+        <reportElement x="356" y="4" width="80" height="14"/>
+        <textElement textAlignment="Right"><font fontName="Arial" size="7" isBold="true"/></textElement>
+        <text>PRICE</text>
+      </staticText>
+      <staticText>
+        <reportElement x="440" y="4" width="110" height="14"/>
+        <textElement textAlignment="Right"><font fontName="Arial" size="7" isBold="true"/></textElement>
+        <text>TOTAL</text>
+      </staticText>
+    </band>
+  </pageHeader>
+
+  <!-- Detail -->
+  <detail>
+    <band height="16">
+      <textField>
+        <reportElement x="4" y="1" width="100" height="14"/>
+        <textElement><font fontName="Arial" size="8"/></textElement>
+        <textFieldExpression>$F{code}</textFieldExpression>
+      </textField>
+      <textField>
+        <reportElement x="108" y="1" width="180" height="14"/>
+        <textElement><font fontName="Arial" size="8"/></textElement>
+        <textFieldExpression>$F{name}</textFieldExpression>
+      </textField>
+      <textField pattern="#,##0">
+        <reportElement x="292" y="1" width="60" height="14"/>
+        <textElement textAlignment="Right"><font fontName="Arial" size="8"/></textElement>
+        <textFieldExpression>$F{qty}</textFieldExpression>
+      </textField>
+      <textField pattern="#,##0.00">
+        <reportElement x="356" y="1" width="80" height="14"/>
+        <textElement textAlignment="Right"><font fontName="Arial" size="8"/></textElement>
+        <textFieldExpression>$F{unit_price}</textFieldExpression>
+      </textField>
+      <textField pattern="#,##0.00">
+        <reportElement x="440" y="1" width="110" height="14"/>
+        <textElement textAlignment="Right"><font fontName="Arial" size="8" isBold="true"/></textElement>
+        <textFieldExpression>$F{total}</textFieldExpression>
+      </textField>
+    </band>
+  </detail>
+
+  <!-- Column Footer (page footer) -->
+  <columnFooter>
+    <band height="16">
+      <line>
+        <reportElement x="0" y="0" width="555" height="1"/>
+      </line>
+    </band>
+  </columnFooter>
+
+  <!-- Summary (Report Footer) -->
+  <summary>
+    <band height="40">
+      <staticText>
+        <reportElement x="4" y="8" width="300" height="16"/>
+        <textElement><font fontName="Arial" size="11" isBold="true"/></textElement>
+        <text>GRAND TOTAL</text>
+      </staticText>
+      <textField pattern="#,##0.00">
+        <reportElement x="440" y="8" width="110" height="16"/>
+        <textElement textAlignment="Right"><font fontName="Arial" size="11" isBold="true"/></textElement>
+        <textFieldExpression>$V{GRAND_TOTAL}</textFieldExpression>
+      </textField>
+    </band>
+  </summary>
+
+  <!-- Page Footer -->
+  <pageFooter>
+    <band height="20">
+      <staticText>
+        <reportElement x="4" y="4" width="300" height="12"/>
+        <textElement><font fontName="Arial" size="7"/></textElement>
+        <text>ReportForge Enterprise — Confidential</text>
+      </staticText>
+    </band>
+  </pageFooter>
+
+</jasperReport>

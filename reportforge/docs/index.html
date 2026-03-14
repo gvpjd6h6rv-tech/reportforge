@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReportForge Enterprise — Documentation</title>
+<style>
+  :root {
+    --bg:       #0D0F1A;
+    --surface:  #141728;
+    --surface2: #1C2038;
+    --border:   #2A2F4F;
+    --primary:  #6C63FF;
+    --accent:   #00D4AA;
+    --warn:     #FF6B6B;
+    --gold:     #FFD700;
+    --text:     #E2E8F0;
+    --muted:    #8892A4;
+    --code-bg:  #0A0C16;
+    --grad1: linear-gradient(135deg, #6C63FF 0%, #00D4AA 100%);
+    --grad2: linear-gradient(135deg, #FF6B6B 0%, #FFD700 100%);
+    --grad3: linear-gradient(135deg, #0D0F1A 0%, #1C2038 100%);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg); color: var(--text);
+    line-height: 1.7; font-size: 15px;
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
+
+  /* ── Hero ── */
+  .hero {
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center;
+    background: radial-gradient(ellipse at 50% 0%, #1C2050 0%, #0D0F1A 70%);
+    padding: 60px 20px; position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: ''; position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%236C63FF' fill-opacity='0.04'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(108,99,255,.15); border: 1px solid rgba(108,99,255,.4);
+    color: #9D98FF; padding: 6px 16px; border-radius: 99px;
+    font-size: 13px; font-weight: 600; letter-spacing: .5px; margin-bottom: 28px;
+  }
+  .hero h1 {
+    font-size: clamp(2.8rem, 7vw, 5.5rem);
+    font-weight: 800; letter-spacing: -2px;
+    background: var(--grad1); -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent; background-clip: text;
+    line-height: 1.1; margin-bottom: 20px;
+  }
+  .hero .sub {
+    font-size: clamp(1rem, 2.5vw, 1.3rem); color: var(--muted);
+    max-width: 600px; margin: 0 auto 40px;
+  }
+  .hero-btns { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 13px 28px; border-radius: 10px; font-size: 15px;
+    font-weight: 600; text-decoration: none; cursor: pointer;
+    transition: all .2s; border: none;
+  }
+  .btn-primary {
+    background: var(--grad1); color: #fff;
+    box-shadow: 0 0 24px rgba(108,99,255,.4);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 36px rgba(108,99,255,.6); }
+  .btn-outline {
+    background: transparent; color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-outline:hover { background: var(--surface); border-color: var(--primary); }
+
+  /* ── Stats bar ── */
+  .stats {
+    display: flex; gap: 60px; justify-content: center;
+    flex-wrap: wrap; padding: 40px 20px;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+  }
+  .stat { text-align: center; }
+  .stat-num {
+    font-size: 2rem; font-weight: 800;
+    background: var(--grad1); -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .stat-lbl { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+  /* ── Nav ── */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(13,15,26,.92); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 0; padding: 0 32px;
+    overflow-x: auto;
+  }
+  nav a {
+    color: var(--muted); text-decoration: none; padding: 16px 16px;
+    font-size: 13.5px; font-weight: 500; white-space: nowrap;
+    border-bottom: 2px solid transparent; transition: all .2s;
+  }
+  nav a:hover { color: var(--text); border-bottom-color: var(--primary); }
+  .nav-logo { font-weight: 800; font-size: 16px; color: var(--text); margin-right: 24px; }
+  .nav-logo span { background: var(--grad1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+  /* ── Layout ── */
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+  section { padding: 80px 0; }
+  section + section { border-top: 1px solid var(--border); }
+
+  /* ── Section headers ── */
+  .sec-badge {
+    display: inline-block; padding: 4px 12px; border-radius: 6px;
+    font-size: 11px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; margin-bottom: 12px;
+  }
+  .badge-purple  { background: rgba(108,99,255,.2); color: #9D98FF; }
+  .badge-teal    { background: rgba(0,212,170,.15); color: #00D4AA; }
+  .badge-red     { background: rgba(255,107,107,.15); color: #FF9090; }
+  .badge-gold    { background: rgba(255,215,0,.15); color: #FFD700; }
+  .badge-blue    { background: rgba(59,130,246,.15); color: #60A5FA; }
+  h2 {
+    font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 800;
+    letter-spacing: -1px; margin-bottom: 16px; color: var(--text);
+  }
+  .lead { font-size: 1.1rem; color: var(--muted); margin-bottom: 48px; max-width: 640px; }
+
+  /* ── Cards grid ── */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 28px; transition: all .2s; position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--grad1); opacity: 0; transition: opacity .2s;
+  }
+  .card:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: 0 12px 40px rgba(108,99,255,.15); }
+  .card:hover::before { opacity: 1; }
+  .card-icon { font-size: 2rem; margin-bottom: 14px; }
+  .card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+  .card p  { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+  /* ── Code blocks ── */
+  pre {
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 12px; padding: 24px; overflow-x: auto;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.7; margin: 20px 0;
+  }
+  code { font-family: inherit; }
+  .kw  { color: #FF79C6; }
+  .str { color: #50FA7B; }
+  .cmt { color: #6272A4; }
+  .num { color: #BD93F9; }
+  .key { color: #8BE9FD; }
+  .val { color: #F1FA8C; }
+  .url { color: #00D4AA; }
+
+  /* ── Pipeline diagram ── */
+  .pipeline {
+    display: flex; align-items: center; gap: 0;
+    flex-wrap: wrap; justify-content: center; margin: 40px 0;
+  }
+  .pipe-step {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 20px; text-align: center; min-width: 120px;
+  }
+  .pipe-step .icon { font-size: 1.4rem; margin-bottom: 4px; }
+  .pipe-step .lbl  { font-size: 12px; font-weight: 600; color: var(--text); }
+  .pipe-step .sub  { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .pipe-arrow { font-size: 1.3rem; color: var(--primary); padding: 0 12px; font-weight: 300; }
+
+  /* ── Comparison table ── */
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%; border-collapse: collapse; font-size: 14px;
+    background: var(--surface);
+  }
+  th {
+    background: var(--surface2); color: var(--text);
+    padding: 14px 18px; text-align: left; font-weight: 700;
+    border-bottom: 2px solid var(--border);
+  }
+  th.highlight { color: #9D98FF; }
+  td { padding: 12px 18px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(108,99,255,.05); }
+  .check { color: #00D4AA; font-size: 1.2rem; }
+  .cross { color: #FF6B6B; font-size: 1.1rem; }
+  .partial { color: #FFD700; font-size: 1.1rem; }
+  td.feature { font-weight: 500; color: var(--text); }
+  td.rf  { text-align: center; }
+  td.cr  { text-align: center; color: var(--muted); }
+
+  /* ── Endpoint card ── */
+  .endpoint {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; margin-bottom: 16px; overflow: hidden;
+  }
+  .ep-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px 20px; background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+  .method {
+    padding: 3px 10px; border-radius: 6px; font-size: 12px;
+    font-weight: 700; font-family: monospace; letter-spacing: .5px;
+  }
+  .method.post { background: rgba(0,212,170,.2); color: #00D4AA; }
+  .method.get  { background: rgba(59,130,246,.2); color: #60A5FA; }
+  .method.del  { background: rgba(255,107,107,.2); color: #FF9090; }
+  .method.put  { background: rgba(255,215,0,.2); color: #FFD700; }
+  .ep-path { font-family: monospace; font-size: 14px; font-weight: 600; }
+  .ep-desc { font-size: 13px; color: var(--muted); margin-left: auto; }
+  .ep-body { padding: 20px; }
+
+  /* ── Feature list ── */
+  .feat-list { list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 10px; }
+  .feat-list li {
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    font-size: 13.5px;
+  }
+  .feat-list li span { font-size: 1.1rem; }
+
+  /* ── Terminal ── */
+  .terminal {
+    background: #0A0C16; border: 1px solid #2A2F4F;
+    border-radius: 12px; overflow: hidden; margin: 20px 0;
+  }
+  .term-bar {
+    background: #1A1D2E; padding: 10px 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .term-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .term-dot:nth-child(1) { background: #FF5F57; }
+  .term-dot:nth-child(2) { background: #FFBD2E; }
+  .term-dot:nth-child(3) { background: #28CA41; }
+  .term-title { color: var(--muted); font-size: 12px; margin-left: 8px; }
+  .term-body { padding: 20px 24px; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.8; }
+  .term-prompt { color: #00D4AA; }
+  .term-cmd { color: #E2E8F0; }
+  .term-out { color: #8892A4; }
+
+  /* ── Footer ── */
+  footer {
+    background: var(--surface); border-top: 1px solid var(--border);
+    padding: 40px 24px; text-align: center; color: var(--muted); font-size: 13px;
+  }
+  footer .f-logo {
+    font-size: 1.4rem; font-weight: 800; margin-bottom: 8px;
+    background: var(--grad1); -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  @media (max-width: 640px) {
+    .pipeline { gap: 8px; }
+    .pipe-arrow { padding: 0 4px; font-size: 1rem; }
+    .stats { gap: 32px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Hero ───────────────────────────────────────────────────── -->
+<section class="hero">
+  <div class="hero-badge">🚀 Enterprise Edition v2.0</div>
+  <h1>ReportForge</h1>
+  <p class="sub">Crystal Reports for the cloud — visual designer, REST API, Docker, SaaS multi-tenant. Open source, zero vendor lock-in.</p>
+  <div class="hero-btns">
+    <a href="manual.html" class="btn btn-primary">📄 Read the Manual</a>
+    <a href="#api" class="btn btn-outline">⚡ API Reference</a>
+    <a href="#quickstart" class="btn btn-outline">🔧 Quick Start</a>
+  </div>
+</section>
+
+<!-- ── Stats ───────────────────────────────────────────────────── -->
+<div class="stats">
+  <div class="stat"><div class="stat-num">17</div><div class="stat-lbl">Features</div></div>
+  <div class="stat"><div class="stat-num">376</div><div class="stat-lbl">Tests Passing</div></div>
+  <div class="stat"><div class="stat-num">5</div><div class="stat-lbl">Export Formats</div></div>
+  <div class="stat"><div class="stat-num">&lt;60ms</div><div class="stat-lbl">HTML Preview</div></div>
+  <div class="stat"><div class="stat-num">∞</div><div class="stat-lbl">Tenants</div></div>
+</div>
+
+<!-- ── Navigation ─────────────────────────────────────────────── -->
+<nav>
+  <div class="nav-logo">Report<span>Forge</span></div>
+  <a href="#what">What is it</a>
+  <a href="#pipeline">Pipeline</a>
+  <a href="#features">Features</a>
+  <a href="#api">REST API</a>
+  <a href="#docker">Docker</a>
+  <a href="#saas">SaaS</a>
+  <a href="#compare">vs Crystal</a>
+  <a href="manual.html">📘 Manual</a>
+</nav>
+
+<!-- ── What is ReportForge ────────────────────────────────────── -->
+<section id="what">
+<div class="container">
+  <div class="sec-badge badge-purple">🧩 Overview</div>
+  <h2>What is ReportForge?</h2>
+  <p class="lead">A Python-native enterprise reporting engine that renders pixel-perfect PDF reports from a JSON layout specification. It replaces Crystal Reports and JasperReports with a modern, cloud-native alternative.</p>
+  <div class="cards">
+    <div class="card">
+      <div class="card-icon">🎨</div>
+      <h3>Visual Designer</h3>
+      <p>WYSIWYG drag-and-drop editor. Absolute positioning, snap-to-grid, layer manager, alignment guides. What you see is exactly what renders.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📊</div>
+      <h3>Full Expression Engine</h3>
+      <p>Arithmetic, conditionals, <code>if/then/else</code>, ternary, running totals, aggregations, template variables like <code>{now()}</code> and <code>{uuid()}</code>.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">⚡</div>
+      <h3>REST API + Docker</h3>
+      <p>Production FastAPI server with multi-tenant support. Render PDFs via HTTP. Deploy in minutes with Docker Compose.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔄</div>
+      <h3>JRXML Compatibility</h3>
+      <p>Import existing JasperReports layouts. Parse JRXML → ReportForge layout → PDF. Full round-trip conversion.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🌐</div>
+      <h3>Live Data Sources</h3>
+      <p>Pull report data from REST APIs, JSON files, or inline payloads. Specify <code>dataSource: "https://api/data"</code> directly in the layout.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🏢</div>
+      <h3>SaaS Multi-Tenant</h3>
+      <p>Per-tenant CSS themes, logo injection, default parameters, template registry. Deploy once, serve hundreds of customers.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ── Pipeline ───────────────────────────────────────────────── -->
+<section id="pipeline">
+<div class="container">
+  <div class="sec-badge badge-teal">⚙️ Architecture</div>
+  <h2>Rendering Pipeline</h2>
+  <p class="lead">A strict WYSIWYG pipeline guarantees that the HTML preview matches the PDF output exactly — down to the pixel.</p>
+  <div class="pipeline">
+    <div class="pipe-step"><div class="icon">🎨</div><div class="lbl">Designer</div><div class="sub">JSON Layout</div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step"><div class="icon">📋</div><div class="lbl">Normalizer</div><div class="sub">Canonical form</div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step"><div class="icon">🔧</div><div class="lbl">EnterpriseEngine</div><div class="sub">Renders sections</div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step"><div class="icon">🌐</div><div class="lbl">HTML</div><div class="sub">Absolute CSS</div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step"><div class="icon">📄</div><div class="lbl">WeasyPrint</div><div class="sub">PDF output</div></div>
+  </div>
+  <pre><code><span class="cmt"># Python API — 3 lines to a PDF</span>
+<span class="kw">from</span> core.render.engines.enterprise_engine <span class="kw">import</span> EnterpriseEngine
+
+engine <span class="kw">=</span> EnterpriseEngine(layout, data, params<span class="kw">=</span>{<span class="str">"startDate"</span>: <span class="str">"2026-01-01"</span>})
+html   <span class="kw">=</span> engine.render()    <span class="cmt"># → full HTML string</span>
+
+<span class="cmt"># Or via REST API</span>
+<span class="url">POST /render</span>  <span class="key">{"layout": "invoice.rfd.json", "data": {...}, "format": "pdf"}</span></code></pre>
+</div>
+</section>
+
+<!-- ── Features ───────────────────────────────────────────────── -->
+<section id="features">
+<div class="container">
+  <div class="sec-badge badge-gold">🧩 Features</div>
+  <h2>Enterprise Feature Set</h2>
+  <p class="lead">Everything Crystal Reports and JasperReports offer, plus modern cloud capabilities they never had.</p>
+  <ul class="feat-list">
+    <li><span>📦</span> Grouping with group header/footer</li>
+    <li><span>∑</span> Aggregations: sum, avg, min, max, count</li>
+    <li><span>🔄</span> Running totals (per group + report)</li>
+    <li><span>🧮</span> Full expression engine</li>
+    <li><span>🔀</span> if/then/else + ternary operator</li>
+    <li><span>📋</span> Subreports (nested layouts)</li>
+    <li><span>📊</span> Charts: bar, line, pie, area, scatter</li>
+    <li><span>🗃️</span> Table elements with totals row</li>
+    <li><span>📄</span> Multi-page pagination</li>
+    <li><span>🎨</span> Conditional styles per element</li>
+    <li><span>👁️</span> visibleIf / suppressIfEmpty</li>
+    <li><span>↕️</span> canGrow / wordWrap</li>
+    <li><span>🔤</span> Named style registry (27+ built-in)</li>
+    <li><span>🖼️</span> Image elements (base64 + URL)</li>
+    <li><span>📐</span> Lines + rectangles</li>
+    <li><span>🌐</span> REST data sources</li>
+    <li><span>📁</span> Multiple datasets per report</li>
+    <li><span>⏱️</span> Template variables: now(), uuid()</li>
+    <li><span>🔑</span> Report parameters</li>
+    <li><span>🔄</span> JRXML import + export</li>
+    <li><span>📤</span> Export: PDF, HTML, XLSX, CSV, PNG</li>
+    <li><span>🚀</span> Fast preview mode (no PDF)</li>
+    <li><span>💾</span> Layout cache (TTL, LRU)</li>
+    <li><span>🏢</span> SaaS multi-tenant</li>
+    <li><span>🐳</span> Docker ready</li>
+    <li><span>📡</span> REST API (FastAPI)</li>
+  </ul>
+</div>
+</section>
+
+<!-- ── REST API ────────────────────────────────────────────────── -->
+<section id="api">
+<div class="container">
+  <div class="sec-badge badge-blue">📡 REST API</div>
+  <h2>REST API Reference</h2>
+  <p class="lead">Full OpenAPI documentation available at <code>/docs</code>. All endpoints accept JSON and return PDF, HTML, XLSX, CSV, or PNG.</p>
+
+  <div class="endpoint">
+    <div class="ep-header">
+      <span class="method post">POST</span>
+      <span class="ep-path">/render</span>
+      <span class="ep-desc">Render layout → PDF/HTML/XLSX/CSV</span>
+    </div>
+    <div class="ep-body">
+<pre><code><span class="cmt"># curl example</span>
+curl -X POST http://localhost:8000/render \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{
+    "layout": "examples/enterprise_layout.rfd.json",
+    "data":   {"items": [...]},
+    "params": {"startDate": "2026-01-01"},
+    "tenant": "acme",
+    "format": "pdf"
+  }'</span> \
+  --output report.pdf</code></pre>
+    </div>
+  </div>
+
+  <div class="endpoint">
+    <div class="ep-header">
+      <span class="method post">POST</span>
+      <span class="ep-path">/designer-preview</span>
+      <span class="ep-desc">Live preview from layout JSON (designer use)</span>
+    </div>
+    <div class="ep-body">
+<pre><code>curl -X POST http://localhost:8000/designer-preview \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{
+    "layout": { "name":"Test", "sections":[...], "elements":[...] },
+    "data":   {"items": [...]}
+  }'</span></code></pre>
+    </div>
+  </div>
+
+  <div class="endpoint">
+    <div class="ep-header">
+      <span class="method post">POST</span>
+      <span class="ep-path">/render-template</span>
+      <span class="ep-desc">Render a saved template by ID</span>
+    </div>
+    <div class="ep-body">
+<pre><code>curl -X POST http://localhost:8000/render-template \
+  -d <span class="str">'{"templateId":"invoice","data":{...},"tenant":"acme"}'</span></code></pre>
+    </div>
+  </div>
+
+  <div class="endpoint">
+    <div class="ep-header">
+      <span class="method post">POST</span>
+      <span class="ep-path">/render-jrxml</span>
+      <span class="ep-desc">Convert JRXML → render → PDF</span>
+    </div>
+    <div class="ep-body">
+<pre><code>curl -X POST http://localhost:8000/render-jrxml \
+  -d <span class="str">'{"jrxml":"examples/sample_report.jrxml","data":{...}}'</span></code></pre>
+    </div>
+  </div>
+
+  <div class="endpoint">
+    <div class="ep-header">
+      <span class="method get">GET</span>
+      <span class="ep-path">/health</span>
+      <span class="ep-desc">Server status + cache stats</span>
+    </div>
+    <div class="ep-body">
+<pre><code>curl http://localhost:8000/health
+<span class="cmt"># → {"status":"ok","version":"2.0.0","cache":{"entries":0,"hit_rate":0}}</span></code></pre>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ── Docker ─────────────────────────────────────────────────── -->
+<section id="docker">
+<div class="container">
+  <div class="sec-badge badge-teal">🐳 Docker</div>
+  <h2>Docker Deployment</h2>
+  <p class="lead">Deploy the full stack in under 2 minutes. Includes WeasyPrint, fonts, and all Python dependencies pre-installed.</p>
+
+  <div class="terminal">
+    <div class="term-bar">
+      <div class="term-dot"></div><div class="term-dot"></div><div class="term-dot"></div>
+      <span class="term-title">bash — Production deployment</span>
+    </div>
+    <div class="term-body">
+<span class="term-prompt">$</span> <span class="term-cmd">git clone https://github.com/yourorg/reportforge</span>
+<span class="term-prompt">$</span> <span class="term-cmd">cd reportforge</span>
+<span class="term-prompt">$</span> <span class="term-cmd">docker compose up -d</span>
+<span class="term-out">✔ Container reportforge-api  Started</span>
+
+<span class="term-prompt">$</span> <span class="term-cmd">curl http://localhost:8000/health</span>
+<span class="term-out">{"status":"ok","version":"2.0.0","cache":{"entries":0}}</span>
+
+<span class="term-prompt">$</span> <span class="term-cmd">curl -X POST http://localhost:8000/render \
+    -H "Content-Type: application/json" \
+    -d '{"layout":"examples/enterprise_layout.rfd.json","data":{}}' \
+    --output report.pdf</span>
+<span class="term-out">  % Total  100  PDF saved ✔</span>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ── SaaS ───────────────────────────────────────────────────── -->
+<section id="saas">
+<div class="container">
+  <div class="sec-badge badge-gold">🏢 SaaS</div>
+  <h2>Multi-Tenant SaaS Features</h2>
+  <p class="lead">Ship a whitelabel reporting engine to your customers. Each tenant gets isolated themes, templates, and parameters.</p>
+  <div class="cards">
+    <div class="card">
+      <div class="card-icon">🎨</div>
+      <h3>Tenant Themes</h3>
+      <p>Each tenant gets a custom color palette, logo, and font. Set via <code>themes/acme.json</code> or the <code>PUT /tenants/:id/theme</code> endpoint.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📑</div>
+      <h3>Template Registry</h3>
+      <p>Store layouts by name. Reference as <code>POST /render-template {"templateId":"invoice"}</code>. Tenant-isolated — ACME can't see CorpB's templates.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">⚡</div>
+      <h3>Layout Cache</h3>
+      <p>LRU cache with configurable TTL. Layout JSON is hashed and cached per-tenant. Rendering hot layouts takes microseconds instead of re-parsing.</p>
+    </div>
+  </div>
+
+  <pre><code><span class="cmt"># Register a template for a tenant</span>
+curl -X POST http://localhost:8000/templates \
+  -d <span class="str">'{
+    "templateId": "invoice",
+    "tenant":     "acme",
+    "layout":     {...layout json...}
+  }'</span>
+
+<span class="cmt"># Render it with tenant theme applied automatically</span>
+curl -X POST http://localhost:8000/render-template \
+  -d <span class="str">'{"templateId":"invoice","tenant":"acme","data":{...}}'</span> \
+  --output acme-invoice.pdf</code></pre>
+</div>
+</section>
+
+<!-- ── Comparison ─────────────────────────────────────────────── -->
+<section id="compare">
+<div class="container">
+  <div class="sec-badge badge-red">📊 Comparison</div>
+  <h2>ReportForge vs Crystal Reports</h2>
+  <p class="lead">A complete feature-by-feature comparison.</p>
+  <div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th style="width:35%">Feature</th>
+        <th class="highlight" style="width:32%">🚀 ReportForge</th>
+        <th style="width:33%">Crystal Reports</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="feature">Visual designer</td><td class="rf"><span class="check">✔</span> Web-based, any browser</td><td class="cr"><span class="partial">◑</span> Windows desktop only</td></tr>
+      <tr><td class="feature">Drag-drop editing</td><td class="rf"><span class="check">✔</span></td><td class="cr"><span class="check">✔</span></td></tr>
+      <tr><td class="feature">Grouping</td><td class="rf"><span class="check">✔</span> Multi-level</td><td class="cr"><span class="check">✔</span></td></tr>
+      <tr><td class="feature">Subreports</td><td class="rf"><span class="check">✔</span></td><td class="cr"><span class="check">✔</span></td></tr>
+      <tr><td class="feature">Formula engine</td><td class="rf"><span class="check">✔</span> Python expressions</td><td class="cr"><span class="check">✔</span> Basic formula</td></tr>
+      <tr><td class="feature">Running totals</td><td class="rf"><span class="check">✔</span></td><td class="cr"><span class="check">✔</span></td></tr>
+      <tr><td class="feature">Table elements</td><td class="rf"><span class="check">✔</span></td><td class="cr"><span class="check">✔</span></td></tr>
+      <tr><td class="feature">Charts</td><td class="rf"><span class="check">✔</span> bar/line/pie/scatter</td><td class="cr"><span class="check">✔</span></td></tr>
+      <tr><td class="feature">Live HTML preview</td><td class="rf"><span class="check">✔</span> &lt;60ms</td><td class="cr"><span class="cross">✗</span></td></tr>
+      <tr><td class="feature">Export: PDF</td><td class="rf"><span class="check">✔</span></td><td class="cr"><span class="check">✔</span></td></tr>
+      <tr><td class="feature">Export: HTML</td><td class="rf"><span class="check">✔</span></td><td class="cr"><span class="partial">◑</span></td></tr>
+      <tr><td class="feature">Export: XLSX</td><td class="rf"><span class="check">✔</span></td><td class="cr"><span class="check">✔</span></td></tr>
+      <tr><td class="feature">Export: CSV</td><td class="rf"><span class="check">✔</span></td><td class="cr"><span class="check">✔</span></td></tr>
+      <tr><td class="feature">Export: PNG</td><td class="rf"><span class="check">✔</span></td><td class="cr"><span class="partial">◑</span></td></tr>
+      <tr><td class="feature">Web-based designer</td><td class="rf"><span class="check">✔</span></td><td class="cr"><span class="cross">✗</span></td></tr>
+      <tr><td class="feature">JRXML compatibility</td><td class="rf"><span class="check">✔</span> Import + export</td><td class="cr"><span class="cross">✗</span></td></tr>
+      <tr><td class="feature">REST API</td><td class="rf"><span class="check">✔</span> FastAPI, OpenAPI</td><td class="cr"><span class="cross">✗</span></td></tr>
+      <tr><td class="feature">Docker ready</td><td class="rf"><span class="check">✔</span></td><td class="cr"><span class="cross">✗</span></td></tr>
+      <tr><td class="feature">Cloud microservice</td><td class="rf"><span class="check">✔</span></td><td class="cr"><span class="cross">✗</span></td></tr>
+      <tr><td class="feature">REST data sources</td><td class="rf"><span class="check">✔</span></td><td class="cr"><span class="cross">✗</span></td></tr>
+      <tr><td class="feature">Template variables</td><td class="rf"><span class="check">✔</span> now(), uuid(), env.*</td><td class="cr"><span class="partial">◑</span></td></tr>
+      <tr><td class="feature">Multi-tenant SaaS</td><td class="rf"><span class="check">✔</span> Built-in</td><td class="cr"><span class="cross">✗</span></td></tr>
+      <tr><td class="feature">Layout cache</td><td class="rf"><span class="check">✔</span> LRU + TTL</td><td class="cr"><span class="cross">✗</span></td></tr>
+      <tr><td class="feature">Open source</td><td class="rf"><span class="check">✔</span> MIT</td><td class="cr"><span class="cross">✗</span> Commercial</td></tr>
+      <tr><td class="feature">Linux / Mac support</td><td class="rf"><span class="check">✔</span></td><td class="cr"><span class="cross">✗</span> Windows only</td></tr>
+      <tr><td class="feature">Python native</td><td class="rf"><span class="check">✔</span></td><td class="cr"><span class="cross">✗</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+</section>
+
+<!-- ── Quick Start ─────────────────────────────────────────────── -->
+<section id="quickstart">
+<div class="container">
+  <div class="sec-badge badge-purple">🔧 Quick Start</div>
+  <h2>Get Running in 3 Minutes</h2>
+  <div class="terminal">
+    <div class="term-bar">
+      <div class="term-dot"></div><div class="term-dot"></div><div class="term-dot"></div>
+      <span class="term-title">bash</span>
+    </div>
+    <div class="term-body">
+<span class="term-prompt">$</span> <span class="term-cmd">pip install fastapi uvicorn weasyprint matplotlib openpyxl</span>
+
+<span class="cmt"># Start API server</span>
+<span class="term-prompt">$</span> <span class="term-cmd">uvicorn reportforge.server.main:app --reload --port 8000</span>
+<span class="term-out">INFO:     Uvicorn running on http://0.0.0.0:8000</span>
+
+<span class="cmt"># Render a PDF via CLI</span>
+<span class="term-prompt">$</span> <span class="term-cmd">python -m core render examples/enterprise_layout.rfd.json \
+    examples/enterprise_data.json output/report.pdf</span>
+
+<span class="cmt"># Live HTML preview</span>
+<span class="term-prompt">$</span> <span class="term-cmd">python -m core preview examples/enterprise_layout.rfd.json \
+    examples/enterprise_data.json</span>
+<span class="term-out">✓ Preview saved: output/preview.html (52ms)</span>
+
+<span class="cmt"># Import JRXML</span>
+<span class="term-prompt">$</span> <span class="term-cmd">python -m core render-jrxml examples/sample_report.jrxml \
+    examples/enterprise_data.json output/jrxml_report.pdf</span>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ── Footer ─────────────────────────────────────────────────── -->
+<footer>
+  <div class="f-logo">ReportForge Enterprise</div>
+  <p>Built with ❤️ using Python · FastAPI · WeasyPrint · matplotlib</p>
+  <p style="margin-top:8px;">MIT License · <a href="manual.html" style="color:#6C63FF">Documentation</a></p>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,1932 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAP Crystal Reports for SAP Business One - [Orden de Venta Epson-3250]</title>
+<style>
+/* ══════════════════════════════════════════════════════════
+   @layer CASCADE — Explicit order
+══════════════════════════════════════════════════════════ */
+@layer reset, tokens, base, components, utilities, overrides;
+
+@layer reset {
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { height: 100%; overflow: hidden; }
+  body { height: 100%; overflow: hidden; }
+  button { border: none; background: none; cursor: default; font: inherit; }
+  ul, ol { list-style: none; }
+  a { text-decoration: none; color: inherit; }
+  [hidden] { display: none !important; }
+}
+
+@layer tokens {
+  :root {
+    /* ── XP Windows Colors ── */
+    --color-win-bg:            #ECE9D8;
+    --color-win-bg-dark:       #D4D0C8;
+    --color-win-border-light:  #FFFFFF;
+    --color-win-border-dark:   #808080;
+    --color-win-border-darker: #404040;
+    --color-win-titlebar-start:#0A246A;
+    --color-win-titlebar-end:  #3A6EA5;
+    --color-win-titlebar-text: #FFFFFF;
+    --color-win-select-bg:     #316AC5;
+    --color-win-select-text:   #FFFFFF;
+    --color-win-inactive-tab:  #D4D0C8;
+    --color-win-active-tab:    #FFFFFF;
+    --color-win-panel-bg:      #F5F4EE;
+    --color-canvas-bg:         #808080;
+    --color-report-bg:         #FFFFFF;
+    --color-text-default:      #000000;
+    --color-text-dim:          #555555;
+    --color-menu-hover:        #316AC5;
+    --color-menu-hover-text:   #FFFFFF;
+    --color-toolbar-sep:       #ACA899;
+    --color-grid-dot:          #BCBCBC;
+    --color-ruler-bg:          #ECE9D8;
+    --color-ruler-mark:        #666666;
+    --color-section-label-bg:  #D4D0C8;
+    --color-section-label-text:#333333;
+    --color-section-border:    #808080;
+    --color-ghost-line:        #0000FF;
+
+    /* ── Crystal Report colors ── */
+    --color-cr-header-bg:      #C0511A;
+    --color-cr-header-text:    #FFFFFF;
+    --color-cr-row-alt:        #FFFBF5;
+    --color-cr-row-hover:      #FFF3E0;
+    --color-cr-border:         #C0511A;
+    --color-cr-totals-label:   #333333;
+    --color-cr-title:          #C0511A;
+
+    /* ── Spacing ── */
+    --space-2xs: 2px;
+    --space-xs:  4px;
+    --space-sm:  6px;
+    --space-md:  8px;
+    --space-lg:  12px;
+    --space-xl:  16px;
+
+    /* ── Typography ── */
+    --font-family-base: Tahoma, 'Microsoft Sans Serif', Arial, sans-serif;
+    --font-family-mono: 'Courier New', monospace;
+    --font-size-xs:  9px;
+    --font-size-sm:  11px;
+    --font-size-md:  12px;
+    --font-size-lg:  13px;
+
+    /* ── Z-index ── */
+    --z-layout:      0;
+    --z-elements:    10;
+    --z-overlay:     20;
+    --z-interaction: 30;
+    --z-tooltip:     100;
+    --z-menu:        200;
+
+    /* ── Section ── */
+    --hitbox-size: 8px;
+    --section-label-w: 22px;
+    --canvas-page-w: 430px;
+  }
+}
+
+@layer base {
+  html, body {
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-default);
+    background: var(--color-win-bg);
+    user-select: none;
+  }
+
+  .app-root {
+    display: grid;
+    grid-template-areas:
+      "titlebar  titlebar  titlebar"
+      "menubar   menubar   menubar"
+      "toolbar1  toolbar1  toolbar1"
+      "toolbar2  toolbar2  toolbar2"
+      "toolbar3  toolbar3  toolbar3"
+      "tabs      tabs      tabs"
+      "left      canvas    right"
+      "statusbar statusbar statusbar";
+    grid-template-rows:
+      22px   /* title */
+      20px   /* menu */
+      26px   /* toolbar1 */
+      26px   /* toolbar2 */
+      22px   /* toolbar3 nav */
+      26px   /* tabs */
+      1fr    /* main */
+      20px;  /* status */
+    grid-template-columns: 148px 1fr 178px;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  /* Pointer-events isolation per layer */
+  .layout-layer,
+  .elements-layer,
+  .section-overlay-layer { pointer-events: none; }
+  .interaction-layer { pointer-events: none; }
+  .interaction-layer .resize-hitbox { pointer-events: all; }
+}
+
+@layer components {
+
+  /* ══ Title Bar ══ */
+  .win-titlebar {
+    grid-area: titlebar;
+    display: flex;
+    align-items: center;
+    background: linear-gradient(to bottom, var(--color-win-titlebar-start), var(--color-win-titlebar-end));
+    padding-inline: var(--space-md);
+    gap: var(--space-xs);
+  }
+  .win-titlebar__icon {
+    inline-size: 16px; block-size: 16px;
+    display: grid; place-items: center; flex-shrink: 0;
+  }
+  .win-titlebar__title {
+    flex: 1;
+    font-size: var(--font-size-sm);
+    font-weight: bold;
+    color: var(--color-win-titlebar-text);
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.4);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .win-titlebar__btns { display: flex; gap: 2px; }
+  .win-ctrl-btn {
+    inline-size: 21px; block-size: 19px;
+    border: 1px outset #AAAAAA;
+    border-radius: 3px;
+    background: linear-gradient(to bottom, #ECE9D8, #D4D0C8);
+    display: grid; place-items: center;
+    font-size: 10px;
+    font-weight: bold;
+    color: #000;
+    cursor: pointer;
+    font-family: 'Marlett', 'Wingdings', Arial, sans-serif;
+  }
+  .win-ctrl-btn:hover { background: linear-gradient(to bottom, #FFFFFF, #D4D0C8); }
+  .win-ctrl-btn--close { background: linear-gradient(to bottom, #E86B55, #C83416); color: white; }
+  .win-ctrl-btn--close:hover { background: linear-gradient(to bottom, #FF8066, #E04020); }
+
+  /* ══ Menu Bar ══ */
+  .menubar {
+    grid-area: menubar;
+    display: flex;
+    align-items: stretch;
+    background: var(--color-win-bg);
+    border-block-end: 1px solid var(--color-win-border-dark);
+    padding-inline-start: var(--space-xs);
+  }
+  .menubar__item {
+    display: flex;
+    align-items: center;
+    padding-inline: var(--space-md);
+    font-size: var(--font-size-sm);
+    white-space: nowrap;
+    cursor: default;
+    border-radius: 2px;
+    position: relative;
+  }
+  .menubar__item:hover {
+    background: var(--color-menu-hover);
+    color: var(--color-menu-hover-text);
+  }
+
+  /* ══ Toolbar ══ */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    background: var(--color-win-bg);
+    border-block-end: 1px solid var(--color-win-border-dark);
+    padding-inline: 2px;
+    gap: 1px;
+    min-block-size: 26px;
+  }
+  .toolbar--row1 { grid-area: toolbar1; }
+  .toolbar--row2 { grid-area: toolbar2; }
+  .toolbar--nav  { grid-area: toolbar3; min-block-size: 22px; }
+
+  .tb-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 22px;
+    block-size: 22px;
+    border: 1px solid transparent;
+    border-radius: 2px;
+    cursor: pointer;
+    flex-shrink: 0;
+    font-size: 9px;
+    color: var(--color-text-default);
+    background: transparent;
+    padding: 0;
+    transition: none;
+  }
+  .tb-btn:hover {
+    background: linear-gradient(to bottom, #FFFAFE, #D8DBE8);
+    border: 1px solid var(--color-win-border-dark);
+    box-shadow: 1px 1px 0 var(--color-win-border-dark) inset;
+  }
+  .tb-btn:active {
+    background: linear-gradient(to bottom, #D0CDCA, #E8E4DE);
+    border: 1px solid var(--color-win-border-darker);
+    box-shadow: 1px 1px 2px rgba(0,0,0,0.2) inset;
+  }
+
+  .tb-sep {
+    inline-size: 1px;
+    block-size: 18px;
+    background: linear-gradient(to bottom, transparent 0%, var(--color-toolbar-sep) 20%, var(--color-toolbar-sep) 80%, transparent 100%);
+    margin-inline: 2px;
+    flex-shrink: 0;
+  }
+
+  .tb-text {
+    font-size: var(--font-size-xs);
+    padding-inline: var(--space-xs);
+    white-space: nowrap;
+    color: var(--color-text-default);
+  }
+
+  .tb-nav-input {
+    inline-size: 28px;
+    block-size: 18px;
+    border: 1px solid var(--color-win-border-dark);
+    font-size: var(--font-size-xs);
+    font-family: var(--font-family-base);
+    text-align: center;
+    background: white;
+    outline: none;
+    padding: 0 2px;
+  }
+
+  /* ══ Tabs ══ */
+  .tabbar {
+    grid-area: tabs;
+    display: flex;
+    align-items: flex-end;
+    background: var(--color-win-bg);
+    padding-inline-start: 4px;
+    border-block-end: 1px solid var(--color-win-border-dark);
+    gap: 1px;
+  }
+  .tab {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-inline: 8px;
+    padding-block: 3px 4px;
+    font-size: var(--font-size-sm);
+    background: var(--color-win-inactive-tab);
+    border: 1px solid var(--color-win-border-dark);
+    border-block-end: none;
+    border-radius: 3px 3px 0 0;
+    cursor: default;
+    position: relative;
+    margin-block-end: -1px;
+  }
+  .tab[data-active="true"] {
+    background: var(--color-win-active-tab);
+    border-block-end: 1px solid white;
+    z-index: 1;
+  }
+  .tab__close {
+    font-size: 9px;
+    color: var(--color-text-dim);
+    inline-size: 12px;
+    block-size: 12px;
+    display: grid;
+    place-items: center;
+    border-radius: 2px;
+  }
+  .tab__close:hover { background: #E06060; color: white; }
+
+  /* Sub-tabs (Diseño / Vista previa) */
+  .subtabbar {
+    display: flex;
+    background: var(--color-win-bg);
+    border-block-start: 1px solid var(--color-win-border-dark);
+    inline-size: 100%;
+  }
+  .subtab {
+    padding-inline: var(--space-md);
+    padding-block: 2px;
+    font-size: var(--font-size-sm);
+    cursor: default;
+    border-inline-end: 1px solid var(--color-win-border-dark);
+  }
+  .subtab[data-active="true"] { background: #316AC5; color: white; }
+
+  /* ══ Main Area Layout ══ */
+  .main-area {
+    display: grid;
+    grid-area: left / left / right / right;
+    grid-template-areas: "panel-left canvas panel-right";
+    grid-template-columns: 148px 1fr 178px;
+    overflow: hidden;
+  }
+
+  /* ══ Left Panel (Parámetros) ══ */
+  .panel-left {
+    grid-area: panel-left;
+    background: var(--color-win-panel-bg);
+    border-inline-end: 1px solid var(--color-win-border-dark);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-block-size: 0;
+  }
+  .panel-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-block: 2px;
+    padding-inline: var(--space-xs);
+    background: var(--color-win-bg);
+    border-block-end: 1px solid var(--color-win-border-dark);
+    font-size: var(--font-size-xs);
+    font-weight: bold;
+  }
+  .panel-title__btns { display: flex; gap: 1px; }
+  .panel-mini-btn {
+    inline-size: 14px; block-size: 14px;
+    border: 1px solid var(--color-win-border-dark);
+    background: var(--color-win-bg);
+    display: grid; place-items: center;
+    font-size: 8px;
+    cursor: pointer;
+    border-radius: 1px;
+  }
+  .panel-mini-btn:hover { background: var(--color-win-bg-dark); }
+
+  .param-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-xs);
+    font-size: var(--font-size-xs);
+  }
+  .param-item {
+    display: flex;
+    align-items: center;
+    padding-block: 1px;
+    padding-inline: 2px;
+    cursor: default;
+    border-radius: 1px;
+  }
+  .param-item:hover { background: var(--color-win-select-bg); color: white; }
+  .param-item__icon { color: #999; margin-inline-end: 3px; font-size: 9px; }
+
+  /* Bottom panel sections */
+  .panel-sections {
+    flex-shrink: 0;
+    border-block-start: 1px solid var(--color-win-border-dark);
+  }
+  .panel-section-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding-block: 2px;
+    padding-inline: var(--space-xs);
+    font-size: var(--font-size-xs);
+    cursor: default;
+    border-block-end: 1px solid var(--color-win-border-dark);
+  }
+  .panel-section-item--active { background: var(--color-win-select-bg); color: white; }
+  .panel-section-item__icon { font-size: 9px; }
+
+  /* ══ Canvas Area ══ */
+  .canvas-area {
+    grid-area: canvas;
+    display: grid;
+    grid-template-areas:
+      "corner ruler-top"
+      "ruler-left canvas-scroll";
+    grid-template-rows: 18px 1fr;
+    grid-template-columns: 22px 1fr;
+    background: var(--color-canvas-bg);
+    overflow: hidden;
+    min-block-size: 0;
+  }
+
+  .canvas-corner {
+    grid-area: corner;
+    background: var(--color-ruler-bg);
+    border-inline-end: 1px solid var(--color-win-border-dark);
+    border-block-end: 1px solid var(--color-win-border-dark);
+  }
+
+  .canvas-ruler-top {
+    grid-area: ruler-top;
+    background: var(--color-ruler-bg);
+    border-block-end: 1px solid var(--color-win-border-dark);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .canvas-ruler-left {
+    grid-area: ruler-left;
+    background: var(--color-ruler-bg);
+    border-inline-end: 1px solid var(--color-win-border-dark);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .canvas-scroll {
+    grid-area: canvas-scroll;
+    overflow: auto;
+    padding: var(--space-xl);
+    background: var(--color-canvas-bg);
+    background-image:
+      radial-gradient(circle at 1px 1px, var(--color-grid-dot) 0.5px, transparent 0);
+    background-size: 10px 10px;
+    position: relative;
+  }
+
+  /* Ruler marks */
+  .ruler-top-inner {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    padding-block-end: 2px;
+  }
+  .ruler-mark {
+    position: absolute;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .ruler-mark__line { width: 1px; background: var(--color-ruler-mark); }
+  .ruler-mark__label {
+    font-size: 8px;
+    color: var(--color-ruler-mark);
+    position: absolute;
+    bottom: 6px;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-family: var(--font-family-base);
+  }
+
+  /* ══ Designer Root — THE CANVAS ══ */
+  .designer-root {
+    container-type: inline-size;
+    container-name: designer;
+    position: relative;
+    inline-size: var(--canvas-page-w);
+    background: var(--color-report-bg);
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.4), 3px 3px 0px rgba(0,0,0,0.15);
+    flex-shrink: 0;
+  }
+
+  /* ══ Canvas Layers ══ */
+  .layout-layer,
+  .elements-layer,
+  .section-overlay-layer,
+  .interaction-layer {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    inset-inline-end: 0;
+    overflow: visible;
+  }
+  .layout-layer            { z-index: var(--z-layout); }
+  .elements-layer          { z-index: var(--z-elements); }
+  .section-overlay-layer   { z-index: var(--z-overlay); }
+  .interaction-layer       { z-index: var(--z-interaction); }
+
+  /* ── LAYOUT LAYER: Section backgrounds ── */
+  .layout-section {
+    position: absolute;
+    inset-inline: 0;
+    block-size: var(--_h, 20px);
+    inset-block-start: var(--_t, 0px);
+    border-block-end: 1px dotted var(--color-section-border);
+    background: var(--color-report-bg);
+  }
+  .layout-section[data-stype="rh"] { background: #FAFAFA; }
+  .layout-section[data-stype="ph"] { background: #FFFEF8; }
+  .layout-section[data-stype="det"]{ background: var(--color-report-bg); }
+  .layout-section[data-stype="pf"] { background: #FAFEFF; }
+  .layout-section[data-stype="rf"] { background: #FFFAFA; }
+
+  /* ── OVERLAY LAYER: Section labels (left side band) ── */
+  .section-label-band {
+    position: absolute;
+    inset-inline-start: 0;
+    inline-size: 0; /* zero-width — label is in left gutter via overflow */
+    block-size: var(--_h, 20px);
+    inset-block-start: var(--_t, 0px);
+    pointer-events: none;
+  }
+
+  /* Left gutter section labels — rendered as ::before on canvas-ruler-left */
+  .section-tick {
+    position: absolute;
+    inset-inline: 0;
+    block-size: var(--_h, 20px);
+    inset-block-start: var(--_t, 0px);
+    border-block-end: 1px solid var(--color-section-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-section-label-bg);
+    overflow: hidden;
+  }
+  .section-tick__abbr {
+    font-size: 8px;
+    font-weight: bold;
+    color: var(--color-section-label-text);
+    writing-mode: horizontal-tb;
+    white-space: nowrap;
+  }
+
+  /* ── ELEMENTS LAYER: Report content ── */
+  .report-element {
+    position: absolute;
+    cursor: move;
+  }
+  .report-element[data-selected="true"] {
+    outline: 1px solid #0000CC;
+    outline-offset: 0;
+  }
+  .report-element:hover:not([data-selected="true"]) {
+    outline: 1px dashed #0000CC;
+    outline-offset: 0;
+  }
+
+  /* ── INTERACTION LAYER: Resize hitboxes ── */
+  .resize-hitbox {
+    position: absolute;
+    inset-inline: 0;
+    block-size: var(--hitbox-size);
+    inset-block-start: var(--_pos, 0px);
+    translate: 0 calc(var(--hitbox-size) / -2);
+    cursor: ns-resize;
+    pointer-events: all;
+    background: transparent;
+  }
+  .resize-visual {
+    position: absolute;
+    inset-inline: 0;
+    block-size: 1px;
+    inset-block-start: calc(var(--hitbox-size) / 2 - 0.5px);
+    background: var(--color-section-border);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 80ms;
+  }
+  .resize-hitbox:hover .resize-visual { background: var(--color-ghost-line); opacity: 1; }
+  .resize-hitbox[data-dragging="true"] .resize-visual { background: var(--color-ghost-line); opacity: 1; }
+
+  .ghost-line {
+    position: absolute;
+    inset-inline: 0;
+    block-size: 1px;
+    background: var(--color-ghost-line);
+    pointer-events: none;
+    display: none;
+  }
+  .ghost-line[data-vis="true"] { display: block; }
+
+  .size-badge {
+    position: absolute;
+    inset-inline-end: 4px;
+    background: #000080;
+    color: #FFFFFF;
+    font-family: var(--font-family-base);
+    font-size: 8px;
+    padding: 1px 3px;
+    pointer-events: none;
+    opacity: 0;
+    white-space: nowrap;
+  }
+  .size-badge[data-vis="true"] { opacity: 1; }
+
+  /* ══ Report Content Styles ══ */
+  .rpt-root {
+    font-family: Arial, sans-serif;
+    font-size: 8px;
+    color: #000;
+    position: relative;
+    inline-size: 100%;
+  }
+
+  /* Packing List Title Box */
+  .rpt-title-box {
+    position: absolute;
+    inset-block-start: 3px;
+    inset-inline-end: 4px;
+    inline-size: 178px;
+    block-size: 48px;
+    border: 1.5px solid var(--color-cr-border);
+  }
+  .rpt-title-box__label {
+    text-align: center;
+    font-size: 11px;
+    font-weight: bold;
+    color: var(--color-cr-title);
+    font-family: Arial, sans-serif;
+    padding-block-start: 4px;
+    border-block-end: 1px solid var(--color-cr-border);
+    padding-block-end: 3px;
+  }
+  .rpt-title-box__no-row {
+    display: flex;
+    align-items: center;
+    block-size: 22px;
+  }
+  .rpt-title-box__no-cell {
+    font-size: 8px;
+    font-weight: bold;
+    padding-inline: 6px;
+    border-inline-end: 1px solid var(--color-cr-border);
+    block-size: 100%;
+    display: flex;
+    align-items: center;
+    inline-size: 30px;
+  }
+  .rpt-title-box__no-val {
+    font-size: 11px;
+    font-weight: bold;
+    flex: 1;
+    text-align: center;
+    font-family: Arial, sans-serif;
+  }
+
+  /* Client info section */
+  .rpt-client-grid {
+    position: absolute;
+    inset-block-start: 54px;
+    inset-inline-start: 4px;
+    inset-inline-end: 4px;
+    border: 1px solid #888;
+  }
+  .rpt-client-row {
+    display: flex;
+    border-block-end: 1px solid #CCC;
+  }
+  .rpt-client-row:last-child { border-block-end: none; }
+  .rpt-client-cell-label {
+    font-size: 7px;
+    font-weight: bold;
+    background: #F0EEE8;
+    padding: 1px 4px;
+    border-inline-end: 1px solid #CCC;
+    white-space: nowrap;
+    min-inline-size: 60px;
+    display: flex;
+    align-items: center;
+  }
+  .rpt-client-cell-value {
+    font-size: 8px;
+    padding: 1px 4px;
+    flex: 1;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Items table */
+  .rpt-items-table {
+    position: absolute;
+    inset-inline: 4px;
+    border-collapse: collapse;
+    font-family: Arial, sans-serif;
+    font-size: 7.5px;
+    inline-size: calc(100% - 8px);
+  }
+
+  .rpt-items-table th {
+    background: var(--color-cr-header-bg);
+    color: var(--color-cr-header-text);
+    font-weight: bold;
+    padding: 2px 3px;
+    border: 1px solid #A03010;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .rpt-items-table th:first-child { inline-size: 18px; }
+  .rpt-items-table th:nth-child(2) { inline-size: 50px; }
+  .rpt-items-table th:nth-child(3) { text-align: left; }
+  .rpt-items-table th:nth-child(4) { inline-size: 32px; }
+  .rpt-items-table th:nth-child(5) { inline-size: 30px; }
+  .rpt-items-table th:nth-child(6) { inline-size: 50px; }
+  .rpt-items-table th:nth-child(7) { inline-size: 40px; }
+
+  .rpt-items-table td {
+    padding: 1px 3px;
+    border: 1px solid #DDD;
+    vertical-align: middle;
+    line-height: 1.3;
+  }
+  .rpt-items-table tr:nth-child(even) td { background: #FFF8F2; }
+  .rpt-items-table td:nth-child(1) { text-align: center; font-weight: bold; color: #444; }
+  .rpt-items-table td:nth-child(4) { text-align: center; }
+  .rpt-items-table td:nth-child(5) { text-align: right; }
+  .rpt-items-table td:nth-child(6) { text-align: right; font-family: var(--font-family-mono); font-size: 7px; }
+  .rpt-items-table td:nth-child(7) { text-align: right; font-weight: bold; }
+
+  /* Row 4 has orange background (selected/highlighted row) */
+  .rpt-row--highlight td { background: #E8621A !important; color: white; }
+  .rpt-row--highlight td:nth-child(5) { color: white; }
+  .rpt-row--highlight td:nth-child(6) { color: white; }
+  .rpt-row--highlight td:nth-child(7) { color: white; }
+
+  /* Totals table */
+  .rpt-totals {
+    position: absolute;
+    inline-size: 130px;
+    border: 1px solid #AAA;
+    border-collapse: collapse;
+    font-size: 7.5px;
+    font-family: Arial, sans-serif;
+  }
+  .rpt-totals td {
+    padding: 2px 4px;
+    border: 1px solid #CCC;
+    line-height: 1.4;
+  }
+  .rpt-totals td:first-child {
+    font-weight: bold;
+    background: #F5F3EE;
+    white-space: nowrap;
+  }
+  .rpt-totals td:last-child { text-align: right; font-family: var(--font-family-mono); }
+
+  /* Page text */
+  .rpt-page-text {
+    font-size: 8px;
+    font-family: Arial, sans-serif;
+    color: #333;
+    position: absolute;
+  }
+
+  /* ══ Right Panel (Explorador de campos) ══ */
+  .panel-right {
+    grid-area: panel-right;
+    background: var(--color-win-panel-bg);
+    border-inline-start: 1px solid var(--color-win-border-dark);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-block-size: 0;
+  }
+  .panel-right__toolbar {
+    display: flex;
+    align-items: center;
+    padding: 2px 3px;
+    background: var(--color-win-bg);
+    border-block-end: 1px solid var(--color-win-border-dark);
+    gap: 1px;
+  }
+  .field-tree {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-xs);
+    font-size: var(--font-size-xs);
+  }
+  .tree-node {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 1px 2px;
+    cursor: default;
+    border-radius: 1px;
+    white-space: nowrap;
+  }
+  .tree-node:hover { background: var(--color-win-select-bg); color: white; }
+  .tree-node__arrow { color: #666; font-size: 7px; inline-size: 10px; }
+  .tree-node__icon  { font-size: 10px; }
+  .tree-node__label { font-size: var(--font-size-xs); }
+  .tree-child {
+    padding-inline-start: 12px;
+  }
+
+  /* ══ Status Bar ══ */
+  .statusbar {
+    grid-area: statusbar;
+    display: flex;
+    align-items: center;
+    background: var(--color-win-bg);
+    border-block-start: 1px solid var(--color-win-border-dark);
+    font-size: var(--font-size-xs);
+    padding-inline: var(--space-xs);
+    gap: var(--space-md);
+  }
+  .statusbar__item {
+    display: flex;
+    align-items: center;
+    padding-inline: var(--space-xs);
+    border-inline-end: 1px solid var(--color-win-border-dark);
+    block-size: 100%;
+    white-space: nowrap;
+  }
+  .statusbar__item:last-child { border: none; }
+  .statusbar__flex { flex: 1; }
+}
+
+@layer utilities {
+  .text-right  { text-align: end; }
+  .font-bold   { font-weight: bold; }
+  .font-mono   { font-family: var(--font-family-mono); }
+  .overflow-hidden { overflow: hidden; }
+}
+
+@layer overrides {
+  /* Container Queries for ruler labels */
+  @container designer (inline-size < 300px) {
+    .section-label-band { display: none; }
+  }
+}
+</style>
+</head>
+<body>
+<div class="app-root" id="app-root">
+
+  <!-- ╔══════════════════════════════╗ -->
+  <!-- ║         TITLE BAR            ║ -->
+  <!-- ╚══════════════════════════════╝ -->
+  <div class="win-titlebar">
+    <div class="win-titlebar__icon">
+      <svg width="16" height="16" viewBox="0 0 16 16">
+        <rect x="1" y="1" width="14" height="14" rx="2" fill="#4090C8"/>
+        <text x="8" y="12" text-anchor="middle" fill="white" font-size="9" font-family="Arial" font-weight="bold">CR</text>
+      </svg>
+    </div>
+    <div class="win-titlebar__title">SAP Crystal Reports for SAP Business One - [Orden de Venta Epson-3250]</div>
+    <div class="win-titlebar__btns">
+      <button class="win-ctrl-btn" aria-label="Minimizar">─</button>
+      <button class="win-ctrl-btn" aria-label="Maximizar">□</button>
+      <button class="win-ctrl-btn win-ctrl-btn--close" aria-label="Cerrar">✕</button>
+    </div>
+  </div>
+
+  <!-- ╔══════════════════════════════╗ -->
+  <!-- ║          MENU BAR            ║ -->
+  <!-- ╚══════════════════════════════╝ -->
+  <nav class="menubar" role="menubar">
+    <div class="menubar__item" role="menuitem">Archivo</div>
+    <div class="menubar__item" role="menuitem">Edición</div>
+    <div class="menubar__item" role="menuitem">Vista</div>
+    <div class="menubar__item" role="menuitem">Insertar</div>
+    <div class="menubar__item" role="menuitem">Formato</div>
+    <div class="menubar__item" role="menuitem">Base de datos</div>
+    <div class="menubar__item" role="menuitem">Informe</div>
+    <div class="menubar__item" role="menuitem">Ventana</div>
+    <div class="menubar__item" role="menuitem">Ayuda</div>
+  </nav>
+
+  <!-- ╔══════════════════════════════╗ -->
+  <!-- ║         TOOLBAR ROW 1        ║ -->
+  <!-- ╚══════════════════════════════╝ -->
+  <div class="toolbar toolbar--row1" role="toolbar" aria-label="Barra de herramientas principal">
+    <!-- File ops -->
+    <button class="tb-btn" title="Nuevo"><svg width="14" height="14" viewBox="0 0 14 14"><rect x="2" y="1" width="8" height="10" rx="1" fill="none" stroke="#333" stroke-width="1"/><path d="M8 1v3h2" stroke="#333" stroke-width="1" fill="none"/><line x1="4" y1="6" x2="8" y2="6" stroke="#333" stroke-width="0.8"/><line x1="4" y1="8" x2="8" y2="8" stroke="#333" stroke-width="0.8"/></svg></button>
+    <button class="tb-btn" title="Abrir"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M1 4h4l1.5 2H13v6H1V4Z" fill="#F0C040" stroke="#888" stroke-width="0.8"/></svg></button>
+    <button class="tb-btn" title="Guardar"><svg width="14" height="14" viewBox="0 0 14 14"><rect x="1.5" y="1.5" width="11" height="11" rx="1" fill="#6090D0" stroke="#306090" stroke-width="0.8"/><rect x="3" y="1.5" width="5" height="4" fill="#D0E8FF" stroke="#306090" stroke-width="0.6"/><rect x="3" y="7" width="8" height="4" rx="0.5" fill="white" stroke="#306090" stroke-width="0.6"/></svg></button>
+    <button class="tb-btn" title="Imprimir"><svg width="14" height="14" viewBox="0 0 14 14"><rect x="2" y="5" width="10" height="7" rx="1" fill="#888" stroke="#555" stroke-width="0.8"/><path d="M4 5V2h6v3" fill="white" stroke="#555" stroke-width="0.8"/><rect x="4" y="8" width="6" height="1" fill="white"/><rect x="4" y="10" width="6" height="1" fill="white"/><rect x="10" y="7" width="1.5" height="1.5" fill="#40AA40" rx="0.5"/></svg></button>
+    <div class="tb-sep"></div>
+    <!-- Edit ops -->
+    <button class="tb-btn" title="Cortar"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M4 2L10 10M10 2L4 10" stroke="#333" stroke-width="1.3" stroke-linecap="round"/><circle cx="3" cy="11" r="2" fill="none" stroke="#333" stroke-width="0.9"/><circle cx="11" cy="11" r="2" fill="none" stroke="#333" stroke-width="0.9"/></svg></button>
+    <button class="tb-btn" title="Copiar"><svg width="14" height="14" viewBox="0 0 14 14"><rect x="3" y="4" width="7" height="8" rx="1" fill="white" stroke="#555" stroke-width="0.9"/><rect x="1.5" y="2" width="7" height="8" rx="1" fill="#E8E8E8" stroke="#555" stroke-width="0.9"/></svg></button>
+    <button class="tb-btn" title="Pegar"><svg width="14" height="14" viewBox="0 0 14 14"><rect x="3" y="4" width="8" height="9" rx="1" fill="white" stroke="#555" stroke-width="0.9"/><rect x="5" y="2" width="4" height="3" rx="1" fill="#C8C8C8" stroke="#555" stroke-width="0.8"/><line x1="5" y1="7" x2="9" y2="7" stroke="#555" stroke-width="0.7"/><line x1="5" y1="9" x2="9" y2="9" stroke="#555" stroke-width="0.7"/></svg></button>
+    <div class="tb-sep"></div>
+    <button class="tb-btn" title="Deshacer"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M4 5 2 3l2-2" stroke="#333" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M2 3c2 0 6-1 7 3s0 5-2 6" stroke="#333" stroke-width="1" stroke-linecap="round" fill="none"/></svg></button>
+    <button class="tb-btn" title="Rehacer"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M10 5l2-2-2-2" stroke="#333" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M12 3c-2 0-6-1-7 3s0 5 2 6" stroke="#333" stroke-width="1" stroke-linecap="round" fill="none"/></svg></button>
+    <div class="tb-sep"></div>
+    <!-- Insert tools -->
+    <button class="tb-btn" title="Insertar texto"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 3h8M7 3v8M5 11h4" stroke="#333" stroke-width="1" stroke-linecap="round"/></svg></button>
+    <button class="tb-btn" title="Insertar línea"><svg width="14" height="14" viewBox="0 0 14 14"><line x1="2" y1="7" x2="12" y2="7" stroke="#333" stroke-width="1.2" stroke-linecap="round"/></svg></button>
+    <button class="tb-btn" title="Insertar rectángulo"><svg width="14" height="14" viewBox="0 0 14 14"><rect x="2" y="3" width="10" height="8" fill="none" stroke="#333" stroke-width="1"/></svg></button>
+    <button class="tb-btn" title="Insertar imagen"><svg width="14" height="14" viewBox="0 0 14 14"><rect x="1" y="2" width="12" height="10" rx="1" fill="none" stroke="#555" stroke-width="0.9"/><circle cx="4.5" cy="5.5" r="1.2" fill="#F0C040"/><path d="M1 9l4-4 3 3 2-2 3 3" stroke="#4A9" stroke-width="0.9" fill="none"/></svg></button>
+    <button class="tb-btn" title="Insertar gráfico"><svg width="14" height="14" viewBox="0 0 14 14"><rect x="2" y="2" width="2" height="9" fill="#4080C0"/><rect x="5" y="5" width="2" height="6" fill="#C04040"/><rect x="8" y="3" width="2" height="8" fill="#40A040"/><rect x="11" y="6" width="2" height="5" fill="#C0A000"/></svg></button>
+    <button class="tb-btn" title="Insertar subreporte"><svg width="14" height="14" viewBox="0 0 14 14"><rect x="1" y="3" width="9" height="7" rx="1" fill="none" stroke="#333" stroke-width="0.9"/><rect x="4" y="5" width="9" height="7" rx="1" fill="white" stroke="#333" stroke-width="0.9"/><line x1="6" y1="7" x2="11" y2="7" stroke="#333" stroke-width="0.7"/><line x1="6" y1="9" x2="11" y2="9" stroke="#333" stroke-width="0.7"/></svg></button>
+    <div class="tb-sep"></div>
+    <!-- Align / Format -->
+    <button class="tb-btn" title="Negrita"><svg width="14" height="14" viewBox="0 0 14 14"><text x="4" y="11" font-family="Arial" font-size="10" font-weight="bold" fill="#333">B</text></svg></button>
+    <button class="tb-btn" title="Cursiva"><svg width="14" height="14" viewBox="0 0 14 14"><text x="5" y="11" font-family="Arial" font-size="10" font-style="italic" fill="#333">I</text></svg></button>
+    <button class="tb-btn" title="Subrayado"><svg width="14" height="14" viewBox="0 0 14 14"><text x="5" y="10" font-family="Arial" font-size="9" text-decoration="underline" fill="#333">U</text><line x1="3" y1="13" x2="11" y2="13" stroke="#333" stroke-width="1"/></svg></button>
+    <div class="tb-sep"></div>
+    <button class="tb-btn" title="Alinear izquierda"><svg width="14" height="14" viewBox="0 0 14 14"><line x1="2" y1="4" x2="12" y2="4" stroke="#333" stroke-width="1"/><line x1="2" y1="7" x2="9" y2="7" stroke="#333" stroke-width="1"/><line x1="2" y1="10" x2="12" y2="10" stroke="#333" stroke-width="1"/></svg></button>
+    <button class="tb-btn" title="Centrar"><svg width="14" height="14" viewBox="0 0 14 14"><line x1="2" y1="4" x2="12" y2="4" stroke="#333" stroke-width="1"/><line x1="4" y1="7" x2="10" y2="7" stroke="#333" stroke-width="1"/><line x1="2" y1="10" x2="12" y2="10" stroke="#333" stroke-width="1"/></svg></button>
+    <button class="tb-btn" title="Alinear derecha"><svg width="14" height="14" viewBox="0 0 14 14"><line x1="2" y1="4" x2="12" y2="4" stroke="#333" stroke-width="1"/><line x1="5" y1="7" x2="12" y2="7" stroke="#333" stroke-width="1"/><line x1="2" y1="10" x2="12" y2="10" stroke="#333" stroke-width="1"/></svg></button>
+    <div class="tb-sep"></div>
+    <button class="tb-btn" title="Zoom menos">─</button>
+    <span class="tb-text" id="zoom-display">100%</span>
+    <button class="tb-btn" title="Zoom más">+</button>
+  </div>
+
+  <!-- ╔══════════════════════════════╗ -->
+  <!-- ║         TOOLBAR ROW 2        ║ -->
+  <!-- ╚══════════════════════════════╝ -->
+  <div class="toolbar toolbar--row2" role="toolbar" aria-label="Barra de herramientas secundaria">
+    <button class="tb-btn" title="Asistente de informes"><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5.5" fill="#4090D0" stroke="#2070B0" stroke-width="0.7"/><text x="7" y="10.5" text-anchor="middle" fill="white" font-size="8" font-family="Arial" font-weight="bold">?</text></svg></button>
+    <button class="tb-btn" title="Insertar campo de base de datos"><svg width="14" height="14" viewBox="0 0 14 14"><ellipse cx="7" cy="4" rx="5" ry="2" fill="none" stroke="#4080C0" stroke-width="1"/><path d="M2 4v6c0 1.1 2.2 2 5 2s5-.9 5-2V4" fill="none" stroke="#4080C0" stroke-width="1"/><line x1="2" y1="7" x2="12" y2="7" stroke="#4080C0" stroke-width="0.7"/></svg></button>
+    <button class="tb-btn" title="Insertar fórmula"><svg width="14" height="14" viewBox="0 0 14 14"><text x="2" y="11" font-family="Arial" font-size="11" fill="#C04000">Σ</text></svg></button>
+    <button class="tb-btn" title="Explorador de campos"><svg width="14" height="14" viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" rx="1" fill="none" stroke="#555" stroke-width="0.9"/><line x1="4" y1="4" x2="10" y2="4" stroke="#555" stroke-width="0.7"/><line x1="4" y1="7" x2="10" y2="7" stroke="#555" stroke-width="0.7"/><line x1="4" y1="10" x2="8" y2="10" stroke="#555" stroke-width="0.7"/><circle cx="2.5" cy="4" r="0.8" fill="#4080C0"/><circle cx="2.5" cy="7" r="0.8" fill="#4080C0"/><circle cx="2.5" cy="10" r="0.8" fill="#4080C0"/></svg></button>
+    <div class="tb-sep"></div>
+    <button class="tb-btn" title="Asistente para gráficos"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M2 9 L5 5 L8 7 L11 3" stroke="#4080C0" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2" y1="11" x2="12" y2="11" stroke="#555" stroke-width="0.8"/><line x1="2" y1="3" x2="2" y2="11" stroke="#555" stroke-width="0.8"/></svg></button>
+    <button class="tb-btn" title="Asistente de parámetros"><svg width="14" height="14" viewBox="0 0 14 14"><rect x="2" y="3" width="10" height="8" rx="1" fill="none" stroke="#555" stroke-width="0.9"/><text x="7" y="9.5" text-anchor="middle" font-family="Arial" font-size="7" fill="#555">Pm</text></svg></button>
+    <div class="tb-sep"></div>
+    <button class="tb-btn" title="Línea de grupo"><svg width="14" height="14" viewBox="0 0 14 14"><line x1="2" y1="4" x2="12" y2="4" stroke="#A04000" stroke-width="1.5" stroke-dasharray="2,1"/><line x1="2" y1="10" x2="12" y2="10" stroke="#A04000" stroke-width="1.5" stroke-dasharray="2,1"/><line x1="7" y1="4" x2="7" y2="10" stroke="#A04000" stroke-width="0.8"/></svg></button>
+    <button class="tb-btn" title="Sección"><svg width="14" height="14" viewBox="0 0 14 14"><rect x="1" y="2" width="12" height="3" fill="#C0D8F0" stroke="#6090C0" stroke-width="0.7"/><rect x="1" y="6" width="12" height="3" fill="#F0F0F0" stroke="#909090" stroke-width="0.7"/><rect x="1" y="10" width="12" height="2" fill="#F0E8C0" stroke="#C09040" stroke-width="0.7"/></svg></button>
+    <div class="tb-sep"></div>
+    <button class="tb-btn" title="Consultar base de datos"><svg width="14" height="14" viewBox="0 0 14 14"><ellipse cx="7" cy="4" rx="4.5" ry="1.8" fill="#C0D8F0" stroke="#4080C0" stroke-width="0.8"/><path d="M2.5 4v5c0 1 2 1.8 4.5 1.8S11.5 10 11.5 9V4" fill="#E8F4FF" stroke="#4080C0" stroke-width="0.8"/><circle cx="10" cy="10" r="2.5" fill="#F0F0F0" stroke="#C04000" stroke-width="0.9"/><line x1="11.7" y1="11.7" x2="13" y2="13" stroke="#C04000" stroke-width="1"/></svg></button>
+    <button class="tb-btn" title="Mostrar SQL"><svg width="14" height="14" viewBox="0 0 14 14"><text x="1" y="11" font-family="Arial" font-size="8" font-weight="bold" fill="#004080">SQL</text></svg></button>
+    <div class="tb-sep"></div>
+    <button class="tb-btn" title="Vista de diseño"><svg width="14" height="14" viewBox="0 0 14 14"><rect x="1" y="2" width="12" height="10" rx="1" fill="none" stroke="#555" stroke-width="0.9"/><rect x="1" y="4" width="12" height="2" fill="#C0D8F0" stroke="#6090C0" stroke-width="0.5"/><line x1="1" y1="8" x2="13" y2="8" stroke="#CCC" stroke-width="0.7"/></svg></button>
+    <button class="tb-btn" title="Vista previa"><svg width="14" height="14" viewBox="0 0 14 14"><rect x="1" y="2" width="12" height="10" rx="1" fill="white" stroke="#555" stroke-width="0.9"/><line x1="3" y1="5" x2="11" y2="5" stroke="#555" stroke-width="0.7"/><line x1="3" y1="7" x2="9" y2="7" stroke="#555" stroke-width="0.7"/><line x1="3" y1="9" x2="11" y2="9" stroke="#555" stroke-width="0.7"/></svg></button>
+    <div class="tb-sep"></div>
+    <button class="tb-btn" title="Exportar"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 2v8M4 7l3 3 3-3M2 11h10v2H2z" stroke="#333" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></button>
+    <button class="tb-btn" title="Actualizar datos"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M11 7A4 4 0 113 7" stroke="#2080C0" stroke-width="1.2" stroke-linecap="round" fill="none"/><path d="M11 4v3h-3" stroke="#2080C0" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></button>
+  </div>
+
+  <!-- ╔══════════════════════════════╗ -->
+  <!-- ║        NAV TOOLBAR           ║ -->
+  <!-- ╚══════════════════════════════╝ -->
+  <div class="toolbar toolbar--nav" role="toolbar" aria-label="Navegación de páginas">
+    <div class="tb-sep"></div>
+    <button class="tb-btn" title="Primera página" style="font-size:8px">|◀</button>
+    <button class="tb-btn" title="Página anterior" style="font-size:9px">◀</button>
+    <span class="tb-text">Página</span>
+    <input class="tb-nav-input" type="text" value="1" id="page-num" aria-label="Número de página"/>
+    <span class="tb-text">de</span>
+    <span class="tb-text" id="page-total">1</span>
+    <button class="tb-btn" title="Página siguiente" style="font-size:9px">▶</button>
+    <button class="tb-btn" title="Última página"  style="font-size:8px">▶|</button>
+    <div class="tb-sep"></div>
+    <button class="tb-btn" title="Detener" style="font-size:8px; color:#CC0000">■</button>
+  </div>
+
+  <!-- ╔══════════════════════════════╗ -->
+  <!-- ║           TABS               ║ -->
+  <!-- ╚══════════════════════════════╝ -->
+  <div class="tabbar" role="tablist">
+    <div class="tab" role="tab">Página de inicio</div>
+    <div class="tab" role="tab" data-active="true">
+      Orden de Venta Epson-3250
+      <span class="tab__close" role="button" aria-label="Cerrar">✕</span>
+    </div>
+    <div style="margin-inline-start:auto;display:flex;align-items:flex-end">
+      <div class="subtab" data-active="false" role="tab" id="tab-design">Diseño</div>
+      <div class="subtab" data-active="true"  role="tab" id="tab-preview">Vista previa</div>
+      <div class="tab__close" role="button" style="margin-inline-start:2px;margin-block-end:2px;padding:2px 4px" aria-label="Cerrar vista">✕</div>
+    </div>
+  </div>
+
+  <!-- ╔══════════════════════════════════════════════════════╗ -->
+  <!-- ║                   MAIN AREA                          ║ -->
+  <!-- ╚══════════════════════════════════════════════════════╝ -->
+  <div class="main-area">
+
+    <!-- ═══ LEFT PANEL ═══ -->
+    <aside class="panel-left" aria-label="Panel de parámetros">
+      <div class="panel-title">
+        <span>Parámetros</span>
+        <div class="panel-title__btns">
+          <button class="panel-mini-btn" title="Añadir parámetro">+</button>
+          <button class="panel-mini-btn" title="Editar parámetro">✎</button>
+          <button class="panel-mini-btn" title="Eliminar parámetro">×</button>
+          <button class="panel-mini-btn" title="Refrescar" style="color:#2060C0">↻</button>
+        </div>
+      </div>
+
+      <div class="param-list" role="list">
+        <div class="param-item" role="listitem">
+          <span class="param-item__icon">▷</span> EI
+        </div>
+        <div class="param-item" role="listitem">
+          <span class="param-item__icon">▷</span> EP
+        </div>
+        <div style="margin-block-start:6px;padding-inline:2px">
+          <div style="font-size:8px;color:#666;margin-block-end:2px">Valores:</div>
+          <div style="font-size:9px;font-family:var(--font-family-mono);padding-inline:4px;background:white;border:1px solid #CCC;padding-block:2px">9.023</div>
+        </div>
+      </div>
+
+      <!-- Section labels on the left - render from state -->
+      <div class="panel-sections" id="panel-sections-list" aria-label="Secciones del reporte" style="flex:0 0 auto;overflow-y:auto;max-block-size:50%">
+        <!-- Filled by OverlayEngine -->
+      </div>
+
+      <!-- Bottom links -->
+      <div style="border-block-start:1px solid var(--color-win-border-dark);padding:3px 4px;display:flex;flex-direction:column;gap:1px;flex-shrink:0">
+        <div class="panel-section-item" id="btn-grupos">
+          <span class="panel-section-item__icon">👥</span> Grupos
+        </div>
+        <div class="panel-section-item panel-section-item--active" id="btn-params">
+          <span class="panel-section-item__icon">📋</span> Parámetros
+        </div>
+        <div class="panel-section-item" id="btn-buscar">
+          <span class="panel-section-item__icon">🔍</span> Buscar
+        </div>
+      </div>
+    </aside>
+
+    <!-- ═══ CANVAS AREA ═══ -->
+    <main class="canvas-area" aria-label="Área de diseño">
+      <div class="canvas-corner"></div>
+
+      <!-- Horizontal ruler -->
+      <div class="canvas-ruler-top" id="ruler-top" role="presentation" aria-hidden="true">
+        <div class="ruler-top-inner" id="ruler-top-inner"></div>
+      </div>
+
+      <!-- Vertical ruler (section labels + tick marks) -->
+      <div class="canvas-ruler-left" id="ruler-left" role="presentation" aria-hidden="true">
+        <!-- Filled by LayoutEngine with section ticks -->
+      </div>
+
+      <!-- Scrollable canvas -->
+      <div class="canvas-scroll" id="canvas-scroll">
+
+        <!-- ════ DESIGNER ROOT — THE CANVAS ════ -->
+        <div class="designer-root" id="designer-root" data-tool="pointer">
+
+          <!-- LAYER 1: Section backgrounds -->
+          <div class="layout-layer"          id="layer-layout"      data-engine="layout"      aria-hidden="true"></div>
+
+          <!-- LAYER 2: Report elements (the actual report content) -->
+          <div class="elements-layer"        id="layer-elements"    data-engine="elements"
+               role="group" aria-label="Contenido del reporte"></div>
+
+          <!-- LAYER 3: Section labels / decorations (no hitboxes ever) -->
+          <div class="section-overlay-layer" id="layer-overlay"     data-engine="overlay"     aria-hidden="true"></div>
+
+          <!-- LAYER 4: Resize hitboxes + ghost line (no report content ever) -->
+          <div class="interaction-layer"     id="layer-interaction" data-engine="interaction" aria-hidden="true">
+            <div class="ghost-line" id="ghost-line" data-vis="false"></div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- ═══ RIGHT PANEL (Field Explorer) ═══ -->
+    <aside class="panel-right" aria-label="Explorador de campos">
+      <div class="panel-title" style="padding:2px 4px">
+        <span>Explorador de campos</span>
+        <div class="panel-title__btns">
+          <button class="panel-mini-btn" title="Actualizar">↻</button>
+          <button class="panel-mini-btn" title="Añadir campo">+</button>
+          <button class="panel-mini-btn" title="Editar campo">✎</button>
+          <button class="panel-mini-btn" title="Eliminar campo">×</button>
+          <button class="panel-mini-btn" title="Mover arriba">▲</button>
+          <button class="panel-mini-btn" title="Mover abajo">▼</button>
+        </div>
+      </div>
+      <div class="field-tree" role="tree" id="field-tree">
+        <div class="tree-node" role="treeitem" data-expanded="false" id="tree-db">
+          <span class="tree-node__arrow">▶</span>
+          <span class="tree-node__icon">🗄️</span>
+          <span class="tree-node__label">Campos de base de datos</span>
+        </div>
+        <div class="tree-node" role="treeitem" data-expanded="false" id="tree-formula">
+          <span class="tree-node__arrow">▶</span>
+          <span class="tree-node__icon">ƒ</span>
+          <span class="tree-node__label">Campos de fórmula</span>
+        </div>
+        <div class="tree-node" role="treeitem" data-expanded="false" id="tree-param">
+          <span class="tree-node__arrow">▶</span>
+          <span class="tree-node__icon">?</span>
+          <span class="tree-node__label">Campos de parámetro</span>
+        </div>
+        <div class="tree-node" role="treeitem" data-expanded="false">
+          <span class="tree-node__arrow">▶</span>
+          <span class="tree-node__icon">Σ</span>
+          <span class="tree-node__label">Campos de totales acumulados</span>
+        </div>
+        <div class="tree-node" role="treeitem" data-expanded="false">
+          <span class="tree-node__arrow">▶</span>
+          <span class="tree-node__icon">G</span>
+          <span class="tree-node__label">Campos de nombre de grupo</span>
+        </div>
+        <div class="tree-node" role="treeitem" data-expanded="false">
+          <span class="tree-node__arrow">▶</span>
+          <span class="tree-node__icon">★</span>
+          <span class="tree-node__label">Campos especiales</span>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ╔══════════════════════════════╗ -->
+  <!-- ║         STATUS BAR           ║ -->
+  <!-- ╚══════════════════════════════╝ -->
+  <footer class="statusbar" role="status">
+    <div class="statusbar__item statusbar__flex">Para obtener Ayuda, presione F1</div>
+    <div class="statusbar__item" id="status-coords">X: 0  Y: 0</div>
+    <div class="statusbar__item" id="status-date">22/11/2025  21:48</div>
+    <div class="statusbar__item">Registro: <span id="status-records">9</span></div>
+    <div class="statusbar__item" id="status-zoom-sb">100%</div>
+    <div class="statusbar__item">ES</div>
+    <div class="statusbar__item" id="status-time">16:26</div>
+  </footer>
+
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   DESIGNER STATE — Reactive, pure mutations, derived geometry
+══════════════════════════════════════════════════════════════ */
+const DesignerState = (() => {
+  // ── Report data (Packing List) ──
+  const REPORT_DATA = {
+    no: '9.023',
+    client: {
+      nombre: 'SILVA LEON ROBERTO CARLOS',
+      ruc:    '0923748188',
+      ciudad: 'GUAYAQUIL',
+      direccion: '44 Y SEDALANA',
+      telefono: '0979478167',
+      fecha:  '19/11/2025',
+      hora:   '16:25:46',
+    },
+    items: [
+      { n:1,  cod:'BCANA.12', desc:'CANASTILLA INC. POSTERIOR TAIWAN DINT',              udm:'UNIDAD', cant:30.00, pu:0.100000, tot:3.00  },
+      { n:2,  cod:'BCAUC.06', desc:'CAUCHO FRENO REFORZADO TAIWAN 460 CALIPER 56mm',     udm:'PAR',    cant:10.00, pu:0.370000, tot:3.70  },
+      { n:3,  cod:'BEJE.18',  desc:'EJE DEL GRUESO CICISMO FINO TAIWAN (26x14)',         udm:'UNIDAD', cant:6.00,  pu:0.720000, tot:4.32  },
+      { n:4,  cod:'BEJE.04',  desc:'EJE DELANTERO FINO 5/16X148 mm TAIWAN',             udm:'UNIDAD', cant:6.00,  pu:0.630000, tot:3.78  },
+      { n:5,  cod:'BEJE.02',  desc:'EJE POSTERIOR LARGO CINCIN 3/8x168mm TAIWAN',       udm:'UNIDAD', cant:6.00,  pu:0.820000, tot:4.92  },
+      { n:6,  cod:'BPEDA.12', desc:'PEDAL STD TAIWAN 3657 RECTANGULAR',                 udm:'PAR',    cant:2.00,  pu:2.250000, tot:4.50  },
+      { n:7,  cod:'BREQU.02', desc:'REGULACION FRENO EN ORQUÍDEA C/BASE TAIWAN',        udm:'UNIDAD', cant:6.00,  pu:0.380000, tot:2.28  },
+      { n:8,  cod:'BRULI.07', desc:'RULIMAN 3/8 TAIWAN',                                udm:'GRUESA', cant:3.00,  pu:0.450000, tot:1.35  },
+      { n:9,  cod:'BTUBO.62', desc:'TUBO 20X2 125 AV DURO TAILANDIA',                   udm:'UNIDAD', cant:3.00,  pu:2.000000, tot:6.00  },
+    ],
+    totals: {
+      subtIva15: 29.43,
+      subtIva0:  0.00,
+      descuento: 0.00,
+      subtotal:  29.43,
+      iva15:     4.42,
+      valorTotal:33.85,
+    }
+  };
+
+  // ── Section definitions ──
+  // Height values faithfully matching the screenshot
+  let _raw = {
+    sections: [
+      { id:'s-rh',  stype:'rh',  abbr:'EI', label:'Encabezado de informe', height: 14 },
+      { id:'s-ph',  stype:'ph',  abbr:'EI', label:'Encabezado de página',  height:148 },
+      { id:'s-d1',  stype:'det', abbr:'D',  label:'Detalle a',             height: 14 },
+      { id:'s-d2',  stype:'det', abbr:'D',  label:'Detalle b',             height: 14 },
+      { id:'s-d3',  stype:'det', abbr:'D',  label:'Detalle c',             height: 14 },
+      { id:'s-d4',  stype:'det', abbr:'D',  label:'Detalle d',             height: 14 },
+      { id:'s-d5',  stype:'det', abbr:'D',  label:'Detalle e',             height: 14 },
+      { id:'s-d6',  stype:'det', abbr:'D',  label:'Detalle f',             height: 14 },
+      { id:'s-d7',  stype:'det', abbr:'D',  label:'Detalle g',             height: 14 },
+      { id:'s-d8',  stype:'det', abbr:'D',  label:'Detalle h',             height: 14 },
+      { id:'s-d9',  stype:'det', abbr:'D',  label:'Detalle i',             height: 14 },
+      { id:'s-pf',  stype:'pf',  abbr:'Pi', label:'Pie de página',         height:110 },
+      { id:'s-rf',  stype:'rf',  abbr:'FP', label:'Final del pasaje',      height: 12 },
+    ],
+    elements: [],
+    selectedId: null,
+    tool: 'pointer',
+    zoom: 1,
+    reportData: REPORT_DATA,
+  };
+
+  const _listeners = { layout:[], overlay:[], elements:[], interaction:[], all:[] };
+  let _derived = {};
+
+  function _derive(raw) {
+    const MIN_H = 10;
+    let top = 0;
+    const sections = raw.sections.map(s => {
+      const height = Math.max(MIN_H, s.height);
+      const r = { ...s, height, top, bottom: top + height };
+      top += height;
+      return r;
+    });
+    return {
+      ...raw,
+      sections,
+      totalHeight: top,
+      sectionMap: Object.fromEntries(sections.map(s => [s.id, s])),
+    };
+  }
+
+  const MUTATIONS = {
+    RESIZE_SECTION(raw, { id, height }) {
+      return {
+        ...raw,
+        sections: raw.sections.map(s =>
+          s.id === id ? { ...s, height: Math.max(10, Math.min(800, Math.round(height))) } : s
+        ),
+      };
+    },
+    SELECT_ELEMENT(raw, { id })  { return { ...raw, selectedId: id }; },
+    DESELECT(raw)                { return { ...raw, selectedId: null }; },
+    SET_TOOL(raw, { tool })      { return { ...raw, tool, selectedId: null }; },
+    SET_ZOOM(raw, { zoom })      { return { ...raw, zoom: Math.max(0.25, Math.min(4, zoom)) }; },
+  };
+
+  function _notify(layers) {
+    const targets = layers === 'all'
+      ? ['layout','overlay','elements','interaction','all']
+      : [...(layers||[]), 'all'];
+    targets.forEach(l => (_listeners[l]||[]).forEach(fn => { try { fn(_derived); } catch(e){} }));
+  }
+
+  function subscribe(layer, fn) {
+    if (!_listeners[layer]) _listeners[layer] = [];
+    _listeners[layer].push(fn);
+    try { fn(_derived); } catch(e) {}
+    return () => { _listeners[layer] = _listeners[layer].filter(f => f !== fn); };
+  }
+
+  function commit(type, payload, invalidates) {
+    const mut = MUTATIONS[type];
+    if (!mut) return;
+    _raw = mut(_raw, payload);
+    _derived = _derive(_raw);
+    _notify(invalidates || ['all']);
+  }
+
+  function getState() { return _derived; }
+
+  _derived = _derive(_raw);
+  return { subscribe, commit, getState };
+})();
+
+/* ══════════════════════════════════════════════════════════════
+   CONSTRUCTABLE STYLESHEETS — Zero inline styles
+══════════════════════════════════════════════════════════════ */
+const EngineSheets = (() => {
+  const sheets = {};
+  function update(name, rules) {
+    if (!sheets[name]) {
+      sheets[name] = new CSSStyleSheet();
+      document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheets[name]];
+    }
+    sheets[name].replaceSync(rules);
+  }
+  return { update };
+})();
+
+/* ══════════════════════════════════════════════════════════════
+   LAYOUT ENGINE — Only layout-layer + left ruler ticks
+══════════════════════════════════════════════════════════════ */
+const LayoutEngine = (() => {
+  const layer     = document.getElementById('layer-layout');
+  const rulerLeft = document.getElementById('ruler-left');
+  let   prevCount = -1;
+
+  function render(state) {
+    const { sections, totalHeight } = state;
+
+    // CSS for each section bg position
+    const css = sections.map(s => `
+      .layout-section[data-sid="${s.id}"] { --_t:${s.top}px; --_h:${s.height}px; }
+    `).join('');
+    EngineSheets.update('layout', css);
+    EngineSheets.update('canvas-h', `.designer-root { block-size: ${totalHeight}px; }`);
+
+    if (sections.length !== prevCount) {
+      layer.innerHTML = '';
+      sections.forEach(s => {
+        const el = document.createElement('div');
+        el.className     = 'layout-section';
+        el.dataset.sid   = s.id;
+        el.dataset.stype = s.stype;
+        layer.appendChild(el);
+      });
+      prevCount = sections.length;
+    }
+
+    // Left ruler ticks
+    const tickCss = sections.map(s => `
+      .section-tick[data-sid="${s.id}"] { --_t:${s.top}px; --_h:${s.height}px; }
+    `).join('');
+    EngineSheets.update('ruler-ticks', tickCss);
+
+    if (rulerLeft.children.length !== sections.length) {
+      rulerLeft.innerHTML = '';
+      sections.forEach(s => {
+        const tick = document.createElement('div');
+        tick.className   = 'section-tick';
+        tick.dataset.sid = s.id;
+        const abbr = document.createElement('span');
+        abbr.className   = 'section-tick__abbr';
+        abbr.textContent = s.abbr;
+        tick.appendChild(abbr);
+        rulerLeft.appendChild(tick);
+      });
+    }
+
+    // Left panel section list update
+    _updateLeftPanelSections(state);
+  }
+
+  function _updateLeftPanelSections(state) {
+    const container = document.getElementById('panel-sections-list');
+    if (!container) return;
+    const items = container.querySelectorAll('.panel-section-item[data-sid]');
+    if (items.length === state.sections.length) {
+      // Only update heights
+      state.sections.forEach(s => {
+        const el = container.querySelector(`[data-sid="${s.id}"] .section-h`);
+        if (el) el.textContent = s.height + 'px';
+      });
+      return;
+    }
+    container.innerHTML = '';
+    state.sections.forEach(s => {
+      const row = document.createElement('div');
+      row.className = 'panel-section-item';
+      row.dataset.sid = s.id;
+      row.innerHTML = `<span class="panel-section-item__icon" style="font-size:8px;inline-size:14px">${s.abbr}</span><span style="flex:1;font-size:8px">${s.label}</span><span class="section-h" style="font-size:8px;color:#666;font-family:var(--font-family-mono)">${s.height}px</span>`;
+      container.appendChild(row);
+    });
+  }
+
+  return { render };
+})();
+
+/* ══════════════════════════════════════════════════════════════
+   ELEMENTS ENGINE — Only elements-layer
+   Renders the full Packing List report as positioned elements
+══════════════════════════════════════════════════════════════ */
+const ElementsEngine = (() => {
+  const layer = document.getElementById('layer-elements');
+  let _rendered = false;
+
+  function render(state) {
+    if (_rendered) return; // Report content is static for now
+    _rendered = true;
+    _renderReport(state.reportData, state);
+  }
+
+  function _renderReport(data, state) {
+    layer.innerHTML = '';
+
+    // Calculate section tops from state
+    const sm = state.sectionMap;
+    const phTop  = sm['s-ph']  ? sm['s-ph'].top  : 14;
+    const d1Top  = sm['s-d1']  ? sm['s-d1'].top  : 162;
+    const pfTop  = sm['s-pf']  ? sm['s-pf'].top  : d1Top + 9 * 14;
+    const pageW  = 430;
+
+    // ── PAGE HEADER: PACKING LIST box ──
+    const titleBox = _el('div', {
+      position:'absolute',
+      top: phTop + 3 + 'px',
+      right: '4px',
+      width: '178px',
+      height: '48px',
+      border: '1.5px solid #C0511A',
+      boxSizing: 'border-box',
+    });
+    titleBox.innerHTML = `
+      <div style="text-align:center;font-size:11px;font-weight:bold;color:#C0511A;font-family:Arial;padding:3px 0;border-bottom:1px solid #C0511A;">PACKING LIST</div>
+      <div style="display:flex;align-items:center;height:28px">
+        <span style="font-size:8px;font-weight:bold;padding:0 5px;border-right:1px solid #C0511A;height:100%;display:flex;align-items:center">NO.</span>
+        <span style="font-size:11px;font-weight:bold;flex:1;text-align:center;font-family:Arial">${data.no}</span>
+      </div>
+    `;
+    _append(titleBox);
+
+    // ── PAGE HEADER: Client info grid ──
+    const clientTop = phTop + 54;
+    const clientEl = _el('div', {
+      position:'absolute',
+      top: clientTop + 'px',
+      left: '4px',
+      right: '4px',
+      border: '1px solid #888',
+      fontSize: '8px',
+      fontFamily: 'Arial',
+      boxSizing: 'border-box',
+    });
+
+    const clientRows = [
+      [
+        { l:'Sr (es):', v: data.client.nombre, w:'35%' },
+        { l:'R.U.C/C.I:', v: data.client.ruc, w:'18%' },
+        { l:'CIUDAD:', v: data.client.ciudad, w:'27%' },
+      ],
+      [
+        { l:'DIRECCIÓN:', v: data.client.direccion, w:'35%' },
+        { l:'TELÉFONO:', v: data.client.telefono + ' -', w:'45%' },
+      ],
+      [
+        { l:'FECHA EMISIÓN:', v: data.client.fecha + '  ' + data.client.hora, w:'35%' },
+        { l:'GUÍA DE REMISIÓN:', v: '', w:'65%' },
+      ],
+    ];
+
+    clientRows.forEach(row => {
+      const rowDiv = document.createElement('div');
+      rowDiv.style.cssText = 'display:flex;border-bottom:1px solid #CCC;min-height:12px;';
+      row.forEach((cell, idx) => {
+        const labelEl = document.createElement('span');
+        labelEl.style.cssText = `font-weight:bold;background:#F0EEE8;padding:1px 3px;border-right:1px solid #CCC;white-space:nowrap;display:flex;align-items:center;width:auto;font-size:7.5px;`;
+        labelEl.textContent = cell.l;
+        const valEl = document.createElement('span');
+        valEl.style.cssText = `padding:1px 3px;flex:1;display:flex;align-items:center;font-size:8px;${idx < row.length-1 ? 'border-right:1px solid #CCC;' : ''}`;
+        valEl.textContent = cell.v;
+        rowDiv.appendChild(labelEl);
+        rowDiv.appendChild(valEl);
+      });
+      clientEl.appendChild(rowDiv);
+    });
+    _append(clientEl);
+
+    // ── PAGE HEADER: Items table header ──
+    const tableHeaderTop = clientTop + 39;
+    const tHeader = _el('table', {
+      position:'absolute',
+      top: tableHeaderTop + 'px',
+      left: '4px',
+      right: '4px',
+      borderCollapse: 'collapse',
+      fontSize: '7.5px',
+      fontFamily: 'Arial',
+      width: 'calc(100% - 8px)',
+    });
+    tHeader.innerHTML = `
+      <thead>
+        <tr>
+          <th style="background:#C0511A;color:white;font-weight:bold;padding:2px 3px;border:1px solid #A03010;text-align:center;width:18px">Item#</th>
+          <th style="background:#C0511A;color:white;font-weight:bold;padding:2px 3px;border:1px solid #A03010;width:55px">CÓDIGO</th>
+          <th style="background:#C0511A;color:white;font-weight:bold;padding:2px 3px;border:1px solid #A03010;text-align:left">DESCRIPCIÓN</th>
+          <th style="background:#C0511A;color:white;font-weight:bold;padding:2px 3px;border:1px solid #A03010;width:32px">UDM</th>
+          <th style="background:#C0511A;color:white;font-weight:bold;padding:2px 3px;border:1px solid #A03010;width:30px;text-align:right">CANT</th>
+          <th style="background:#C0511A;color:white;font-weight:bold;padding:2px 3px;border:1px solid #A03010;width:55px;text-align:right">P.UNITARIO</th>
+          <th style="background:#C0511A;color:white;font-weight:bold;padding:2px 3px;border:1px solid #A03010;width:40px;text-align:right">P.TOTAL</th>
+        </tr>
+      </thead>
+    `;
+    _append(tHeader);
+
+    // ── DETAIL ROWS — one per section ──
+    data.items.forEach((item, idx) => {
+      const sKey = `s-d${idx+1}`;
+      const secTop = sm[sKey] ? sm[sKey].top : (d1Top + idx * 14);
+      const rowH   = sm[sKey] ? sm[sKey].height : 14;
+      const isHighlight = (idx === 3); // Row 4 (Eje delantero) highlighted orange in screenshot
+
+      const row = _el('table', {
+        position:'absolute',
+        top: secTop + 'px',
+        left: '4px',
+        right: '4px',
+        width: 'calc(100% - 8px)',
+        borderCollapse: 'collapse',
+        fontSize: '7.5px',
+        fontFamily: 'Arial',
+        height: rowH + 'px',
+      });
+
+      const bg = isHighlight ? '#E8621A' : (idx % 2 === 1 ? '#FFF8F2' : '#FFFFFF');
+      const fg = isHighlight ? 'white' : '#000';
+
+      row.innerHTML = `<tr style="background:${bg};color:${fg}">
+        <td style="border:1px solid #DDD;padding:1px 3px;text-align:center;font-weight:bold;width:18px;color:${isHighlight?'white':'#444'}">${item.n}</td>
+        <td style="border:1px solid #DDD;padding:1px 3px;width:55px;font-size:7px">${item.cod}</td>
+        <td style="border:1px solid #DDD;padding:1px 3px;font-size:7px">${item.desc}</td>
+        <td style="border:1px solid #DDD;padding:1px 3px;width:32px;text-align:center;font-size:7px">${item.udm}</td>
+        <td style="border:1px solid #DDD;padding:1px 3px;width:30px;text-align:right;color:${isHighlight?'white':'#C0511A'};font-weight:bold">${item.cant.toFixed(2)}</td>
+        <td style="border:1px solid #DDD;padding:1px 3px;width:55px;text-align:right;font-family:'Courier New';font-size:7px">${item.pu.toFixed(6)}</td>
+        <td style="border:1px solid #DDD;padding:1px 3px;width:40px;text-align:right;font-weight:bold">${item.tot.toFixed(2)}</td>
+      </tr>`;
+      _append(row);
+    });
+
+    // ── PAGE FOOTER: "Página X de Y" ──
+    const pageText = _el('div', {
+      position:'absolute',
+      top: pfTop + 68 + 'px',
+      left: '200px',
+      fontSize: '8px',
+      fontFamily: 'Arial',
+      color: '#333',
+    });
+    pageText.textContent = 'Página 1 de 1';
+    _append(pageText);
+
+    // ── PAGE FOOTER: Totals table ──
+    const totalsEl = _el('table', {
+      position:'absolute',
+      top: pfTop + 6 + 'px',
+      right: '4px',
+      width: '132px',
+      borderCollapse: 'collapse',
+      fontSize: '7.5px',
+      fontFamily: 'Arial',
+    });
+    const totRows = [
+      ['SUBTOTAL IVA 15%', data.totals.subtIva15.toFixed(2)],
+      ['SUBTOTAL IVA 0%',  data.totals.subtIva0.toFixed(2)],
+      ['DESCUENTO',         data.totals.descuento.toFixed(2)],
+      ['SUBTOTAL',          data.totals.subtotal.toFixed(2)],
+      ['IVA 15%',           data.totals.iva15.toFixed(2)],
+      ['VALOR TOTAL',       data.totals.valorTotal.toFixed(2)],
+    ];
+    totalsEl.innerHTML = totRows.map(([label, val]) => `
+      <tr>
+        <td style="border:1px solid #CCC;padding:1px 4px;font-weight:bold;background:#F5F3EE;white-space:nowrap;font-size:7px">${label}</td>
+        <td style="border:1px solid #CCC;padding:1px 4px;text-align:right;font-family:'Courier New';font-size:7.5px">${val}</td>
+      </tr>
+    `).join('');
+    _append(totalsEl);
+  }
+
+  function _el(tag, styles) {
+    const el = document.createElement(tag);
+    Object.assign(el.style, styles);
+    return el;
+  }
+
+  function _append(el) {
+    el.classList.add('report-element');
+    el.dataset.etype = 'content';
+    layer.appendChild(el);
+  }
+
+  return { render };
+})();
+
+/* ══════════════════════════════════════════════════════════════
+   OVERLAY ENGINE — Only section-overlay-layer
+══════════════════════════════════════════════════════════════ */
+const OverlayEngine = (() => {
+  const layer = document.getElementById('layer-overlay');
+
+  function render(state) {
+    // Nothing needed in overlay for preview mode
+    // Labels are in the left ruler / panel (layout engine handles those)
+  }
+
+  return { render };
+})();
+
+/* ══════════════════════════════════════════════════════════════
+   INTERACTION ENGINE — Only interaction-layer
+══════════════════════════════════════════════════════════════ */
+const InteractionEngine = (() => {
+  const layer     = document.getElementById('layer-interaction');
+  const ghostLine = document.getElementById('ghost-line');
+  const root      = document.getElementById('designer-root');
+  let _resize     = null;
+  let _badgeEl    = null;
+
+  function render(state) {
+    // Rebuild hitboxes
+    layer.querySelectorAll('.resize-hitbox, .size-badge').forEach(el => el.remove());
+
+    const css = state.sections.map(s => `
+      .resize-hitbox[data-sid="${s.id}"] { --_pos: ${s.bottom}px; }
+      .size-badge[data-sid="${s.id}"]    { inset-block-start: ${s.bottom - 18}px; }
+    `).join('');
+    EngineSheets.update('interaction', css);
+
+    state.sections.forEach(s => {
+      const hitbox = document.createElement('div');
+      hitbox.className   = 'resize-hitbox';
+      hitbox.dataset.sid = s.id;
+      hitbox.setAttribute('tabindex', '0');
+      hitbox.setAttribute('aria-label', `Redimensionar ${s.label}`);
+      hitbox.setAttribute('role', 'separator');
+
+      const visual = document.createElement('div');
+      visual.className = 'resize-visual';
+      hitbox.appendChild(visual);
+      layer.appendChild(hitbox);
+
+      const badge = document.createElement('div');
+      badge.className   = 'size-badge';
+      badge.dataset.sid = s.id;
+      badge.dataset.vis = 'false';
+      badge.textContent = `${s.height}px`;
+      layer.appendChild(badge);
+
+      hitbox.addEventListener('mousedown', e => _onStart(e, s.id));
+      hitbox.addEventListener('keydown',   e => _onKey(e, s.id));
+    });
+  }
+
+  function _onStart(e, sid) {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    const state = DesignerState.getState();
+    const sec   = state.sectionMap[sid];
+    if (!sec) return;
+
+    _resize = {
+      sid,
+      startY:  e.clientY,
+      origH:   sec.height,
+    };
+
+    layer.querySelector(`.resize-hitbox[data-sid="${sid}"]`)?.setAttribute('data-dragging','true');
+    ghostLine.dataset.vis = 'true';
+    _updateGhost(sec.bottom);
+
+    _badgeEl = layer.querySelector(`.size-badge[data-sid="${sid}"]`);
+    if (_badgeEl) _badgeEl.dataset.vis = 'true';
+
+    document.addEventListener('mousemove', _onMove);
+    document.addEventListener('mouseup',   _onEnd);
+    document.body.style.cursor = 'ns-resize';
+  }
+
+  function _onMove(e) {
+    if (!_resize) return;
+    const dy = e.clientY - _resize.startY;
+    const newH = Math.max(10, Math.min(800, _resize.origH + dy));
+    const state = DesignerState.getState();
+    const sec   = state.sectionMap[_resize.sid];
+    _updateGhost(sec.top + newH);
+    if (_badgeEl) _badgeEl.textContent = `${Math.round(newH)}px`;
+    DesignerState.commit('RESIZE_SECTION', { id: _resize.sid, height: newH }, ['layout','interaction']);
+  }
+
+  function _onEnd() {
+    if (!_resize) return;
+    layer.querySelector(`.resize-hitbox[data-sid="${_resize.sid}"]`)?.setAttribute('data-dragging','false');
+    ghostLine.dataset.vis = 'false';
+    if (_badgeEl) { _badgeEl.dataset.vis = 'false'; _badgeEl = null; }
+    _resize = null;
+    document.removeEventListener('mousemove', _onMove);
+    document.removeEventListener('mouseup',   _onEnd);
+    document.body.style.cursor = '';
+  }
+
+  function _onKey(e, sid) {
+    const STEP = e.shiftKey ? 10 : 1;
+    const sec  = DesignerState.getState().sectionMap[sid];
+    if (!sec) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); DesignerState.commit('RESIZE_SECTION', { id:sid, height: sec.height + STEP }, ['layout','interaction']); }
+    if (e.key === 'ArrowUp')   { e.preventDefault(); DesignerState.commit('RESIZE_SECTION', { id:sid, height: sec.height - STEP }, ['layout','interaction']); }
+  }
+
+  function _updateGhost(y) {
+    EngineSheets.update('ghost', `#ghost-line { inset-block-start: ${y}px; }`);
+  }
+
+  return { render };
+})();
+
+/* ══════════════════════════════════════════════════════════════
+   RULER ENGINE — Horizontal ruler marks
+══════════════════════════════════════════════════════════════ */
+(function buildTopRuler() {
+  const ruler = document.getElementById('ruler-top-inner');
+  if (!ruler) return;
+  for (let i = 1; i <= 22; i++) {
+    const mark = document.createElement('div');
+    mark.className = 'ruler-mark';
+    mark.style.insetInlineStart = (i * 20) + 'px';
+    const line = document.createElement('div');
+    line.className = 'ruler-mark__line';
+    line.style.blockSize = '6px';
+    const label = document.createElement('span');
+    label.className = 'ruler-mark__label';
+    label.textContent = i;
+    mark.appendChild(line);
+    mark.appendChild(label);
+    ruler.appendChild(mark);
+  }
+})();
+
+/* ══════════════════════════════════════════════════════════════
+   ZOOM
+══════════════════════════════════════════════════════════════ */
+let _zoom = 1;
+function setZoom(z) {
+  _zoom = Math.max(0.25, Math.min(4, z));
+  EngineSheets.update('zoom', `
+    .canvas-scroll > .designer-root {
+      transform: scale(${_zoom});
+      transform-origin: top center;
+      margin-block-end: calc((${_zoom} - 1) * ${430}px * 0.8);
+    }
+  `);
+  const pct = Math.round(_zoom * 100) + '%';
+  const d1 = document.getElementById('zoom-display');
+  const d2 = document.getElementById('status-zoom-sb');
+  if (d1) d1.textContent = pct;
+  if (d2) d2.textContent = pct;
+  DesignerState.commit('SET_ZOOM', { zoom: _zoom }, []);
+}
+
+document.querySelectorAll('[title="Zoom menos"]').forEach(btn => btn.addEventListener('click', () => setZoom(_zoom - 0.1)));
+document.querySelectorAll('[title="Zoom más"]').forEach(btn => btn.addEventListener('click',  () => setZoom(_zoom + 0.1)));
+
+/* ══════════════════════════════════════════════════════════════
+   CURSOR COORDINATES IN STATUS BAR
+══════════════════════════════════════════════════════════════ */
+document.getElementById('canvas-scroll')?.addEventListener('mousemove', e => {
+  const root = document.getElementById('designer-root');
+  if (!root) return;
+  const rect = root.getBoundingClientRect();
+  const x = Math.round((e.clientX - rect.left) / _zoom);
+  const y = Math.round((e.clientY - rect.top)  / _zoom);
+  const el = document.getElementById('status-coords');
+  if (el) el.textContent = `X: ${x}   Y: ${y}`;
+});
+
+/* ══════════════════════════════════════════════════════════════
+   LIVE CLOCK
+══════════════════════════════════════════════════════════════ */
+function updateClock() {
+  const now = new Date();
+  const t = document.getElementById('status-time');
+  if (t) t.textContent = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+}
+updateClock();
+setInterval(updateClock, 30000);
+
+/* ══════════════════════════════════════════════════════════════
+   TREE TOGGLE
+══════════════════════════════════════════════════════════════ */
+document.querySelectorAll('[id^="tree-"]').forEach(node => {
+  node.addEventListener('click', () => {
+    const arrow = node.querySelector('.tree-node__arrow');
+    const expanded = node.dataset.expanded === 'true';
+    node.dataset.expanded = (!expanded).toString();
+    if (arrow) arrow.textContent = expanded ? '▶' : '▼';
+    node.style.background = expanded ? '' : 'var(--color-win-select-bg)';
+    node.style.color = expanded ? '' : 'white';
+  });
+});
+
+/* ══════════════════════════════════════════════════════════════
+   SUBTAB TOGGLE
+══════════════════════════════════════════════════════════════ */
+document.getElementById('tab-design')?.addEventListener('click', () => {
+  document.getElementById('tab-design').dataset.active  = 'true';
+  document.getElementById('tab-preview').dataset.active = 'false';
+});
+document.getElementById('tab-preview')?.addEventListener('click', () => {
+  document.getElementById('tab-design').dataset.active  = 'false';
+  document.getElementById('tab-preview').dataset.active = 'true';
+});
+
+/* ══════════════════════════════════════════════════════════════
+   SUBSCRIBE & WIRE
+══════════════════════════════════════════════════════════════ */
+DesignerState.subscribe('layout',      s => LayoutEngine.render(s));
+DesignerState.subscribe('overlay',     s => OverlayEngine.render(s));
+DesignerState.subscribe('elements',    s => ElementsEngine.render(s));
+DesignerState.subscribe('interaction', s => InteractionEngine.render(s));
+</script>
+
+<!-- ══════════════════════════════════════════════════
+     REPORTFORGE API CLIENT — connects to Python server
+══════════════════════════════════════════════════ -->
+<script>
+/* ── API Client ── */
+const API = {
+  async get(path) {
+    try {
+      const r = await fetch(path);
+      return await r.json();
+    } catch(e) { return null; }
+  },
+  async post(path, data) {
+    try {
+      const r = await fetch(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return await r.json();
+    } catch(e) { return null; }
+  },
+};
+
+/* ── Save Report ── */
+async function saveReport() {
+  const state = DesignerState.getState();
+  const name  = prompt('Nombre del reporte:', 'Packing List Epson-3250') || 'untitled';
+  const data  = {
+    name,
+    version: '1.0',
+    pageWidth: 430,
+    sections: state.sections.map(s => ({ id:s.id, label:s.label, height:s.height, abbr:s.abbr })),
+    elements: state.elements,
+    savedAt: new Date().toISOString(),
+  };
+  const result = await API.post('/api/save', data);
+  if (result?.ok) {
+    _toast(`✓ Guardado: ${result.file}`, 'success');
+  } else {
+    _toast('✗ Error al guardar', 'error');
+  }
+}
+
+/* ── Load Report ── */
+async function openReport() {
+  const reports = await API.get('/api/reports');
+  if (!reports || reports.length === 0) {
+    _toast('No hay reportes guardados', 'info');
+    return;
+  }
+  const names = reports.map((r, i) => `${i+1}. ${r.name}`).join('\n');
+  const input = prompt(`Reportes guardados:\n${names}\n\nEscribe el número o nombre:`, '1');
+  if (!input) return;
+  const idx = parseInt(input) - 1;
+  const rep = reports[idx] || reports.find(r => r.name === input);
+  if (!rep) { _toast('Reporte no encontrado', 'error'); return; }
+  const data = await API.get(`/api/report/${encodeURIComponent(rep.name)}`);
+  if (data?.sections) {
+    _toast(`✓ Abierto: ${rep.name}`, 'success');
+    // Load sections into state
+    data.sections.forEach(s => {
+      DesignerState.commit('RESIZE_SECTION', { id: s.id, height: s.height }, ['layout','interaction']);
+    });
+  }
+}
+
+/* ── Quit App ── */
+async function quitApp() {
+  if (confirm('¿Cerrar ReportForge?')) {
+    await API.post('/api/quit', {});
+    window.close();
+  }
+}
+
+/* ── Toast notifications ── */
+function _toast(msg, type = 'info') {
+  const existing = document.getElementById('rf-toast');
+  if (existing) existing.remove();
+
+  const toast = document.createElement('div');
+  toast.id = 'rf-toast';
+  const colors = { success: '#2A6D2A', error: '#8B0000', info: '#003080' };
+  toast.style.cssText = `
+    position: fixed;
+    inset-block-end: 32px;
+    inset-inline-start: 50%;
+    translate: -50% 0;
+    background: ${colors[type] || colors.info};
+    color: white;
+    font-family: Tahoma, sans-serif;
+    font-size: 11px;
+    padding: 6px 16px;
+    border-radius: 3px;
+    z-index: 9999;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    pointer-events: none;
+    animation: rf-toast-in 0.2s ease;
+  `;
+  toast.textContent = msg;
+
+  // Add keyframe
+  if (!document.getElementById('rf-toast-style')) {
+    const s = document.createElement('style');
+    s.id = 'rf-toast-style';
+    s.textContent = '@keyframes rf-toast-in { from { opacity:0; translate:-50% 12px } to { opacity:1; translate:-50% 0 } }';
+    document.head.appendChild(s);
+  }
+
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2800);
+}
+
+/* ── Wire toolbar buttons to API ── */
+document.addEventListener('DOMContentLoaded', () => {
+  // Override Guardar button
+  const btnSave = document.querySelector('[title="Guardar"]');
+  if (btnSave) btnSave.addEventListener('click', saveReport);
+
+  // Override Abrir button
+  const btnOpen = document.querySelector('[title="Abrir"]');
+  if (btnOpen) btnOpen.addEventListener('click', openReport);
+
+  // Add keyboard shortcuts
+  document.addEventListener('keydown', e => {
+    if (e.key === 'F4' && e.altKey) { e.preventDefault(); quitApp(); }
+    if (e.key === 's' && (e.ctrlKey||e.metaKey)) { e.preventDefault(); saveReport(); }
+    if (e.key === 'o' && (e.ctrlKey||e.metaKey)) { e.preventDefault(); openReport(); }
+  });
+
+  // Announce app is ready
+  API.get('/api/info').then(info => {
+    if (info) {
+      console.log('[ReportForge] Connected to server v' + info.version);
+      document.title = 'SAP Crystal Reports for SAP Business One - [Orden de Venta Epson-3250]';
+    }
+  });
+
+  // Intercept close (for browsers that support beforeunload)
+  window.addEventListener('beforeunload', () => {
+    navigator.sendBeacon('/api/quit', '{}');
+  });
+});
+</script>
+</body>
+</html>

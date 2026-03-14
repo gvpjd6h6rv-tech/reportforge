@@ -1,0 +1,28 @@
+{
+  "period": "Q4 2025",
+  "report_date": "19/11/2025",
+  "client": {
+    "name": "ACME Corp International",
+    "id": "RUC-0991234567001",
+    "address": "Av. Principal 123, Guayaquil"
+  },
+  "company": {
+    "name": "DISTRIBUIDORA TECH S.A.",
+    "ruc": "0991234567001",
+    "address": "Av. 9 de Octubre 1234, Guayaquil"
+  },
+  "items": [
+    {"code":"ELEC-001","name":"Laptop ProBook 450 G9",    "category":"Electronics","qty":5,"unit_price":899.99,"discount":0.05,"total":4274.95,"stock":12},
+    {"code":"ELEC-002","name":"Wireless Mouse MX Master", "category":"Electronics","qty":20,"unit_price":79.99, "discount":0.10,"total":1439.82,"stock":3},
+    {"code":"ELEC-003","name":"USB-C Hub 7-Port",         "category":"Electronics","qty":15,"unit_price":49.99, "discount":0.0, "total":749.85, "stock":25},
+    {"code":"ELEC-004","name":"Mechanical Keyboard TKL",  "category":"Electronics","qty":8,"unit_price":129.99,"discount":0.0, "total":1039.92,"stock":7},
+    {"code":"FURN-001","name":"Ergonomic Office Chair",   "category":"Furniture",  "qty":3,"unit_price":449.99,"discount":0.15,"total":1147.47,"stock":6},
+    {"code":"FURN-002","name":"Standing Desk 160cm",      "category":"Furniture",  "qty":2,"unit_price":699.99,"discount":0.10,"total":1259.98,"stock":2},
+    {"code":"FURN-003","name":"Monitor Arm Dual",         "category":"Furniture",  "qty":6,"unit_price":89.99, "discount":0.0, "total":539.94, "stock":14},
+    {"code":"SOFT-001","name":"Office Suite License",     "category":"Software",   "qty":10,"unit_price":199.99,"discount":0.20,"total":1599.92,"stock":999},
+    {"code":"SOFT-002","name":"Antivirus Pro 1yr",        "category":"Software",   "qty":25,"unit_price":39.99, "discount":0.05,"total":949.76, "stock":999},
+    {"code":"SUPP-001","name":"A4 Paper Ream 500 sheets", "category":"Supplies",   "qty":50,"unit_price":5.99,  "discount":0.0, "total":299.50, "stock":200},
+    {"code":"SUPP-002","name":"Ballpoint Pens Box 50",    "category":"Supplies",   "qty":10,"unit_price":12.99, "discount":0.0, "total":129.90, "stock":80},
+    {"code":"SUPP-003","name":"Sticky Notes Pack",        "category":"Supplies",   "qty":30,"unit_price":3.49,  "discount":0.0, "total":104.70, "stock":150}
+  ]
+}

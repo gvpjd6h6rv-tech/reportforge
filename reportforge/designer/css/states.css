@@ -1,0 +1,62 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   css/states.css — ReportForge Designer — Interactive states
+   @layer states — applied after components, before utilities
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Focus management ── */
+:focus-visible {
+  outline: 2px solid var(--sel-blue);
+  outline-offset: 1px;
+}
+:focus:not(:focus-visible) { outline: none; }
+
+/* ── Keyboard focus ring on inputs (already in base, here for specificity) ── */
+input:focus-visible, select:focus-visible, textarea:focus-visible {
+  border-color: var(--sel-blue);
+  box-shadow: 0 0 0 1px var(--sel-blue);
+}
+
+/* ── Hover states ── */
+.tb-btn:hover:not(:disabled):not([disabled]) {
+  background: var(--btn-hover-bg);
+  border-color: var(--btn-hover-border);
+}
+.tb-btn:active:not(:disabled) {
+  background: var(--btn-press-bg);
+  border-color: var(--btn-press-border);
+  transform: translateY(1px);
+}
+.tb-btn.active {
+  background: var(--btn-press-bg);
+  border-color: var(--btn-press-border);
+}
+
+/* ── ARIA and disabled ── */
+[aria-disabled="true"], button:disabled, input:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+  }
+}
+
+/* ── Selection highlight ── */
+.rf-el.selected > .sel-outline { outline: 2px solid var(--sel-blue); }
+
+/* ── Drop zone highlight (data attr driven) ── */
+.rf-sec-body[data-dragging] { outline: 2px dashed var(--sel-blue); }
+.rf-sec-body[data-drag-over] { background: rgba(0,120,215,.04); }
+
+/* ── Pointer capture hint ── */
+[data-dragging] { touch-action: none; }
+
+/* ── Panel tab states ── */
+.panel-tab         { cursor: pointer; }
+.panel-tab.active  { border-block-end-color: var(--page-white); background: var(--page-white); color: var(--text-primary); }
+.panel-tab:hover:not(.active) { background: var(--btn-hover-bg); }

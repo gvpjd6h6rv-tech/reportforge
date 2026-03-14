@@ -1,0 +1,18 @@
+{
+  "theme": {
+    "primaryColor":  "#6D28D9",
+    "accentColor":   "#10B981",
+    "bgColor":       "#FFFFFF",
+    "fontFamily":    "Arial",
+    "fontSize":      9,
+    "headerBg":      "#6D28D9",
+    "headerColor":   "#FFFFFF",
+    "altRowBg":      "#F5F3FF",
+    "borderColor":   "#DDD6FE",
+    "logo":          ""
+  },
+  "params": {
+    "company": "TechCorp S.A.",
+    "currency": "USD"
+  }
+}

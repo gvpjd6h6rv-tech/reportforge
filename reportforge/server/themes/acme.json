@@ -1,0 +1,22 @@
+{
+  "theme": {
+    "primaryColor":  "#1A3C5E",
+    "accentColor":   "#F59E0B",
+    "bgColor":       "#FFFFFF",
+    "fontFamily":    "Arial",
+    "fontSize":      9,
+    "headerBg":      "#1A3C5E",
+    "headerColor":   "#FFFFFF",
+    "altRowBg":      "#EFF6FF",
+    "borderColor":   "#BFDBFE",
+    "logo":          "https://example.com/acme-logo.png"
+  },
+  "params": {
+    "company": "ACME Corporation",
+    "currency": "USD",
+    "locale": "en-US"
+  },
+  "styles": {
+    "heading1": {"fontSize": 16, "bold": true, "color": "#1A3C5E"}
+  }
+}

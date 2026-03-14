@@ -1,0 +1,1911 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Report Designer — Enterprise Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style>
+/* ╔══════════════════════════════════════════════════════════════════╗
+   ║  @layer CASCADE ORDER — Explicit, dependency-free               ║
+   ╚══════════════════════════════════════════════════════════════════╝ */
+@layer reset, tokens, base, components, utilities, overrides;
+
+/* ═══════════════════════════════════════
+   RESET
+═══════════════════════════════════════ */
+@layer reset {
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; tab-size: 4; }
+  body { line-height: 1.5; min-block-size: 100dvh; }
+  button, input, select { font: inherit; }
+  img, svg { display: block; max-inline-size: 100%; }
+  [hidden] { display: none !important; }
+}
+
+/* ═══════════════════════════════════════
+   TOKENS
+═══════════════════════════════════════ */
+@layer tokens {
+  :root {
+    /* ── Colors ── */
+    --color-brand-primary:      #1d4ed8;
+    --color-brand-hover:        #1e40af;
+    --color-brand-subtle:       #dbeafe;
+    --color-surface-primary:    #ffffff;
+    --color-surface-secondary:  #f8fafc;
+    --color-surface-tertiary:   #f1f5f9;
+    --color-surface-canvas:     #e2e8f0;
+    --color-surface-tooltip:    #1e293b;
+    --color-border-subtle:      #e2e8f0;
+    --color-border-strong:      #cbd5e1;
+    --color-border-brand:       #3b82f6;
+    --color-border-focus:       #2563eb;
+    --color-text-primary:       #0f172a;
+    --color-text-secondary:     #64748b;
+    --color-text-disabled:      #94a3b8;
+    --color-text-inverse:       #f8fafc;
+    --color-text-brand:         #1d4ed8;
+    --color-accent-header:      rgba(59,130,246,0.07);
+    --color-accent-detail:      rgba(16,185,129,0.04);
+    --color-accent-footer:      rgba(245,158,11,0.06);
+    --color-selection:          rgba(59,130,246,0.12);
+    --color-ghost-line:         #3b82f6;
+    --color-ghost-line-alpha:   rgba(59,130,246,0.5);
+    --color-shadow-xs:          rgba(15,23,42,0.04);
+    --color-shadow-sm:          rgba(15,23,42,0.08);
+    --color-shadow-md:          rgba(15,23,42,0.14);
+    --color-section-rh:         rgba(59,130,246,0.06);
+    --color-section-ph:         rgba(99,102,241,0.05);
+    --color-section-det:        rgba(16,185,129,0.04);
+    --color-section-pf:         rgba(245,158,11,0.05);
+    --color-section-rf:         rgba(239,68,68,0.05);
+    --color-label-rh:           #1d4ed8;
+    --color-label-ph:           #4f46e5;
+    --color-label-det:          #059669;
+    --color-label-pf:           #d97706;
+    --color-label-rf:           #dc2626;
+
+    /* ── Spacing ── */
+    --space-2xs: 0.125rem;   /* 2px  */
+    --space-xs:  0.25rem;    /* 4px  */
+    --space-sm:  0.5rem;     /* 8px  */
+    --space-md:  0.75rem;    /* 12px */
+    --space-lg:  1rem;       /* 16px */
+    --space-xl:  1.5rem;     /* 24px */
+    --space-2xl: 2rem;       /* 32px */
+    --space-3xl: 3rem;       /* 48px */
+
+    /* ── Typography ── */
+    --font-family-base: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
+    --font-family-mono: 'DM Mono', 'Fira Code', monospace;
+    --font-family-display: 'DM Serif Display', Georgia, serif;
+    --font-size-2xs: clamp(0.625rem,  0.58rem  + 0.15vw, 0.6875rem);
+    --font-size-xs:  clamp(0.6875rem, 0.65rem  + 0.15vw, 0.75rem);
+    --font-size-sm:  clamp(0.75rem,   0.7rem   + 0.2vw,  0.875rem);
+    --font-size-md:  clamp(0.875rem,  0.82rem  + 0.2vw,  1rem);
+    --font-size-lg:  clamp(1rem,      0.94rem  + 0.25vw, 1.125rem);
+    --font-size-xl:  clamp(1.125rem,  1.05rem  + 0.3vw,  1.25rem);
+    --font-weight-normal:   400;
+    --font-weight-medium:   500;
+    --font-weight-semibold: 600;
+    --font-weight-bold:     700;
+
+    /* ── Radius ── */
+    --radius-xs:   2px;
+    --radius-sm:   4px;
+    --radius-md:   6px;
+    --radius-lg:   10px;
+    --radius-xl:   14px;
+    --radius-pill: 9999px;
+
+    /* ── Shadows ── */
+    --shadow-xs: 0 1px 2px var(--color-shadow-xs);
+    --shadow-sm: 0 1px 3px var(--color-shadow-xs), 0 1px 2px var(--color-shadow-sm);
+    --shadow-md: 0 4px 8px var(--color-shadow-sm), 0 2px 4px var(--color-shadow-xs);
+    --shadow-lg: 0 10px 24px var(--color-shadow-sm), 0 4px 8px var(--color-shadow-xs);
+    --shadow-canvas: 0 4px 24px var(--color-shadow-md), 0 1px 4px var(--color-shadow-sm);
+
+    /* ── Transitions ── */
+    --transition-instant: 80ms ease;
+    --transition-fast:    150ms ease;
+    --transition-normal:  250ms ease;
+    --transition-slow:    400ms ease;
+
+    /* ── Z-index layers ── */
+    --z-layout:      0;
+    --z-elements:    10;
+    --z-overlay:     20;
+    --z-interaction: 30;
+    --z-tooltip:     100;
+    --z-modal:       200;
+
+    /* ── Canvas ── */
+    --canvas-page-width: 794px;  /* A4 @96dpi */
+    --canvas-padding:    var(--space-xl);
+    --section-label-w:   108px;
+    --hitbox-size:       8px;
+    --grid-size:         8px;
+  }
+
+  [data-theme="dark"] {
+    --color-surface-primary:   #1e293b;
+    --color-surface-secondary: #0f172a;
+    --color-surface-tertiary:  #293548;
+    --color-surface-canvas:    #0a0f1e;
+    --color-border-subtle:     #334155;
+    --color-border-strong:     #475569;
+    --color-text-primary:      #f1f5f9;
+    --color-text-secondary:    #94a3b8;
+    --color-text-disabled:     #475569;
+    --color-shadow-xs:         rgba(0,0,0,0.2);
+    --color-shadow-sm:         rgba(0,0,0,0.35);
+    --color-shadow-md:         rgba(0,0,0,0.5);
+    --color-accent-header:     rgba(59,130,246,0.12);
+    --color-accent-detail:     rgba(16,185,129,0.08);
+    --color-accent-footer:     rgba(245,158,11,0.08);
+    --color-section-rh:        rgba(59,130,246,0.1);
+    --color-section-ph:        rgba(99,102,241,0.08);
+    --color-section-det:       rgba(16,185,129,0.06);
+    --color-section-pf:        rgba(245,158,11,0.07);
+    --color-section-rf:        rgba(239,68,68,0.08);
+  }
+}
+
+/* ═══════════════════════════════════════
+   BASE
+═══════════════════════════════════════ */
+@layer base {
+  html {
+    font-family: var(--font-family-base);
+    font-size: 16px;
+    color: var(--color-text-primary);
+    background: var(--color-surface-canvas);
+  }
+
+  body {
+    display: grid;
+    grid-template-areas:
+      "toolbar toolbar toolbar"
+      "sidebar canvas props";
+    grid-template-rows: auto 1fr;
+    grid-template-columns: auto 1fr auto;
+    block-size: 100dvh;
+    overflow: hidden;
+  }
+
+  /* All engine layers are pointer-events: none by default */
+  .layout-layer,
+  .elements-layer,
+  .section-overlay-layer { pointer-events: none; }
+
+  /* Interaction layer has selective pointer-events */
+  .interaction-layer { pointer-events: none; }
+  .interaction-layer .resize-hitbox { pointer-events: all; }
+}
+
+/* ═══════════════════════════════════════
+   COMPONENTS
+═══════════════════════════════════════ */
+@layer components {
+
+  /* ╌╌ Toolbar ╌╌ */
+  .toolbar {
+    grid-area: toolbar;
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding-block: var(--space-sm);
+    padding-inline: var(--space-lg);
+    background: var(--color-surface-primary);
+    border-block-end: 1px solid var(--color-border-subtle);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .toolbar__brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-lg);
+    color: var(--color-brand-primary);
+    margin-inline-end: var(--space-md);
+    text-decoration: none;
+    font-weight: var(--font-weight-bold);
+  }
+
+  .toolbar__brand-dot {
+    inline-size: 6px;
+    block-size: 6px;
+    border-radius: var(--radius-pill);
+    background: var(--color-ghost-line);
+  }
+
+  .toolbar__sep {
+    inline-size: 1px;
+    block-size: 1.25rem;
+    background: var(--color-border-subtle);
+    margin-inline: var(--space-xs);
+  }
+
+  .toolbar__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding-block: 5px;
+    padding-inline: var(--space-md);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--color-surface-secondary);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: background var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+    white-space: nowrap;
+  }
+
+  .toolbar__btn:hover {
+    background: var(--color-surface-tertiary);
+    border-color: var(--color-border-strong);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .toolbar__btn--primary {
+    background: var(--color-brand-primary);
+    border-color: var(--color-brand-primary);
+    color: var(--color-text-inverse);
+  }
+
+  .toolbar__btn--primary:hover {
+    background: var(--color-brand-hover);
+    border-color: var(--color-brand-hover);
+    box-shadow: 0 0 0 3px var(--color-brand-subtle);
+  }
+
+  .toolbar__btn svg { flex-shrink: 0; }
+
+  .toolbar__zoom {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: var(--font-size-xs);
+    font-family: var(--font-family-mono);
+    color: var(--color-text-secondary);
+  }
+
+  /* ╌╌ Sidebar (tools) ╌╌ */
+  .sidebar {
+    grid-area: sidebar;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    inline-size: clamp(9rem, 11rem, 13rem);
+    background: var(--color-surface-primary);
+    border-inline-end: 1px solid var(--color-border-subtle);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .sidebar__group-title {
+    font-size: var(--font-size-2xs);
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-disabled);
+    padding-block-end: var(--space-xs);
+    border-block-end: 1px solid var(--color-border-subtle);
+    margin-block-start: var(--space-xs);
+  }
+
+  .sidebar__tool {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding-block: var(--space-sm);
+    padding-inline: var(--space-sm);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background var(--transition-fast), color var(--transition-fast);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+    border: 1px solid transparent;
+    user-select: none;
+  }
+
+  .sidebar__tool:hover {
+    background: var(--color-surface-tertiary);
+    color: var(--color-text-primary);
+  }
+
+  .sidebar__tool[data-active="true"] {
+    background: var(--color-brand-subtle);
+    border-color: var(--color-border-brand);
+    color: var(--color-text-brand);
+  }
+
+  .sidebar__tool-icon {
+    display: grid;
+    place-items: center;
+    inline-size: 1.75rem;
+    block-size: 1.75rem;
+    background: var(--color-surface-tertiary);
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+    transition: background var(--transition-fast);
+  }
+
+  .sidebar__tool[data-active="true"] .sidebar__tool-icon {
+    background: var(--color-brand-subtle);
+  }
+
+  /* Section list in sidebar */
+  .section-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-block: var(--space-xs);
+    padding-inline: var(--space-xs);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    cursor: default;
+    gap: var(--space-xs);
+  }
+
+  .section-row__label { flex: 1; color: var(--color-text-primary); font-weight: var(--font-weight-medium); }
+  .section-row__h {
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-2xs);
+    color: var(--color-text-secondary);
+    min-inline-size: 3ch;
+    text-align: end;
+  }
+
+  /* ╌╌ Properties Panel ╌╌ */
+  .properties {
+    grid-area: props;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    inline-size: clamp(11rem, 14rem, 17rem);
+    background: var(--color-surface-primary);
+    border-inline-start: 1px solid var(--color-border-subtle);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .props__title {
+    font-size: var(--font-size-2xs);
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-disabled);
+    padding-block-end: var(--space-xs);
+    border-block-end: 1px solid var(--color-border-subtle);
+  }
+
+  .prop-group { display: flex; flex-direction: column; gap: var(--space-xs); }
+
+  .prop-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-xs);
+    align-items: center;
+  }
+
+  .prop-row label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .prop-input {
+    padding-block: 3px;
+    padding-inline: var(--space-xs);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-family: var(--font-family-mono);
+    background: var(--color-surface-secondary);
+    color: var(--color-text-primary);
+    transition: border-color var(--transition-fast);
+    inline-size: 100%;
+  }
+
+  .prop-input:focus {
+    outline: none;
+    border-color: var(--color-border-focus);
+    box-shadow: 0 0 0 2px var(--color-brand-subtle);
+  }
+
+  .prop-select {
+    padding-block: 3px;
+    padding-inline: var(--space-xs);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    background: var(--color-surface-secondary);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    inline-size: 100%;
+  }
+
+  .prop-badge {
+    display: inline-flex;
+    align-items: center;
+    padding-block: 2px;
+    padding-inline: var(--space-sm);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-2xs);
+    font-weight: var(--font-weight-semibold);
+    background: var(--color-surface-tertiary);
+    color: var(--color-text-secondary);
+  }
+
+  .prop-badge--selected {
+    background: var(--color-brand-subtle);
+    color: var(--color-text-brand);
+  }
+
+  /* ╌╌ Canvas wrapper ╌╌ */
+  .canvas-wrapper {
+    grid-area: canvas;
+    overflow: auto;
+    padding: var(--canvas-padding);
+    background: var(--color-surface-canvas);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+    overscroll-behavior: contain;
+    background-image:
+      radial-gradient(circle at 1px 1px, var(--color-border-subtle) 1px, transparent 0);
+    background-size: var(--grid-size) var(--grid-size);
+  }
+
+  .canvas-label-row {
+    inline-size: var(--canvas-page-width);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-disabled);
+    font-family: var(--font-family-mono);
+    flex-shrink: 0;
+  }
+
+  .canvas-ruler {
+    position: relative;
+    inline-size: var(--canvas-page-width);
+    block-size: 18px;
+    background: var(--color-surface-secondary);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-xs);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  /* ╌╌ Designer Root — THE CANVAS ╌╌ */
+  .designer-root {
+    container-type: inline-size;
+    container-name: designer;
+    position: relative;
+    inline-size: var(--canvas-page-width);
+    background: var(--color-surface-primary);
+    box-shadow: var(--shadow-canvas);
+    border-radius: var(--radius-sm);
+    overflow: visible;
+    flex-shrink: 0;
+    outline: 1px solid var(--color-border-subtle);
+  }
+
+  /* ╌╌ Layer Base Styles ╌╌ */
+  .layout-layer,
+  .elements-layer,
+  .section-overlay-layer,
+  .interaction-layer {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    inset-inline-end: 0;
+    overflow: visible;
+  }
+
+  .layout-layer           { z-index: var(--z-layout); }
+  .elements-layer         { z-index: var(--z-elements); }
+  .section-overlay-layer  { z-index: var(--z-overlay); }
+  .interaction-layer      { z-index: var(--z-interaction); }
+
+  /* ── LAYOUT LAYER: Section backgrounds ── */
+  .layout-section {
+    position: absolute;
+    inset-inline: 0;
+    block-size: var(--_h, 60px);
+    inset-block-start: var(--_t, 0px);
+    border-block-end: 1px solid var(--color-border-subtle);
+    transition: background var(--transition-fast);
+  }
+
+  .layout-section[data-stype="rh"] { background: var(--color-section-rh); }
+  .layout-section[data-stype="ph"] { background: var(--color-section-ph); }
+  .layout-section[data-stype="det"]{ background: var(--color-section-det); }
+  .layout-section[data-stype="pf"] { background: var(--color-section-pf); }
+  .layout-section[data-stype="rf"] { background: var(--color-section-rf); }
+
+  /* ── SECTION OVERLAY LAYER: labels ── */
+  .section-label {
+    position: absolute;
+    inset-inline-start: 0;
+    inset-inline-end: auto;
+    inline-size: var(--section-label-w);
+    block-size: var(--_h, 60px);
+    inset-block-start: var(--_t, 0px);
+    display: flex;
+    align-items: flex-start;
+    padding-block-start: var(--space-sm);
+    padding-inline: var(--space-sm);
+    border-inline-end: 2px solid currentColor;
+    pointer-events: none;
+  }
+
+  .section-label[data-stype="rh"]  { color: var(--color-label-rh); background: rgba(29,78,216,0.04); }
+  .section-label[data-stype="ph"]  { color: var(--color-label-ph); background: rgba(79,70,229,0.03); }
+  .section-label[data-stype="det"] { color: var(--color-label-det); background: rgba(5,150,105,0.03); }
+  .section-label[data-stype="pf"]  { color: var(--color-label-pf); background: rgba(217,119,6,0.03); }
+  .section-label[data-stype="rf"]  { color: var(--color-label-rf); background: rgba(220,38,38,0.04); }
+
+  .section-label__text {
+    font-size: var(--font-size-2xs);
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-inline-size: calc(var(--section-label-w) - var(--space-lg));
+    opacity: 0.85;
+  }
+
+  /* ── ELEMENTS LAYER: Report elements ── */
+  .report-element {
+    position: absolute;
+    user-select: none;
+  }
+
+  .report-element[data-etype="text"] {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    border: 1px dashed transparent;
+    padding-block: var(--space-2xs);
+    padding-inline: var(--space-xs);
+    border-radius: var(--radius-xs);
+    cursor: move;
+  }
+
+  .report-element[data-etype="field"] {
+    font-size: var(--font-size-sm);
+    font-family: var(--font-family-mono);
+    color: var(--color-text-brand);
+    border: 1px solid var(--color-border-brand);
+    border-radius: var(--radius-xs);
+    padding-block: var(--space-2xs);
+    padding-inline: var(--space-xs);
+    background: var(--color-brand-subtle);
+    cursor: move;
+  }
+
+  .report-element[data-etype="line"] {
+    border-block-end: 1px solid var(--color-border-strong);
+    block-size: 1px !important;
+    cursor: move;
+  }
+
+  .report-element[data-etype="rect"] {
+    border: 1px solid var(--color-border-strong);
+    background: transparent;
+    cursor: move;
+  }
+
+  .report-element[data-etype="image"] {
+    border: 1px dashed var(--color-border-strong);
+    background: var(--color-surface-tertiary);
+    display: grid;
+    place-items: center;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-disabled);
+    cursor: move;
+    border-radius: var(--radius-xs);
+  }
+
+  .report-element[data-selected="true"] {
+    outline: 2px solid var(--color-border-brand);
+    outline-offset: 1px;
+  }
+
+  .report-element:hover:not([data-selected="true"]) {
+    outline: 1px dashed var(--color-border-brand);
+    outline-offset: 1px;
+  }
+
+  /* Element selection handles */
+  .element-handle {
+    position: absolute;
+    inline-size: 6px;
+    block-size: 6px;
+    background: var(--color-surface-primary);
+    border: 2px solid var(--color-border-brand);
+    border-radius: var(--radius-xs);
+    pointer-events: all;
+  }
+
+  .element-handle--tl { inset-block-start: -4px; inset-inline-start: -4px; cursor: nwse-resize; }
+  .element-handle--tr { inset-block-start: -4px; inset-inline-end: -4px;   cursor: nesw-resize; }
+  .element-handle--bl { inset-block-end: -4px;   inset-inline-start: -4px; cursor: nesw-resize; }
+  .element-handle--br { inset-block-end: -4px;   inset-inline-end: -4px;   cursor: nwse-resize; }
+  .element-handle--t  { inset-block-start: -4px; inset-inline: calc(50% - 3px); cursor: ns-resize; }
+  .element-handle--b  { inset-block-end: -4px;   inset-inline: calc(50% - 3px); cursor: ns-resize; }
+  .element-handle--l  { inset-inline-start: -4px; inset-block: calc(50% - 3px); cursor: ew-resize; }
+  .element-handle--r  { inset-inline-end: -4px;   inset-block: calc(50% - 3px); cursor: ew-resize; }
+
+  /* ── INTERACTION LAYER: Resize hitboxes ── */
+  .resize-hitbox {
+    position: absolute;
+    inset-inline: 0;
+    block-size: var(--hitbox-size);
+    inset-block-start: var(--_pos, 0px);
+    /* Offset up by half so it straddles the section border */
+    translate: 0 calc(var(--hitbox-size) / -2);
+    cursor: ns-resize;
+    pointer-events: all;
+    background: transparent;
+  }
+
+  .resize-hitbox[data-dragging="true"] { cursor: ns-resize !important; }
+
+  .resize-visual {
+    position: absolute;
+    inset-inline: 0;
+    block-size: 2px;
+    inset-block-start: calc(var(--hitbox-size) / 2 - 1px);
+    background: var(--color-border-strong);
+    border-radius: var(--radius-pill);
+    transition: background var(--transition-instant), block-size var(--transition-instant), opacity var(--transition-instant);
+    pointer-events: none;
+    opacity: 0;
+  }
+
+  .resize-hitbox:hover .resize-visual {
+    background: var(--color-border-brand);
+    block-size: 3px;
+    opacity: 1;
+  }
+
+  .resize-hitbox[data-dragging="true"] .resize-visual {
+    background: var(--color-brand-primary);
+    block-size: 3px;
+    opacity: 1;
+  }
+
+  /* Ghost line during drag */
+  .ghost-line {
+    position: absolute;
+    inset-inline: 0;
+    block-size: 2px;
+    background: var(--color-ghost-line);
+    box-shadow: 0 0 0 1px var(--color-ghost-line-alpha), 0 0 8px var(--color-ghost-line-alpha);
+    pointer-events: none;
+    display: none;
+    border-radius: var(--radius-pill);
+  }
+
+  .ghost-line[data-vis="true"] { display: block; }
+
+  /* Section height badge */
+  .size-badge {
+    position: absolute;
+    inset-inline-end: var(--space-sm);
+    background: var(--color-brand-primary);
+    color: var(--color-text-inverse);
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-2xs);
+    padding-block: 1px;
+    padding-inline: var(--space-xs);
+    border-radius: var(--radius-pill);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    white-space: nowrap;
+  }
+
+  .size-badge[data-vis="true"] { opacity: 1; }
+
+  /* Crosshair / placement cursor on canvas */
+  .designer-root[data-tool]:not([data-tool="pointer"]) {
+    cursor: crosshair;
+  }
+
+  /* Status bar */
+  .status-bar {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+    padding-block: var(--space-xs);
+    padding-inline: var(--space-lg);
+    background: var(--color-surface-primary);
+    border-block-start: 1px solid var(--color-border-subtle);
+    font-size: var(--font-size-xs);
+    font-family: var(--font-family-mono);
+    color: var(--color-text-secondary);
+  }
+
+  .status-indicator {
+    inline-size: 6px;
+    block-size: 6px;
+    border-radius: var(--radius-pill);
+    background: var(--color-accent-green);
+    flex-shrink: 0;
+  }
+
+  /* Tooltip */
+  [data-tooltip] {
+    position: relative;
+  }
+
+  [data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    inset-block-end: calc(100% + var(--space-xs));
+    inset-inline-start: 50%;
+    translate: -50% 0;
+    background: var(--color-surface-tooltip);
+    color: var(--color-text-inverse);
+    font-size: var(--font-size-xs);
+    padding-block: var(--space-2xs);
+    padding-inline: var(--space-sm);
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    z-index: var(--z-tooltip);
+  }
+
+  [data-tooltip]:hover::after { opacity: 1; }
+}
+
+/* ═══════════════════════════════════════
+   UTILITIES
+═══════════════════════════════════════ */
+@layer utilities {
+  .sr-only {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .flex            { display: flex; }
+  .flex-col        { flex-direction: column; }
+  .items-center    { align-items: center; }
+  .gap-xs          { gap: var(--space-xs); }
+  .gap-sm          { gap: var(--space-sm); }
+  .ml-auto         { margin-inline-start: auto; }
+  .text-xs         { font-size: var(--font-size-xs); }
+  .text-secondary  { color: var(--color-text-secondary); }
+  .font-mono       { font-family: var(--font-family-mono); }
+  .font-semibold   { font-weight: var(--font-weight-semibold); }
+}
+
+/* ═══════════════════════════════════════
+   OVERRIDES — Container Queries
+═══════════════════════════════════════ */
+@layer overrides {
+  /* Adapt labels when canvas is narrow */
+  @container designer (inline-size < 550px) {
+    .section-label { display: none; }
+  }
+
+  @container designer (inline-size >= 550px) {
+    .section-label__text { opacity: 0.85; }
+  }
+
+  @container designer (inline-size > 700px) {
+    .section-label-w { --section-label-w: 120px; }
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- ╔══════════════════════════════╗ -->
+<!-- ║          TOOLBAR             ║ -->
+<!-- ╚══════════════════════════════╝ -->
+<header class="toolbar" role="banner">
+  <div class="toolbar__brand" aria-label="Report Designer">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <rect x="3" y="2" width="14" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="6" y1="6" x2="14" y2="6" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="6" y1="9" x2="14" y2="9" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="6" y1="12" x2="10" y2="12" stroke="currentColor" stroke-width="1.2"/>
+    </svg>
+    <span>ReportForge</span>
+    <span class="toolbar__brand-dot"></span>
+    <span style="font-family:var(--font-family-base);font-size:var(--font-size-xs);font-weight:var(--font-weight-normal);color:var(--color-text-secondary)">Enterprise</span>
+  </div>
+
+  <div class="toolbar__sep" role="separator"></div>
+
+  <button class="toolbar__btn" id="btn-new" data-tooltip="Nuevo reporte">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2h7l3 3v7H2V2Z" stroke="currentColor" stroke-width="1.2"/><path d="M9 2v3h3" stroke="currentColor" stroke-width="1.2"/></svg>
+    Nuevo
+  </button>
+  <button class="toolbar__btn" id="btn-open" data-tooltip="Abrir .rfd">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 4h5l1.5 2H13v6H1V4Z" stroke="currentColor" stroke-width="1.2"/></svg>
+    Abrir
+  </button>
+  <button class="toolbar__btn" id="btn-save" data-tooltip="Guardar JSON">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="1.5" width="11" height="11" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="4" y="1.5" width="6" height="4" stroke="currentColor" stroke-width="1.2"/><rect x="4" y="8" width="6" height="4" rx="0.5" stroke="currentColor" stroke-width="1.2"/></svg>
+    Guardar
+  </button>
+
+  <div class="toolbar__sep" role="separator"></div>
+
+  <button class="toolbar__btn" id="btn-undo" data-tooltip="Deshacer (Ctrl+Z)" aria-label="Deshacer">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 6 1 4l2-2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 4c1.5 0 5-1 7 2s1 5-1 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none"/></svg>
+    Undo
+  </button>
+  <button class="toolbar__btn" id="btn-redo" data-tooltip="Rehacer (Ctrl+Y)" aria-label="Rehacer">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M11 6l2-2-2-2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 4c-1.5 0-5-1-7 2S5 11 7 12" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none"/></svg>
+    Redo
+  </button>
+
+  <div class="toolbar__sep" role="separator"></div>
+
+  <div class="toolbar__zoom" aria-live="polite">
+    <button class="toolbar__btn" id="btn-zoom-out" aria-label="Alejar" style="padding-inline:var(--space-xs)">−</button>
+    <span id="zoom-label">100%</span>
+    <button class="toolbar__btn" id="btn-zoom-in" aria-label="Acercar" style="padding-inline:var(--space-xs)">+</button>
+  </div>
+
+  <div class="ml-auto flex gap-xs items-center">
+    <button class="toolbar__btn" id="btn-theme" data-tooltip="Cambiar tema" aria-label="Cambiar tema claro/oscuro">
+      <svg id="icon-sun" width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="2.5" stroke="currentColor" stroke-width="1.2"/><path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M2.9 2.9l1.1 1.1M10 10l1.1 1.1M2.9 11.1 4 10M10 4l1.1-1.1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      Tema
+    </button>
+    <button class="toolbar__btn toolbar__btn--primary" id="btn-export" data-tooltip="Exportar → PDF via WeasyPrint">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v8M4 6l3 3 3-3M2 11h10v2H2v-2Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Exportar PDF
+    </button>
+  </div>
+</header>
+
+<!-- ╔══════════════════════════════╗ -->
+<!-- ║          SIDEBAR             ║ -->
+<!-- ╚══════════════════════════════╝ -->
+<aside class="sidebar" aria-label="Herramientas y secciones">
+
+  <p class="sidebar__group-title">Herramientas</p>
+
+  <button class="sidebar__tool" data-tool="pointer" data-active="true" data-tooltip="Seleccionar">
+    <span class="sidebar__tool-icon" aria-hidden="true">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 1l10 5.5-4 1.5L6 13 2 1Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+    </span>
+    Pointer
+  </button>
+
+  <button class="sidebar__tool" data-tool="text" data-tooltip="Campo de texto">
+    <span class="sidebar__tool-icon" aria-hidden="true">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 3h10M7 3v8M5 11h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+    </span>
+    Texto
+  </button>
+
+  <button class="sidebar__tool" data-tool="field" data-tooltip="Campo de datos del JSON">
+    <span class="sidebar__tool-icon" aria-hidden="true">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="4" width="12" height="6" rx="1" stroke="currentColor" stroke-width="1.2"/><path d="M4 7h6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+    </span>
+    Field
+  </button>
+
+  <button class="sidebar__tool" data-tool="rect" data-tooltip="Rectángulo">
+    <span class="sidebar__tool-icon" aria-hidden="true">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="3" width="10" height="8" rx="1" stroke="currentColor" stroke-width="1.2"/></svg>
+    </span>
+    Rect
+  </button>
+
+  <button class="sidebar__tool" data-tool="line" data-tooltip="Línea separadora">
+    <span class="sidebar__tool-icon" aria-hidden="true">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+    </span>
+    Línea
+  </button>
+
+  <button class="sidebar__tool" data-tool="image" data-tooltip="Placeholder de imagen">
+    <span class="sidebar__tool-icon" aria-hidden="true">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="2.5" width="11" height="9" rx="1" stroke="currentColor" stroke-width="1.2"/><circle cx="5" cy="5.5" r="1" stroke="currentColor" stroke-width="1"/><path d="M1.5 9.5l3-3 2.5 2.5 2-2 3 3" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+    </span>
+    Imagen
+  </button>
+
+  <p class="sidebar__group-title" style="margin-block-start:var(--space-md)">Secciones</p>
+  <div id="section-list" role="list" aria-label="Lista de secciones"></div>
+
+  <p class="sidebar__group-title" style="margin-block-start:var(--space-md)">Campos JSON</p>
+  <div style="display:flex;flex-direction:column;gap:var(--space-xs)" id="field-list"></div>
+</aside>
+
+<!-- ╔══════════════════════════════╗ -->
+<!-- ║     CANVAS AREA              ║ -->
+<!-- ╚══════════════════════════════╝ -->
+<main class="canvas-wrapper" id="canvas-wrapper" aria-label="Área de diseño">
+  <div class="canvas-label-row">
+    <span>A4 · 794×—px</span>
+    <span style="margin-inline-start:auto" id="canvas-size-label">794 × <span id="canvas-total-h">—</span></span>
+  </div>
+
+  <div class="canvas-ruler" role="presentation" aria-hidden="true" id="ruler"></div>
+
+  <!-- THE CANVAS -->
+  <div class="designer-root" id="designer-root" data-tool="pointer"
+       role="region" aria-label="Canvas del reporte">
+
+    <!-- LAYER 1: Layout backgrounds -->
+    <div class="layout-layer" id="layer-layout" data-engine="layout" aria-hidden="true"></div>
+
+    <!-- LAYER 2: Report elements -->
+    <div class="elements-layer" id="layer-elements" data-engine="elements"
+         role="group" aria-label="Elementos del reporte"></div>
+
+    <!-- LAYER 3: Section labels + decoration (no hitboxes) -->
+    <div class="section-overlay-layer" id="layer-overlay" data-engine="overlay" aria-hidden="true"></div>
+
+    <!-- LAYER 4: Interaction (resize hitboxes, ghost lines) -->
+    <div class="interaction-layer" id="layer-interaction" data-engine="interaction" aria-hidden="true">
+      <div class="ghost-line" id="ghost-line" data-vis="false" role="presentation"></div>
+    </div>
+  </div>
+</main>
+
+<!-- ╔══════════════════════════════╗ -->
+<!-- ║     PROPERTIES PANEL        ║ -->
+<!-- ╚══════════════════════════════╝ -->
+<aside class="properties" aria-label="Propiedades">
+  <p class="props__title">Propiedades</p>
+  <div id="props-content">
+    <p class="text-xs text-secondary" id="props-empty">Selecciona un elemento o sección.</p>
+  </div>
+</aside>
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   DESIGNER STATE — Reactive, pure mutations, derived geometry
+════════════════════════════════════════════════════════════════ */
+const DesignerState = (() => {
+  // ── Initial raw state ──
+  let _raw = {
+    sections: [
+      { id: 's-rh',  stype: 'rh',  label: 'Report Header', height: 80  },
+      { id: 's-ph',  stype: 'ph',  label: 'Page Header',   height: 64  },
+      { id: 's-det', stype: 'det', label: 'Detail',        height: 120 },
+      { id: 's-pf',  stype: 'pf',  label: 'Page Footer',   height: 64  },
+      { id: 's-rf',  stype: 'rf',  label: 'Report Footer', height: 80  },
+    ],
+    elements: [],
+    selectedId: null,
+    tool: 'pointer',
+    zoom: 1,
+  };
+
+  // ── Derived state ──
+  let _derived = {};
+  const _listeners = { layout: [], overlay: [], elements: [], interaction: [], all: [] };
+
+  function _derive(raw) {
+    let top = 0;
+    const MIN_H = 24;
+    const sections = raw.sections.map(s => {
+      const height = Math.max(MIN_H, s.height);
+      const r = { ...s, height, top, bottom: top + height };
+      top += height;
+      return r;
+    });
+    return {
+      ...raw,
+      sections,
+      totalHeight: top,
+      sectionMap: Object.fromEntries(sections.map(s => [s.id, s])),
+    };
+  }
+
+  // ── Mutations ── (pure functions)
+  const MUTATIONS = {
+    RESIZE_SECTION(raw, { id, height }) {
+      const MIN_H = 24;
+      const MAX_H = 600;
+      return {
+        ...raw,
+        sections: raw.sections.map(s =>
+          s.id === id ? { ...s, height: Math.max(MIN_H, Math.min(MAX_H, Math.round(height))) } : s
+        ),
+      };
+    },
+    ADD_ELEMENT(raw, el) {
+      return { ...raw, elements: [...raw.elements, el] };
+    },
+    SELECT_ELEMENT(raw, { id }) {
+      return { ...raw, selectedId: id };
+    },
+    DESELECT(raw) {
+      return { ...raw, selectedId: null };
+    },
+    MOVE_ELEMENT(raw, { id, x, y }) {
+      return {
+        ...raw,
+        elements: raw.elements.map(e => e.id === id ? { ...e, x, y } : e),
+      };
+    },
+    DELETE_ELEMENT(raw, { id }) {
+      return {
+        ...raw,
+        elements: raw.elements.filter(e => e.id !== id),
+        selectedId: raw.selectedId === id ? null : raw.selectedId,
+      };
+    },
+    SET_TOOL(raw, { tool }) {
+      return { ...raw, tool, selectedId: null };
+    },
+    SET_ZOOM(raw, { zoom }) {
+      return { ...raw, zoom: Math.max(0.25, Math.min(3, zoom)) };
+    },
+  };
+
+  // ── History ──
+  const _history = [];
+  let _historyIdx = -1;
+
+  function _snapshot() { return JSON.parse(JSON.stringify(_raw)); }
+
+  // ── Notify ──
+  function _notify(layers) {
+    const toNotify = layers === 'all'
+      ? ['layout', 'overlay', 'elements', 'interaction', 'all']
+      : [...(layers || []), 'all'];
+
+    toNotify.forEach(layer => {
+      (_listeners[layer] || []).forEach(fn => {
+        try { fn(_derived); } catch(e) { console.error(`Listener error [${layer}]:`, e); }
+      });
+    });
+  }
+
+  // ── API ──
+  function subscribe(layer, fn) {
+    if (!_listeners[layer]) _listeners[layer] = [];
+    _listeners[layer].push(fn);
+    // Immediately call with current state
+    try { fn(_derived); } catch(e) {}
+    return () => {
+      _listeners[layer] = _listeners[layer].filter(f => f !== fn);
+    };
+  }
+
+  function commit(type, payload, invalidates) {
+    const mutation = MUTATIONS[type];
+    if (!mutation) { console.warn(`Unknown mutation: ${type}`); return; }
+
+    // Push to history (only for undoable actions)
+    const undoable = ['ADD_ELEMENT','DELETE_ELEMENT','RESIZE_SECTION','MOVE_ELEMENT'];
+    if (undoable.includes(type)) {
+      _history.splice(_historyIdx + 1); // drop redo stack
+      _history.push(_snapshot());
+      if (_history.length > 50) _history.shift();
+      else _historyIdx = _history.length - 1;
+    }
+
+    _raw = mutation(_raw, payload);
+    _derived = _derive(_raw);
+    _notify(invalidates || _defaultInvalidation(type));
+  }
+
+  function _defaultInvalidation(type) {
+    const map = {
+      RESIZE_SECTION: ['layout', 'overlay', 'interaction'],
+      ADD_ELEMENT:    ['elements'],
+      SELECT_ELEMENT: ['elements'],
+      DESELECT:       ['elements'],
+      MOVE_ELEMENT:   ['elements'],
+      DELETE_ELEMENT: ['elements'],
+      SET_TOOL:       ['interaction'],
+      SET_ZOOM:       ['all'],
+    };
+    return map[type] || ['all'];
+  }
+
+  function undo() {
+    if (_historyIdx < 0) return;
+    _raw = _history[_historyIdx--];
+    _derived = _derive(_raw);
+    _notify('all');
+  }
+
+  function redo() {
+    if (_historyIdx >= _history.length - 1) return;
+    _raw = _history[++_historyIdx];
+    _derived = _derive(_raw);
+    _notify('all');
+  }
+
+  function getState() { return _derived; }
+
+  // Init
+  _derived = _derive(_raw);
+
+  return { subscribe, commit, undo, redo, getState };
+})();
+
+/* ════════════════════════════════════════════════════════════════
+   CONSTRUCTABLE STYLESHEETS — One per engine, no inline styles
+════════════════════════════════════════════════════════════════ */
+const EngineSheets = (() => {
+  const sheets = {};
+
+  function getSheet(name) {
+    if (!sheets[name]) {
+      const s = new CSSStyleSheet();
+      sheets[name] = s;
+      document.adoptedStyleSheets = [...document.adoptedStyleSheets, s];
+    }
+    return sheets[name];
+  }
+
+  function update(name, rules) {
+    getSheet(name).replaceSync(rules);
+  }
+
+  return { update };
+})();
+
+/* ════════════════════════════════════════════════════════════════
+   LAYOUT ENGINE — Only touches .layout-layer
+════════════════════════════════════════════════════════════════ */
+const LayoutEngine = (() => {
+  const layer = document.getElementById('layer-layout');
+  let prevIds = [];
+
+  function render(state) {
+    const { sections, totalHeight } = state;
+    const ids = sections.map(s => s.id);
+
+    // Update dynamic CSS for section positioning (no inline styles)
+    const cssRules = sections.map(s => `
+      .layout-section[data-sid="${s.id}"] {
+        --_t: ${s.top}px;
+        --_h: ${s.height}px;
+      }
+    `).join('\n');
+    EngineSheets.update('layout', cssRules);
+
+    // Only rebuild DOM if section count changes
+    if (JSON.stringify(ids) !== JSON.stringify(prevIds)) {
+      layer.innerHTML = '';
+      sections.forEach(s => {
+        const el = document.createElement('div');
+        el.className = 'layout-section';
+        el.dataset.sid   = s.id;
+        el.dataset.stype = s.stype;
+        layer.appendChild(el);
+      });
+      prevIds = ids;
+    }
+
+    // Update canvas root height via CSS variable
+    EngineSheets.update('canvas-height', `
+      .designer-root { block-size: ${totalHeight}px; }
+    `);
+
+    // Update info in DOM (not inline)
+    const el = document.getElementById('canvas-total-h');
+    if (el) el.textContent = totalHeight + 'px';
+
+    _updateRuler(state);
+  }
+
+  function _updateRuler(state) {
+    const ruler = document.getElementById('ruler');
+    if (!ruler) return;
+    ruler.innerHTML = '';
+    const step = 100;
+    for (let x = 0; x <= state.canvasWidth; x += step) {
+      const mark = document.createElement('div');
+      mark.dataset.rulertick = x;
+      ruler.appendChild(mark);
+    }
+    EngineSheets.update('ruler', `
+      #ruler { position: relative; }
+      #ruler > [data-rulertick] {
+        position: absolute;
+        block-size: 100%;
+        border-inline-start: 1px solid var(--color-border-subtle);
+        font-size: 9px;
+        color: var(--color-text-disabled);
+        padding-inline-start: 2px;
+        font-family: var(--font-family-mono);
+        line-height: 1;
+        padding-block-start: 2px;
+      }
+      ${state.sections.map((_, idx) => idx === 0 ? '' : '').join('')}
+      ${Array.from({length: Math.ceil(794/100)+1}, (_,i) => i*100).map(x => `
+        #ruler > [data-rulertick="${x}"] { inset-inline-start: ${x / 794 * 100}%; }
+        #ruler > [data-rulertick="${x}"]::before { content: "${x}"; }
+      `).join('\n')}
+    `);
+  }
+
+  return { render };
+})();
+
+/* ════════════════════════════════════════════════════════════════
+   OVERLAY ENGINE — Only touches .section-overlay-layer
+════════════════════════════════════════════════════════════════ */
+const OverlayEngine = (() => {
+  const layer = document.getElementById('layer-overlay');
+  let prevSig = '';
+
+  function render(state) {
+    const sig = state.sections.map(s => `${s.id}:${s.height}`).join('|');
+    if (sig === prevSig) return; // skip if nothing changed
+    prevSig = sig;
+
+    // CSS for label positions
+    const cssRules = state.sections.map(s => `
+      .section-label[data-sid="${s.id}"] {
+        --_t: ${s.top}px;
+        --_h: ${s.height}px;
+      }
+    `).join('\n');
+    EngineSheets.update('overlay', cssRules);
+
+    layer.innerHTML = '';
+    state.sections.forEach(s => {
+      const el = document.createElement('div');
+      el.className = 'section-label';
+      el.dataset.sid   = s.id;
+      el.dataset.stype = s.stype;
+
+      const span = document.createElement('span');
+      span.className = 'section-label__text';
+      span.textContent = s.label;
+
+      el.appendChild(span);
+      layer.appendChild(el);
+    });
+
+    // Update sidebar section list
+    _updateSidebarList(state);
+  }
+
+  function _updateSidebarList(state) {
+    const container = document.getElementById('section-list');
+    if (!container) return;
+    container.innerHTML = '';
+    state.sections.forEach(s => {
+      const row = document.createElement('div');
+      row.className = 'section-row';
+      row.role = 'listitem';
+      row.innerHTML = `
+        <span class="section-row__label">${s.label}</span>
+        <span class="section-row__h" id="srow-h-${s.id}">${s.height}px</span>
+      `;
+      container.appendChild(row);
+    });
+  }
+
+  // Update only the height badges in sidebar without full re-render
+  function updateHeightBadge(state, sectionId) {
+    const el = document.getElementById(`srow-h-${sectionId}`);
+    if (el) el.textContent = state.sectionMap[sectionId]?.height + 'px';
+  }
+
+  return { render, updateHeightBadge };
+})();
+
+/* ════════════════════════════════════════════════════════════════
+   ELEMENTS ENGINE — Only touches .elements-layer
+════════════════════════════════════════════════════════════════ */
+const ElementsEngine = (() => {
+  const layer = document.getElementById('layer-elements');
+  const propsPanel = document.getElementById('props-content');
+
+  let _state = null;
+  let _dragging = null; // { id, startX, startY, origX, origY }
+
+  function render(state) {
+    _state = state;
+    const { elements, selectedId } = state;
+
+    // Build CSS for all element positions
+    const cssRules = elements.map(e => `
+      .report-element[data-eid="${e.id}"] {
+        inset-inline-start: ${e.x}px;
+        inset-block-start:  ${e.y}px;
+        inline-size:  ${e.w}px;
+        block-size:   ${e.h}px;
+      }
+    `).join('\n');
+    EngineSheets.update('elements', cssRules);
+
+    // Reconcile DOM — add/remove elements without full wipe
+    const existing = new Set([...layer.querySelectorAll('.report-element')].map(el => el.dataset.eid));
+    const current  = new Set(elements.map(e => e.id));
+
+    // Remove deleted
+    existing.forEach(id => {
+      if (!current.has(id)) layer.querySelector(`[data-eid="${id}"]`)?.remove();
+    });
+
+    // Add new
+    elements.forEach(e => {
+      if (existing.has(e.id)) {
+        // Update selection state via data attribute (no inline style)
+        const el = layer.querySelector(`[data-eid="${e.id}"]`);
+        if (el) el.dataset.selected = (e.id === selectedId) ? 'true' : 'false';
+        return;
+      }
+      const el = _createElement(e);
+      layer.appendChild(el);
+    });
+
+    // Update selection
+    layer.querySelectorAll('.report-element').forEach(el => {
+      el.dataset.selected = (el.dataset.eid === selectedId) ? 'true' : 'false';
+    });
+
+    _renderProps(state);
+  }
+
+  function _createElement(e) {
+    const el = document.createElement('div');
+    el.className = 'report-element';
+    el.dataset.eid   = e.id;
+    el.dataset.etype = e.type;
+
+    switch(e.type) {
+      case 'text':
+        el.textContent = e.content || 'Texto';
+        break;
+      case 'field':
+        el.textContent = `{${e.content || 'campo'}}`;
+        break;
+      case 'image':
+        el.textContent = '⬜ Imagen';
+        break;
+      case 'rect':
+      case 'line':
+        break;
+    }
+
+    // Drag to move
+    el.addEventListener('mousedown', _onElementMouseDown);
+    el.addEventListener('click', _onElementClick);
+    return el;
+  }
+
+  function _onElementClick(e) {
+    e.stopPropagation();
+    const id = e.currentTarget.dataset.eid;
+    DesignerState.commit('SELECT_ELEMENT', { id }, ['elements']);
+  }
+
+  function _onElementMouseDown(e) {
+    if (e.button !== 0) return;
+    e.stopPropagation();
+    const id = e.currentTarget.dataset.eid;
+    const state = DesignerState.getState();
+    const el_data = state.elements.find(el => el.id === id);
+    if (!el_data) return;
+
+    DesignerState.commit('SELECT_ELEMENT', { id }, ['elements']);
+
+    _dragging = {
+      id,
+      startX: e.clientX,
+      startY: e.clientY,
+      origX: el_data.x,
+      origY: el_data.y,
+    };
+
+    document.addEventListener('mousemove', _onDragMove);
+    document.addEventListener('mouseup',   _onDragEnd);
+  }
+
+  function _onDragMove(e) {
+    if (!_dragging) return;
+    const dx = e.clientX - _dragging.startX;
+    const dy = e.clientY - _dragging.startY;
+    const newX = Math.max(0, _dragging.origX + dx);
+    const newY = Math.max(0, _dragging.origY + dy);
+
+    // Update CSS immediately via constructable sheet
+    const cssRules = DesignerState.getState().elements.map(el => {
+      const x = el.id === _dragging.id ? newX : el.x;
+      const y = el.id === _dragging.id ? newY : el.y;
+      return `
+        .report-element[data-eid="${el.id}"] {
+          inset-inline-start: ${x}px;
+          inset-block-start:  ${y}px;
+          inline-size:  ${el.w}px;
+          block-size:   ${el.h}px;
+        }
+      `;
+    }).join('\n');
+    EngineSheets.update('elements', cssRules);
+  }
+
+  function _onDragEnd(e) {
+    if (!_dragging) return;
+    const dx = e.clientX - _dragging.startX;
+    const dy = e.clientY - _dragging.startY;
+    const newX = Math.max(0, _dragging.origX + dx);
+    const newY = Math.max(0, _dragging.origY + dy);
+
+    DesignerState.commit('MOVE_ELEMENT', { id: _dragging.id, x: newX, y: newY }, ['elements']);
+    _dragging = null;
+    document.removeEventListener('mousemove', _onDragMove);
+    document.removeEventListener('mouseup',   _onDragEnd);
+  }
+
+  function _renderProps(state) {
+    const sel = state.elements.find(e => e.id === state.selectedId);
+    if (!sel) {
+      propsPanel.innerHTML = `
+        <p class="text-xs text-secondary">Selecciona un elemento o sección.</p>
+        <div class="prop-group" style="margin-block-start:var(--space-md)">
+          <p class="props__title">Página</p>
+          <div class="prop-row"><label>Ancho</label><span class="prop-input" style="text-align:end">794px</span></div>
+          <div class="prop-row"><label>Alto total</label><span class="prop-input" style="text-align:end">${state.totalHeight}px</span></div>
+          <div class="prop-row"><label>Elementos</label><span class="prop-input" style="text-align:end">${state.elements.length}</span></div>
+        </div>
+      `;
+      return;
+    }
+
+    propsPanel.innerHTML = `
+      <span class="prop-badge prop-badge--selected">${sel.type.toUpperCase()}</span>
+      <div class="prop-group" style="margin-block-start:var(--space-sm)">
+        <p class="props__title">Posición &amp; Tamaño</p>
+        <div class="prop-row"><label>X</label><input class="prop-input" id="pi-x" type="number" value="${sel.x}"></div>
+        <div class="prop-row"><label>Y</label><input class="prop-input" id="pi-y" type="number" value="${sel.y}"></div>
+        <div class="prop-row"><label>Ancho</label><input class="prop-input" id="pi-w" type="number" value="${sel.w}"></div>
+        <div class="prop-row"><label>Alto</label><input class="prop-input" id="pi-h" type="number" value="${sel.h}"></div>
+      </div>
+      ${sel.type === 'text' || sel.type === 'field' ? `
+      <div class="prop-group">
+        <p class="props__title">Contenido</p>
+        <input class="prop-input" id="pi-content" type="text" value="${sel.content || ''}" style="grid-column:1/-1;inline-size:100%">
+      </div>
+      ` : ''}
+      <div class="prop-group">
+        <p class="props__title">Acciones</p>
+        <button class="toolbar__btn" id="btn-delete-el" style="inline-size:100%;justify-content:center">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 3h8M5 3V2h2v1M4 3v6h4V3H4Z" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Eliminar
+        </button>
+      </div>
+    `;
+
+    // Bind prop inputs
+    ['x','y','w','h'].forEach(key => {
+      const input = document.getElementById(`pi-${key}`);
+      if (!input) return;
+      input.addEventListener('change', () => {
+        const val = parseInt(input.value, 10);
+        if (isNaN(val)) return;
+        const current = DesignerState.getState().elements.find(e => e.id === sel.id);
+        if (!current) return;
+        DesignerState.commit('MOVE_ELEMENT', {
+          id: sel.id,
+          x: key === 'x' ? val : current.x,
+          y: key === 'y' ? val : current.y,
+        }, ['elements']);
+      });
+    });
+
+    document.getElementById('btn-delete-el')?.addEventListener('click', () => {
+      DesignerState.commit('DELETE_ELEMENT', { id: sel.id }, ['elements']);
+    });
+  }
+
+  // Place element on canvas click
+  function placeAt(x, y, tool, state) {
+    const defaults = {
+      text:  { w: 120, h: 22, content: 'Nuevo texto' },
+      field: { w: 100, h: 22, content: 'invoice.number' },
+      rect:  { w: 100, h: 60, content: '' },
+      line:  { w: 200, h: 2,  content: '' },
+      image: { w: 80,  h: 60, content: '' },
+    };
+    const d = defaults[tool];
+    if (!d) return;
+
+    const id = `el-${Date.now()}-${Math.random().toString(36).slice(2,6)}`;
+    DesignerState.commit('ADD_ELEMENT', { id, type: tool, x, y, ...d }, ['elements']);
+    DesignerState.commit('SELECT_ELEMENT', { id }, ['elements']);
+  }
+
+  return { render, placeAt };
+})();
+
+/* ════════════════════════════════════════════════════════════════
+   INTERACTION ENGINE — Resize hitboxes, ghost line, no overlay
+════════════════════════════════════════════════════════════════ */
+const InteractionEngine = (() => {
+  const layer      = document.getElementById('layer-interaction');
+  const ghostLine  = document.getElementById('ghost-line');
+  const root       = document.getElementById('designer-root');
+
+  let _resize = null; // active resize state
+  let _badgeEl = null;
+
+  function render(state) {
+    // Remove old hitboxes (keep ghost-line)
+    layer.querySelectorAll('.resize-hitbox').forEach(el => el.remove());
+    layer.querySelectorAll('.size-badge').forEach(el => el.remove());
+
+    // CSS for hitbox positioning
+    const cssRules = state.sections.map(s => `
+      .resize-hitbox[data-sid="${s.id}"] {
+        --_pos: ${s.bottom}px;
+      }
+      .size-badge[data-sid="${s.id}"] {
+        inset-block-start: ${s.bottom - 20}px;
+      }
+    `).join('\n');
+    EngineSheets.update('interaction', cssRules);
+
+    // Create hitbox + visual line + size badge per section
+    state.sections.forEach((s, idx) => {
+      // No hitbox after last section
+      const hitbox = document.createElement('div');
+      hitbox.className = 'resize-hitbox';
+      hitbox.dataset.sid = s.id;
+      hitbox.setAttribute('role', 'separator');
+      hitbox.setAttribute('aria-label', `Resize ${s.label}`);
+      hitbox.setAttribute('tabindex', '0');
+
+      const visual = document.createElement('div');
+      visual.className = 'resize-visual';
+      hitbox.appendChild(visual);
+      layer.appendChild(hitbox);
+
+      const badge = document.createElement('div');
+      badge.className = 'size-badge';
+      badge.dataset.sid = s.id;
+      badge.dataset.vis = 'false';
+      badge.textContent = `${s.height}px`;
+      layer.appendChild(badge);
+
+      hitbox.addEventListener('mousedown', e => _onResizeStart(e, s.id));
+      hitbox.addEventListener('keydown',   e => _onResizeKey(e, s.id));
+    });
+  }
+
+  function _onResizeStart(e, sectionId) {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const state = DesignerState.getState();
+    const section = state.sectionMap[sectionId];
+    if (!section) return;
+
+    const rootRect = root.getBoundingClientRect();
+
+    _resize = {
+      sectionId,
+      startY:     e.clientY,
+      origHeight: section.height,
+      rootTop:    rootRect.top,
+      minHeight:  24,
+      maxHeight:  600,
+    };
+
+    // Visual: set dragging state via data attribute
+    const hitbox = layer.querySelector(`.resize-hitbox[data-sid="${sectionId}"]`);
+    if (hitbox) hitbox.dataset.dragging = 'true';
+
+    // Show ghost line
+    ghostLine.dataset.vis = 'true';
+    _updateGhostLine(section.bottom);
+
+    // Show size badge
+    _badgeEl = layer.querySelector(`.size-badge[data-sid="${sectionId}"]`);
+    if (_badgeEl) _badgeEl.dataset.vis = 'true';
+
+    document.addEventListener('mousemove', _onResizeMove);
+    document.addEventListener('mouseup',   _onResizeEnd);
+    document.body.dataset.resizing = 'true';
+  }
+
+  function _onResizeMove(e) {
+    if (!_resize) return;
+    const state  = DesignerState.getState();
+    const section = state.sectionMap[_resize.sectionId];
+    if (!section) return;
+
+    const dy        = e.clientY - _resize.startY;
+    const newHeight = Math.max(_resize.minHeight, Math.min(_resize.maxHeight, _resize.origHeight + dy));
+    const newBottom = section.top + newHeight;
+
+    // Update ghost line position via CSS (no inline)
+    _updateGhostLine(newBottom);
+
+    // Update badge text
+    if (_badgeEl) _badgeEl.textContent = `${Math.round(newHeight)}px`;
+
+    // Live commit (invalidates only layout+overlay+interaction)
+    DesignerState.commit('RESIZE_SECTION', {
+      id: _resize.sectionId,
+      height: newHeight,
+    }, ['layout', 'overlay', 'interaction']);
+
+    // Update sidebar badge in realtime
+    OverlayEngine.updateHeightBadge(DesignerState.getState(), _resize.sectionId);
+  }
+
+  function _onResizeEnd() {
+    if (!_resize) return;
+
+    // Cleanup visual state via data attributes
+    const hitbox = layer.querySelector(`.resize-hitbox[data-sid="${_resize.sectionId}"]`);
+    if (hitbox) hitbox.dataset.dragging = 'false';
+
+    ghostLine.dataset.vis = 'false';
+    if (_badgeEl) {
+      _badgeEl.dataset.vis = 'false';
+      _badgeEl = null;
+    }
+
+    _resize = null;
+    delete document.body.dataset.resizing;
+    document.removeEventListener('mousemove', _onResizeMove);
+    document.removeEventListener('mouseup',   _onResizeEnd);
+  }
+
+  function _updateGhostLine(y) {
+    EngineSheets.update('ghost-line', `
+      #ghost-line { inset-block-start: ${y}px; }
+    `);
+  }
+
+  function _onResizeKey(e, sectionId) {
+    const STEP = e.shiftKey ? 10 : 1;
+    const state = DesignerState.getState();
+    const section = state.sectionMap[sectionId];
+    if (!section) return;
+
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      DesignerState.commit('RESIZE_SECTION', { id: sectionId, height: section.height - STEP }, ['layout','overlay','interaction']);
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      DesignerState.commit('RESIZE_SECTION', { id: sectionId, height: section.height + STEP }, ['layout','overlay','interaction']);
+    }
+  }
+
+  return { render };
+})();
+
+/* ════════════════════════════════════════════════════════════════
+   CANVAS CLICK — Place elements
+════════════════════════════════════════════════════════════════ */
+document.getElementById('layer-elements').addEventListener('click', e => {
+  const state = DesignerState.getState();
+  if (state.tool === 'pointer') {
+    // Click on empty canvas = deselect
+    if (e.target === e.currentTarget) {
+      DesignerState.commit('DESELECT', {}, ['elements']);
+    }
+    return;
+  }
+  const root = document.getElementById('designer-root');
+  const rect = root.getBoundingClientRect();
+  const x = Math.round(e.clientX - rect.left);
+  const y = Math.round(e.clientY - rect.top);
+  ElementsEngine.placeAt(x, y, state.tool, state);
+  // Switch back to pointer after placing
+  DesignerState.commit('SET_TOOL', { tool: 'pointer' }, ['interaction']);
+  _updateActiveTool('pointer');
+});
+
+/* ════════════════════════════════════════════════════════════════
+   TOOL SELECTION
+════════════════════════════════════════════════════════════════ */
+function _updateActiveTool(toolId) {
+  document.querySelectorAll('.sidebar__tool[data-tool]').forEach(btn => {
+    btn.dataset.active = (btn.dataset.tool === toolId) ? 'true' : 'false';
+  });
+  document.getElementById('designer-root').dataset.tool = toolId;
+}
+
+document.querySelectorAll('.sidebar__tool[data-tool]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tool = btn.dataset.tool;
+    DesignerState.commit('SET_TOOL', { tool }, ['interaction']);
+    _updateActiveTool(tool);
+  });
+});
+
+/* ════════════════════════════════════════════════════════════════
+   KEYBOARD SHORTCUTS
+════════════════════════════════════════════════════════════════ */
+document.addEventListener('keydown', e => {
+  // Guard: don't fire when editing an input
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+    e.preventDefault();
+    DesignerState.undo();
+  }
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'z'))) {
+    e.preventDefault();
+    DesignerState.redo();
+  }
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    const state = DesignerState.getState();
+    if (state.selectedId) {
+      DesignerState.commit('DELETE_ELEMENT', { id: state.selectedId }, ['elements']);
+    }
+  }
+  if (e.key === 'Escape') {
+    DesignerState.commit('DESELECT', {}, ['elements']);
+    DesignerState.commit('SET_TOOL', { tool: 'pointer' }, ['interaction']);
+    _updateActiveTool('pointer');
+  }
+  // Tool shortcuts
+  const toolKeys = { v:'pointer', t:'text', f:'field', r:'rect', l:'line', i:'image' };
+  if (!e.ctrlKey && !e.metaKey && toolKeys[e.key]) {
+    DesignerState.commit('SET_TOOL', { tool: toolKeys[e.key] }, ['interaction']);
+    _updateActiveTool(toolKeys[e.key]);
+  }
+});
+
+/* ════════════════════════════════════════════════════════════════
+   TOOLBAR ACTIONS
+════════════════════════════════════════════════════════════════ */
+document.getElementById('btn-undo').addEventListener('click', () => DesignerState.undo());
+document.getElementById('btn-redo').addEventListener('click', () => DesignerState.redo());
+
+// Zoom
+let currentZoom = 1;
+function applyZoom(z) {
+  currentZoom = Math.max(0.25, Math.min(3, z));
+  EngineSheets.update('zoom', `
+    .designer-root, .canvas-ruler {
+      transform-origin: top center;
+      transform: scale(${currentZoom});
+      margin-block-end: calc((${currentZoom} - 1) * var(--canvas-page-width) * 0.6);
+    }
+  `);
+  document.getElementById('zoom-label').textContent = Math.round(currentZoom * 100) + '%';
+}
+
+document.getElementById('btn-zoom-in').addEventListener('click', () => applyZoom(currentZoom + 0.1));
+document.getElementById('btn-zoom-out').addEventListener('click', () => applyZoom(currentZoom - 0.1));
+
+// Theme toggle
+document.getElementById('btn-theme').addEventListener('click', () => {
+  const html = document.documentElement;
+  html.dataset.theme = html.dataset.theme === 'dark' ? 'light' : 'dark';
+});
+
+// Save to JSON
+document.getElementById('btn-save').addEventListener('click', () => {
+  const state = DesignerState.getState();
+  const data = {
+    version: '1.0',
+    pageWidth: 794,
+    sections: state.sections.map(s => ({ id: s.id, label: s.label, height: s.height })),
+    elements: state.elements,
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'report-design.rfd.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+// Export (shows a message about the pipeline)
+document.getElementById('btn-export').addEventListener('click', () => {
+  const state = DesignerState.getState();
+  alert(`Pipeline de exportación:\n\nreport-design.rfd.json\n↓\nJinja2 Render Engine (Python)\n↓\nHTML paginado A4\n↓\nWeasyPrint\n↓\nfactura_000123.pdf\n\nSecciones: ${state.sections.length}\nElementos: ${state.elements.length}\nAlto total: ${state.totalHeight}px`);
+});
+
+// New
+document.getElementById('btn-new').addEventListener('click', () => {
+  if (confirm('¿Crear un reporte nuevo? Se perderán los cambios.')) {
+    location.reload();
+  }
+});
+
+/* ════════════════════════════════════════════════════════════════
+   FIELD LIST (sample JSON fields for dragging)
+════════════════════════════════════════════════════════════════ */
+const sampleFields = [
+  'invoice.number', 'invoice.date', 'client.name',
+  'client.id', 'company.name', 'totals.subtotal',
+  'totals.tax', 'totals.total', 'page.current',
+  'page.total',
+];
+
+const fieldContainer = document.getElementById('field-list');
+sampleFields.forEach(f => {
+  const btn = document.createElement('button');
+  btn.className = 'sidebar__tool';
+  btn.dataset.tooltip = `Agregar campo ${f}`;
+  btn.innerHTML = `
+    <span class="sidebar__tool-icon" style="font-size:9px;font-family:var(--font-family-mono)">{}</span>
+    <span class="text-xs font-mono" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f}</span>
+  `;
+  btn.addEventListener('click', () => {
+    DesignerState.commit('SET_TOOL', { tool: 'field' }, ['interaction']);
+    _updateActiveTool('field');
+    // Override content for next placement
+    const orig = ElementsEngine.placeAt;
+    // We'll place it on the detail section center
+    const state = DesignerState.getState();
+    const det = state.sections.find(s => s.id === 's-det') || state.sections[2];
+    const id = `el-${Date.now()}`;
+    DesignerState.commit('ADD_ELEMENT', {
+      id, type: 'field',
+      x: 120, y: det.top + 8,
+      w: 130, h: 22,
+      content: f,
+    }, ['elements']);
+    DesignerState.commit('SELECT_ELEMENT', { id }, ['elements']);
+    DesignerState.commit('SET_TOOL', { tool: 'pointer' }, ['interaction']);
+    _updateActiveTool('pointer');
+  });
+  fieldContainer.appendChild(btn);
+});
+
+/* ════════════════════════════════════════════════════════════════
+   WIRE SUBSCRIPTIONS — Each engine subscribes to its layer
+════════════════════════════════════════════════════════════════ */
+DesignerState.subscribe('layout',      state => LayoutEngine.render(state));
+DesignerState.subscribe('overlay',     state => OverlayEngine.render(state));
+DesignerState.subscribe('elements',    state => ElementsEngine.render(state));
+DesignerState.subscribe('interaction', state => InteractionEngine.render(state));
+
+/* ════════════════════════════════════════════════════════════════
+   BOOT — Seed some demo elements
+════════════════════════════════════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', () => {
+  // Seed demo elements
+  const seeds = [
+    { id:'el-demo-1', type:'text',  x:120, y:28,  w:200, h:22, content:'FACTURA'},
+    { id:'el-demo-2', type:'field', x:500, y:28,  w:130, h:22, content:'invoice.number'},
+    { id:'el-demo-3', type:'text',  x:120, y:95,  w:150, h:18, content:'Señor/a:'},
+    { id:'el-demo-4', type:'field', x:190, y:95,  w:200, h:18, content:'client.name'},
+    { id:'el-demo-5', type:'line',  x:120, y:130, w:550, h:2,  content:''},
+    { id:'el-demo-6', type:'field', x:120, y:148, w:200, h:20, content:'invoice.date'},
+    { id:'el-demo-7', type:'text',  x:120, y:358, w:200, h:22, content:'Total:'},
+    { id:'el-demo-8', type:'field', x:600, y:358, w:100, h:22, content:'totals.total'},
+    { id:'el-demo-9', type:'text',  x:300, y:443, w:200, h:14, content:'Página:'},
+    { id:'el-demo-a', type:'field', x:365, y:443, w:60,  h:14, content:'page.current'},
+    { id:'el-demo-b', type:'image', x:530, y:22,  w:110, h:48, content:'logo'},
+  ];
+  seeds.forEach(el => DesignerState.commit('ADD_ELEMENT', el, ['elements']));
+});
+</script>
+</body>
+</html>

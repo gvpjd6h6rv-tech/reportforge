@@ -1,0 +1,25 @@
+Package: reportforge
+Version: 1.0.0
+Section: misc
+Priority: optional
+Architecture: all
+Depends: python3 (>= 3.8)
+Recommends: chromium-browser | chromium | google-chrome-stable | firefox
+Maintainer: ReportForge <reportforge@example.com>
+Description: Diseñador de reportes estilo Crystal Reports para Linux
+ ReportForge es un diseñador visual de reportes inspirado en SAP Crystal Reports,
+ que corre completamente en Linux Mint sin dependencias comerciales.
+ .
+ Características:
+  - Interfaz idéntica a Crystal Reports (Crystal para SAP Business One)
+  - Secciones redimensionables: Report Header, Page Header, Detail, Footer
+  - Arquitectura DOM por capas (layout, elements, overlay, interaction)
+  - Estado reactivo con undo/redo
+  - Exportación a JSON (.rfd.json) para procesamiento con WeasyPrint
+  - Soporte para campos de base de datos, fórmulas y parámetros
+  - Funciona offline, sin telemetría, sin licencias
+ .
+ Pipeline de exportación PDF:
+  report-design.rfd.json → Jinja2 → HTML A4 → WeasyPrint → PDF
+Installed-Size: 128
+Homepage: https://github.com/reportforge/reportforge

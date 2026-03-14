@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ReportForge Designer</title>
+<link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- Menu bar -->
+  <div id="menubar"></div>
+
+  <!-- Toolbar rows -->
+  <div id="toolbar"></div>
+  <div id="toolbar2"></div>
+
+  <!-- Workspace -->
+  <div id="workspace">
+
+    <!-- Left: Field Explorer -->
+    <div id="field-explorer" class="panel"></div>
+
+    <!-- Centre: Canvas -->
+    <div id="canvas-area">
+      <!-- Design / Preview tab strip -->
+      <div id="canvas-tabs" class="canvas-tabs-bar">
+        <div id="tab-design"  class="canvas-tab canvas-tab-active" onclick="RF.Classic.Menu._switchTab('design')"  title="Design view (Esc)">Design</div>
+        <div id="tab-preview" class="canvas-tab"                   onclick="RF.Classic.Menu._switchTab('preview')" title="Preview report (F5)">Preview</div>
+      </div>
+      <!-- ruler-corner is 40px wide: sec-col(22) + ruler-v(18) -->
+      <div id="ruler-corner"></div>
+      <div id="ruler-h"><canvas></canvas></div>
+      <div id="ruler-v"><canvas></canvas></div>
+      <div id="canvas-scroll">
+        <div id="canvas-surface">
+          <!-- sec-label-col is injected here by sections.js -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Property Inspector -->
+    <div id="property-inspector" class="panel"></div>
+
+  </div>
+
+  <!-- Status bar -->
+  <div id="statusbar">
+    <span id="sb-msg">Loading…</span>
+    <span id="sb-sel"></span>
+    <span id="sb-dirty"></span>
+    <span class="spacer"></span>
+    <span id="sb-wh"></span>
+    <span id="sb-grid"></span>
+    <span id="sb-snap"></span>
+    <span id="sb-zoom">100%</span>
+    <span id="sb-coord">X:0  Y:0</span>
+  </div>
+
+</div>
+
+<!-- Context menu -->
+<div id="ctx-menu"></div>
+
+<!-- Preview overlay -->
+<div id="preview-panel">
+  <div class="preview-topbar">
+    <svg viewBox="0 0 16 16" width="16" height="16" class="pv-icon">
+      <path d="M1 8C3 4 5 2 8 2s5 2 7 6c-2 4-4 6-7 6S3 12 1 8z" fill="none" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="8" cy="8" r="2.5" fill="none" stroke="currentColor" stroke-width="1.2"/>
+    </svg>
+    <span>Preview</span>
+    <div class="flex-spacer"></div>
+    <button class="modal-btn pv-close-btn" onclick="RF.emit(RF.E.PREVIEW_CLOSE)">✕ Close</button>
+  </div>
+  <div class="preview-frame-wrap">
+    <div id="pv-loading" class="pv-loading">
+      <div>Loading preview…</div>
+    </div>
+    <iframe id="pv-frame" class="preview-frame"
+      class="pv-frame-init"
+      sandbox="allow-same-origin"></iframe>
+  </div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              name="SalesReport"
+              pageWidth="595" pageHeight="842"
+              leftMargin="20" rightMargin="20"
+              topMargin="30" bottomMargin="30">
+
+    <!-- Parameters -->
+    <parameter name="company" class="java.lang.String">
+        <defaultValueExpression><![CDATA["ACME Corp"]]></defaultValueExpression>
+    </parameter>
+    <parameter name="reportDate" class="java.lang.String">
+        <defaultValueExpression><![CDATA["2025-12-01"]]></defaultValueExpression>
+    </parameter>
+
+    <!-- Fields -->
+    <field name="code"       class="java.lang.String"/>
+    <field name="name"       class="java.lang.String"/>
+    <field name="category"   class="java.lang.String"/>
+    <field name="qty"        class="java.lang.Integer"/>
+    <field name="unit_price" class="java.lang.Double"/>
+    <field name="total"      class="java.lang.Double"/>
+    <field name="stock"      class="java.lang.Integer"/>
+
+    <!-- Groups -->
+    <group name="CategoryGroup">
+        <groupExpression><![CDATA[$F{category}]]></groupExpression>
+        <groupHeader>
+            <band height="18">
+                <!-- Group header background -->
+                <rectangle>
+                    <reportElement x="0" y="0" width="555" height="18" backcolor="#E8EEF8"/>
+                    <graphicElement><pen lineWidth="0"/></graphicElement>
+                </rectangle>
+                <!-- Category label -->
+                <textField>
+                    <reportElement x="4" y="2" width="300" height="14" forecolor="#1A3A6B"/>
+                    <textElement>
+                        <font fontName="Arial" size="9" isBold="true"/>
+                    </textElement>
+                    <textFieldExpression><![CDATA[$F{category}]]></textFieldExpression>
+                </textField>
+            </band>
+        </groupHeader>
+        <groupFooter>
+            <band height="16">
+                <!-- Subtotal line -->
+                <line>
+                    <reportElement x="360" y="0" width="195" height="1" forecolor="#1A3A6B"/>
+                </line>
+                <!-- Subtotal label -->
+                <staticText>
+                    <reportElement x="300" y="2" width="60" height="12" forecolor="#1A3A6B"/>
+                    <textElement textAlignment="Right">
+                        <font fontName="Arial" size="8" isBold="true"/>
+                    </textElement>
+                    <text><![CDATA[Subtotal:]]></text>
+                </staticText>
+                <!-- Subtotal value -->
+                <textField>
+                    <reportElement x="370" y="2" width="80" height="12" forecolor="#1A3A6B"/>
+                    <textElement textAlignment="Right">
+                        <font fontName="Arial" size="8" isBold="true"/>
+                    </textElement>
+                    <textFieldExpression><![CDATA[$F{total}]]></textFieldExpression>
+                </textField>
+            </band>
+        </groupFooter>
+    </group>
+
+    <!-- Title / Report Header -->
+    <title>
+        <band height="60">
+            <!-- Header background -->
+            <rectangle>
+                <reportElement x="0" y="0" width="555" height="50" backcolor="#1A3A6B"/>
+                <graphicElement><pen lineWidth="0"/></graphicElement>
+            </rectangle>
+            <!-- Company name -->
+            <textField>
+                <reportElement x="8" y="8" width="300" height="20" forecolor="#FFFFFF"/>
+                <textElement>
+                    <font fontName="Arial" size="14" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{company}]]></textFieldExpression>
+            </textField>
+            <!-- Report title -->
+            <staticText>
+                <reportElement x="8" y="28" width="300" height="14" forecolor="#AACCFF"/>
+                <textElement>
+                    <font fontName="Arial" size="9"/>
+                </textElement>
+                <text><![CDATA[Sales Report]]></text>
+            </staticText>
+            <!-- Date -->
+            <textField>
+                <reportElement x="380" y="8" width="170" height="14" forecolor="#FFFFFF"/>
+                <textElement textAlignment="Right">
+                    <font fontName="Arial" size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{reportDate}]]></textFieldExpression>
+            </textField>
+        </band>
+    </title>
+
+    <!-- Page Header -->
+    <pageHeader>
+        <band height="20">
+            <!-- Column headers -->
+            <staticText>
+                <reportElement x="0" y="2" width="70" height="14" forecolor="#555555"/>
+                <textElement><font fontName="Arial" size="7" isBold="true"/></textElement>
+                <text><![CDATA[CODE]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="74" y="2" width="200" height="14" forecolor="#555555"/>
+                <textElement><font fontName="Arial" size="7" isBold="true"/></textElement>
+                <text><![CDATA[DESCRIPTION]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="278" y="2" width="50" height="14" forecolor="#555555"/>
+                <textElement textAlignment="Right"><font fontName="Arial" size="7" isBold="true"/></textElement>
+                <text><![CDATA[QTY]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="332" y="2" width="80" height="14" forecolor="#555555"/>
+                <textElement textAlignment="Right"><font fontName="Arial" size="7" isBold="true"/></textElement>
+                <text><![CDATA[UNIT PRICE]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="416" y="2" width="80" height="14" forecolor="#555555"/>
+                <textElement textAlignment="Right"><font fontName="Arial" size="7" isBold="true"/></textElement>
+                <text><![CDATA[TOTAL]]></text>
+            </staticText>
+            <!-- Header rule -->
+            <line>
+                <reportElement x="0" y="18" width="555" height="1" forecolor="#1A3A6B"/>
+            </line>
+        </band>
+    </pageHeader>
+
+    <!-- Detail Band -->
+    <detail>
+        <band height="14">
+            <textField>
+                <reportElement x="0" y="1" width="70" height="12"/>
+                <textElement><font fontName="Arial" size="8"/></textElement>
+                <textFieldExpression><![CDATA[$F{code}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="74" y="1" width="200" height="12"/>
+                <textElement><font fontName="Arial" size="8"/></textElement>
+                <textFieldExpression><![CDATA[$F{name}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="278" y="1" width="50" height="12"/>
+                <textElement textAlignment="Right"><font fontName="Arial" size="8"/></textElement>
+                <textFieldExpression><![CDATA[$F{qty}]]></textFieldExpression>
+            </textField>
+            <textField pattern="#,##0.00">
+                <reportElement x="332" y="1" width="80" height="12"/>
+                <textElement textAlignment="Right"><font fontName="Arial" size="8"/></textElement>
+                <textFieldExpression><![CDATA[$F{unit_price}]]></textFieldExpression>
+            </textField>
+            <textField pattern="#,##0.00" isStretchWithOverflow="false">
+                <reportElement x="416" y="1" width="80" height="12" forecolor="#000000"/>
+                <textElement textAlignment="Right"><font fontName="Arial" size="8" isBold="true"/></textElement>
+                <textFieldExpression><![CDATA[$F{total}]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+
+    <!-- Page Footer -->
+    <pageFooter>
+        <band height="20">
+            <line>
+                <reportElement x="0" y="0" width="555" height="1" forecolor="#CCCCCC"/>
+            </line>
+            <staticText>
+                <reportElement x="0" y="4" width="200" height="12" forecolor="#999999"/>
+                <textElement><font fontName="Arial" size="7"/></textElement>
+                <text><![CDATA[ReportForge — Enterprise Reporting Engine]]></text>
+            </staticText>
+        </band>
+    </pageFooter>
+
+    <!-- Summary / Report Footer -->
+    <summary>
+        <band height="30">
+            <line>
+                <reportElement x="0" y="0" width="555" height="2" forecolor="#1A3A6B"/>
+            </line>
+            <staticText>
+                <reportElement x="280" y="6" width="80" height="16" forecolor="#1A3A6B"/>
+                <textElement textAlignment="Right">
+                    <font fontName="Arial" size="10" isBold="true"/>
+                </textElement>
+                <text><![CDATA[GRAND TOTAL:]]></text>
+            </staticText>
+            <textField pattern="#,##0.00">
+                <reportElement x="364" y="6" width="100" height="16" forecolor="#1A3A6B"/>
+                <textElement textAlignment="Right">
+                    <font fontName="Arial" size="10" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{total}]]></textFieldExpression>
+            </textField>
+        </band>
+    </summary>
+
+</jasperReport>

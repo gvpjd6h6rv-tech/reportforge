@@ -1,0 +1,24 @@
+/**
+ * css/index.css — ReportForge Designer
+ *
+ * @layer cascade order (explicit, lowest → highest specificity):
+ *   reset      — box-sizing, margin/padding zero, html/body
+ *   tokens     — CSS custom properties (palette, spacing, typography)
+ *   base       — element defaults (body, input, button)
+ *   layout     — workspace, sidebars, inspector panels
+ *   components — toolbar, canvas, modals, v4 extensions
+ *   states     — hover, focus, active, ARIA, disabled, reduced-motion
+ *   utilities  — u-* classes, override helpers
+ */
+
+@layer reset, tokens, base, layout, components, states, utilities;
+
+@import "./reset.css"     layer(reset);
+@import "./base.css"      layer(tokens);
+@import "./toolbar.css"   layer(components);
+@import "./panels.css"    layer(layout);
+@import "./canvas.css"    layer(components);
+@import "./modals.css"    layer(components);
+@import "./v4.css"        layer(components);
+@import "./states.css"    layer(states);
+@import "./utilities.css" layer(utilities);

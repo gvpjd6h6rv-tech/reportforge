@@ -1,0 +1,26 @@
+{
+  "company":  {"name": "TechCorp S.A.", "ruc": "0991234567001", "address": "Av. Principal 123, Guayaquil"},
+  "client":   {"name": "Distribuidora Nacional Ltda.", "ruc": "0987654321001", "id": "CLI-0042"},
+  "period":   "Q1 2026",
+  "report_date": "2026-01-15",
+  "items": [
+    {"code":"ELEC-001","name":"Laptop ProBook 15","category":"Electronics","qty":5,"unit_price":1299.99,"discount":0.05,"total":6174.95,"stock":12},
+    {"code":"ELEC-002","name":"Wireless Mouse M305","category":"Electronics","qty":25,"unit_price":29.99,"discount":0.10,"total":674.78,"stock":3},
+    {"code":"ELEC-003","name":"USB-C Hub 7-Port","category":"Electronics","qty":15,"unit_price":49.99,"discount":0.08,"total":689.86,"stock":45},
+    {"code":"ELEC-004","name":"Monitor 27\" 4K","category":"Electronics","qty":3,"unit_price":599.99,"discount":0.00,"total":1799.97,"stock":2},
+    {"code":"FURN-001","name":"Ergonomic Desk Chair","category":"Furniture","qty":4,"unit_price":349.99,"discount":0.00,"total":1399.96,"stock":8},
+    {"code":"FURN-002","name":"Standing Desk L-Shape","category":"Furniture","qty":2,"unit_price":799.99,"discount":0.15,"total":1359.98,"stock":4},
+    {"code":"FURN-003","name":"Bookshelf Oak 5-Tier","category":"Furniture","qty":3,"unit_price":199.99,"discount":0.00,"total":599.97,"stock":11},
+    {"code":"SOFT-001","name":"Office Suite Pro 2026","category":"Software","qty":10,"unit_price":299.99,"discount":0.20,"total":2399.92,"stock":999},
+    {"code":"SOFT-002","name":"Antivirus Enterprise","category":"Software","qty":50,"unit_price":49.99,"discount":0.25,"total":1874.63,"stock":999},
+    {"code":"SOFT-003","name":"Project Manager Plus","category":"Software","qty":5,"unit_price":149.99,"discount":0.10,"total":674.96,"stock":999},
+    {"code":"SUPP-001","name":"A4 Paper Box (5 reams)","category":"Supplies","qty":20,"unit_price":24.99,"discount":0.00,"total":499.80,"stock":150},
+    {"code":"SUPP-002","name":"Ink Cartridge Multi-Pack","category":"Supplies","qty":8,"unit_price":39.99,"discount":0.05,"total":303.92,"stock":22}
+  ],
+  "summary": {
+    "total_items": 12,
+    "grand_total": 18453.70,
+    "avg_order":   1537.81,
+    "categories":  4
+  }
+}

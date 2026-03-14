@@ -1,0 +1,614 @@
+{
+  "name": "Sales Report by Category",
+  "version": "1.0",
+  "pageSize": "A4",
+  "orientation": "portrait",
+  "pageWidth": 754,
+  "margins": {
+    "top": 15,
+    "bottom": 15,
+    "left": 20,
+    "right": 20
+  },
+  "groups": [
+    {
+      "field": "category",
+      "sortDesc": false,
+      "label": "Category"
+    }
+  ],
+  "sortBy": [
+    {
+      "field": "category",
+      "desc": false
+    },
+    {
+      "field": "total",
+      "desc": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "s-rh",
+      "stype": "rh",
+      "label": "Report Header",
+      "height": 72
+    },
+    {
+      "id": "s-ph",
+      "stype": "ph",
+      "label": "Page Header",
+      "height": 56
+    },
+    {
+      "id": "s-gh",
+      "stype": "gh",
+      "label": "Group Header",
+      "height": 22,
+      "groupIndex": 0
+    },
+    {
+      "id": "s-dt",
+      "stype": "det",
+      "label": "Detail",
+      "height": 16,
+      "iterates": "items"
+    },
+    {
+      "id": "s-gf",
+      "stype": "gf",
+      "label": "Group Footer",
+      "height": 22,
+      "groupIndex": 0
+    },
+    {
+      "id": "s-pf",
+      "stype": "pf",
+      "label": "Page Footer",
+      "height": 36
+    },
+    {
+      "id": "s-rf",
+      "stype": "rf",
+      "label": "Report Footer",
+      "height": 52
+    }
+  ],
+  "elements": [
+    {
+      "id": "rh-bg",
+      "type": "rect",
+      "sectionId": "s-rh",
+      "x": 0,
+      "y": 0,
+      "w": 754,
+      "h": 72,
+      "bgColor": "#1A3A6B",
+      "zIndex": 0
+    },
+    {
+      "id": "rh-title",
+      "type": "field",
+      "sectionId": "s-rh",
+      "x": 20,
+      "y": 10,
+      "w": 500,
+      "h": 28,
+      "fieldPath": "company.name",
+      "fontSize": 16,
+      "bold": true,
+      "color": "#FFFFFF",
+      "zIndex": 1
+    },
+    {
+      "id": "rh-sub",
+      "type": "text",
+      "sectionId": "s-rh",
+      "x": 20,
+      "y": 42,
+      "w": 400,
+      "h": 16,
+      "content": "Sales Report — {period}",
+      "fontSize": 9,
+      "color": "#B0C4DE",
+      "zIndex": 1
+    },
+    {
+      "id": "rh-date",
+      "type": "text",
+      "sectionId": "s-rh",
+      "x": 580,
+      "y": 10,
+      "w": 160,
+      "h": 14,
+      "content": "Date: {report_date}",
+      "fontSize": 8,
+      "color": "#B0C4DE",
+      "align": "right",
+      "zIndex": 1
+    },
+    {
+      "id": "rh-client",
+      "type": "text",
+      "sectionId": "s-rh",
+      "x": 580,
+      "y": 28,
+      "w": 160,
+      "h": 14,
+      "content": "Client: {client.name}",
+      "fontSize": 7,
+      "color": "#B0C4DE",
+      "align": "right",
+      "zIndex": 1
+    },
+    {
+      "id": "ph-c1",
+      "type": "text",
+      "sectionId": "s-ph",
+      "x": 4,
+      "y": 4,
+      "w": 60,
+      "h": 14,
+      "content": "CODE",
+      "fontSize": 7,
+      "bold": true,
+      "bgColor": "#2C5282",
+      "color": "#FFF"
+    },
+    {
+      "id": "ph-c2",
+      "type": "text",
+      "sectionId": "s-ph",
+      "x": 68,
+      "y": 4,
+      "w": 256,
+      "h": 14,
+      "content": "PRODUCT NAME",
+      "fontSize": 7,
+      "bold": true,
+      "bgColor": "#2C5282",
+      "color": "#FFF"
+    },
+    {
+      "id": "ph-c3",
+      "type": "text",
+      "sectionId": "s-ph",
+      "x": 328,
+      "y": 4,
+      "w": 50,
+      "h": 14,
+      "content": "QTY",
+      "fontSize": 7,
+      "bold": true,
+      "bgColor": "#2C5282",
+      "color": "#FFF",
+      "align": "right"
+    },
+    {
+      "id": "ph-c4",
+      "type": "text",
+      "sectionId": "s-ph",
+      "x": 382,
+      "y": 4,
+      "w": 80,
+      "h": 14,
+      "content": "UNIT PRICE",
+      "fontSize": 7,
+      "bold": true,
+      "bgColor": "#2C5282",
+      "color": "#FFF",
+      "align": "right"
+    },
+    {
+      "id": "ph-c5",
+      "type": "text",
+      "sectionId": "s-ph",
+      "x": 466,
+      "y": 4,
+      "w": 70,
+      "h": 14,
+      "content": "DISCOUNT",
+      "fontSize": 7,
+      "bold": true,
+      "bgColor": "#2C5282",
+      "color": "#FFF",
+      "align": "right"
+    },
+    {
+      "id": "ph-c6",
+      "type": "text",
+      "sectionId": "s-ph",
+      "x": 540,
+      "y": 4,
+      "w": 90,
+      "h": 14,
+      "content": "TOTAL",
+      "fontSize": 7,
+      "bold": true,
+      "bgColor": "#2C5282",
+      "color": "#FFF",
+      "align": "right"
+    },
+    {
+      "id": "ph-c7",
+      "type": "text",
+      "sectionId": "s-ph",
+      "x": 634,
+      "y": 4,
+      "w": 116,
+      "h": 14,
+      "content": "STOCK STATUS",
+      "fontSize": 7,
+      "bold": true,
+      "bgColor": "#2C5282",
+      "color": "#FFF",
+      "align": "center"
+    },
+    {
+      "id": "ph-line",
+      "type": "line",
+      "sectionId": "s-ph",
+      "x": 4,
+      "y": 30,
+      "w": 746,
+      "h": 1,
+      "borderColor": "#2C5282",
+      "borderWidth": 1
+    },
+    {
+      "id": "ph-cli-l",
+      "type": "text",
+      "sectionId": "s-ph",
+      "x": 4,
+      "y": 36,
+      "w": 50,
+      "h": 14,
+      "content": "Client:",
+      "fontSize": 7,
+      "bold": true
+    },
+    {
+      "id": "ph-cli-v",
+      "type": "field",
+      "sectionId": "s-ph",
+      "x": 58,
+      "y": 36,
+      "w": 350,
+      "h": 14,
+      "fieldPath": "client.name",
+      "fontSize": 7
+    },
+    {
+      "id": "ph-per-l",
+      "type": "text",
+      "sectionId": "s-ph",
+      "x": 450,
+      "y": 36,
+      "w": 50,
+      "h": 14,
+      "content": "Period:",
+      "fontSize": 7,
+      "bold": true
+    },
+    {
+      "id": "ph-per-v",
+      "type": "field",
+      "sectionId": "s-ph",
+      "x": 504,
+      "y": 36,
+      "w": 246,
+      "h": 14,
+      "fieldPath": "period",
+      "fontSize": 7,
+      "align": "right"
+    },
+    {
+      "id": "gh-bg",
+      "type": "rect",
+      "sectionId": "s-gh",
+      "x": 4,
+      "y": 4,
+      "w": 746,
+      "h": 16,
+      "bgColor": "#EBF4FF",
+      "borderColor": "#2C5282",
+      "borderWidth": 1
+    },
+    {
+      "id": "gh-label",
+      "type": "text",
+      "sectionId": "s-gh",
+      "x": 10,
+      "y": 6,
+      "w": 80,
+      "h": 12,
+      "content": "Category:",
+      "fontSize": 8,
+      "bold": true,
+      "color": "#1A3A6B",
+      "zIndex": 1
+    },
+    {
+      "id": "gh-value",
+      "type": "field",
+      "sectionId": "s-gh",
+      "x": 94,
+      "y": 6,
+      "w": 240,
+      "h": 12,
+      "fieldPath": "item.category",
+      "fontSize": 8,
+      "bold": true,
+      "color": "#1A3A6B",
+      "zIndex": 1
+    },
+    {
+      "id": "gh-cnt",
+      "type": "text",
+      "sectionId": "s-gh",
+      "x": 400,
+      "y": 6,
+      "w": 340,
+      "h": 12,
+      "content": "Items: {count(items.code)}",
+      "fontSize": 7,
+      "color": "#666",
+      "align": "right",
+      "zIndex": 1
+    },
+    {
+      "id": "dt-code",
+      "type": "field",
+      "sectionId": "s-dt",
+      "x": 4,
+      "y": 1,
+      "w": 60,
+      "h": 14,
+      "fieldPath": "item.code",
+      "fontSize": 7,
+      "color": "#444"
+    },
+    {
+      "id": "dt-name",
+      "type": "field",
+      "sectionId": "s-dt",
+      "x": 68,
+      "y": 1,
+      "w": 256,
+      "h": 14,
+      "fieldPath": "item.name",
+      "fontSize": 7
+    },
+    {
+      "id": "dt-qty",
+      "type": "field",
+      "sectionId": "s-dt",
+      "x": 328,
+      "y": 1,
+      "w": 50,
+      "h": 14,
+      "fieldPath": "item.qty",
+      "fieldFmt": "int",
+      "fontSize": 7,
+      "align": "right"
+    },
+    {
+      "id": "dt-price",
+      "type": "field",
+      "sectionId": "s-dt",
+      "x": 382,
+      "y": 1,
+      "w": 80,
+      "h": 14,
+      "fieldPath": "item.unit_price",
+      "fieldFmt": "currency",
+      "fontSize": 7,
+      "align": "right"
+    },
+    {
+      "id": "dt-disc",
+      "type": "field",
+      "sectionId": "s-dt",
+      "x": 466,
+      "y": 1,
+      "w": 70,
+      "h": 14,
+      "fieldPath": "item.discount",
+      "fieldFmt": "pct2",
+      "fontSize": 7,
+      "align": "right",
+      "conditionalStyles": [
+        {
+          "condition": "item.discount > 0.1",
+          "style": {
+            "color": "#2E7D32",
+            "bold": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "dt-total",
+      "type": "field",
+      "sectionId": "s-dt",
+      "x": 540,
+      "y": 1,
+      "w": 90,
+      "h": 14,
+      "fieldPath": "item.qty * item.unit_price * (1 - item.discount)",
+      "fieldFmt": "currency",
+      "fontSize": 7,
+      "align": "right",
+      "bold": true
+    },
+    {
+      "id": "dt-stock",
+      "type": "field",
+      "sectionId": "s-dt",
+      "x": 634,
+      "y": 1,
+      "w": 116,
+      "h": 14,
+      "fieldPath": "item.stock > 10 ? \"✓ In Stock\" : item.stock > 0 ? \"⚠ Low\" : \"✗ Out\"",
+      "fontSize": 7,
+      "align": "center",
+      "conditionalStyles": [
+        {
+          "condition": "item.stock < 5",
+          "style": {
+            "color": "#C62828",
+            "bold": true
+          }
+        },
+        {
+          "condition": "item.stock < 10",
+          "style": {
+            "color": "#E65100"
+          }
+        }
+      ]
+    },
+    {
+      "id": "gf-line",
+      "type": "line",
+      "sectionId": "s-gf",
+      "x": 4,
+      "y": 3,
+      "w": 746,
+      "h": 1,
+      "borderColor": "#999",
+      "borderWidth": 1
+    },
+    {
+      "id": "gf-label",
+      "type": "text",
+      "sectionId": "s-gf",
+      "x": 4,
+      "y": 7,
+      "w": 520,
+      "h": 13,
+      "content": "Category Subtotal:",
+      "fontSize": 8,
+      "bold": true,
+      "align": "right",
+      "color": "#1A3A6B"
+    },
+    {
+      "id": "gf-total",
+      "type": "field",
+      "sectionId": "s-gf",
+      "x": 528,
+      "y": 7,
+      "w": 100,
+      "h": 13,
+      "fieldPath": "sum(items.total)",
+      "fieldFmt": "currency",
+      "fontSize": 8,
+      "bold": true,
+      "align": "right",
+      "color": "#1A3A6B"
+    },
+    {
+      "id": "pf-left",
+      "type": "text",
+      "sectionId": "s-pf",
+      "x": 4,
+      "y": 8,
+      "w": 300,
+      "h": 12,
+      "content": "ReportForge v1.0 — Confidential",
+      "fontSize": 7,
+      "color": "#AAA"
+    },
+    {
+      "id": "pf-right",
+      "type": "text",
+      "sectionId": "s-pf",
+      "x": 500,
+      "y": 8,
+      "w": 250,
+      "h": 12,
+      "content": "Printed: {report_date}",
+      "fontSize": 7,
+      "color": "#AAA",
+      "align": "right"
+    },
+    {
+      "id": "pf-line",
+      "type": "line",
+      "sectionId": "s-pf",
+      "x": 4,
+      "y": 4,
+      "w": 746,
+      "h": 1,
+      "borderColor": "#DDD",
+      "borderWidth": 1
+    },
+    {
+      "id": "rf-line",
+      "type": "line",
+      "sectionId": "s-rf",
+      "x": 4,
+      "y": 4,
+      "w": 746,
+      "h": 2,
+      "borderColor": "#1A3A6B",
+      "borderWidth": 2
+    },
+    {
+      "id": "rf-g-lbl",
+      "type": "text",
+      "sectionId": "s-rf",
+      "x": 400,
+      "y": 14,
+      "w": 170,
+      "h": 16,
+      "content": "GRAND TOTAL:",
+      "fontSize": 10,
+      "bold": true,
+      "color": "#1A3A6B",
+      "align": "right"
+    },
+    {
+      "id": "rf-g-tot",
+      "type": "field",
+      "sectionId": "s-rf",
+      "x": 528,
+      "y": 14,
+      "w": 100,
+      "h": 14,
+      "fieldPath": "sum(items.total)",
+      "fieldFmt": "currency",
+      "fontSize": 10,
+      "bold": true,
+      "align": "right",
+      "color": "#1A3A6B"
+    },
+    {
+      "id": "rf-cnt-lbl",
+      "type": "text",
+      "sectionId": "s-rf",
+      "x": 4,
+      "y": 32,
+      "w": 350,
+      "h": 12,
+      "content": "Total line items: {count(items)}",
+      "fontSize": 8,
+      "color": "#555"
+    },
+    {
+      "id": "rf-avg-lbl",
+      "type": "text",
+      "sectionId": "s-rf",
+      "x": 360,
+      "y": 32,
+      "w": 260,
+      "h": 12,
+      "content": "Avg order value: {avg(items.total)}",
+      "fieldFmt": "currency",
+      "fontSize": 8,
+      "color": "#555",
+      "align": "right"
+    }
+  ]
+}
