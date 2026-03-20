@@ -1,0 +1,51 @@
+{
+  "label": "baseline",
+  "timestamp": 1773622210289,
+  "state": {
+    "rulers": {
+      "horizontalVisible": true,
+      "verticalVisible": true,
+      "hWidth": 981,
+      "vWidth": 24,
+      "vHeight": 710
+    },
+    "canvas": {
+      "x": 310,
+      "y": 184,
+      "width": 754,
+      "height": 354,
+      "transform": "none"
+    },
+    "viewport": {
+      "x": 310,
+      "transform": "matrix(1, 0, 0, 1, 0, 0)"
+    },
+    "workspace": {
+      "left": 196,
+      "width": 982,
+      "scrollX": 0,
+      "scrollY": 0
+    },
+    "zoom": {
+      "design": 1,
+      "preview": 1,
+      "design2": 1
+    },
+    "selection": {
+      "count": 0,
+      "ids": []
+    },
+    "elements": {
+      "count": 46
+    },
+    "snap": {
+      "guideCount": 0,
+      "snapEnabled": true,
+      "gridVisible": true
+    },
+    "preview": {
+      "active": false
+    },
+    "jsErrors": 0
+  }
+}

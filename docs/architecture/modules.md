@@ -1,79 +1,136 @@
-# Module Map
+# Engine Module Reference — ReportForge v18.0
 
-## File tree
+## CommandEngine
 
-```
-js/
-├── rf.js                          # Global namespace RF, event bus, utilities
-├── main.js                        # Import graph entry, DOMContentLoaded boot
-├── app.js                         # RF.App — orchestrates all init() calls
-│
-├── core/
-│   ├── document-model.js          # RF.Core.DocumentModel — layout state
-│   ├── history.js                 # RF.Core.HistoryEngine — undo/redo stack
-│   ├── selection.js               # RF.Core.SelectionSystem — selectedIds Set
-│   ├── render-pipeline.js         # RF.Core.RenderPipeline — fullRender / reconcile
-│   └── layout-tools.js            # RF.Core.LayoutTools — load/save/export JSON
-│
-├── ux/
-│   ├── snapping.js                # RF.UX.Snapping — grid + element snap
-│   ├── guides.js                  # RF.UX.Guides — user guide lines
-│   ├── alignment.js               # RF.UX.Alignment — align, distribute, equal
-│   ├── format-painter.js          # RF.UX.FormatPainter — copy style across elements
-│   ├── drag-tools.js              # RF.UX.DragTools — move, resize, marquee
-│   ├── object-group.js            # RF.UX.ObjectGroup — group / ungroup
-│   ├── panel-splitter.js          # RF.UX.PanelSplitter — resize side panels
-│   ├── context-menu.js            # RF.UX.ContextMenu — right-click menus + showAt()
-│   ├── field-drag-ghost.js        # RF.UX.FieldDragGhost — yellow ghost during drag
-│   └── panel-tabs.js              # RF.UX.PanelTabs — Fields/Report/Repo tabs
-│
-├── classic/
-│   ├── elements.js                # RF.Classic.Elements — render element DOM
-│   ├── canvas.js                  # RF.Classic.Canvas — zoom, pan, rulers, grid
-│   ├── sections.js                # RF.Classic.Sections — section bodies + label column
-│   ├── inspector.js               # RF.Classic.Inspector — property grid panel
-│   ├── explorer.js                # RF.Classic.Explorer — field tree panel
-│   ├── toolbar.js                 # RF.Classic.Toolbar — toolbar rows 1 & 2
-│   ├── menu.js                    # RF.Classic.Menu — full Windows menu bar
-│   ├── sections-v4.js             # RF.Classic.SectionsV4 — collapse toggle patch
-│   ├── status-bar-v4.js           # RF.Classic.StatusBarV4 — W×H, grid, snap, coords
-│   └── toolbar-v4.js              # RF.Classic.ToolbarV4 — extra tool buttons
-│
-└── modules/
-    ├── formula-editor.js           # RF.Modules.FormulaEditor
-    ├── formula-editor-v4.js        # RF.Modules.FormulaEditorV4 — autocomplete patch
-    ├── formula-debugger.js         # RF.Modules.FormulaDebugger
-    ├── parameters.js               # RF.Modules.Parameters
-    ├── groups.js                   # RF.Modules.Groups — group/sort expert
-    ├── filters.js                  # RF.Modules.Filters — select expert
-    ├── tables.js                   # RF.Modules.Tables — cross-tab tables
-    ├── charts.js                   # RF.Modules.Charts — chart editor
-    ├── subreports.js               # RF.Modules.Subreports
-    ├── conditional-fmt.js          # RF.Modules.ConditionalFmt
-    ├── section-expert.js           # RF.Modules.SectionExpert
-    ├── object-explorer.js          # RF.Modules.ObjectExplorer
-    ├── preview.js                  # RF.Modules.Preview — iframe preview
-    ├── running-totals.js           # RF.Modules.RunningTotals
-    ├── crosstab.js                 # RF.Modules.Crosstab
-    ├── topn.js                     # RF.Modules.TopN
-    ├── multi-section.js            # RF.Modules.MultiSection
-    ├── report-explorer.js          # RF.Modules.ReportExplorer
-    ├── repository-explorer.js      # RF.Modules.RepositoryExplorer
-    ├── sql-editor.js               # RF.Modules.SQLEditor
-    ├── barcode-editor.js           # RF.Modules.BarcodeEditor
-    ├── rich-text-editor.js         # RF.Modules.RichTextEditor
-    ├── map-editor.js               # RF.Modules.MapEditor
-    └── preview-nav.js              # RF.Modules.PreviewNav
+Implements all 84 designer commands with undo/redo integration.
+
+**Categories:** FILE (8) · EDIT (7) · SELECTION (3) · MOVEMENT (8) · ALIGNMENT (6) · DISTRIBUTION (2) · ORDER (4) · GROUPING (2) · ZOOM (5) · VIEW (6) · GUIDES (4) · MARGINS (4) · SECTIONS (5) · OBJECT (4) · CANVAS (4) · INSERT (4) · FORMAT (4) · NAVIGATION (4)
+
+**Key methods:**
+
+```javascript
+CommandEngine.copy()          // copy to DS.clipboard
+CommandEngine.paste()         // paste with 8px offset
+CommandEngine.delete()        // delete selected + saveHistory()
+CommandEngine.bringFront()    // max zIndex + 1
+CommandEngine.sendBack()      // min zIndex - 1
+CommandEngine.bringForward()  // zIndex + 1
+CommandEngine.sendBackward()  // zIndex - 1
+CommandEngine.group()         // assign shared groupId
+CommandEngine.invertSelection() // flip DS.selection
+CommandEngine.zoomFitPage()   // scale to fit workspace
+CommandEngine.zoomFitWidth()  // scale to fit width
+CommandEngine.alignLefts()    // align to leftmost selected
+CommandEngine.deleteSection() // remove section + its elements
+CommandEngine.lockObject()    // set el.locked = true
+CommandEngine.hideObject()    // set el.hidden = true
 ```
 
-## CSS files
+All mutating commands call `DS.saveHistory()` to push to the undo stack.
 
-| File | Responsibility |
-|------|---------------|
-| `base.css` | CSS variables (light palette), reset, typography |
-| `toolbar.css` | Toolbar rows, menu bar, canvas tabs |
-| `panels.css` | Workspace layout, field explorer, inspector, status bar |
-| `canvas.css` | Canvas area, section bodies, elements, handles, guides |
-| `modals.css` | All dialog modals, formula editor, preview overlay |
-| `v4.css` | Context menu, panel tabs, formula workshop, extended element types |
-| `index.css` | Cascade entry point (`@import` all above) |
+## DesignZoomEngine
+
+```javascript
+DesignZoomEngine.set(z, anchorX?, anchorY?)   // snap to ZOOM_STEPS, scroll-compensate
+DesignZoomEngine.setFree(z, anchorX?, anchorY?) // continuous, no snap (wheel zoom)
+DesignZoomEngine.zoomIn(ax?, ay?)              // next ZOOM_STEPS level
+DesignZoomEngine.zoomOut(ax?, ay?)             // prev ZOOM_STEPS level
+DesignZoomEngine.reset()                       // set(1.0)
+DesignZoomEngine.get()                         // DS.zoom
+
+ZOOM_STEPS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4]
+```
+
+`set()` snaps to nearest step (±25–50% increments, for buttons).  
+`setFree()` is used for wheel zoom (~10% per tick).
+
+## DocumentStore (DS)
+
+Global singleton — all state lives here.
+
+```javascript
+DS.elements[]          // all report elements
+DS.sections[]          // report sections in order
+DS.selection           // Set<id>
+DS.clipboard           // array of JSON strings
+DS.history[]           // undo stack entries
+DS.historyIndex        // current position
+DS.zoom                // current zoom level
+DS.zoomDesign          // saved design-mode zoom
+DS.zoomPreview         // saved preview-mode zoom
+DS.previewMode         // boolean
+DS.gridVisible         // boolean
+DS.snapToGrid          // boolean
+
+DS.getElementById(id)  // → element or null
+DS.getSection(id)      // → section or null
+DS.getSectionTop(id)   // → accumulated y offset
+DS.getSectionAtY(y)    // → {section, relY}
+DS.getTotalHeight()    // → sum of section heights
+DS.getSelectedElements() // → array
+DS.snap(v)             // → Math.round(v/8)*8
+DS.saveHistory()       // push snapshot to history
+DS.undo()              // restore previous snapshot
+DS.redo()              // restore next snapshot
+DS.subscribe(cb)       // observe state changes
+DS.notify()            // trigger subscribers
+```
+
+## RF.Geometry
+
+Cached per-frame geometry math.
+
+```javascript
+RF.Geometry.canvasRect()      // DOMRect of #canvas-layer
+RF.Geometry.rulerVRect()      // DOMRect of #ruler-v
+RF.Geometry.elementRect(div)  // {x,y,w,h} in canvas coords
+RF.Geometry.sectionBand(div)  // {y,h} of section
+RF.Geometry.rulerVTop()       // canvas top offset for ruler sync
+RF.Geometry.toWorldX(clientX) // screen → document x
+RF.Geometry.toWorldY(clientY) // screen → document y
+RF.Geometry.invalidate()      // clear per-frame cache
+
+RF.Geometry.MagneticSnap.snap(v, grid) // snap to grid, idempotent
+```
+
+## AlignmentGuides
+
+Snap guide rendering in `#guide-layer` (position: fixed — not affected by viewport zoom).
+
+```javascript
+AlignmentGuides.show(elementId)  // render guides for element edges+centers
+AlignmentGuides.clear()          // remove all guides
+```
+
+Guide classes: `.rf-guide.rf-guide-h` / `.rf-guide.rf-guide-v`  
+Guides use `getBoundingClientRect()` in screen-space for pixel-perfect alignment.
+
+## SelectionEngine
+
+```javascript
+SelectionEngine.renderHandles()    // draw L-shaped corner handles (4 corners only)
+SelectionEngine.onPointerDown(e, id)
+SelectionEngine.onMouseMove(e)     // RAF-throttled position update
+SelectionEngine._doMove(pos, e)    // real-time drag (updates div.style.left/top in RAF)
+SelectionEngine._doResize(pos, e)
+```
+
+Handles: 4 L-shaped black corner markers (`.sel-handle[data-pos="nw|ne|sw|se"]`), 1px border, 7×7px.
+
+## PreviewEngine
+
+```javascript
+PreviewEngine.show()  // save DS.zoomDesign, restore DS.zoomPreview, add .preview-mode class
+PreviewEngine.hide()  // save DS.zoomPreview, restore DS.zoomDesign, remove class
+PreviewEngine.toggle()
+```
+
+Preview and Design maintain **independent zoom states** (`DS.zoomDesign`, `DS.zoomPreview`). Switching modes restores the previous zoom for that mode.
+
+## OverlayEngine
+
+```javascript
+OverlayEngine.render()   // full re-render: rulers + handles + guides
+```
+
+Called by `DS.subscribe()` on any state change. Throttled via `requestAnimationFrame`.

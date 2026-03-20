@@ -1,43 +1,59 @@
-# Report Sections
+# Section System — ReportForge v18.0
 
-## Section model
+## Section Types
 
-Every ReportForge layout has an ordered list of sections. Each section has a **type** (stype), a **height** in pixels, and contains zero or more elements.
+ReportForge implements the Crystal Reports banded section model:
 
-```json
+| Type | `stype` | Description |
+|------|---------|-------------|
+| Report Header | `RH` | Prints once at start of report |
+| Page Header | `PH` | Prints at top of each page |
+| Group Header N | `GH` | Before each group (multiple allowed) |
+| Detail | `D` | Repeats for each data row |
+| Group Footer N | `GF` | After each group |
+| Page Footer | `PF` | Prints at bottom of each page |
+| Report Footer | `RF` | Prints once at end of report |
+
+## Section Properties
+
+Each section in `DS.sections[]`:
+
+```javascript
 {
-  "sections": [
-    { "id": "s1", "stype": "rh",  "label": "Report Header",  "height": 80  },
-    { "id": "s2", "stype": "ph",  "label": "Page Header",    "height": 40  },
-    { "id": "s3", "stype": "gh",  "label": "Group Header 1", "height": 30  },
-    { "id": "s4", "stype": "det", "label": "Details",        "height": 20  },
-    { "id": "s5", "stype": "gf",  "label": "Group Footer 1", "height": 30  },
-    { "id": "s6", "stype": "pf",  "label": "Page Footer",    "height": 30  },
-    { "id": "s7", "stype": "rf",  "label": "Report Footer",  "height": 60  }
-  ]
+  id: "sec_1",
+  stype: "D",          // section type code
+  label: "Detail a",   // display label
+  height: 120,         // height in pixels (document units)
+  visible: true,       // visibility flag
 }
 ```
 
-## Section properties
+## Section Commands
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `id` | string | Unique identifier |
-| `stype` | enum | `rh` `ph` `gh` `det` `gf` `pf` `rf` |
-| `label` | string | Display name |
-| `height` | number | Height in pixels |
-| `canGrow` | boolean | Section expands to fit content |
-| `suppress` | boolean | Section hidden in output |
-| `keepTogether` | boolean | Prevents page break inside |
-| `newPageBefore` | boolean | Force page break before |
-| `newPageAfter` | boolean | Force page break after |
+All section commands are in `CommandEngine`:
 
-## Section Expert
+```javascript
+CommandEngine.insertSection()     // insert new section after current
+CommandEngine.deleteSection()     // delete section + all its elements
+CommandEngine.moveSectionUp()     // swap with previous section
+CommandEngine.moveSectionDown()   // swap with next section
+CommandEngine.renameSection()     // prompt for new label
+```
 
-Open via **Report → Section Expert** or double-click a section label.
+## Layout Calculation
 
-Configure suppress conditions, can-grow, new-page, background color, and underlay behavior per section.
+Section y-offsets are computed by `DS.getSectionTop(sectionId)`:
 
-## Resizing
+```javascript
+// Accumulate heights of all preceding sections
+getSectionTop(id) {
+  let y = 0;
+  for (const sec of this.sections) {
+    if (sec.id === id) return y;
+    y += sec.height;
+  }
+  return y;
+}
+```
 
-Drag the 3 px gray handle below any section body to resize. Live height tooltip shown in status bar.
+Element coordinates (`el.x`, `el.y`) are always **relative to their section**, not the whole canvas. The absolute canvas position is `getSectionTop(el.sectionId) + el.y`.

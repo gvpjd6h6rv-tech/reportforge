@@ -12,8 +12,7 @@ RF.Modules.ReportExplorer = {
   _visible: false,
 
   init() {
-    RF.on(RF.E.LAYOUT_CHANGED, () => { if(this._visible) this.render(); });
-  },
+      },
 
   toggle() {
     this._visible = !this._visible;

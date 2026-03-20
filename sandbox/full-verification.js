@@ -69,14 +69,14 @@ function report(cat) {
   // ══════════════════════════════════════════════════════
   section('DOM TESTS');
   const dom = await page.evaluate(`(() => {
-    const ids=['canvas-layer','workspace','panel-left','panel-right','sections-layer','handles-layer','selection-layer','guides-layer','preview-layer','preview-content','zoom-widget','zw-slider'];
+    const ids=['canvas-surface','canvas-scroll','panel-left','panel-right','sections-layer','handles-layer','selection-layer','guides-layer','preview-layer','preview-content','zoom-widget','zw-slider'];
     const res={};
     ids.forEach(id=>res[id]=!!document.getElementById(id));
     res.crElements=document.querySelectorAll('.cr-element').length;
     res.crSections=document.querySelectorAll('.cr-section').length;
     return res;
   })()`);
-  ['canvas-layer','workspace','panel-left','panel-right','sections-layer','handles-layer','selection-layer','guides-layer','preview-layer','zoom-widget','zw-slider'].forEach(id => {
+  ['canvas-surface','canvas-scroll','panel-left','panel-right','sections-layer','handles-layer','selection-layer','guides-layer','preview-layer','zoom-widget','zw-slider'].forEach(id => {
     record('DOM', `#${id} exists`, dom[id]);
   });
   record('DOM', 'cr-element count > 0', dom.crElements > 0, `count=${dom.crElements}`);
@@ -87,8 +87,8 @@ function report(cat) {
   // ══════════════════════════════════════════════════════
   section('GEOMETRY TESTS');
   const geo = await page.evaluate(`(() => {
-    const cl=document.getElementById('canvas-layer');
-    const ws=document.getElementById('workspace');
+    const cl=document.getElementById('canvas-layer')||document.getElementById('canvas-surface');
+    const ws=document.getElementById('workspace')||document.getElementById('canvas-scroll');
     const clR=cl.getBoundingClientRect();
     const wsR=ws.getBoundingClientRect();
     const els=document.querySelectorAll('.cr-element');
@@ -151,7 +151,7 @@ function report(cat) {
   section('GUIDE ALIGNMENT TESTS');
   const guides = await page.evaluate(`(() => {
     if(DS.elements.length < 2) return {skip:true};
-    const cl=document.getElementById('canvas-layer');
+    const cl=document.getElementById('canvas-layer')||document.getElementById('canvas-surface');
     const clRect=cl.getBoundingClientRect();
     // Place two elements at known aligned positions
     const el0=DS.elements[0], el1=DS.elements[1];
@@ -197,7 +197,7 @@ function report(cat) {
   section('GUIDE EXTENSION TESTS');
   const guideExt = await page.evaluate(`(() => {
     if(DS.elements.length < 2) return {skip:true};
-    const cl=document.getElementById('canvas-layer');
+    const cl=document.getElementById('canvas-layer')||document.getElementById('canvas-surface');
     const clRect=cl.getBoundingClientRect();
     const el0=DS.elements[0], el1=DS.elements[1];
     const origX1=el1.x; el1.x=el0.x;
@@ -228,8 +228,8 @@ function report(cat) {
   // ══════════════════════════════════════════════════════
   section('ZOOM TESTS');
   const zoom = await page.evaluate(`(() => {
-    const cl=document.getElementById('canvas-layer');
-    const ws=document.getElementById('workspace');
+    const cl=document.getElementById('canvas-layer')||document.getElementById('canvas-surface');
+    const ws=document.getElementById('workspace')||document.getElementById('canvas-scroll');
     // Canvas offsetWidth must stay constant during zoom (model coords unchanged)
     const w100=cl.offsetWidth, h100=cl.offsetHeight;
     DesignZoomEngine.set(3.0);
@@ -270,7 +270,7 @@ function report(cat) {
   // ══════════════════════════════════════════════════════
   section('CTRL+WHEEL TESTS');
   const ctrlWheel = await page.evaluate(`(() => {
-    const ws=document.getElementById('workspace');
+    const ws=document.getElementById('workspace')||document.getElementById('canvas-scroll');
     const z0=DS.zoom;
     // Simulate ctrl+wheel down (zoom out)
     const evt=new WheelEvent('wheel',{ctrlKey:true,deltaY:100,bubbles:true,cancelable:true});
@@ -304,7 +304,7 @@ function report(cat) {
     const pvEl=instances[0];
     const pvCorners=pvEl?pvEl.querySelectorAll('.el-corner').length:0;
     // Canvas offsetWidth unchanged in preview
-    const cl=document.getElementById('canvas-layer');
+    const cl=document.getElementById('canvas-layer')||document.getElementById('canvas-surface');
     const pvCW=cl.offsetWidth;
     const itemCount=typeof SAMPLE_DATA!=='undefined'?(SAMPLE_DATA.items||[]).length:0;
     const detailBands=[...document.querySelectorAll('.pv-section')].filter(d=>{
@@ -389,7 +389,7 @@ function report(cat) {
   section('DRAG TEST');
   const dragT = await page.evaluate(`(() => {
     if(DS.elements.length<2) return {skip:true};
-    const cl=document.getElementById('canvas-layer');
+    const cl=document.getElementById('canvas-layer')||document.getElementById('canvas-surface');
     const clRect=cl.getBoundingClientRect();
     const el0div=document.querySelector('.cr-element');
     if(!el0div) return {skip:true};
@@ -434,7 +434,7 @@ function report(cat) {
   // ── Scroll tests ────────────────────────────────────────────────
   // Verify overflow layout at zoom 4x (layout proof = scroll IS possible)
   const scroll = await page.evaluate(`(() => {
-    const ws = document.getElementById('workspace');
+    const ws = document.getElementById('workspace')||document.getElementById('canvas-scroll');
     const ov = getComputedStyle(ws).overflow;
     const ovY = getComputedStyle(ws).overflowY;
     DesignZoomEngine.set(4.0);
@@ -518,7 +518,7 @@ function report(cat) {
   // ══════════════════════════════════════════════════════
   section('FUZZ TESTS');
   const fuzz = await page.evaluate(`(() => {
-    const cl=document.getElementById('canvas-layer');
+    const cl=document.getElementById('canvas-layer')||document.getElementById('canvas-surface');
     const clRect=cl.getBoundingClientRect();
     const W=clRect.width, H=clRect.height;
     let nanCount=0, oobCount=0;

@@ -1,7 +1,7 @@
 import RF from '../rf.js';
 
 /**
- * core/history.js — RF.Core.HistoryEngine  (alias: RF.H)
+ * core/history.js — RF.Core.HistoryEngine
  * Layer   : Core
  * Purpose : Undo/redo stack. Snapshots the full layout as JSON; restores on
  *           undo/redo via RF.Core.DocumentModel.

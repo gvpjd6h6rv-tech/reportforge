@@ -61,9 +61,9 @@ function hdr(s) { process.stdout.write('\n  [' + s + ']\n'); }
   // ══════════════════════════════════════════════════════════════════════
   hdr('GEOMETRY TESTS');
   const geo = await page.evaluate(`(() => {
-    const cl=document.getElementById('canvas-layer');
-    const vp=document.getElementById('viewport');
-    const ws=document.getElementById('workspace');
+    const cl=document.getElementById('canvas-layer')||document.getElementById('canvas-surface');
+    const vp=document.getElementById('viewport')||document.getElementById('canvas-viewport');
+    const ws=document.getElementById('workspace')||document.getElementById('canvas-scroll');
     const els=[...document.querySelectorAll('.cr-element')];
     const secs=[...document.querySelectorAll('.cr-section')];
     const clR=cl.getBoundingClientRect();
@@ -183,9 +183,9 @@ function hdr(s) { process.stdout.write('\n  [' + s + ']\n'); }
   // ══════════════════════════════════════════════════════════════════════
   hdr('VIEWPORT ZOOM ARCHITECTURE');
   const zoomArch = await page.evaluate(`(() => {
-    const vp=document.getElementById('viewport');
-    const cl=document.getElementById('canvas-layer');
-    const ws=document.getElementById('workspace');
+    const vp=document.getElementById('viewport')||document.getElementById('canvas-viewport');
+    const cl=document.getElementById('canvas-layer')||document.getElementById('canvas-surface');
+    const ws=document.getElementById('workspace')||document.getElementById('canvas-scroll');
     // Canvas offsetWidth BEFORE zoom
     const clOffW_before=cl.offsetWidth, clOffH_before=cl.offsetHeight;
     DesignZoomEngine.set(3.0);
@@ -242,7 +242,7 @@ function hdr(s) { process.stdout.write('\n  [' + s + ']\n'); }
 
   // Test each zoom level: canvas offsetWidth must be 754 always
   const zoomLevels = await page.evaluate(`(() => {
-    const cl=document.getElementById('canvas-layer');
+    const cl=document.getElementById('canvas-layer')||document.getElementById('canvas-surface');
     const r=[];
     ZOOM_STEPS.forEach(z=>{
       DesignZoomEngine.set(z);
@@ -259,7 +259,7 @@ function hdr(s) { process.stdout.write('\n  [' + s + ']\n'); }
     const hasFormula=DesignZoomEngine.set.toString().includes('scrollLeft')&&
                      DesignZoomEngine.set.toString().includes('ratio');
     DesignZoomEngine.set(4.0);
-    const vp=document.getElementById('viewport');
+    const vp=document.getElementById('viewport')||document.getElementById('canvas-viewport');
     const mbHigh=parseFloat(vp.style.marginBottom)||0;
     DesignZoomEngine.set(1.0);
     const mbLow=parseFloat(vp.style.marginBottom)||0;
@@ -270,7 +270,7 @@ function hdr(s) { process.stdout.write('\n  [' + s + ']\n'); }
   t('ZOOM_ARCH','viewport marginBottom grows at higher zoom',scrollComp.marginGrows, `mb4x=${scrollComp.mbHigh} mb1x=${scrollComp.mbLow}`);
   // Ctrl+wheel
   const ctrlWheel = await page.evaluate(`(() => {
-    const ws=document.getElementById('workspace');
+    const ws=document.getElementById('workspace')||document.getElementById('canvas-scroll');
     const z0=DS.zoom;
     ws.dispatchEvent(new WheelEvent('wheel',{ctrlKey:true,deltaY:100,bubbles:true,cancelable:true}));
     const z1=DS.zoom;
@@ -302,7 +302,7 @@ function hdr(s) { process.stdout.write('\n  [' + s + ']\n'); }
   const guideTests = await page.evaluate(`(() => {
     const results=[];
     if(DS.elements.length<2){return [{k:'need 2+ elements',v:false}];}
-    const cl=document.getElementById('canvas-layer');
+    const cl=document.getElementById('canvas-layer')||document.getElementById('canvas-surface');
     const clRect=cl.getBoundingClientRect();
     // Force alignment scenario
     const el0=DS.elements[0], el1=DS.elements[1];
@@ -440,8 +440,8 @@ function hdr(s) { process.stdout.write('\n  [' + s + ']\n'); }
     const pvCorners=pvEl?pvEl.querySelectorAll('.el-corner').length:0;
     results.push({k:'pv-el has 4 corner markers',v:pvCorners>=4,d:'n='+pvCorners});
     // Canvas offsetWidth unchanged in preview
-    const cl=document.getElementById('canvas-layer');
-    const vp=document.getElementById('viewport');
+    const cl=document.getElementById('canvas-layer')||document.getElementById('canvas-surface');
+    const vp=document.getElementById('viewport')||document.getElementById('canvas-viewport');
     const clOW=cl.offsetWidth;
     results.push({k:'canvas offsetWidth unchanged in preview',v:clOW===754,d:'w='+clOW});
     // Preview-layer visible
@@ -502,7 +502,7 @@ function hdr(s) { process.stdout.write('\n  [' + s + ']\n'); }
   // ══════════════════════════════════════════════════════════════════════
   hdr('KEYBOARD SHORTCUT TESTS');
   // Focus workspace
-  await page.evaluate('document.getElementById("canvas-layer").focus?.()');
+  await page.evaluate('document.getElementById("canvas-surface").focus?.()');
   await page.waitForTimeout(100);
 
   // Select all: Ctrl+A
@@ -1074,7 +1074,7 @@ function hdr(s) { process.stdout.write('\n  [' + s + ']\n'); }
   hdr('DOM TESTS');
   const domTests = await page.evaluate(`(() => {
     const r=[];
-    const required=['viewport','canvas-layer','workspace','panel-left','panel-right','sections-layer','handles-layer','selection-layer','guides-layer','preview-layer','preview-content','zoom-widget','zw-slider','zw-in','zw-out','zw-pct'];
+    const required=['canvas-viewport','canvas-surface','canvas-scroll','panel-left','panel-right','sections-layer','handles-layer','selection-layer','guides-layer','preview-layer','preview-content','zoom-widget','zw-slider','zw-in','zw-out','zw-pct'];
     required.forEach(id=>r.push({k:'#'+id+' exists',v:!!document.getElementById(id)}));
     r.push({k:'@layer count>=16',v:(()=>{let n=0;for(const ss of document.styleSheets){try{for(const r of ss.cssRules){if(r.constructor.name==='CSSLayerStatementRule')n+=r.nameList.length;}}catch(e){}}return n>=16;})()});
     return r;
@@ -1089,7 +1089,7 @@ function hdr(s) { process.stdout.write('\n  [' + s + ']\n'); }
   // ══════════════════════════════════════════════════════════════════════
   hdr('SCROLL TESTS');
   const scrollTests = await page.evaluate(`(() => {
-    const ws=document.getElementById('workspace');
+    const ws=document.getElementById('workspace')||document.getElementById('canvas-scroll');
     const ov=getComputedStyle(ws).overflow;
     const r=[];
     r.push({k:'workspace overflow:auto',v:ov==='auto',d:ov});
@@ -1103,13 +1103,14 @@ function hdr(s) { process.stdout.write('\n  [' + s + ']\n'); }
   await page.evaluate('DesignZoomEngine.set(4.0)');
   await page.waitForTimeout(100);
   const ws = await page.evaluate(`(() => {
-    const r=document.getElementById('workspace').getBoundingClientRect();
+    const el=document.getElementById('workspace')||document.getElementById('canvas-scroll')||document.getElementById('workspace');
+    const r=el.getBoundingClientRect();
     return {cx:r.left+r.width/2,cy:r.top+r.height/2};
   })()`);
   await page.mouse.move(ws.cx, ws.cy);
   await page.mouse.wheel(0, 200);
   await page.waitForTimeout(100);
-  const scrolled = await page.evaluate('document.getElementById("workspace").scrollTop');
+  const scrolled = await page.evaluate('(document.getElementById("workspace")||document.getElementById("canvas-scroll")||{scrollTop:0}).scrollTop');
   t('SCROLL',`mouse wheel scrolls workspace (scrollTop=${scrolled})`,scrolled>0,`st=${scrolled}`);
   await page.evaluate('DesignZoomEngine.reset()');
   for(let i=3; i<30; i++){

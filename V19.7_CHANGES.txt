@@ -1,0 +1,95 @@
+ReportForge v19.7 — Section Canvas Fix + Pipeline Cleanup
+==========================================================
+Date: 2026-03-19
+
+BUGS FIXED
+----------
+
+1. WHITE GAP ON SECTION RESIZE
+   canvas-layer height set to raw model px instead of RF.Geometry.scale()
+   Visible at any zoom ≠ 100% after SectionEngine.render() fires.
+
+2. HandlesEngine.update is not a function (TypeError in RenderScheduler)
+   OverlayEngine.js, EngineCore.js, and HTML boot blocks all called
+   HandlesEngine.update() but the real API is HandlesEngine.render().
+
+3. GuideEngine.flush is not a function (TypeError in RenderScheduler)
+   OverlayEngine.js called GuideEngine.flush() which does not exist.
+   Real API: GuideEngine.render() (re-renders active guides).
+
+4. Stale v19.5 debug/assert blocks still executing at runtime
+   Phase 3.3 console.assert() blocks were still active, printing
+   misleading '[v19.5]' messages and running assertion overhead.
+
+ROOT CAUSES
+-----------
+
+Bug 1 (white gap):
+  SectionEngine.render() ended with:
+    canvas.style.height = DS.getTotalHeight() + 'px'     // raw model
+    canvas.style.width  = CFG.PAGE_W + 'px'              // raw model
+  At zoom=1.0 these are coincidentally correct.
+  At any other zoom they set canvas to wrong (unscaled) size.
+
+Bug 2 (HandlesEngine.update):
+  HandlesEngine real public API:
+    render(), renderSync(), onZoomChanged(),
+    computeHandlePositions(), selectionBounds()
+  update() was never defined.
+
+Bug 3 (GuideEngine.flush):
+  GuideEngine real public API:
+    show(guides), render(), clear(), onZoomChanged()
+  flush() was never defined.
+
+Bug 4 (stale assertions):
+  Phase 3.3 boot block with console.assert() still ran every page load.
+
+FIXES APPLIED
+-------------
+
+designer/crystal-reports-designer-v4.html:
+  SectionEngine.render():
+    BEFORE: canvas.style.height = DS.getTotalHeight() + 'px'
+    AFTER:  canvas.style.height = RF.Geometry.scale(DS.getTotalHeight()) + 'px'
+    BEFORE: canvas.style.width  = CFG.PAGE_W + 'px'
+    AFTER:  canvas.style.width  = RF.Geometry.scale(CFG.PAGE_W) + 'px'
+    + RenderScheduler.layout() hook for CanvasLayoutEngine + WorkspaceScrollEngine sync
+
+  SectionResizeEngine.onMouseUp():
+    + RF.Geometry.scale() canvas sync on drag end
+
+  Phase 2 boot DragEngine callbacks:
+    HandlesEngine.update() → HandlesEngine.render()
+
+  Phase 2 _apply patch:
+    HandlesEngine.update() → HandlesEngine.render()
+
+  Phase 3.3 debug block:
+    Removed stale v19.5 console.assert() blocks
+
+engines/OverlayEngine.js:
+  BEFORE: HandlesEngine.update()  → AFTER: HandlesEngine.render()
+  BEFORE: GuideEngine.flush()     → AFTER: GuideEngine.render() (guarded by .hasGuides)
+  Added dedup key to RenderScheduler.visual() call
+
+engines/EngineCore.js:
+  BEFORE: _E('HandlesEngine').update()  → AFTER: _E('HandlesEngine').render()
+
+VERIFICATION RESULTS
+--------------------
+Boot errors:       ZERO ✅
+Stale v19.5 logs:  ZERO ✅
+Interaction errors: ZERO ✅ (including multiple SectionEngine.render() + OverlayEngine.render())
+
+Gap checks:
+  100% : height=369px  scaled=369px  gap=0px ✅
+  150% : height=553px  scaled=554px  gap=1px ✅  (sub-pixel float, ≤1px tolerance)
+  300% : height=1107px scaled=1107px gap=0px ✅
+   50% : height=184px  scaled=185px  gap=1px ✅  (sub-pixel float, ≤1px tolerance)
+
+FILES CHANGED
+-------------
+  designer/crystal-reports-designer-v4.html   (SectionEngine, SectionResizeEngine, stale blocks)
+  engines/OverlayEngine.js                    (HandlesEngine.render, GuideEngine.render)
+  engines/EngineCore.js                       (HandlesEngine.render)

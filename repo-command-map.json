@@ -1,0 +1,602 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-03-16T00:49:30.700Z",
+  "summary": {
+    "expectedCommands": 84,
+    "implementedCommands": 84,
+    "missingCommands": 0,
+    "uiControlsWithoutCommand": 0,
+    "coveragePct": "100%"
+  },
+  "missingCommands": [],
+  "implementedCommands": [
+    {
+      "id": "new-report",
+      "category": "FILE",
+      "via": "new"
+    },
+    {
+      "id": "open-report",
+      "category": "FILE",
+      "via": "open"
+    },
+    {
+      "id": "save-report",
+      "category": "FILE",
+      "via": "save"
+    },
+    {
+      "id": "save-as",
+      "category": "FILE",
+      "via": "save-as"
+    },
+    {
+      "id": "export-pdf",
+      "category": "FILE",
+      "via": "export-pdf"
+    },
+    {
+      "id": "export-xls",
+      "category": "FILE",
+      "via": "export-xls"
+    },
+    {
+      "id": "print-preview",
+      "category": "FILE",
+      "via": "print"
+    },
+    {
+      "id": "undo",
+      "category": "EDIT",
+      "via": "undo"
+    },
+    {
+      "id": "redo",
+      "category": "EDIT",
+      "via": "redo"
+    },
+    {
+      "id": "cut",
+      "category": "EDIT",
+      "via": "cut"
+    },
+    {
+      "id": "copy",
+      "category": "EDIT",
+      "via": "copy"
+    },
+    {
+      "id": "paste",
+      "category": "EDIT",
+      "via": "paste"
+    },
+    {
+      "id": "delete",
+      "category": "EDIT",
+      "via": "delete"
+    },
+    {
+      "id": "duplicate",
+      "category": "EDIT",
+      "via": "duplicate"
+    },
+    {
+      "id": "select-all",
+      "category": "SELECTION",
+      "via": "select-all"
+    },
+    {
+      "id": "deselect-all",
+      "category": "SELECTION",
+      "via": "deselect-all"
+    },
+    {
+      "id": "invert-selection",
+      "category": "SELECTION",
+      "via": "invert-selection"
+    },
+    {
+      "id": "move-left",
+      "category": "MOVEMENT",
+      "via": "ArrowLeft"
+    },
+    {
+      "id": "move-right",
+      "category": "MOVEMENT",
+      "via": "ArrowRight"
+    },
+    {
+      "id": "move-up",
+      "category": "MOVEMENT",
+      "via": "ArrowUp"
+    },
+    {
+      "id": "move-down",
+      "category": "MOVEMENT",
+      "via": "ArrowDown"
+    },
+    {
+      "id": "move-left-large",
+      "category": "MOVEMENT",
+      "via": "ShiftArrowLeft"
+    },
+    {
+      "id": "move-right-large",
+      "category": "MOVEMENT",
+      "via": "ShiftArrowRight"
+    },
+    {
+      "id": "move-up-large",
+      "category": "MOVEMENT",
+      "via": "ShiftArrowUp"
+    },
+    {
+      "id": "move-down-large",
+      "category": "MOVEMENT",
+      "via": "ShiftArrowDown"
+    },
+    {
+      "id": "align-left",
+      "category": "ALIGNMENT",
+      "via": "align-left"
+    },
+    {
+      "id": "align-right",
+      "category": "ALIGNMENT",
+      "via": "align-right"
+    },
+    {
+      "id": "align-center",
+      "category": "ALIGNMENT",
+      "via": "align-center"
+    },
+    {
+      "id": "align-top",
+      "category": "ALIGNMENT",
+      "via": "align-top"
+    },
+    {
+      "id": "align-middle",
+      "category": "ALIGNMENT",
+      "via": "align-middle"
+    },
+    {
+      "id": "align-bottom",
+      "category": "ALIGNMENT",
+      "via": "align-bottom"
+    },
+    {
+      "id": "distribute-horizontal",
+      "category": "DISTRIBUTION",
+      "via": "distribute-horizontal"
+    },
+    {
+      "id": "distribute-vertical",
+      "category": "DISTRIBUTION",
+      "via": "distribute-vertical"
+    },
+    {
+      "id": "bring-to-front",
+      "category": "ORDER",
+      "via": "bring-front"
+    },
+    {
+      "id": "send-to-back",
+      "category": "ORDER",
+      "via": "send-back"
+    },
+    {
+      "id": "bring-forward",
+      "category": "ORDER",
+      "via": "bring-forward"
+    },
+    {
+      "id": "send-backward",
+      "category": "ORDER",
+      "via": "send-backward"
+    },
+    {
+      "id": "group",
+      "category": "GROUPING",
+      "via": "group"
+    },
+    {
+      "id": "ungroup",
+      "category": "GROUPING",
+      "via": "ungroup"
+    },
+    {
+      "id": "zoom-in",
+      "category": "ZOOM",
+      "via": "zoom-in"
+    },
+    {
+      "id": "zoom-out",
+      "category": "ZOOM",
+      "via": "zoom-out"
+    },
+    {
+      "id": "zoom-reset",
+      "category": "ZOOM",
+      "via": "zoom-100"
+    },
+    {
+      "id": "zoom-fit-page",
+      "category": "ZOOM",
+      "via": "zoom-fit"
+    },
+    {
+      "id": "zoom-fit-width",
+      "category": "ZOOM",
+      "via": "zoom-fit-width"
+    },
+    {
+      "id": "toggle-design-mode",
+      "category": "VIEW",
+      "via": "toggle-design"
+    },
+    {
+      "id": "toggle-preview-mode",
+      "category": "VIEW",
+      "via": "preview"
+    },
+    {
+      "id": "toggle-grid",
+      "category": "VIEW",
+      "via": "toggle-grid"
+    },
+    {
+      "id": "toggle-guides",
+      "category": "VIEW",
+      "via": "toggle-guides"
+    },
+    {
+      "id": "toggle-rulers",
+      "category": "VIEW",
+      "via": "toggle-rulers"
+    },
+    {
+      "id": "add-horizontal-guide",
+      "category": "GUIDES",
+      "via": "add-horizontal-guide"
+    },
+    {
+      "id": "add-vertical-guide",
+      "category": "GUIDES",
+      "via": "add-vertical-guide"
+    },
+    {
+      "id": "remove-guide",
+      "category": "GUIDES",
+      "via": "remove-guide"
+    },
+    {
+      "id": "clear-guides",
+      "category": "GUIDES",
+      "via": "clear-guides"
+    },
+    {
+      "id": "set-margin-left",
+      "category": "MARGINS",
+      "via": "margin-left"
+    },
+    {
+      "id": "set-margin-right",
+      "category": "MARGINS",
+      "via": "margin-right"
+    },
+    {
+      "id": "set-margin-top",
+      "category": "MARGINS",
+      "via": "margin-top"
+    },
+    {
+      "id": "set-margin-bottom",
+      "category": "MARGINS",
+      "via": "margin-bottom"
+    },
+    {
+      "id": "insert-section",
+      "category": "SECTIONS",
+      "via": "insert-section"
+    },
+    {
+      "id": "delete-section",
+      "category": "SECTIONS",
+      "via": "delete-section"
+    },
+    {
+      "id": "move-section-up",
+      "category": "SECTIONS",
+      "via": "move-section-up"
+    },
+    {
+      "id": "move-section-down",
+      "category": "SECTIONS",
+      "via": "move-section-down"
+    },
+    {
+      "id": "rename-section",
+      "category": "SECTIONS",
+      "via": "rename-section"
+    },
+    {
+      "id": "lock-object",
+      "category": "OBJECT",
+      "via": "lock"
+    },
+    {
+      "id": "unlock-object",
+      "category": "OBJECT",
+      "via": "unlock"
+    },
+    {
+      "id": "hide-object",
+      "category": "OBJECT",
+      "via": "hide"
+    },
+    {
+      "id": "show-object",
+      "category": "OBJECT",
+      "via": "show"
+    },
+    {
+      "id": "toggle-snap",
+      "category": "CANVAS",
+      "via": "toggle-snap"
+    },
+    {
+      "id": "toggle-grid-snap",
+      "category": "CANVAS",
+      "via": "toggle-grid"
+    },
+    {
+      "id": "toggle-object-snap",
+      "category": "CANVAS",
+      "via": "toggle-snap"
+    },
+    {
+      "id": "clear-selection",
+      "category": "CANVAS",
+      "via": "clear-selection"
+    },
+    {
+      "id": "insert-text",
+      "category": "INSERT",
+      "via": "insert-text"
+    },
+    {
+      "id": "insert-box",
+      "category": "INSERT",
+      "via": "insert-box"
+    },
+    {
+      "id": "insert-line",
+      "category": "INSERT",
+      "via": "insert-line"
+    },
+    {
+      "id": "insert-field",
+      "category": "INSERT",
+      "via": "insert-field"
+    },
+    {
+      "id": "color-font",
+      "category": "FORMAT",
+      "via": "color-font"
+    },
+    {
+      "id": "color-bg",
+      "category": "FORMAT",
+      "via": "color-bg"
+    },
+    {
+      "id": "color-border",
+      "category": "FORMAT",
+      "via": "color-border"
+    },
+    {
+      "id": "format-field",
+      "category": "FORMAT",
+      "via": "format-field"
+    },
+    {
+      "id": "page-first",
+      "category": "NAVIGATION",
+      "via": "page-first"
+    },
+    {
+      "id": "page-last",
+      "category": "NAVIGATION",
+      "via": "page-last"
+    },
+    {
+      "id": "page-next",
+      "category": "NAVIGATION",
+      "via": "page-next"
+    },
+    {
+      "id": "page-prev",
+      "category": "NAVIGATION",
+      "via": "page-prev"
+    },
+    {
+      "id": "quit",
+      "category": "FILE",
+      "via": "quit"
+    },
+    {
+      "id": "refresh",
+      "category": "VIEW",
+      "via": "refresh"
+    }
+  ],
+  "unmappedUIControls": [],
+  "discoveredUIActions": [
+    "add-horizontal-guide",
+    "add-vertical-guide",
+    "align-bottoms",
+    "align-center",
+    "align-centers",
+    "align-left",
+    "align-lefts",
+    "align-middles",
+    "align-right",
+    "align-rights",
+    "align-tops",
+    "bring-forward",
+    "bring-front",
+    "clear-guides",
+    "color-bg",
+    "color-border",
+    "color-font",
+    "copy",
+    "cut",
+    "delete",
+    "delete-section",
+    "deselect-all",
+    "export-json",
+    "export-pdf",
+    "format-field",
+    "group",
+    "hide-object",
+    "insert-box",
+    "insert-field",
+    "insert-line",
+    "insert-section",
+    "insert-text",
+    "invert-selection",
+    "lock-object",
+    "move-section-down",
+    "move-section-up",
+    "new",
+    "open",
+    "page-first",
+    "page-last",
+    "page-next",
+    "page-prev",
+    "paste",
+    "preview",
+    "print",
+    "quit",
+    "redo",
+    "refresh",
+    "remove-guide",
+    "rename-section",
+    "same-height",
+    "same-width",
+    "save",
+    "save-as",
+    "select-all",
+    "send-back",
+    "send-backward",
+    "set-margin-bottom",
+    "set-margin-left",
+    "set-margin-right",
+    "set-margin-top",
+    "show-object",
+    "toggle-grid",
+    "toggle-rulers",
+    "toggle-snap",
+    "undo",
+    "ungroup",
+    "unlock-object",
+    "zoom-100",
+    "zoom-fit-page",
+    "zoom-fit-width",
+    "zoom-in",
+    "zoom-out"
+  ],
+  "categories": {
+    "FILE": {
+      "implemented": 8,
+      "missing": 0,
+      "total": 8
+    },
+    "EDIT": {
+      "implemented": 7,
+      "missing": 0,
+      "total": 7
+    },
+    "SELECTION": {
+      "implemented": 3,
+      "missing": 0,
+      "total": 3
+    },
+    "MOVEMENT": {
+      "implemented": 8,
+      "missing": 0,
+      "total": 8
+    },
+    "ALIGNMENT": {
+      "implemented": 6,
+      "missing": 0,
+      "total": 6
+    },
+    "DISTRIBUTION": {
+      "implemented": 2,
+      "missing": 0,
+      "total": 2
+    },
+    "ORDER": {
+      "implemented": 4,
+      "missing": 0,
+      "total": 4
+    },
+    "GROUPING": {
+      "implemented": 2,
+      "missing": 0,
+      "total": 2
+    },
+    "ZOOM": {
+      "implemented": 5,
+      "missing": 0,
+      "total": 5
+    },
+    "VIEW": {
+      "implemented": 6,
+      "missing": 0,
+      "total": 6
+    },
+    "GUIDES": {
+      "implemented": 4,
+      "missing": 0,
+      "total": 4
+    },
+    "MARGINS": {
+      "implemented": 4,
+      "missing": 0,
+      "total": 4
+    },
+    "SECTIONS": {
+      "implemented": 5,
+      "missing": 0,
+      "total": 5
+    },
+    "OBJECT": {
+      "implemented": 4,
+      "missing": 0,
+      "total": 4
+    },
+    "CANVAS": {
+      "implemented": 4,
+      "missing": 0,
+      "total": 4
+    },
+    "INSERT": {
+      "implemented": 4,
+      "missing": 0,
+      "total": 4
+    },
+    "FORMAT": {
+      "implemented": 4,
+      "missing": 0,
+      "total": 4
+    },
+    "NAVIGATION": {
+      "implemented": 4,
+      "missing": 0,
+      "total": 4
+    }
+  }
+}

@@ -50,8 +50,6 @@
 .ctx-sub:hover .ctx-submenu { display: block; }
 
 /* Section collapse/expand */
-.rf-sec-body.collapsed { height:0 !important; overflow:hidden; }
-.rf-sec-body.collapsed + .rf-sec-resize { height:2px; }
 .rf-sec-collapse-btn {
   width:16px; height:16px; border-radius:2px; border:none;
   background:rgba(255,255,255,.1); color:rgba(255,255,255,.7);

@@ -1,7 +1,7 @@
 import RF from '../rf.js';
 
 /**
- * core/layout-tools.js — RF.Core.LayoutTools  (alias: RF.LT)
+ * core/layout-tools.js — RF.Core.LayoutTools
  * Layer   : Core
  * Purpose : Nudge (arrow-key moves), distribute, size-to-fit, and other
  *           batch layout helpers operating on selected elements.
@@ -36,7 +36,7 @@ RF.Core.LayoutTools = {
       return false;
     }
     if (!layout.elements) layout.elements = [];
-    // Back-compat: ensure locked field exists on all elements
+    // Normalize optional fields expected by the runtime.
     layout.elements.forEach(el => {
       if (el.locked === undefined) el.locked = false;
       if (!el.conditionalStyles)  el.conditionalStyles = [];

@@ -1,76 +1,81 @@
-# Designer UI
+# Designer Guide — ReportForge v18.0
 
-## Layout overview
+## Interface Layout
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  Menu Bar  File | Edit | View | Insert | Format | Report    │ 22px
-├─────────────────────────────────────────────────────────────┤
-│  Toolbar   [New][Open][Save] | [Select][Text]... | [Zoom]   │ 26px
-├─────────────────────────────────────────────────────────────┤
-│  Toolbar2  [Font ▼][Size] [B][I][U] | Page: A4 | Portrait   │ 26px
-├──────────┬──────────────────────────┬────────────────────────┤
-│ Field    │ Design │ Preview         │ Property               │
-│ Explorer │                          │ Inspector              │
-│          │  [22px]  [canvas area]   │                        │
-│ Fields   │  label  ┌─────────────┐  │ Type: TEXT             │
-│ Formulas │  col    │ Page body   │  │ ─────────────────────  │
-│ Params   │         │             │  │ Position / Size        │
-│ RunTotals│         │  elements   │  │ X: 100   Y: 50         │
-│          │         │             │  │ W: 200   H: 20         │
-│          │         └─────────────┘  │ ─────────────────────  │
-│          │                          │ Font                   │
-├──────────┴──────────────────────────┴────────────────────────┤
-│ Status  │ 1 selected │ ● Unsaved │ W:200 H:20 │ 100% │ X:0  │ 22px
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│  Menu Bar  [File] [Edit] [Insert] [Format] [Report] [View]      │
+├─────────────────────────────────────────────────────────────────┤
+│  Main Toolbar  [New][Open][Save] | [Undo][Redo] | [Zoom] ...    │
+├─────────────────────────────────────────────────────────────────┤
+│  Format Toolbar  [Bold][Italic] | [Align] | [Color] ...         │
+├───────────┬────────────────────────────────────────┬────────────┤
+│  Sections │  ┌─ Ruler (H) ──────────────────────┐  │  Field     │
+│  Panel    │  │  Canvas Area                     │  │  Explorer  │
+│           │  │  ┌─ Report Header ─────────────┐ │  │           │
+│           │  │  │  {elements}                 │ │  │           │
+│           │  │  ├─ Page Header ───────────────┤ │  │           │
+│           │  │  │  {elements}                 │ │  │           │
+│  Ruler    │  │  ├─ Detail ────────────────────┤ │  ├────────────┤
+│  (V)      │  │  │  {elements}                 │ │  │ Properties │
+│           │  │  └──────────────────────────────┘ │  │  Panel     │
+├───────────┴──┴──────────────────────────────────┴──┴────────────┤
+│  Status Bar:  X: 100   Y: 50   Items: 9   100%   Design         │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-## Menu bar
+## Sections
 
-| Menu   | Key actions |
-|--------|------------|
-| File   | New, Open, Save, Export |
-| Edit   | Undo/Redo, Cut/Copy/Paste, Duplicate, Delete, Group |
-| View   | Design/Preview tabs, Field Explorer, Rulers, Grid, Snap, Zoom |
-| Insert | Text, Field, Line, Box, Image, Chart, Subreport |
-| Format | Align, Distribute, Make Same Size |
-| Report | Filters, Groups, Section Expert, Formula Workshop, Parameters |
+ReportForge uses Crystal Reports–style banded sections:
 
-## Toolbar (row 1)
+| Section | Purpose |
+|---------|---------|
+| Report Header | Prints once at the beginning |
+| Page Header | Prints at the top of each page |
+| Group Header | Prints before each group |
+| Detail | Repeats for each data record |
+| Group Footer | Prints after each group |
+| Page Footer | Prints at the bottom of each page |
+| Report Footer | Prints once at the end |
 
-Icon-only buttons: New · Open · Save · **|** · Select · Text · Field · Line · Rect · Image · Chart · **|** · Undo · Redo · **|** · Copy · Paste · Duplicate · Delete · **|** · Align × 8 · **|** · Zoom − · 100% · Zoom +
+**Managing sections:**
+- Right-click a section label to insert, delete, or rename
+- Drag the section border to resize
+- Use Section Expert (Format → Section) for advanced options
 
-## Toolbar (row 2)
+## Elements
 
-Font picker → Size → **B I U** → Align L/C/R → Page size → Orientation → Z-order → Lock
+Insert elements from the toolbar or Insert menu:
 
-## Section label column
+| Element | Description |
+|---------|-------------|
+| Text | Static label or formatted text |
+| Field | Data field from a dataset |
+| Box | Rectangle / border shape |
+| Line | Horizontal or vertical line |
 
-The 22 px column left of the canvas shows section labels in rotated text:
+**Selection:** Click to select, Shift+click for multi-select, Ctrl+A for all.
 
-| Label | Section |
-|-------|---------|
-| RH | Report Header |
-| PH | Page Header |
-| GH | Group Header |
-| D  | Detail |
-| GF | Group Footer |
-| PF | Page Footer |
-| RF | Report Footer |
+**Drag:** Click and drag to move. Position updates in real-time during drag. Snap grid is 8px.
 
-- **Click** → selects section
-- **Double-click** → opens Section Expert
-- **Right-click** → context menu (suppress, can-grow, insert, delete)
+**Resize:** Drag the L-shaped corner handles.
 
-## Canvas interactions
+## Snap & Guides
 
-| Action | Result |
-|--------|--------|
-| Click element | Select |
-| Ctrl+Click | Multi-select |
-| Drag element | Move |
-| Drag handle | Resize |
-| Ctrl+Wheel | Zoom |
-| Space+Drag | Pan |
-| Double-click text | Inline edit |
-| Drag from Field Explorer | Insert field element |
+- **Snap to grid:** 8px grid, toggle with Ctrl+Shift+G
+- **Alignment guides:** appear automatically when dragging near aligned objects (works in both Design and Preview)
+- **Manual guides:** Insert → Guide to add horizontal/vertical guides
+
+## Zoom
+
+Zoom range: 25% – 400%
+
+- Mouse wheel + Ctrl: smooth ~10% increments
+- + / − buttons: snaps to predefined steps (25%, 50%, 75%, 100%, 150%, 200%, 300%, 400%)
+- Design and Preview maintain separate zoom levels
+
+## Preview Mode
+
+Click **Preview** or press F5 to switch to Preview mode. The canvas renders the document as it will print. All panels and toolbars remain visible. Drag operations and snap guides work in Preview mode too.
+
+Click **Design** to return to edit mode.

@@ -49,15 +49,22 @@ RF.App = {
       const n=RF.Core.DocumentModel.selectedIds.size;
       const el=document.getElementById('sb-sel'); if(el) el.textContent=n?`${n} sel`:'';
     });
+    RF.on(RF.E.SECTION_RESIZED, payload => {
+      const sec = payload?.sectionId ? RF.Core.DocumentModel.getSectionById(payload.sectionId) : null;
+      console.log('[trace app:SECTION_RESIZED before]', payload?.sectionId, sec?.height);
+      RF.RP.syncSectionLayoutOnly();
+      RF.Engines.WorkspaceScrollEngine?.syncViewport?.();
+      console.log('[trace app:SECTION_RESIZED after]', payload?.sectionId, sec?.height);
+    });
+
     RF.on(RF.E.LAYOUT_CHANGED, () => {
       const el=document.getElementById('sb-dirty');
       if(el) el.textContent=RF.Core.DocumentModel.isDirty?'● Unsaved':'';
     });
-    document.getElementById('canvas-surface')?.addEventListener('pointermove', e => {
-      const surf=document.getElementById('canvas-surface');
-      const rect=surf.getBoundingClientRect(), DM=RF.Core.DocumentModel;
+    RF.DOM.canvasLayer()?.addEventListener('pointermove', e => {
+      const point = RF.Geometry.clientToCanvas(e);
       const el=document.getElementById('sb-coord');
-      if(el) el.textContent=`X:${Math.round((e.clientX-rect.left)/DM.zoom)}  Y:${Math.round((e.clientY-rect.top)/DM.zoom)}`;
+      if(el) el.textContent=`X:${Math.round(point.x)}  Y:${Math.round(point.y)}`;
     });
   },
 
@@ -177,17 +184,17 @@ RF.App = {
 
   // ── Tool creation (draw on canvas) ───────────────────────────────────────
   _initToolCreation() {
-    document.getElementById('canvas-surface')?.addEventListener('pointerdown', e => {
+    RF.DOM.canvasLayer()?.addEventListener('pointerdown', e => {
       const tool=RF.Core.DocumentModel.activeTool;
       if (tool==='select'||e.button!==0) return;
       const secBody=e.target.closest('.rf-sec-body');
       if (!secBody||e.target.classList.contains('rf-el')||e.target.dataset.handle) return;
       e.preventDefault(); e.stopPropagation();
       const DM=RF.Core.DocumentModel, sId=secBody.dataset.secid;
-      const surf=document.getElementById('canvas-surface');
-      const sRect=surf.getBoundingClientRect(), bRect=secBody.getBoundingClientRect();
-      const bx=(bRect.left-sRect.left)/DM.zoom, by=(bRect.top-sRect.top)/DM.zoom;
-      const pt={x:(e.clientX-sRect.left)/DM.zoom, y:(e.clientY-sRect.top)/DM.zoom};
+      const origin = RF.Geometry.canvasToSection({ x: 0, y: 0 }, sId);
+      const pt = RF.Geometry.clientToCanvas(e);
+      const bx = -origin.x;
+      const by = -origin.y;
       const lx=RF.clamp(pt.x-bx,0,DM.layout.pageWidth-40);
       const ly=RF.clamp(pt.y-by,0,(DM.getSectionById(sId)?.height||40)-4);
       const snp=RF.UX.Snapping.snapPoint(lx,ly);
@@ -198,11 +205,8 @@ RF.App = {
   _dragCreate(startEv, type, sectionId, startX, startY, bx, by) {
     let el=null, div=null;
     const DM=RF.Core.DocumentModel;
-    const surf=document.getElementById('canvas-surface');
-
     const onMove=e=>{
-      const sRect=surf.getBoundingClientRect();
-      const pt={x:(e.clientX-sRect.left)/DM.zoom,y:(e.clientY-sRect.top)/DM.zoom};
+      const pt = RF.Geometry.clientToCanvas(e);
       const lx=pt.x-bx, ly=pt.y-by;
       const w=Math.max(8,Math.abs(lx-startX)), h=Math.max(4,Math.abs(ly-startY));
       const nx=Math.min(lx,startX), ny=Math.min(ly,startY);
@@ -247,7 +251,6 @@ RF.App = {
 
   // ── Drop zones (field explorer → canvas sections) ─────────────────────────
   _initDropZones() {
-    RF.on(RF.E.LAYOUT_CHANGED, ()=>this._attachDropToSections());
     this._attachDropToSections();
   },
 
@@ -292,8 +295,7 @@ RF.App._initV4 = function() {
 
   // ── v4 core modules ─────────────────────────────────────────────────────────
   RF.UX.ContextMenu.init();
-  RF.Classic.SectionsV4.patchRender();
-  RF.Modules.FormulaEditorV4.patchFormulaEditor();
+    RF.Modules.FormulaEditorV4.patchFormulaEditor();
   RF.Modules.RunningTotals.init();
   RF.Modules.Crosstab.init();
   RF.Modules.TopN.init();

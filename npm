@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Local npm wrapper: intercepts 'npm install playwright' (already installed via symlink)
+if [[ "$*" == *"install"*"playwright"* ]]; then
+    echo "playwright already present in node_modules (offline mode)"
+    exit 0
+fi
+# All other npm commands: pass through to real npm
+exec /usr/bin/npm "$@"

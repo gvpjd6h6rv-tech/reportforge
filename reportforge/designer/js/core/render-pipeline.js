@@ -1,7 +1,7 @@
 import RF from '../rf.js';
 
 /**
- * core/render-pipeline.js — RF.Core.RenderPipeline  (alias: RF.RP)
+ * core/render-pipeline.js — RF.Core.RenderPipeline
  * Layer   : Core
  * Purpose : Full-page render (fullRender) and incremental DOM reconciliation
  *           (reconcile). Delegates element and section DOM construction to
@@ -10,6 +10,11 @@ import RF from '../rf.js';
  */
 
 RF.Core.RenderPipeline = {
+  syncSectionLayoutOnly() {
+    RF.Engines.SectionLayoutEngine.syncAll();
+    RF.Sel.syncDOM();
+  },
+
   // ── Layer invalidation ──────────────────────────────────────────────────
   _dirty: new Set(),
 
@@ -53,16 +58,13 @@ RF.Core.RenderPipeline = {
       dataSecs.forEach(sec => {
         const domSec = surface.querySelector(`.rf-section[data-secid="${sec.id}"]`);
         if (!domSec) return;
-        // Update section height if changed
-        const body = domSec.querySelector('.rf-sec-body');
-        if (body && parseInt(body.style.height) !== sec.height) {
-          body.style.height = sec.height + 'px';
-        }
+        RF.Engines.SectionLayoutEngine.syncSection(sec);
       });
       // Reconcile elements
       this.reconcile();
       return;
     }
+    RF.Engines.SectionLayoutEngine.syncAll();
     RF.Sel.syncDOM();
     RF.Sel.initLayer();
   },

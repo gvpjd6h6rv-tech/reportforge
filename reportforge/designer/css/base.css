@@ -39,28 +39,6 @@
   --danger-glow:       rgba(204,0,0,.12);
   --modified-dot:      #FF6600;
 
-/* ── Legacy aliases (kept for JS refs) ── */
-  --bg0:          #F0F0F0;
-  --bg1:          #F0F0F0;
-  --bg2:          #E4E4E4;
-  --bg3:          #FFFFFF;
-  --bg4:          #D4D4D4;
-  --border:       #C0C0C0;
-  --border2:      #888888;
-  --text:         #000000;
-  --text-dim:     #444444;
-  --text-faint:   #888888;
-  --primary:      #0078D7;
-  --primary-dk:   #005FA3;
-  --primary-glow: rgba(0,120,215,.12);
-  --accent:       #0078D7;
-  --accent-glow:  rgba(0,120,215,.12);
-  --amber:        #FF6600;
-  --amber-glow:   rgba(255,102,0,.12);
-  --sel-color:    #0078D7;
-  --sel-border:   #0078D7;
-  --handle-fill:  #0078D7;
-
 /* ── UI sizing (fluid where relevant) ── */
   --toolbar-h:     26px;
   --toolbar2-h:    26px;
@@ -148,8 +126,6 @@ code, .mono { font-family: var(--font-mono); }
 
 /* ── App scaffold ── */
 #app { display:flex; flex-direction:column; height:100vh; overflow:hidden; }
-
-}
 
 /* ── Display utilities ── */
 .is-hidden { display: none !important; }

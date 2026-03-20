@@ -39,8 +39,6 @@
 #canvas-surface {
   position: relative;
   transform-origin: 0 0;
-  min-width: 900px;
-  min-height: 700px;
   padding: 20px 20px 20px 30px; /* left must be > 22px for label column */
   display: inline-block;
 }

@@ -84,7 +84,6 @@ RF.UX.PanelTabs = {
 
     // Wire events
     RF.on(RF.E.SEL_CHANGED,    () => this._syncObjPanel());
-    RF.on(RF.E.LAYOUT_CHANGED, () => this._syncObjPanel());
   },
 
   switchLeft(tab, el) {

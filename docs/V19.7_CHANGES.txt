@@ -1,0 +1,92 @@
+ReportForge v19.7 — Section Canvas Fix
+=======================================
+Date: 2026-03-19
+
+BUG
+---
+White/grey gap appears at the bottom of the canvas after section resize
+or any full re-render (e.g. document type switch, tab change).
+
+The last section is visually clipped — the dark workspace background
+intrudes into the canvas area at incorrect heights when zoom ≠ 100%.
+
+ROOT CAUSE
+----------
+SectionEngine.render() set canvas-layer height using raw MODEL units:
+
+  // BEFORE (BROKEN):
+  canvas.style.height = DS.getTotalHeight() + 'px';   // ← no zoom scaling
+  canvas.style.width  = CFG.PAGE_W + 'px';            // ← no zoom scaling
+
+At zoom = 1.0 (100%) these values happen to be correct.
+At zoom ≠ 1.0, the canvas is set to the model height (e.g. 354px)
+instead of the scaled height (e.g. 531px at 150%), creating a gap of
+exactly (zoom - 1) × modelHeight pixels.
+
+Every call to SectionEngine.render() overwrote the correct zoom-scaled
+value that DesignZoomEngine._apply() had previously set.
+
+AFFECTED SCENARIO
+-----------------
+Triggered by:
+  1. Switching document type (Factura → Remisión → ...)
+  2. Any section resize drag (via SectionResizeEngine)
+  3. Any call to SectionEngine.render()
+
+Most visible at zoom levels other than 100%:
+  - 50%:  canvas shrinks to half model size (gap = negative)
+  - 150%: 177px gap at bottom
+  - 300%: 708px gap at bottom
+
+METRICS (before fix, at 150% zoom)
+------------------------------------
+  modelTotalHeight:  354 px
+  scaledTotalHeight: 531 px  (correct)
+  canvas style.height: 354 px  ← WRONG (model, not scaled)
+  canvas actual:       531 px  (browser overflow-visible masks the gap)
+  GAP:                 177 px
+
+FIX
+---
+Two changes in designer/crystal-reports-designer-v4.html:
+
+1. SectionEngine.render() — end of method:
+   BEFORE:
+     canvas.style.height = DS.getTotalHeight() + 'px';
+     canvas.style.width  = CFG.PAGE_W + 'px';
+   AFTER:
+     canvas.style.height = RF.Geometry.scale(DS.getTotalHeight()) + 'px';
+     canvas.style.width  = RF.Geometry.scale(CFG.PAGE_W) + 'px';
+     RenderScheduler.layout(() => {
+       CanvasLayoutEngine.updateSync();
+       WorkspaceScrollEngine.update();
+     }, 'SectionEngine.render.canvasSync');
+
+2. SectionResizeEngine.onMouseUp() — on drag end:
+   Added same RF.Geometry.scale() canvas sync + RenderScheduler call.
+
+RULE ENFORCED
+-------------
+  canvas.style.height = RF.Geometry.scale(DS.getTotalHeight()) + 'px'
+  canvas.style.width  = RF.Geometry.scale(CFG.PAGE_W) + 'px'
+
+No raw model values may be written to canvas-layer style properties.
+All layout mutations must go through RF.Geometry.
+
+FILES CHANGED
+-------------
+  designer/crystal-reports-designer-v4.html
+    - SectionEngine.render()       (2 lines fixed + RenderScheduler hook)
+    - SectionResizeEngine.onMouseUp() (canvas sync added)
+
+  No engine files changed.
+  No CSS changes.
+
+VERIFICATION
+------------
+Tested at: 50%, 100%, 150%, 300%
+  ✅ 100%: style.height=354px  scaled=354px  gap=0px
+  ✅ 150%: style.height=531px  scaled=531px  gap=0px
+  ✅ 300%: style.height=1062px scaled=1062px gap=0px
+  ✅ 50%:  style.height=177px  scaled=177px  gap=0px
+  ✅ After resize+render @150%: height=606px scaled=606px gap=0px

@@ -1,7 +1,7 @@
 import RF from '../rf.js';
 
 /**
- * core/selection.js — RF.Core.SelectionSystem  (alias: RF.Sel)
+ * core/selection.js — RF.Core.SelectionSystem
  * Layer   : Core
  * Purpose : Tracks which element IDs are selected, syncs selection handles
  *           in the DOM, and emits SEL_CHANGED events.

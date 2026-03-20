@@ -1,0 +1,540 @@
+{
+  "version": "3.0",
+  "timestamp": "2026-03-16T00:49:59.674Z",
+  "summary": {
+    "total": 119,
+    "tested": 57,
+    "working": 57,
+    "unimplemented": 0,
+    "broken": 0,
+    "coverage": "100%"
+  },
+  "categories": {
+    "FILE": {
+      "working": 4,
+      "unimplemented": 0,
+      "broken": 0
+    },
+    "EDIT": {
+      "working": 5,
+      "unimplemented": 0,
+      "broken": 0
+    },
+    "ZOOM_VIEW": {
+      "working": 3,
+      "unimplemented": 0,
+      "broken": 0
+    },
+    "VIEW": {
+      "working": 3,
+      "unimplemented": 0,
+      "broken": 0
+    },
+    "NAVIGATION": {
+      "working": 8,
+      "unimplemented": 0,
+      "broken": 0
+    },
+    "TOOLBAR": {
+      "working": 10,
+      "unimplemented": 0,
+      "broken": 0
+    },
+    "INSERT": {
+      "working": 4,
+      "unimplemented": 0,
+      "broken": 0
+    },
+    "FORMAT": {
+      "working": 3,
+      "unimplemented": 0,
+      "broken": 0
+    },
+    "ALIGNMENT": {
+      "working": 9,
+      "unimplemented": 0,
+      "broken": 0
+    },
+    "OTHER": {
+      "working": 8,
+      "unimplemented": 0,
+      "broken": 0
+    }
+  },
+  "controls": [
+    {
+      "selector": "[data-action=\"new\"]",
+      "category": "FILE",
+      "status": "WORKING",
+      "action": "new",
+      "text": "📄"
+    },
+    {
+      "selector": "[data-action=\"open\"]",
+      "category": "FILE",
+      "status": "WORKING",
+      "action": "open",
+      "text": "📂"
+    },
+    {
+      "selector": "[data-action=\"save\"]",
+      "category": "FILE",
+      "status": "WORKING",
+      "action": "save",
+      "text": "💾"
+    },
+    {
+      "selector": "[data-action=\"undo\"]",
+      "category": "EDIT",
+      "status": "WORKING",
+      "action": "undo",
+      "text": "↩"
+    },
+    {
+      "selector": "[data-action=\"redo\"]",
+      "category": "EDIT",
+      "status": "WORKING",
+      "action": "redo",
+      "text": "↪"
+    },
+    {
+      "selector": "[data-action=\"cut\"]",
+      "category": "EDIT",
+      "status": "WORKING",
+      "action": "cut",
+      "text": "✂"
+    },
+    {
+      "selector": "[data-action=\"copy\"]",
+      "category": "EDIT",
+      "status": "WORKING",
+      "action": "copy",
+      "text": "📋"
+    },
+    {
+      "selector": "[data-action=\"paste\"]",
+      "category": "EDIT",
+      "status": "WORKING",
+      "action": "paste",
+      "text": "📌"
+    },
+    {
+      "selector": "[data-action=\"preview\"]",
+      "category": "ZOOM_VIEW",
+      "status": "WORKING",
+      "action": "preview",
+      "text": "👁"
+    },
+    {
+      "selector": "[data-action=\"export-pdf\"]",
+      "category": "FILE",
+      "status": "WORKING",
+      "action": "export-pdf",
+      "text": "📤"
+    },
+    {
+      "selector": "[data-action=\"refresh\"]",
+      "category": "VIEW",
+      "status": "WORKING",
+      "action": "refresh",
+      "text": "🔄"
+    },
+    {
+      "selector": "[data-action=\"zoom-out\"]",
+      "category": "ZOOM_VIEW",
+      "status": "WORKING",
+      "action": "zoom-out",
+      "text": "🔎"
+    },
+    {
+      "selector": "[data-action=\"zoom-in\"]",
+      "category": "ZOOM_VIEW",
+      "status": "WORKING",
+      "action": "zoom-in",
+      "text": "🔍"
+    },
+    {
+      "selector": "[data-action=\"page-first\"]",
+      "category": "NAVIGATION",
+      "status": "WORKING",
+      "action": "page-first",
+      "text": "⏮"
+    },
+    {
+      "selector": "[data-action=\"page-prev\"]",
+      "category": "NAVIGATION",
+      "status": "WORKING",
+      "action": "page-prev",
+      "text": "◀"
+    },
+    {
+      "selector": "[data-action=\"page-next\"]",
+      "category": "NAVIGATION",
+      "status": "WORKING",
+      "action": "page-next",
+      "text": "▶"
+    },
+    {
+      "selector": "[data-action=\"page-last\"]",
+      "category": "NAVIGATION",
+      "status": "WORKING",
+      "action": "page-last",
+      "text": "⏭"
+    },
+    {
+      "selector": "[data-action=\"pointer\"]",
+      "category": "TOOLBAR",
+      "status": "WORKING",
+      "action": "pointer",
+      "text": "🖱"
+    },
+    {
+      "selector": "[data-action=\"text\"]",
+      "category": "INSERT",
+      "status": "WORKING",
+      "action": "text",
+      "text": "T"
+    },
+    {
+      "selector": "[data-action=\"field\"]",
+      "category": "INSERT",
+      "status": "WORKING",
+      "action": "field",
+      "text": "⬚"
+    },
+    {
+      "selector": "[data-action=\"line\"]",
+      "category": "INSERT",
+      "status": "WORKING",
+      "action": "line",
+      "text": "─"
+    },
+    {
+      "selector": "[data-action=\"box\"]",
+      "category": "INSERT",
+      "status": "WORKING",
+      "action": "box",
+      "text": "▭"
+    },
+    {
+      "selector": "button#btn-bold",
+      "category": "TOOLBAR",
+      "status": "WORKING",
+      "action": "",
+      "text": "B"
+    },
+    {
+      "selector": "button#btn-italic",
+      "category": "TOOLBAR",
+      "status": "WORKING",
+      "action": "",
+      "text": "I"
+    },
+    {
+      "selector": "button#btn-underline",
+      "category": "TOOLBAR",
+      "status": "WORKING",
+      "action": "",
+      "text": "U"
+    },
+    {
+      "selector": "button#btn-al",
+      "category": "TOOLBAR",
+      "status": "WORKING",
+      "action": "",
+      "text": "⬱"
+    },
+    {
+      "selector": "button#btn-ac",
+      "category": "TOOLBAR",
+      "status": "WORKING",
+      "action": "",
+      "text": "≡"
+    },
+    {
+      "selector": "button#btn-ar",
+      "category": "TOOLBAR",
+      "status": "WORKING",
+      "action": "",
+      "text": "⬰"
+    },
+    {
+      "selector": "[data-action=\"color-font\"]",
+      "category": "FORMAT",
+      "status": "WORKING",
+      "action": "color-font",
+      "text": "A"
+    },
+    {
+      "selector": "[data-action=\"color-bg\"]",
+      "category": "FORMAT",
+      "status": "WORKING",
+      "action": "color-bg",
+      "text": "🎨"
+    },
+    {
+      "selector": "[data-action=\"color-border\"]",
+      "category": "FORMAT",
+      "status": "WORKING",
+      "action": "color-border",
+      "text": "▭"
+    },
+    {
+      "selector": "[data-action=\"align-lefts\"]",
+      "category": "ALIGNMENT",
+      "status": "WORKING",
+      "action": "align-lefts",
+      "text": "⬜◧"
+    },
+    {
+      "selector": "[data-action=\"align-centers\"]",
+      "category": "ALIGNMENT",
+      "status": "WORKING",
+      "action": "align-centers",
+      "text": "⬜◈"
+    },
+    {
+      "selector": "[data-action=\"align-rights\"]",
+      "category": "ALIGNMENT",
+      "status": "WORKING",
+      "action": "align-rights",
+      "text": "⬜◨"
+    },
+    {
+      "selector": "[data-action=\"align-tops\"]",
+      "category": "ALIGNMENT",
+      "status": "WORKING",
+      "action": "align-tops",
+      "text": "⬜⬆"
+    },
+    {
+      "selector": "[data-action=\"align-bottoms\"]",
+      "category": "ALIGNMENT",
+      "status": "WORKING",
+      "action": "align-bottoms",
+      "text": "⬜⬇"
+    },
+    {
+      "selector": "[data-action=\"same-width\"]",
+      "category": "ALIGNMENT",
+      "status": "WORKING",
+      "action": "same-width",
+      "text": "↔"
+    },
+    {
+      "selector": "[data-action=\"same-height\"]",
+      "category": "ALIGNMENT",
+      "status": "WORKING",
+      "action": "same-height",
+      "text": "↕"
+    },
+    {
+      "selector": "[data-action=\"bring-front\"]",
+      "category": "ALIGNMENT",
+      "status": "WORKING",
+      "action": "bring-front",
+      "text": "🔼"
+    },
+    {
+      "selector": "[data-action=\"send-back\"]",
+      "category": "ALIGNMENT",
+      "status": "WORKING",
+      "action": "send-back",
+      "text": "🔽"
+    },
+    {
+      "selector": "[data-action=\"toggle-grid\"]",
+      "category": "VIEW",
+      "status": "WORKING",
+      "action": "toggle-grid",
+      "text": "⊞"
+    },
+    {
+      "selector": "[data-action=\"toggle-snap\"]",
+      "category": "VIEW",
+      "status": "WORKING",
+      "action": "toggle-snap",
+      "text": "🧲"
+    },
+    {
+      "selector": "button.doc-type-btn",
+      "category": "OTHER",
+      "status": "WORKING",
+      "action": "",
+      "text": "Factura"
+    },
+    {
+      "selector": "button.doc-type-btn",
+      "category": "OTHER",
+      "status": "WORKING",
+      "action": "",
+      "text": "Guía de Remisión"
+    },
+    {
+      "selector": "button.doc-type-btn",
+      "category": "OTHER",
+      "status": "WORKING",
+      "action": "",
+      "text": "Nota de Crédito"
+    },
+    {
+      "selector": "button.doc-type-btn",
+      "category": "OTHER",
+      "status": "WORKING",
+      "action": "",
+      "text": "Retención"
+    },
+    {
+      "selector": "button.doc-type-btn",
+      "category": "OTHER",
+      "status": "WORKING",
+      "action": "",
+      "text": "Liquidación de Compras"
+    },
+    {
+      "selector": "button#zw-out",
+      "category": "OTHER",
+      "status": "WORKING",
+      "action": "",
+      "text": "−"
+    },
+    {
+      "selector": "button#zw-in",
+      "category": "OTHER",
+      "status": "WORKING",
+      "action": "",
+      "text": "+"
+    },
+    {
+      "selector": "div#ui-mode-btn",
+      "category": "OTHER",
+      "status": "WORKING",
+      "action": "",
+      "text": "◧ Classic"
+    },
+    {
+      "selector": "div.tb-btn",
+      "category": "TOOLBAR",
+      "status": "WORKING",
+      "action": "",
+      "text": "─"
+    },
+    {
+      "selector": "div.tb-btn",
+      "category": "TOOLBAR",
+      "status": "WORKING",
+      "action": "",
+      "text": "□"
+    },
+    {
+      "selector": "div.tb-btn",
+      "category": "TOOLBAR",
+      "status": "WORKING",
+      "action": "",
+      "text": "✕"
+    },
+    {
+      "selector": "div#tab-design",
+      "category": "NAVIGATION",
+      "status": "WORKING",
+      "action": "",
+      "text": "Diseño"
+    },
+    {
+      "selector": "div#tab-preview",
+      "category": "NAVIGATION",
+      "status": "WORKING",
+      "action": "",
+      "text": "Preview"
+    },
+    {
+      "selector": "div.file-tab",
+      "category": "NAVIGATION",
+      "status": "WORKING",
+      "action": "",
+      "text": "Página de inicio"
+    },
+    {
+      "selector": "div.file-tab",
+      "category": "NAVIGATION",
+      "status": "WORKING",
+      "action": "",
+      "text": "Factura 002-101-000020482"
+    }
+  ],
+  "registeredActions": [
+    "add-horizontal-guide",
+    "add-vertical-guide",
+    "align-bottoms",
+    "align-center",
+    "align-centers",
+    "align-left",
+    "align-lefts",
+    "align-middles",
+    "align-right",
+    "align-rights",
+    "align-tops",
+    "bring-forward",
+    "bring-front",
+    "clear-guides",
+    "color-bg",
+    "color-border",
+    "color-font",
+    "copy",
+    "cut",
+    "delete",
+    "delete-section",
+    "deselect-all",
+    "export-json",
+    "export-pdf",
+    "format-field",
+    "group",
+    "hide-object",
+    "insert-box",
+    "insert-field",
+    "insert-line",
+    "insert-section",
+    "insert-text",
+    "invert-selection",
+    "lock-object",
+    "move-section-down",
+    "move-section-up",
+    "new",
+    "open",
+    "page-first",
+    "page-last",
+    "page-next",
+    "page-prev",
+    "paste",
+    "preview",
+    "print",
+    "quit",
+    "redo",
+    "refresh",
+    "remove-guide",
+    "rename-section",
+    "same-height",
+    "same-width",
+    "save",
+    "save-as",
+    "select-all",
+    "send-back",
+    "send-backward",
+    "set-margin-bottom",
+    "set-margin-left",
+    "set-margin-right",
+    "set-margin-top",
+    "show-object",
+    "toggle-grid",
+    "toggle-rulers",
+    "toggle-snap",
+    "undo",
+    "ungroup",
+    "unlock-object",
+    "zoom-100",
+    "zoom-fit-page",
+    "zoom-fit-width",
+    "zoom-in",
+    "zoom-out"
+  ]
+}

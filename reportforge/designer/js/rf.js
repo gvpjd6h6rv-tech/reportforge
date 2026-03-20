@@ -11,12 +11,15 @@
  *   RF.Classic.*    — canvas UI, sections, inspector, toolbar
  *   RF.Modules.*    — feature dialogs and panels
  *   RF.E            — event name constants (string enum)
- *   RF.H / Sel / RP / LT  — convenience aliases, set by their owner modules
+ *   RF.H / Sel / RP / LT  — owner references, set by their modules
  */
 
 /* ── Namespace ─────────────────────────────────────────────────────────── */
 const RF = {};
 RF.Core    = {};
+RF.DOM     = null;
+RF.Engines = {};
+RF.Geometry = {};
 RF.UX      = {};
 RF.Classic = {};
 RF.Modules = {};
@@ -27,6 +30,7 @@ RF.Modules = {};
 RF.E = {
   // Layout mutations
   LAYOUT_CHANGED:   'layout:changed',
+  SECTION_RESIZED:  'section:resized',
   ELEMENT_CREATED:  'element:created',
   ELEMENT_DELETED:  'element:deleted',
   ELEMENT_MUTATED:  'element:mutated',
@@ -69,7 +73,7 @@ RF.Core.EventBus = new (class EventBus {
   trigger(ev, data) { return this.emit(ev, data); }
 })();
 
-/* ── Convenience aliases ──────────────────────────────────────────────── */
+/* ── Event helpers ────────────────────────────────────────────────────── */
 RF.on   = (ev, fn) => RF.Core.EventBus.on(ev, fn);
 RF.emit = (ev, d)  => RF.Core.EventBus.emit(ev, d);
 
@@ -79,9 +83,7 @@ RF.clone = v => JSON.parse(JSON.stringify(v));
 RF.clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 RF.snap  = (v, g)      => Math.round(v / g) * g;
 
-/* ── Short aliases — set by each owner module after it registers ─────── */
-// Declared null here so any module that imports rf.js gets a defined reference.
-// Actual values are assigned at the bottom of each owner file.
+/* ── Owner references ─────────────────────────────────────────────────── */
 RF.H   = null;   // RF.Core.HistoryEngine    → core/history.js
 RF.Sel = null;   // RF.Core.SelectionSystem  → core/selection.js
 RF.RP  = null;   // RF.Core.RenderPipeline   → core/render-pipeline.js
@@ -107,4 +109,3 @@ RF.clear = function(el) { el.replaceChildren(); };
 
 // RF.setText(el, text) — safe text content
 RF.setText = function(el, text) { el.textContent = text; };
-

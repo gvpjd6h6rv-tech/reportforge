@@ -23,7 +23,7 @@ RF.UX.DragTools = {
       return;
     }
 
-    const canPt  = this._canvasPt(e);
+    const canPt  = RF.Geometry.clientToCanvas(e);
     if (!DM.selectedIds.has(elId)) RF.Sel.select(elId, e.ctrlKey||e.metaKey||e.shiftKey);
 
     // Alt-drag: duplicate first
@@ -43,7 +43,7 @@ RF.UX.DragTools = {
     const sx = canPt.x, sy = canPt.y;
 
     const onMove = ev => {
-      const pt  = this._canvasPt(ev);
+      const pt  = RF.Geometry.clientToCanvas(ev);
       const dx  = pt.x - sx, dy = pt.y - sy;
 
       DM.selectedIds.forEach(id => {
@@ -82,14 +82,24 @@ RF.UX.DragTools = {
     const DM   = RF.Core.DocumentModel;
     const el   = DM.getElementById(elId);
     if (!el) return;
+    const aspectRatio = el.w / el.h;
+    const body = RF.DOM.sectionBody(el.sectionId);
+    let preview = null;
+    if (body) {
+      preview = document.createElement('div');
+      preview.className = 'resize-preview';
+      preview.style.cssText = `left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px`;
+      body.appendChild(preview);
+    }
     RF.H.snapshot('before-resize');
     const orig = {x:el.x,y:el.y,w:el.w,h:el.h};
-    const sx   = this._canvasPt(e).x;
-    const sy   = this._canvasPt(e).y;
+    const startPoint = RF.Geometry.clientToCanvas(e);
+    const sx   = startPoint.x;
+    const sy   = startPoint.y;
     const MIN  = 4;
 
     const onMove = ev => {
-      const pt  = this._canvasPt(ev);
+      const pt  = RF.Geometry.clientToCanvas(ev);
       const dx  = pt.x-sx, dy = pt.y-sy;
       let {x:nx,y:ny,w:nw,h:nh} = orig;
       if (handle.includes('r'))  nw = Math.max(MIN, orig.w+dx);
@@ -98,6 +108,16 @@ RF.UX.DragTools = {
       if (handle.includes('t')) { ny = Math.min(orig.y+orig.h-MIN, orig.y+dy); nh = orig.h-dy; }
       if (handle==='tc') { ny=Math.min(orig.y+orig.h-MIN,orig.y+dy); nh=orig.h-dy; }
       if (handle==='bc') nh=Math.max(MIN,orig.h+dy);
+      if (ev.shiftKey && (handle === 'br' || handle === 'tr' || handle === 'bl' || handle === 'tl')) {
+        if (Math.abs(dx) > Math.abs(dy)) nh = Math.round(nw / aspectRatio);
+        else nw = Math.round(nh * aspectRatio);
+      }
+      if (preview) {
+        preview.style.left = `${Math.round(nx)}px`;
+        preview.style.top = `${Math.round(ny)}px`;
+        preview.style.width = `${Math.max(MIN, Math.round(nw))}px`;
+        preview.style.height = `${Math.max(MIN, Math.round(nh))}px`;
+      }
       const snp = RF.UX.Snapping.snapPoint(nx,ny,elId);
       DM.resizeElement(elId, {x:snp.x,y:snp.y,w:Math.min(nw,DM.layout.pageWidth-snp.x),h:Math.max(MIN,nh)});
       const div = document.getElementById(`el-${elId}`);
@@ -107,9 +127,10 @@ RF.UX.DragTools = {
     const onUp = () => {
       document.removeEventListener('pointermove',onMove);
       document.removeEventListener('pointerup',onUp);
+      preview?.remove();
       DM.isDirty=true;
       RF.emit(RF.E.LAYOUT_CHANGED);
-      RF.emit(RF.E.STATUS,'Resized');
+      RF.emit(RF.E.STATUS,`Resized: ${el.w}×${el.h}`);
     };
     document.addEventListener('pointermove',onMove);
     document.addEventListener('pointerup',onUp);
@@ -178,165 +199,5 @@ RF.UX.DragTools = {
     RF.emit(RF.E.INSPECTOR_REFRESH);
   },
 
-  _canvasPt(e) {
-    const surf = document.getElementById('canvas-surface');
-    const rect = surf?.getBoundingClientRect();
-    const DM   = RF.Core.DocumentModel;
-    return { x:(e.clientX-rect.left)/DM.zoom, y:(e.clientY-rect.top)/DM.zoom };
-  },
-};
-
-
-// ── Classic UI ─────────────────────────────────────────────────────────
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// RF.Classic.Elements — Element type registry, factory, DOM renderer.
-// Supports: text, field, line, rect, image, chart, table, subreport
-// ═══════════════════════════════════════════════════════════════════════════════
-
-(() => {
-// ── Aspect-ratio resize (v4 patch) ─────────────────────
-  // Track Shift key for aspect ratio lock
-  document.addEventListener('keydown', e => { if(e.key==='Shift') document.body.classList.add('shift-resize'); });
-  document.addEventListener('keyup',   e => { if(e.key==='Shift') document.body.classList.remove('shift-resize'); });
-
-  // Patch DragTools.startResize to support aspect ratio + preview outline
-  const _orig = RF.UX.DragTools.startResize.bind(RF.UX.DragTools);
-  RF.UX.DragTools.startResize = function(e, handle, elId) {
-    const el = RF.Core.DocumentModel.getElementById(elId);
-    if (!el) { _orig(e, handle, elId); return; }
-    const aspectRatio = el.w / el.h;
-
-    // Create preview outline
-    const body = document.getElementById(`secbody-${el.sectionId}`);
-    let preview = null;
-    if (body) {
-      preview = document.createElement('div');
-      preview.className = 'resize-preview';
-      preview.style.cssText = `left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px`;
-      body.appendChild(preview);
-    }
-
-    e.preventDefault(); e.stopPropagation();
-    const DM = RF.Core.DocumentModel;
-    RF.H.snapshot('before-resize');
-    const orig = {x:el.x,y:el.y,w:el.w,h:el.h};
-    const sx = this._canvasPt(e).x;
-    const sy = this._canvasPt(e).y;
-    const MIN = 4;
-
-    const onMove = ev => {
-      const pt  = this._canvasPt(ev);
-      const dx  = pt.x-sx, dy = pt.y-sy;
-      let {x:nx,y:ny,w:nw,h:nh} = orig;
-      if (handle.includes('r'))  nw = Math.max(MIN, orig.w+dx);
-      if (handle.includes('l')) { nx = Math.min(orig.x+orig.w-MIN, orig.x+dx); nw = orig.w-dx; }
-      if (handle.includes('b'))  nh = Math.max(MIN, orig.h+dy);
-      if (handle.includes('t')) { ny = Math.min(orig.y+orig.h-MIN, orig.y+dy); nh = orig.h-dy; }
-      if (handle==='tc') { ny=Math.min(orig.y+orig.h-MIN,orig.y+dy); nh=orig.h-dy; }
-      if (handle==='bc') nh=Math.max(MIN,orig.h+dy);
-
-      // Aspect ratio lock on Shift
-      if (ev.shiftKey && (handle==='br'||handle==='tr'||handle==='bl'||handle==='tl')) {
-        const newRatio = nw / nh;
-        if (Math.abs(newRatio - aspectRatio) > 0.01) {
-          if (Math.abs(dx) > Math.abs(dy)) nh = Math.round(nw / aspectRatio);
-          else nw = Math.round(nh * aspectRatio);
-        }
-      }
-
-      // Update preview only, not actual element
-      if (preview) {
-        preview.style.left=Math.round(nx)+'px'; preview.style.top=Math.round(ny)+'px';
-        preview.style.width=Math.max(MIN,Math.round(nw))+'px'; preview.style.height=Math.max(MIN,Math.round(nh))+'px';
-      }
-
-      const snp = RF.UX.Snapping.snapPoint(nx,ny,elId);
-      DM.resizeElement(elId, {x:snp.x,y:snp.y,w:Math.min(nw,DM.layout.pageWidth-snp.x),h:Math.max(MIN,nh)});
-      const div = document.getElementById(`el-${elId}`);
-      if (div) { div.style.left=el.x+'px'; div.style.top=el.y+'px'; div.style.width=el.w+'px'; div.style.height=el.h+'px'; }
-      RF.Sel.syncDOM();
-      // Update status bar W/H
-      RF.emit(RF.E.INSPECTOR_REFRESH);
-    };
-    const onUp = () => {
-      document.removeEventListener('pointermove',onMove);
-      document.removeEventListener('pointerup',onUp);
-      preview?.remove();
-      DM.isDirty=true;
-      RF.emit(RF.E.LAYOUT_CHANGED);
-      RF.emit(RF.E.STATUS,`Resized: ${el.w}×${el.h}`);
-    };
-    document.addEventListener('pointermove',onMove);
-    document.addEventListener('pointerup',onUp);
-  };
-})();
-
-
-// ── v4: Resizable panel splitters ─────────────────────────────────────────────
-RF.UX.PanelSplitter = {
-  init() {
-    // Make field explorer resizable
-    this._makeSplitter('field-explorer', 'right');
-    this._makeSplitter('property-inspector', 'left');
-  },
-
-  _makeSplitter(panelId, side) {
-    const panel = document.getElementById(panelId);
-    if (!panel) return;
-    const splitter = document.createElement('div');
-    splitter.className = 'panel-splitter';
-    splitter.title = 'Drag to resize';
-    if (side === 'right') panel.parentElement?.insertBefore(splitter, panel.nextElementSibling);
-    else                  panel.parentElement?.insertBefore(splitter, panel);
-
-    let startX, startW;
-    splitter.addEventListener('pointerdown', e => {
-      e.preventDefault();
-      startX = e.clientX; startW = panel.offsetWidth;
-      const onMove = ev => {
-        const dx = side==='right' ? ev.clientX-startX : startX-ev.clientX;
-        const nw = Math.max(160, Math.min(400, startW+dx));
-        panel.style.width = nw+'px';
-        panel.style.minWidth = nw+'px';
-      };
-      const onUp = () => {
-        document.removeEventListener('pointermove',onMove);
-        document.removeEventListener('pointerup',onUp);
-      };
-      document.addEventListener('pointermove',onMove);
-      document.addEventListener('pointerup',onUp);
-    });
-  },
-};
-
-
-// ── v4: Enhanced status bar ────────────────────────────────────────────────────
-RF.Classic.StatusBarV4 = {
-  init() {
-    const sb = document.getElementById('statusbar');
-    if (!sb || sb.dataset.v4) return;
-    sb.dataset.v4 = '1';
-
-    // Add W×H display, grid indicator, snap indicator
-    const extra = `
-      <span class="u-mw-90 u-fs-11" id="sb-wh"></span>
-      <span class="u-fs-11 u-ml-6" id="sb-grid-ind"></span>
-      <span class="u-fs-11 u-ml-4" id="sb-snap-ind"></span>`;
-    const frag = document.createElement('div');
-    frag.innerHTML = extra;
-    while (frag.firstChild) sb.appendChild(frag.firstChild);
-    RF.on(RF.E.SEL_CHANGED, () => {
-      const el = RF.Core.DocumentModel.selectedElements[0];
-      const wh = document.getElementById('sb-wh');
-      if (wh) wh.textContent = el ? el.w + '\u00D7' + el.h + 'px' : '';
-    });
-    RF.on(RF.E.LAYOUT_CHANGED, () => {
-      const DM = RF.Core.DocumentModel;
-      const g = document.getElementById('sb-grid-ind');
-      const s = document.getElementById('sb-snap-ind');
-      if (g) g.textContent = DM.showGrid ? 'G' + DM.gridSize : '';
-      if (s) s.textContent = DM.snapToGrid ? '\u229ESnap' : '';
-    });
-  },
+  _canvasPt(e) { return RF.Geometry.clientToCanvas(e); },
 };

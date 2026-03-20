@@ -1,23 +1,19 @@
-# Python
-.venv/
-venv/
 __pycache__/
 *.pyc
 *.pyo
-
-# Node
+*.pyd
 node_modules/
-
-# Build
-dist/
-build/
-
-# Env
 .env
-
-# OS
+*.log
+*.zip
+*.tar.gz
 .DS_Store
 Thumbs.db
-.venv/
+*.bak*
+*trace*
+*.fixbak
 __pycache__/
 *.pyc
+*.bak*
+*trace*
+*.fixbak

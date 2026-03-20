@@ -18,35 +18,24 @@ RF.Classic.Sections = {
   ICONS:  { rh:'RH',ph:'PH',gh:'GH',det:'D',gf:'GF',pf:'PF',rf:'RF' },
 
   render(container) {
-    // Clear sections but preserve labelCol
-    const existingLabelCol = document.getElementById('sec-label-col-inner');
     RF.clear(container);
 
-    // Re-create or re-attach label column
-    let labelCol = document.createElement('div');
+    const labelCol = document.createElement('div');
     labelCol.id = 'sec-label-col-inner';
     labelCol.className = 'sec-label-col-inner';
-    labelCol.style.cssText = 'position:absolute;left:-22px;top:0;width:22px;z-index:10;pointer-events:auto;';
     container.appendChild(labelCol);
 
-    // Track cumulative Y offset for label cells
-    let offsetY = 0;
     const DM = RF.Core.DocumentModel;
 
     DM.layout.sections.forEach(sec => {
-      // Build the section wrap + body + resize
       const { wrap, body } = this._buildSection(sec);
       container.appendChild(wrap);
-
-      // Build label cell in column
-      const cell = this._buildLabelCell(sec, offsetY);
+      const cell = this._buildLabelCell(sec);
       labelCol.appendChild(cell);
-
-      // The label cell height = body height + resize handle (3px)
-      offsetY += sec.height + 3;
     });
 
-    RF.Sel.initLayer();
+    RF.Engines.SectionLayoutEngine.syncAll();
+    RF.Core.SelectionSystem.initLayer();
     RF.UX.Guides.init();
   },
 
@@ -57,14 +46,11 @@ RF.Classic.Sections = {
     wrap.className     = `rf-section sec-${sec.stype}`;
     wrap.id            = `sec-${sec.id}`;
     wrap.dataset.secid = sec.id;
-    wrap.style.cssText = `width:${DM.layout.pageWidth}px;position:relative;flex-shrink:0;`;
 
-    // Body — white, no colored band
     const body = document.createElement('div');
     body.className     = 'rf-sec-body';
     body.id            = `secbody-${sec.id}`;
     body.dataset.secid = sec.id;
-    body.style.cssText = `width:${DM.layout.pageWidth}px;height:${sec.height}px;`;
 
     DM.layout.elements
       .filter(e => e.sectionId === sec.id)
@@ -80,19 +66,20 @@ RF.Classic.Sections = {
     // Resize handle
     const rsz = document.createElement('div');
     rsz.className     = 'rf-sec-resize';
-    rsz.style.cssText = `width:${DM.layout.pageWidth}px;`;
+    rsz.id            = `secresize-${sec.id}`;
     rsz.title         = 'Drag to resize section';
     rsz.addEventListener('pointerdown', e => this._startResize(e, sec.id));
     wrap.appendChild(rsz);
 
+    RF.Engines.SectionLayoutEngine.syncSection(sec);
+
     return { wrap, body };
   },
 
-  _buildLabelCell(sec, offsetY) {
+  _buildLabelCell(sec) {
     const cell = document.createElement('div');
     cell.className       = 'rf-sec-label-cell';
     cell.dataset.secid   = sec.id;
-    cell.style.cssText   = `height:${sec.height + 3}px;`; // body + resize
     cell.title           = sec.label + (sec.canGrow ? ' (Can Grow)' : '');
 
     const abbr = SEC_ABBR[sec.stype] || sec.stype.toUpperCase().slice(0,3);
@@ -118,13 +105,7 @@ RF.Classic.Sections = {
 
   // Sync label column heights after a section resize
   _syncLabelCol() {
-    const DM = RF.Core.DocumentModel;
-    let offsetY = 0;
-    DM.layout.sections.forEach(sec => {
-      const cell = document.querySelector(`.rf-sec-label-cell[data-secid="${sec.id}"]`);
-      if (cell) cell.style.height = (sec.height + 3) + 'px';
-      offsetY += sec.height + 3;
-    });
+    RF.Engines.SectionLayoutEngine.syncAll();
   },
 
   attachElementEvents(div) {
@@ -155,9 +136,10 @@ RF.Classic.Sections = {
   },
 
   fullRender() {
-    const surf = document.getElementById('canvas-surface');
+    const surf = RF.DOM.canvasLayer();
     if (surf) this.render(surf);
-    RF.Sel.syncDOM(); RF.Sel.initLayer();
+    RF.Core.SelectionSystem.syncDOM();
+    RF.Core.SelectionSystem.initLayer();
   },
 
   _selectSection(secId) {
@@ -214,18 +196,18 @@ RF.Classic.Sections = {
     RF.H.snapshot('before-sec-resize');
     const onMove = ev => {
       const dy = (ev.clientY - startY) / RF.Core.DocumentModel.zoom;
-      sec.height = Math.max(12, Math.round(startH + dy));
-      const body = document.getElementById(`secbody-${secId}`);
-      if (body) body.style.height = sec.height + 'px';
-      this._syncLabelCol();
+      RF.Engines.SectionLayoutEngine.setSectionHeight(secId, startH + dy);
+      console.log('[trace sections:onMove]', secId, 'sec.height=', sec.height);
       RF.emit(RF.E.INSPECTOR_REFRESH);
       RF.emit(RF.E.STATUS, `Height: ${sec.height}px`);
     };
     const onUp = () => {
       document.removeEventListener('pointermove', onMove);
       document.removeEventListener('pointerup', onUp);
+      console.log('[trace sections:onUp before emit]', secId, 'sec.height=', sec.height);
       RF.Core.DocumentModel.isDirty = true;
-      RF.emit(RF.E.LAYOUT_CHANGED);
+      RF.emit(RF.E.SECTION_RESIZED, { sectionId: secId });
+      console.log('[trace sections:onUp after emit]', secId, 'sec.height=', sec.height);
     };
     document.addEventListener('pointermove', onMove);
     document.addEventListener('pointerup', onUp);

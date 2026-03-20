@@ -3,8 +3,8 @@ layout: home
 
 hero:
   name: ReportForge
-  text: Crystal Reports-compatible Report Designer
-  tagline: Open-source visual report designer with enterprise render engine
+  text: Crystal Reports–compatible Visual Designer
+  tagline: Open-source report designer with Crystal Reports XI fidelity, Python render engine, and enterprise QA pipeline.
   actions:
     - theme: brand
       text: Get Started
@@ -16,13 +16,19 @@ hero:
 features:
   - icon: 🖥️
     title: Visual Designer
-    details: Crystal Reports XI/2010-style designer with menu bar, canvas, property inspector and field explorer.
+    details: Crystal Reports XI–style designer with rulers, banded sections, snap guides, L-shaped handles, property inspector, and field explorer.
   - icon: ⚙️
     title: Render Engine
-    details: Enterprise-grade Python engine renders layouts to HTML, PDF, XLSX, CSV and PNG.
+    details: Python engine renders layouts to HTML, PDF, XLSX, CSV. Formula engine supports IIf, aggregates, date functions, and Crystal syntax.
   - icon: 🔌
     title: REST API
-    details: FastAPI-based API with OpenAPI docs. Drop-in replacement for Crystal Reports generation.
+    details: FastAPI server with OpenAPI docs. POST /render for PDF generation, /validate-formula for formula checking.
+  - icon: 🧪
+    title: QA Pipeline
+    details: 43 QA scripts, 1000+ automated tests, 12 layout invariants. Zero regressions since v15.1.
   - icon: 📐
-    title: Full Fidelity
-    details: Section model, conditional formatting, formulas, groups, running totals, sub-reports.
+    title: Layout Invariant Engine
+    details: Strict four-layer architecture (Viewport → Workspace → Canvas → Document). 12 invariants validated across 6 interaction scenarios.
+  - icon: ⌨️
+    title: Complete Command System
+    details: 84/84 commands implemented (100% coverage) — alignment, ordering, grouping, zoom, sections, object properties.

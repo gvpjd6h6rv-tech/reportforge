@@ -78,6 +78,18 @@ class RFHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         path = urllib.parse.urlparse(self.path).path.rstrip("/") or "/"
 
+        if path == "/favicon.ico":
+            fav = _HERE / "favicon.ico"
+            if fav.exists():
+                self.send_response(200)
+                self.send_header("Content-Type", "image/x-icon")
+                self.send_header("Cache-Control", "max-age=86400")
+                self.end_headers()
+                self.wfile.write(fav.read_bytes())
+            else:
+                self.send_error(404)
+            return
+
         if path in ("/", "/designer", "/classic"):
             self._serve_designer()
         elif path == "/modern":
@@ -300,8 +312,9 @@ class RFHandler(BaseHTTPRequestHandler):
             self._error(400, str(e))
 
     def _serve_static(self, path: str):
-        # Try designer dir first, then project root
-        for base in [_DESIGNER_SRC, _HERE]:
+        # Try designer dir, engines dir, then project root
+        _ENGINES = _HERE / "engines"
+        for base in [_DESIGNER_SRC, _ENGINES, _HERE]:
             fp = base / path.lstrip("/")
             if fp.exists() and fp.is_file():
                 mt = mimetypes.guess_type(str(fp))[0] or "application/octet-stream"

@@ -19,8 +19,8 @@ with sync_playwright() as p:
     # ── Geometry probes ────────────────────────────────────────────
     geo = page.evaluate("""() => {
         const cs = getComputedStyle(document.documentElement);
-        const ws = document.getElementById('workspace');
-        const cl = document.getElementById('canvas-layer');
+        const ws = document.getElementById('canvas-scroll');
+        const cl = document.getElementById('canvas-surface');
         const wR = ws.getBoundingClientRect(), cR = cl.getBoundingClientRect();
         const layerOrder = [];
         for(const ss of document.styleSheets){
@@ -74,7 +74,7 @@ with sync_playwright() as p:
             t2=Math.abs(w-mw*4)<2;
             DesignZoomEngine.set(1.0);
         }
-        const ws=document.getElementById('workspace');
+        const ws=document.getElementById('workspace')||document.getElementById('canvas-scroll');
         ws.scrollLeft=0; ws.scrollTop=100;
         DesignZoomEngine.set(2.0,700,450);
         const scrollComp=ws.scrollTop!==100;
@@ -111,7 +111,7 @@ with sync_playwright() as p:
         const allInstances=originId ? document.querySelectorAll('[data-origin-id="'+originId+'"]') : [];
         const allHL=[...allInstances].every(e=>e.classList.contains('pv-origin-selected'));
 
-        const ws=document.getElementById('workspace');
+        const ws=document.getElementById('workspace')||document.getElementById('canvas-scroll');
         const wsCSS=getComputedStyle(ws);
         const scrollOK=wsCSS.overflow==='auto'||wsCSS.overflow==='scroll'||wsCSS.overflowY==='auto';
 

@@ -1,70 +1,53 @@
-# Keyboard Shortcuts
-
-## File
-
-| Shortcut | Action |
-|----------|--------|
-| Ctrl+N | New report |
-| Ctrl+O | Open file |
-| Ctrl+S | Save |
+# Keyboard Shortcuts — ReportForge v18.0
 
 ## Edit
 
-| Shortcut | Action |
-|----------|--------|
-| Ctrl+Z | Undo |
-| Ctrl+Y | Redo |
-| Ctrl+C | Copy |
-| Ctrl+X | Cut |
-| Ctrl+V | Paste (smart offset +4px per paste) |
-| Ctrl+D | Duplicate |
-| Del | Delete selected |
-| Ctrl+A | Select all |
-| Ctrl+G | Group |
-| Ctrl+Shift+G | Ungroup |
+| Action | Shortcut |
+|--------|----------|
+| Undo | Ctrl+Z |
+| Redo | Ctrl+Y |
+| Copy | Ctrl+C |
+| Cut | Ctrl+X |
+| Paste | Ctrl+V |
+| Delete | Delete / Backspace |
+| Duplicate | Ctrl+D |
+| Select all | Ctrl+A |
 
-## Navigation
+## Movement
 
-| Shortcut | Action |
-|----------|--------|
-| Arrow keys | Nudge element 1px |
-| Shift+Arrow | Nudge 8px |
-| Ctrl+Wheel | Zoom in/out |
-| Space+Drag | Pan canvas |
-| Ctrl+0 | Zoom 100% |
-| Ctrl++ | Zoom in |
-| Ctrl+- | Zoom out |
+| Action | Shortcut |
+|--------|----------|
+| Move 1px | Arrow keys |
+| Move 8px | Shift + Arrow |
 
-## View / Modes
+## Zoom
 
-| Shortcut | Action |
-|----------|--------|
-| F5 | Preview report |
-| Esc | Return to Design / Select tool |
-| Ctrl+F | Formula Workshop |
-| F9 | SQL Expression Editor |
-| Ctrl+Shift+O | Object Explorer |
-| Ctrl+Shift+F | Formula Debugger |
-| Ctrl+R | Repository Explorer |
+| Action | Shortcut |
+|--------|----------|
+| Zoom in | Ctrl+B or Ctrl+= |
+| Zoom out | Ctrl+Shift+B |
+| Zoom reset (100%) | Ctrl+0 |
+| Smooth zoom | Ctrl + Mouse Wheel (~10% per tick) |
 
-## Z-order
+## View
 
-| Shortcut | Action |
-|----------|--------|
-| Ctrl+] | Bring forward |
-| Ctrl+[ | Send backward |
+| Action | Shortcut |
+|--------|----------|
+| Toggle preview | F5 or Preview button |
+| Toggle grid | Ctrl+G |
+| Toggle snap | Ctrl+Shift+G |
 
-## Tools (when not editing)
+## Format
 
-| Key | Tool |
-|-----|------|
-| V | Select tool |
-| T | Text object |
-| F | Field |
-| L | Line |
-| R | Rectangle |
-| I | Image |
+| Action | Shortcut |
+|--------|----------|
+| Bold | Ctrl+B (text elements) |
+| Italic | Ctrl+I |
+| Underline | Ctrl+U |
 
-## Alt accelerators (menu bar)
+## Notes
 
-`Alt` activates the menu bar. Use arrow keys to navigate. Letter underlines trigger items.
+- Arrow key movement respects the snap grid (8px for Shift+Arrow, 1px for Arrow)
+- Ctrl+Wheel zoom uses `DesignZoomEngine.setFree()` for smooth continuous zoom
+- Buttons (+/−) use `DesignZoomEngine.set()` which snaps to predefined steps: 25%, 50%, 75%, 100%, 150%, 200%, 300%, 400%
+- Preview and Design modes maintain independent zoom states — switching modes restores the previous zoom for that mode

@@ -13,8 +13,7 @@ RF.Modules.ObjectExplorer = {
 
   init() {
     this._el = document.getElementById('object-explorer-content');
-    RF.on(RF.E.LAYOUT_CHANGED, () => this.render());
-    RF.on(RF.E.SEL_CHANGED,    () => this.update());
+        RF.on(RF.E.SEL_CHANGED,    () => this.update());
   },
 
   render() {

@@ -11,7 +11,7 @@
  *   3  classic/base     Elements → Canvas → Sections → Inspector → Explorer → Toolbar
  *   4  modules/         all feature dialogs (depend only on Core + Classic)
  *   5  ux/v4            ObjectGroup → PanelSplitter → ContextMenu → FieldDragGhost → PanelTabs
- *   6  classic/v4       SectionsV4 → StatusBarV4 → ToolbarV4
+ *   6  classic/v4       StatusBarV4 → ToolbarV4
  *   7  modules/v4       FormulaEditorV4 → FormulaDebugger → PreviewNav → running-totals…
  *   8  app.js           RF.App (consolidated init)
  */
@@ -21,10 +21,15 @@ import RF from './rf.js';
 
 // 1 ── core  [document-model → history → selection → render-pipeline → layout-tools] ────────────────────────────────────────────────────────────────────
 import './core/document-model.js';
+import './core/dom-contract.js';
+import './core/geometry.js';
 import './core/history.js';
 import './core/selection.js';
 import './core/render-pipeline.js';
 import './core/layout-tools.js';
+import './engines/CanvasLayoutEngine.js';
+import './engines/SectionLayoutEngine.js';
+import './engines/WorkspaceScrollEngine.js';
 
 // 2 ── ux/base  [snapping → guides → alignment → format-painter → drag-tools] ─────────────────────────────────────────────────────────────────
 import './ux/snapping.js';
@@ -35,8 +40,8 @@ import './ux/drag-tools.js';
 
 // 3 ── classic/base  [elements → canvas → sections → inspector → explorer → toolbar] ────────────────────────────────────────────────────────────
 import './classic/elements.js';
-import './classic/canvas.js';
 import './classic/sections.js';
+import './classic/canvas.js';
 import './classic/inspector.js';
 import './classic/explorer.js';
 import './classic/toolbar.js';
@@ -63,7 +68,6 @@ import './ux/field-drag-ghost.js';
 import './ux/panel-tabs.js';
 
 // 6 ── classic/v4  [sections-v4 → status-bar-v4 → toolbar-v4] ─────────────────────────────────────────────────────────────
-import './classic/sections-v4.js';
 import './classic/status-bar-v4.js';
 import './classic/toolbar-v4.js';
 

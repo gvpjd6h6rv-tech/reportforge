@@ -1,16 +1,4 @@
-/**
- * RF.Geometry v5.0 — Precision Geometry Engine
- * =============================================
- * Stage 1 deliverables (all runtime-verifiable):
- *   - Matrix2D: 2D affine transforms (translate/scale/rotate) at float64 precision
- *   - AABB: axis-aligned bounding box collision detection
- *   - MagneticSnap: grid snapping with 0.001px tolerance
- *   - PointerNorm: unified Mouse/Touch/Pen → canvas coordinates
- *   - DOMRect-based overlay positioning (existing, preserved)
- */
-
-window.RF = window.RF || {};
-const RF = window.RF;
+import RF from '../rf.js';
 
 /* ── Matrix2D ─────────────────────────────────────────────────────────────
  * Represents a 3×3 affine matrix stored as [a,b,c,d,e,f]:
@@ -127,7 +115,7 @@ const MagneticSnap = {
 };
 
 /* ── PointerNorm ──────────────────────────────────────────────────────────
- * Unified Mouse/Touch/Pen → pre-transform canvas coordinates.
+ * Unified Mouse/Touch/Pen → model coordinates.
  */
 const PointerNorm = {
   /** Extract clientX/Y from any pointer/mouse/touch event */
@@ -138,8 +126,7 @@ const PointerNorm = {
   },
   /** Convert client coords → pre-transform canvas space */
   toCanvas(e){
-    const {x,y} = this.clientPos(e);
-    return RF.Geometry.toCanvasSpace(x, y);
+    return RF.Geometry.clientToCanvas(e);
   },
   /** Pointer pressure (1.0 for mouse, real value for pen) */
   pressure(e){ return (e.pressure !== undefined && e.pressure > 0) ? e.pressure : 1.0; },
@@ -150,23 +137,62 @@ const PointerNorm = {
 /* ── RF.Geometry v5 ───────────────────────────────────────────────────────
  * Extends the existing geometry module with Stage 1 capabilities.
  */
-RF.Geometry = Object.assign(RF.Geometry || {}, {
+RF.Geometry = Object.assign(RF.Geometry, {
   // Stage 1 additions
   Matrix2D,
   AABB,
   MagneticSnap,
   PointerNorm,
 
+  getZoom() {
+    return RF.Core.DocumentModel?.zoom ?? 1;
+  },
   /** Build canvas transform matrix from current zoom */
   canvasMatrix(){
-    const zoom = (typeof DS !== 'undefined' ? DS.zoom : 1) || 1;
-    return Matrix2D.scale(zoom);
+    return Matrix2D.scale(this.getZoom());
   },
   /** Build inverse canvas matrix (screen → model) */
   canvasMatrixInverse(){
     return this.canvasMatrix().inverse();
   },
-  /** Get AABB for a .cr-element in canvas space */
+  clientToCanvas(input, maybeY){
+    const { x, y } = typeof input === 'number'
+      ? { x: input, y: maybeY ?? 0 }
+      : PointerNorm.clientPos(input);
+    const rect = RF.DOM.canvasLayer()?.getBoundingClientRect();
+    const zoom = this.getZoom();
+    if (!rect) return { x: 0, y: 0 };
+    return {
+      x: (x - rect.left) / zoom,
+      y: (y - rect.top) / zoom,
+    };
+  },
+  clientToSection(input, sectionId){
+    const { x, y } = typeof input === 'number'
+      ? { x: input, y: arguments[2] ?? 0 }
+      : PointerNorm.clientPos(input);
+    const body = RF.DOM.sectionBody(sectionId);
+    const rect = body?.getBoundingClientRect();
+    const zoom = this.getZoom();
+    if (!rect) return { x: 0, y: 0 };
+    return {
+      x: (x - rect.left) / zoom,
+      y: (y - rect.top) / zoom,
+    };
+  },
+  canvasToSection(point, sectionId){
+    const body = RF.DOM.sectionBody(sectionId);
+    const surface = RF.DOM.canvasLayer();
+    if (!body || !surface) return { x: point.x, y: point.y };
+    const bodyRect = body.getBoundingClientRect();
+    const surfaceRect = surface.getBoundingClientRect();
+    const zoom = this.getZoom();
+    return {
+      x: point.x - (bodyRect.left - surfaceRect.left) / zoom,
+      y: point.y - (bodyRect.top - surfaceRect.top) / zoom,
+    };
+  },
+  /** Get AABB for an element in canvas space */
   elementAABB(elOrId){
     const r = this.getElementRect(elOrId);
     return r ? AABB.fromRect(r) : null;
@@ -174,11 +200,21 @@ RF.Geometry = Object.assign(RF.Geometry || {}, {
   /** Get all element AABBs in canvas space */
   allElementAABBs(){
     const result = [];
-    document.querySelectorAll('.cr-element').forEach(el => {
+    document.querySelectorAll('.rf-el[data-elid]').forEach(el => {
       const r = this.getElementRect(el);
-      if(r) result.push({id:el.dataset.id, aabb: AABB.fromRect(r)});
+      if(r) result.push({id:el.dataset.elid, aabb: AABB.fromRect(r)});
     });
     return result;
+  },
+  getElementRect(elOrId){
+    const id = typeof elOrId === 'string' ? `el-${elOrId}` : null;
+    const node = typeof elOrId === 'string'
+      ? document.getElementById(id)
+      : elOrId;
+    const elId = typeof elOrId === 'string' ? elOrId : node?.dataset?.elid;
+    const model = elId ? RF.Core.DocumentModel.getElementById(elId) : null;
+    if (!model) return null;
+    return { x: model.x, y: model.y, w: model.w, h: model.h };
   },
   /** Detect overlapping pairs */
   findOverlaps(){
@@ -195,4 +231,4 @@ RF.Geometry = Object.assign(RF.Geometry || {}, {
   },
 });
 
-window.RF = RF;
+export default RF;

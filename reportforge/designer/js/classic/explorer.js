@@ -20,8 +20,7 @@ RF.Classic.Explorer = {
     this._el = document.getElementById('field-explorer');
     if (!this._el) return;
     this.render();
-    RF.on(RF.E.LAYOUT_CHANGED, () => this._syncParams());
-  },
+      },
 
   render() {
     const fd = RF.Core.DocumentModel.fieldData;

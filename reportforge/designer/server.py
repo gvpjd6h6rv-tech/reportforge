@@ -76,10 +76,14 @@ async def designer_preview(request: dict):
 
 
 _MIME = {".js": "application/javascript", ".css": "text/css", ".html": "text/html"}
+_STATIC_PREFIXES = ("css/", "js/")
+_STATIC_FILES = {"index.html", "favicon.svg"}
 
 @router.get("/{path:path}", include_in_schema=False)
 async def serve_static(path: str):
-    """Serve legacy module JS/CSS files from the designer directory."""
+    """Serve only the module-based designer assets."""
+    if path not in _STATIC_FILES and not path.startswith(_STATIC_PREFIXES):
+        raise HTTPException(404, f"Not found: {path}")
     fp = (_DESIGNER_DIR / path).resolve()
     try:
         fp.relative_to(_DESIGNER_DIR.resolve())
