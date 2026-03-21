@@ -20,23 +20,6 @@ window.WorkspaceScrollEngine = (() => {
 
   // rAF handle — batches multiple rapid update calls into one frame
   let _rafId = null;
-  let _lastBounds = null;
-
-  function _computeBounds() {
-    const canvas = (typeof CanvasLayoutEngine !== 'undefined' &&
-      CanvasLayoutEngine &&
-      typeof CanvasLayoutEngine.getLayoutContract === 'function')
-      ? CanvasLayoutEngine.getLayoutContract()
-      : null;
-
-    return {
-      scaledW: canvas ? canvas.width : RF.Geometry.scale(CFG.PAGE_W),
-      scaledH: canvas ? canvas.height : RF.Geometry.scale(
-        (typeof DS !== 'undefined') ? DS.getTotalHeight() : 0
-      ),
-      padding: SCROLL_PADDING,
-    };
-  }
 
   /**
    * Schedule an update via requestAnimationFrame.
@@ -58,7 +41,9 @@ window.WorkspaceScrollEngine = (() => {
     const ws = document.getElementById('workspace');
     if (!ws) return;
 
-    const bounds = _computeBounds();
+    const scaledW = RF.Geometry.scale(CFG.PAGE_W);
+    const totalH  = (typeof DS !== 'undefined') ? DS.getTotalHeight() : 0;
+    const scaledH = RF.Geometry.scale(totalH);
 
     // Workspace min-content size = canvas + padding
     // We set min-width/min-height on the viewport instead of width
@@ -66,25 +51,14 @@ window.WorkspaceScrollEngine = (() => {
     const vp = document.getElementById('viewport');
     if (vp) {
       // Viewport is already sized by ZoomEngine; ensure bottom margin
-      const marginBottom = bounds.padding + 'px';
-      if (vp.style.marginBottom !== marginBottom) {
-        vp.style.marginBottom = marginBottom;
-      }
-    }
-
-    if (_lastBounds &&
-        _lastBounds.scaledW === bounds.scaledW &&
-        _lastBounds.scaledH === bounds.scaledH &&
-        _lastBounds.padding === bounds.padding) {
-      return;
+      vp.style.marginBottom = SCROLL_PADDING + 'px';
     }
 
     // Emit a custom event so other systems can react
     ws.dispatchEvent(new CustomEvent('rf:scroll-geometry', {
-      detail: bounds,
+      detail: { scaledW, scaledH, padding: SCROLL_PADDING },
       bubbles: false,
     }));
-    _lastBounds = bounds;
   }
 
   /**
@@ -156,11 +130,13 @@ window.WorkspaceScrollEngine = (() => {
      * Useful for rulers and overlays.
      */
     getGeometry() {
-      return _computeBounds();
-    },
-
-    getLayoutContract() {
-      return _computeBounds();
+      return {
+        scaledW:  RF.Geometry.scale(CFG.PAGE_W),
+        scaledH:  RF.Geometry.scale(
+          (typeof DS !== 'undefined') ? DS.getTotalHeight() : 0
+        ),
+        padding:  SCROLL_PADDING,
+      };
     },
   };
 })();
