@@ -24,22 +24,93 @@ const RenderScheduler = (() => {
   let _rafId  = null;
   let _frame  = 0;
   let _locked = false;  // prevents re-entrant scheduling during flush
+  let _recovering = false;
 
   function _flush() {
     _rafId  = null;
     _frame++;
     _locked = true;
+    const frameMeta = {
+      frame: _frame,
+      startedAt: new Date().toISOString(),
+      queued: {
+        layout: _queues[PRIORITY.LAYOUT].size,
+        visual: _queues[PRIORITY.VISUAL].size,
+        handles: _queues[PRIORITY.HANDLES].size,
+        post: _queues[PRIORITY.POST].size,
+      },
+      executed: {
+        layout: 0,
+        visual: 0,
+        handles: 0,
+        post: 0,
+      },
+    };
+    let firstError = null;
+
+    _notifyCore('beginFrame', frameMeta);
     try {
-      for (const q of _queues) {
-        const tasks = [...q.values()];
+      for (let i = 0; i < _queues.length; i++) {
+        const q = _queues[i];
+        const tasks = [...q.entries()];
         q.clear();
-        for (const fn of tasks) {
-          try { fn(); } catch (e) { console.error('[RenderScheduler]', e); }
+        for (const [key, fn] of tasks) {
+          try {
+            fn();
+            if (i === PRIORITY.LAYOUT) frameMeta.executed.layout += 1;
+            else if (i === PRIORITY.VISUAL) frameMeta.executed.visual += 1;
+            else if (i === PRIORITY.HANDLES) frameMeta.executed.handles += 1;
+            else if (i === PRIORITY.POST) frameMeta.executed.post += 1;
+          } catch (e) {
+            if (!firstError) firstError = e;
+            console.error('[RenderScheduler]', e);
+            _notifyCore('enterSafeMode', 'scheduler_task_error', e, {
+              frame: _frame,
+              priority: i,
+              key: typeof key === 'symbol' ? key.toString() : key,
+            });
+          }
         }
+
+        if (i === PRIORITY.LAYOUT) {
+          const layoutReport = _notifyCore('verifyRuntimeInvariants', 'post-layout', {
+            frame: _frame,
+            executed: frameMeta.executed.layout,
+          });
+          if (layoutReport && layoutReport.ok === false && !firstError) {
+            firstError = new Error('Runtime invariant failure at post-layout');
+          }
+        }
+      }
+
+      const pipelineReport = _notifyCore('verifyRuntimeInvariants', 'post-pipeline', {
+        frame: _frame,
+        executed: _cloneFrameCounts(frameMeta.executed),
+      });
+      if (pipelineReport && pipelineReport.ok === false && !firstError) {
+        firstError = new Error('Runtime invariant failure at post-pipeline');
       }
     } finally {
       _locked = false;
+      frameMeta.completedAt = new Date().toISOString();
+      _notifyCore('completeFrame', frameMeta);
     }
+
+    if (firstError) {
+      _attemptRecovery('render_scheduler_flush_failure', firstError, {
+        frame: _frame,
+        frameMeta,
+      });
+    }
+  }
+
+  function _cloneFrameCounts(counts) {
+    return {
+      layout: counts.layout,
+      visual: counts.visual,
+      handles: counts.handles,
+      post: counts.post,
+    };
   }
 
   function _kick() {
