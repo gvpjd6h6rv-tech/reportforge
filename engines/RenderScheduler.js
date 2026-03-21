@@ -25,6 +25,24 @@ const RenderScheduler = (() => {
   let _frame  = 0;
   let _locked = false;  // prevents re-entrant scheduling during flush
 
+  function _getEngine(name) {
+    if (typeof EngineRegistry !== 'undefined' && EngineRegistry && EngineRegistry.get) {
+      return EngineRegistry.get(name) || null;
+    }
+    if (typeof window !== 'undefined' && window[name]) return window[name];
+    return null;
+  }
+
+  function _runLayoutPipeline() {
+    const section = _getEngine('SectionLayoutEngine');
+    const canvas = _getEngine('CanvasLayoutEngine') || _getEngine('CanvasEngineV19');
+    const scroll = _getEngine('WorkspaceScrollEngine');
+
+    if (section && typeof section.updateSync === 'function') section.updateSync();
+    if (canvas && typeof canvas.updateSync === 'function') canvas.updateSync();
+    if (scroll && typeof scroll.updateSync === 'function') scroll.updateSync();
+  }
+
   function _flush() {
     _rafId  = null;
     _frame++;
@@ -66,6 +84,12 @@ const RenderScheduler = (() => {
     visual(fn, key)  { this.schedule(fn, PRIORITY.VISUAL,  key || 'visual_' + (fn.name || 'anon')); },
     handles(fn, key) { this.schedule(fn, PRIORITY.HANDLES, key || 'handles_' + (fn.name || 'anon')); },
     post(fn, key)    { this.schedule(fn, PRIORITY.POST,    key || 'post_' + (fn.name || 'anon')); },
+    layoutPipeline(key) {
+      this.layout(() => _runLayoutPipeline(), key || 'layout_pipeline');
+    },
+    runLayoutPipelineSync() {
+      _runLayoutPipeline();
+    },
 
     /** Synchronous flush — ONLY for boot init, never in hot paths */
     flushSync(fn) { fn(); },

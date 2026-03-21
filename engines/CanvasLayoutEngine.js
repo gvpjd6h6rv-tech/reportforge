@@ -15,29 +15,61 @@
 'use strict';
 
 const CanvasLayoutEngine = (() => {
+  let _lastCanvasContract = null;
+
+  function _setStyleIfChanged(style, prop, value) {
+    if (style[prop] !== value) style[prop] = value;
+  }
+
+  function _computeCanvasContract() {
+    const sectionLayout = (typeof SectionLayoutEngine !== 'undefined' &&
+      SectionLayoutEngine &&
+      typeof SectionLayoutEngine.getLayoutContract === 'function')
+      ? SectionLayoutEngine.getLayoutContract()
+      : null;
+
+    const width = sectionLayout
+      ? sectionLayout.pageWidth
+      : RF.Geometry.scale(CFG.PAGE_W);
+    const height = sectionLayout
+      ? sectionLayout.totalHeight
+      : ((typeof DS !== 'undefined')
+          ? DS.sections.reduce((s, sec) => s + RF.Geometry.scale(sec.height), 0)
+          : 0);
+
+    return {
+      width,
+      height,
+      minHeight: 0,
+      maxHeight: height,
+    };
+  }
+
   // ── Canvas size management ────────────────────────────────────────
   function _applyCLSize() {
     const cl = document.getElementById('canvas-layer');
     if (!cl || typeof DS === 'undefined') return;
-    console.log('🔥 REAL CanvasLayoutEngine._applyCLSize before', DS.sections.map(sec => ({ id: sec.id, h: sec.height })));
+    const contract = _computeCanvasContract();
+    const next = {
+      width: `${contract.width}px`,
+      minHeight: `${contract.minHeight}px`,
+      height: `${contract.height}px`,
+      maxHeight: `${contract.maxHeight}px`,
+    };
 
-    const contentH = DS.sections.reduce((s, sec) => s + RF.Geometry.scale(sec.height), 0);
+    if (_lastCanvasContract &&
+        _lastCanvasContract.width === next.width &&
+        _lastCanvasContract.minHeight === next.minHeight &&
+        _lastCanvasContract.height === next.height &&
+        _lastCanvasContract.maxHeight === next.maxHeight) {
+      return;
+    }
 
-    console.log('🔥 REAL CanvasLayoutEngine.contentH', contentH);
-    cl.style.width     = `${RF.Geometry.scale(CFG.PAGE_W)}px`;
-    cl.style.minHeight = '0px';
-    cl.style.height    = `${contentH}px`;
-    cl.style.maxHeight = `${contentH}px`;
-
-    requestAnimationFrame(() => {
-      const rows = [...document.querySelectorAll('.cr-section[data-section-id]')].map(div => ({
-        id: div.dataset.sectionId,
-        top: div.getBoundingClientRect().top,
-        h: div.getBoundingClientRect().height,
-        styleH: div.style.height
-      }));
-      console.log('🔥 POST CANVAS SECTIONS', rows);
-    });
+    _setStyleIfChanged(cl.style, 'width', next.width);
+    _setStyleIfChanged(cl.style, 'minHeight', next.minHeight);
+    _setStyleIfChanged(cl.style, 'height', next.height);
+    _setStyleIfChanged(cl.style, 'maxHeight', next.maxHeight);
+    _lastCanvasContract = next;
   }
   function _scheduleSize() {
     if (typeof RenderScheduler !== 'undefined') {
@@ -227,6 +259,9 @@ const CanvasLayoutEngine = (() => {
         modelH:  typeof DS !== 'undefined' ? DS.getTotalHeight() : 0,
         zoom:    RF.Geometry.zoom(),
       };
+    },
+    getLayoutContract() {
+      return _computeCanvasContract();
     },
 
     // Full DOM element management (no monolithic delegation)

@@ -3011,10 +3011,7 @@ const SectionEngine = {
     // canvas sizing delegated to CanvasLayoutEngine.updateSync()
     // Notify layout engines via RenderScheduler so WorkspaceScrollEngine updates scroll bounds
     if (typeof RenderScheduler !== 'undefined') {
-      RenderScheduler.layout(() => {
-        if (typeof CanvasLayoutEngine !== 'undefined') CanvasLayoutEngine.updateSync();
-        if (typeof WorkspaceScrollEngine !== 'undefined') WorkspaceScrollEngine.update();
-      }, 'SectionEngine.render.canvasSync');
+      RenderScheduler.layoutPipeline('SectionEngine.render.layout');
     }
     this.updateSectionsList();
   },
@@ -3648,15 +3645,10 @@ const SectionResizeEngine = {
       d._rafPending=true;
       requestAnimationFrame(()=>{
         d._rafPending=false;
-        // height write removed — SectionLayoutEngine owns all section sizing
-        if (typeof SectionLayoutEngine !== 'undefined') SectionLayoutEngine.updateSync();
-        if (typeof CanvasLayoutEngine !== 'undefined') CanvasLayoutEngine.updateSync();
-        if (typeof WorkspaceScrollEngine !== 'undefined') WorkspaceScrollEngine.update();
-        // v19.10: compute from source of truth — sum scaled section heights directly
-        // Never use previous canvas height; always recompute from model.
-        const _cl = document.getElementById('canvas-layer');
-        const _totalH = DS.sections.reduce((s,sec)=>s + RF.Geometry.scale(sec.height), 0);
-        // canvas height write removed; CanvasLayoutEngine owns canvas sizing
+        // height write removed — RenderScheduler owns the full layout pass
+        if (typeof RenderScheduler !== 'undefined' && typeof RenderScheduler.layoutPipeline === 'function') {
+          RenderScheduler.layoutPipeline('SectionResizeEngine.onMouseMove.layout');
+        }
         const badge=document.getElementById('resize-badge');
         badge.textContent=`${sec.abbr}: ${sec.height}px`;
         badge.style.left=(e.clientX+12)+'px';badge.style.top=(e.clientY-20)+'px';
@@ -3671,15 +3663,9 @@ const SectionResizeEngine = {
     document.getElementById('resize-badge').style.display='none';
     DS.saveHistory();
     SectionEngine.updateSectionsList();
-    // v19.9: clear minHeight, set only height
-    const cl = document.getElementById('canvas-layer');
-    // canvas sizing delegated to CanvasLayoutEngine.updateSync()
+    // canvas sizing delegated to the centralized layout pipeline
     if (typeof RenderScheduler !== 'undefined') {
-      RenderScheduler.layout(() => {
-        if (typeof SectionLayoutEngine !== 'undefined') SectionLayoutEngine.updateSync();
-        if (typeof CanvasLayoutEngine !== 'undefined') CanvasLayoutEngine.updateSync();
-        if (typeof WorkspaceScrollEngine !== 'undefined') WorkspaceScrollEngine.update();
-      }, 'SectionResizeEngine.onMouseUp.canvasSync');
+      RenderScheduler.layoutPipeline('SectionResizeEngine.onMouseUp.layout');
     }
     this._drag=null;
   },
@@ -4738,7 +4724,9 @@ const DesignZoomEngine={
       div.style.fontSize = RF.Geometry.scale(el.fontSize * 96/72) + 'px'; // v18.12: scale font
     });
     // ── 5. Update canvas-layer total height ─────────────────────────
-    if (typeof CanvasLayoutEngine !== 'undefined') CanvasLayoutEngine.updateSync();
+    if (typeof RenderScheduler !== 'undefined' && typeof RenderScheduler.layoutPipeline === 'function') {
+      RenderScheduler.layoutPipeline('DesignZoomEngine._apply.layoutLegacy');
+    }
     // ── 6. Re-render rulers + overlays (already geometry-based) ──────
     OverlayEngine.render();
     SelectionEngine.renderHandles();
@@ -6822,11 +6810,10 @@ document.addEventListener('DOMContentLoaded', () => {
 // ── ReportForge v19 Phase 3 Boot ─────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
 
-  // ── CanvasEngine ────────────────────────────────────────────────
-  if (typeof CanvasLayoutEngine !== 'undefined') CanvasLayoutEngine.updateSync();
-
-  // ── SectionLayoutEngine ─────────────────────────────────────────
-  if (typeof SectionLayoutEngine !== 'undefined') SectionLayoutEngine.updateSync();
+  // ── Layout bootstrap ────────────────────────────────────────────
+  if (typeof RenderScheduler !== 'undefined' && typeof RenderScheduler.runLayoutPipelineSync === 'function') {
+    RenderScheduler.runLayoutPipelineSync();
+  }
 
   // ── ElementLayoutEngine ─────────────────────────────────────────
   if (typeof ElementLayoutEngine !== 'undefined') {
@@ -6870,10 +6857,7 @@ document.addEventListener('DOMContentLoaded', () => {
     DesignZoomEngine._apply = function(z, ax, ay) {
       _prevApply3(z, ax, ay);
       if (typeof RenderScheduler !== 'undefined') {
-        RenderScheduler.layout(() => {
-          if (typeof CanvasLayoutEngine        !== 'undefined') CanvasLayoutEngine.update();
-          if (typeof SectionLayoutEngine !== 'undefined') SectionLayoutEngine.update();
-        });
+        RenderScheduler.layoutPipeline('DesignZoomEngine._apply.phase3Layout');
         RenderScheduler.visual(() => {
           if (typeof OverlayEngineV19 !== 'undefined') OverlayEngineV19.render();
         });

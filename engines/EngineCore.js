@@ -148,10 +148,15 @@ const EngineCore = (() => {
    */
   function onZoomDidChange(newZoom) {
     // LAYOUT tier — geometry must be updated first
-    RenderScheduler.layout(() => {
-      if (_E('CanvasLayoutEngine'))         _E('CanvasLayoutEngine').updateSync();
-      if (_E('SectionLayoutEngine'))  _E('SectionLayoutEngine').updateSync();
-    }, 'zoom_layout');
+    if (RenderScheduler && typeof RenderScheduler.layoutPipeline === 'function') {
+      RenderScheduler.layoutPipeline('zoom_layout');
+    } else {
+      RenderScheduler.layout(() => {
+        if (_E('SectionLayoutEngine')) _E('SectionLayoutEngine').updateSync();
+        if (_E('CanvasLayoutEngine')) _E('CanvasLayoutEngine').updateSync();
+        if (_E('WorkspaceScrollEngine')) _E('WorkspaceScrollEngine').updateSync();
+      }, 'zoom_layout');
+    }
 
     // VISUAL tier — rulers + grid
     RenderScheduler.visual(() => {
@@ -169,7 +174,6 @@ const EngineCore = (() => {
       if (typeof DS !== 'undefined' && DS.previewMode) {
         if (typeof PreviewEngine !== 'undefined') PreviewEngine.refresh();
       }
-      if (_E('WorkspaceScrollEngine')) _E('WorkspaceScrollEngine').update();
     }, 'zoom_post');
   }
 

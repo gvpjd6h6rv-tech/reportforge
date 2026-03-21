@@ -13,30 +13,60 @@
 
 const SectionLayoutEngine = (() => {
   let _rafId = null;
+  const _layoutCache = new Map();
+
+  function _setStyleIfChanged(style, prop, value) {
+    if (style[prop] !== value) style[prop] = value;
+  }
+
+  function _computeLayoutContract() {
+    if (typeof DS === 'undefined') {
+      return { pageWidth: 0, totalHeight: 0, sections: [] };
+    }
+
+    const pageWidth = RF.Geometry.scale(CFG.PAGE_W);
+    let top = 0;
+    const sections = DS.sections.map(sec => {
+      const height = RF.Geometry.scale(sec.height);
+      const contract = {
+        id: sec.id,
+        top,
+        height,
+        visible: sec.visible !== false,
+      };
+      top += height;
+      return contract;
+    });
+
+    return { pageWidth, totalHeight: top, sections };
+  }
 
   function _apply() {
     if (typeof DS === 'undefined') return;
 
-    console.log('🔥 REAL SectionLayoutEngine._apply', {
-      sections: Array.isArray(DS?.sections) ? DS.sections.map(sec => ({ id: sec.id, height: sec.height })) : 'no-sections'
-    });
-
-    const scaledPageW = RF.Geometry.scale(CFG.PAGE_W);
-
-    DS.sections.forEach(sec => {
+    const contract = _computeLayoutContract();
+    contract.sections.forEach(sec => {
       const div = document.querySelector(`.cr-section[data-section-id="${sec.id}"]`);
       if (!div) return;
-      const rect = div.getBoundingClientRect();
-      console.log('🔥 SEC POS', sec.id, 'modelH=', sec.height, 'domH=', div.style.height, 'top=', rect.top);
-
-      if (sec.visible === false) {
-        div.style.display = 'none';
+      const next = {
+        display: sec.visible ? '' : 'none',
+        height: `${sec.height}px`,
+        width: `${contract.pageWidth}px`,
+        top: sec.top,
+      };
+      const prev = _layoutCache.get(sec.id);
+      if (prev &&
+          prev.display === next.display &&
+          prev.height === next.height &&
+          prev.width === next.width &&
+          prev.top === next.top) {
         return;
       }
 
-      div.style.display = '';
-      div.style.height  = `${RF.Geometry.scale(sec.height)}px`;
-      div.style.width   = `${scaledPageW}px`;
+      _setStyleIfChanged(div.style, 'display', next.display);
+      _setStyleIfChanged(div.style, 'height', next.height);
+      _setStyleIfChanged(div.style, 'width', next.width);
+      _layoutCache.set(sec.id, next);
     });
   }
 
@@ -53,23 +83,23 @@ const SectionLayoutEngine = (() => {
   }
 
   return {
-    update()     { console.log('🔥 REAL SectionLayoutEngine.update'); _schedule(); },
-    updateSync() { console.log('🔥 REAL SectionLayoutEngine.updateSync'); _apply(); },
+    update()     { _schedule(); },
+    updateSync() { _apply(); },
 
     getSectionBand(sectionId) {
-      if (typeof DS === 'undefined') return { y: 0, h: 0 };
-      let y = 0;
-      for (const sec of DS.sections) {
-        const h = RF.Geometry.scale(sec.height);
-        if (sec.id === sectionId) return { y, h };
-        y += h;
+      const contract = _computeLayoutContract();
+      for (const sec of contract.sections) {
+        if (sec.id === sectionId) return { y: sec.top, h: sec.height };
       }
       return { y: 0, h: 0 };
     },
 
     getTotalViewHeight() {
-      if (typeof DS === 'undefined') return 0;
-      return DS.sections.reduce((s, sec) => s + RF.Geometry.scale(sec.height), 0);
+      return _computeLayoutContract().totalHeight;
+    },
+
+    getLayoutContract() {
+      return _computeLayoutContract();
     },
   };
 })();
