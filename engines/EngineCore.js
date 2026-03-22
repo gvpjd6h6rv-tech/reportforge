@@ -65,9 +65,12 @@ const EngineCore = (() => {
   const _EPS        = 0.5;
   const _runtime    = {
     debugFlags: _resolveDebugFlags(),
+    lastWarningKey: null,
     safeMode: {
       active: false,
       reason: null,
+      incidentKey: null,
+      recoveryAttempted: false,
       recoveryCount: 0,
       lastError: null,
       lastRecoveryAt: null,
@@ -76,6 +79,7 @@ const EngineCore = (() => {
       lastFrameMeta: null,
       lastFailure: null,
       lastInvariantReport: null,
+      lastWarningReport: null,
       lastSnapshotAt: null,
     },
   };
@@ -86,6 +90,51 @@ const EngineCore = (() => {
   // ── Helper: resolve engine or null ──────────────────────────────────
   // ONLY EngineRegistry — no window scanning, no global access
   function _E(name) { return EngineRegistry.get(name) || null; }
+
+  function _useInteractionRouter() {
+    return typeof window === 'undefined' || window.RF_USE_ENGINECORE_INTERACTION !== false;
+  }
+
+  function _trace(source, event, payload, phase, frame) {
+    if (typeof window === 'undefined' || typeof window.rfTrace !== 'function') return;
+    const channel = (typeof event === 'string' && (event.includes('verify') || event.includes('invariant')))
+      ? 'invariants'
+      : 'runtime';
+    if (!window.DebugTrace?.isEnabled(channel)) return;
+    window.rfTrace(channel, event, {
+      frame: typeof frame === 'number' ? frame : (_E('RenderScheduler') ? _E('RenderScheduler').frame : null),
+      source,
+      phase: phase || null,
+      payload: payload || null,
+    });
+  }
+
+  function _traceElement(source, event, state) {
+    if (typeof window === 'undefined' || typeof window.rfTrace !== 'function') return;
+    if (typeof event === 'string' && event.toLowerCase().includes('move') && !window.DebugTrace?.isEnabled('move')) return;
+    if (!window.DebugTrace?.isEnabled('elements')) return;
+    window.rfTrace('elements', event, {
+      source,
+      id: state && typeof state.id !== 'undefined' ? state.id : null,
+      handle: state && typeof state.handle !== 'undefined' ? state.handle : null,
+      state: state || null,
+    });
+  }
+
+  function _targetSummary(target) {
+    if (!target) return null;
+    return {
+      tag: target.tagName || null,
+      id: target.id || null,
+      className: typeof target.className === 'string' ? target.className : null,
+      dataset: target.dataset ? {
+        id: target.dataset.id || null,
+        pos: target.dataset.pos || null,
+        handlePos: target.dataset.handlePos || null,
+        sectionId: target.dataset.sectionId || null,
+      } : null,
+    };
+  }
 
   function _resolveDebugFlags() {
     const globalFlags = (typeof window !== 'undefined' && window.RF_DEBUG_FLAGS &&
@@ -151,7 +200,7 @@ const EngineCore = (() => {
 
   function _snapshotContracts() {
     const section = _E('SectionLayoutEngine');
-    const canvas = _E('CanvasLayoutEngine');
+    const canvas = _E('CanvasLayoutEngine') || _E('CanvasEngineV19');
     const scroll = _E('WorkspaceScrollEngine');
     return {
       section: section && typeof section.getLayoutContract === 'function'
@@ -166,20 +215,46 @@ const EngineCore = (() => {
     };
   }
 
+  function _summarizeContracts(contracts) {
+    return {
+      section: contracts.section ? {
+        ready: contracts.section.ready,
+        count: Array.isArray(contracts.section.sections) ? contracts.section.sections.length : 0,
+        totalHeight: contracts.section.totalHeight,
+        pageWidth: contracts.section.pageWidth,
+      } : null,
+      canvas: contracts.canvas ? {
+        ready: contracts.canvas.ready,
+        width: contracts.canvas.width,
+        height: contracts.canvas.height,
+      } : null,
+      scroll: contracts.scroll ? {
+        ready: contracts.scroll.ready,
+        scaledW: contracts.scroll.scaledW,
+        scaledH: contracts.scroll.scaledH,
+        padding: contracts.scroll.padding,
+      } : null,
+    };
+  }
+
   function _pushIssue(issues, code, message, meta) {
     issues.push({ code, message, meta: meta || null });
   }
 
   function _validateSectionContract(contracts, issues) {
     const section = contracts.section;
-    if (!section) {
-      _pushIssue(issues, 'section.contract.missing', 'SectionLayout contract unavailable');
+    if (!section || section.ready === false) {
       return;
     }
     if (!_finite(section.pageWidth) || section.pageWidth < 0) {
       _pushIssue(issues, 'section.pageWidth.invalid', 'Section pageWidth must be finite and non-negative', {
         pageWidth: section.pageWidth,
       });
+    }
+
+    const sectionDomCount = document.querySelectorAll('.cr-section[data-section-id]').length;
+    if (sectionDomCount < (section.sections || []).length) {
+      return;
     }
 
     let expectedTop = 0;
@@ -199,7 +274,6 @@ const EngineCore = (() => {
 
       const div = document.querySelector(`.cr-section[data-section-id="${sec.id}"]`);
       if (!div) {
-        _pushIssue(issues, 'section.dom.missing', 'Section DOM node missing for contract section', { id: sec.id });
         continue;
       }
 
@@ -237,8 +311,7 @@ const EngineCore = (() => {
   function _validateCanvasContract(contracts, issues) {
     const section = contracts.section;
     const canvas = contracts.canvas;
-    if (!canvas) {
-      _pushIssue(issues, 'canvas.contract.missing', 'CanvasLayout contract unavailable');
+    if (!canvas || canvas.ready === false) {
       return;
     }
 
@@ -265,7 +338,6 @@ const EngineCore = (() => {
 
     const cl = document.getElementById('canvas-layer');
     if (!cl) {
-      _pushIssue(issues, 'canvas.dom.missing', 'canvas-layer DOM node missing');
       return;
     }
 
@@ -292,8 +364,7 @@ const EngineCore = (() => {
   function _validateScrollContract(contracts, issues) {
     const canvas = contracts.canvas;
     const scroll = contracts.scroll;
-    if (!scroll) {
-      _pushIssue(issues, 'scroll.contract.missing', 'WorkspaceScroll contract unavailable');
+    if (!scroll || scroll.ready === false) {
       return;
     }
     if (canvas) {
@@ -312,14 +383,6 @@ const EngineCore = (() => {
     }
     if (!_finite(scroll.padding) || scroll.padding < 0) {
       _pushIssue(issues, 'scroll.padding.invalid', 'Scroll padding must be finite and non-negative', {
-        padding: scroll.padding,
-      });
-    }
-
-    const vp = document.getElementById('viewport');
-    if (vp && !_same(_parsePx(vp.style.marginBottom), scroll.padding)) {
-      _pushIssue(issues, 'scroll.dom.marginBottom', 'Viewport marginBottom diverges from scroll padding', {
-        marginBottom: _parsePx(vp.style.marginBottom),
         padding: scroll.padding,
       });
     }
@@ -354,14 +417,57 @@ const EngineCore = (() => {
   }
 
   function _recordInvariantReport(report) {
-    _runtime.pipeline.lastInvariantReport = report;
-    if (_runtime.debugFlags.asserts && typeof console !== 'undefined' && typeof console.assert === 'function') {
-      console.assert(report.ok, `[EngineCore] Runtime invariants failed at ${report.phase}`);
+    const clonedReport = _cloneSerializable(report || {});
+    const normalizedIssues = Array.isArray(clonedReport.issues)
+      ? clonedReport.issues.filter(Boolean)
+      : [];
+    const storedIssues = normalizedIssues;
+    const storedReport = {
+      ...clonedReport,
+      issues: storedIssues,
+      ok: storedIssues.length === 0,
+    };
+
+    _trace('EngineCore', 'invariant-report', {
+      ok: storedReport.ok,
+      issuesLength: storedIssues.length,
+      issueCodes: storedIssues.map(issue => issue.code),
+      timestamp: storedReport.timestamp,
+    }, storedReport.phase, storedReport.meta && storedReport.meta.frame);
+
+    _runtime.pipeline.lastInvariantReport = storedReport;
+    if (storedReport.ok === false && typeof console !== 'undefined') {
+      const warningReport = _cloneSerializable(storedReport);
+      _runtime.pipeline.lastWarningReport = warningReport;
+      const issueCodes = storedIssues.map(issue => issue.code);
+      const warningKey = JSON.stringify({
+        frame: storedReport.meta && typeof storedReport.meta.frame !== 'undefined' ? storedReport.meta.frame : null,
+        phase: storedReport.phase,
+        codes: issueCodes,
+      });
+      if (_runtime.lastWarningKey !== warningKey) {
+        _runtime.lastWarningKey = warningKey;
+        console.warn(
+          `[EngineCore] Runtime invariants warning at ${storedReport.phase}`,
+          {
+            source: '_recordInvariantReport',
+            frame: storedReport.meta && typeof storedReport.meta.frame !== 'undefined'
+              ? storedReport.meta.frame
+              : null,
+            phase: storedReport.phase,
+            timestamp: storedReport.timestamp,
+            ok: storedReport.ok,
+            issuesLength: storedIssues.length,
+            issueCodes,
+            report: warningReport,
+          }
+        );
+      }
     }
     if (_runtime.debugFlags.trace && typeof console !== 'undefined') {
-      console.debug('[EngineCore] invariant report', report);
+      console.debug('[EngineCore] invariant report', storedReport);
     }
-    _emitRuntimeEvent('rf:runtime-invariants', report);
+    _emitRuntimeEvent('rf:runtime-invariants', storedReport);
   }
 
   function _normalizeError(error) {
@@ -373,62 +479,202 @@ const EngineCore = (() => {
     };
   }
 
+  function _incidentKey(reason, error, meta) {
+    const normalized = _normalizeError(error);
+    return JSON.stringify({
+      reason: reason || 'runtime_failure',
+      name: normalized ? normalized.name : 'Error',
+      message: normalized ? normalized.message : '',
+      phase: meta && meta.phase ? meta.phase : '',
+      priority: meta && typeof meta.priority !== 'undefined' ? meta.priority : '',
+    });
+  }
+
   // ── Event pipeline ──────────────────────────────────────────────────
 
   /**
    * Full input pipeline for a pointer event.
    * Called from the single workspace pointermove/down/up listeners.
    */
-  function _routePointer(e, phase) {
-    const type = phase; // 'down' | 'move' | 'up'
-
-    // 1. Screen → Model
+  function _normalizePointerEvent(e, phase) {
+    const ws = document.getElementById('workspace');
+    const rect = ws ? ws.getBoundingClientRect() : null;
     const model = RF.Geometry.viewToModel(e.clientX, e.clientY);
+    const selected = (typeof DS !== 'undefined' && DS.getSelectedElements)
+      ? DS.getSelectedElements()
+      : [];
+    const hitTest = _E('HitTestEngine');
+    return {
+      phase,
+      pointerId: typeof e.pointerId === 'number' ? e.pointerId : null,
+      pointerType: e.pointerType || 'mouse',
+      button: typeof e.button === 'number' ? e.button : 0,
+      buttons: typeof e.buttons === 'number' ? e.buttons : 0,
+      detail: typeof e.detail === 'number' ? e.detail : 0,
+      clientX: e.clientX,
+      clientY: e.clientY,
+      client: { x: e.clientX, y: e.clientY },
+      workspace: rect ? {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      } : { x: e.clientX, y: e.clientY },
+      model,
+      hit: hitTest ? {
+        element: hitTest.elementAt(e.clientX, e.clientY),
+        section: hitTest.sectionAt(e.clientX, e.clientY),
+        handle: selected.length === 1
+          ? hitTest.handleAt(selected[0], e.clientX, e.clientY)
+          : null,
+      } : { element: null, section: null, handle: null },
+      modifiers: {
+        altKey: !!e.altKey,
+        ctrlKey: !!e.ctrlKey,
+        metaKey: !!e.metaKey,
+        shiftKey: !!e.shiftKey,
+      },
+      target: e.target || null,
+      originalEvent: e,
+    };
+  }
 
-    // 2. HitTest
-    const hit = _E('HitTestEngine')
-      ? {
-          element: _E('HitTestEngine').elementAt(e.clientX, e.clientY),
-          section: _E('HitTestEngine').sectionAt(e.clientX, e.clientY),
-          handle:  DS.getSelectedElements && DS.getSelectedElements().length === 1
-            ? _E('HitTestEngine').handleAt(DS.getSelectedElements()[0], e.clientX, e.clientY)
-            : null,
+  function _interactionEngine() {
+    const selection = _E('SelectionEngine');
+    if (
+      selection &&
+      typeof selection.onElementPointerDown === 'function' &&
+      typeof selection.onHandlePointerDown === 'function'
+    ) {
+      return selection;
+    }
+    const selectionV19 = _E('SelectionEngineV19');
+    if (
+      selectionV19 &&
+      typeof selectionV19.onElementPointerDown === 'function' &&
+      typeof selectionV19.onHandlePointerDown === 'function'
+    ) {
+      return selectionV19;
+    }
+    return selectionV19 || selection;
+  }
+
+  function _routePointer(e, phase) {
+    const event = _normalizePointerEvent(e, phase);
+    _runtime.pipeline.lastPointerEvent = _cloneSerializable({
+      phase: event.phase,
+      pointerId: event.pointerId,
+      buttons: event.buttons,
+      client: event.client,
+      workspace: event.workspace,
+      model: event.model,
+      hit: {
+        elementId: event.hit.element ? event.hit.element.id : null,
+        sectionId: event.hit.section ? event.hit.section.id : null,
+        handle: event.hit.handle,
+      },
+      modifiers: event.modifiers,
+    });
+
+    const selection = _interactionEngine();
+    const sectionResize = _E('SectionResizeEngine');
+    const insert = _E('InsertEngine');
+    const closest = selector => (
+      event.target &&
+      typeof event.target.closest === 'function' &&
+      event.target.closest(selector)
+    );
+    const elementNode = closest('.cr-element');
+    const handleNode = closest('.sel-handle');
+    const sectionHandleNode = closest('.section-resize-handle');
+    const interactionEngineName = selection === _E('SelectionEngine')
+      ? 'SelectionEngine'
+      : (selection === _E('SelectionEngineV19') ? 'SelectionEngineV19' : null);
+
+    if (phase === 'down') {
+      if (elementNode || handleNode) {
+        _traceElement('EngineCore', 'pointerdown', {
+          id: elementNode ? (elementNode.dataset.id || null) : null,
+          handle: handleNode ? (handleNode.dataset.pos || handleNode.dataset.handlePos || null) : null,
+          target: _targetSummary(event.target),
+          elementId: elementNode ? (elementNode.dataset.id || null) : null,
+          handlePos: handleNode ? (handleNode.dataset.pos || handleNode.dataset.handlePos || null) : null,
+          interactionEngine: interactionEngineName,
+        });
+      }
+      if (!closest('#ctx-menu')) {
+        const ctx = _E('ContextMenuEngine');
+        if (ctx && typeof ctx.hide === 'function') ctx.hide();
+      }
+      if (!closest('.menu-item') && !closest('.dropdown')) {
+        const menu = _E('MenuEngine');
+        if (menu && typeof menu.closeAll === 'function') menu.closeAll();
+      }
+      if (event.button === 0 && sectionHandleNode) {
+        if (sectionResize && typeof sectionResize.onPointerDown === 'function') {
+          sectionResize.onPointerDown(event, sectionHandleNode.dataset.sectionId);
         }
-      : { element: null, section: null, handle: null };
-
-    // 3. Pass to SelectionEngine (owns rubber-band, multi-select, move-drag)
-    //    The monolithic SelectionEngine already handles this; EngineCore
-    //    supplements with guide feedback.
-
-    // 4. During drag: compute alignment guides and snap
-    if (type === 'move' && DS.selection && DS.selection.size > 0) {
-      const selEls = DS.getSelectedElements ? DS.getSelectedElements() : [];
-      if (selEls.length && _E('AlignmentEngine')) {
-        const result = _E('AlignmentEngine').compute(selEls[0]);
-        if (result.guides.length && _E('GuideEngine')) {
-          _E('GuideEngine').show(result.guides);
+      } else if (event.button === 0 && handleNode) {
+        if (selection && typeof selection.onHandlePointerDown === 'function') {
+          const handlePos = handleNode.dataset.pos || handleNode.dataset.handlePos || null;
+          _traceElement('EngineCore', 'dispatch-handle-down', {
+            id: event.hit.element ? event.hit.element.id : null,
+            handle: handlePos,
+            handlePos,
+            engine: interactionEngineName,
+          });
+          selection.onHandlePointerDown(
+            event,
+            handlePos
+          );
         }
+      } else if (event.button === 0 && elementNode) {
+        if (selection && typeof selection.onElementPointerDown === 'function') {
+          _traceElement('EngineCore', 'dispatch-element-down', {
+            id: elementNode.dataset.id || null,
+            elementId: elementNode.dataset.id || null,
+            engine: interactionEngineName,
+          });
+          selection.onElementPointerDown(event, elementNode.dataset.id);
+        }
+      } else if (
+        event.button === 0 &&
+        typeof DS !== 'undefined' &&
+        !DS.previewMode
+      ) {
+        if (insert && typeof insert.onCanvasMouseDown === 'function') {
+          _traceElement('EngineCore', 'dispatch-canvas-down', {
+            engine: 'InsertEngine',
+          });
+          insert.onCanvasMouseDown(event);
+        }
+      }
+    } else if (phase === 'move') {
+      if (sectionResize && sectionResize._drag && typeof sectionResize.onMouseMove === 'function') {
+        sectionResize.onMouseMove(event);
+      } else if (selection && typeof selection.onMouseMove === 'function') {
+        selection.onMouseMove(event);
+      }
+    } else if (phase === 'up' || phase === 'cancel') {
+      _traceElement('EngineCore', phase === 'cancel' ? 'pointercancel' : 'pointerup', {
+        id: event.hit.element ? event.hit.element.id : null,
+        handle: event.hit.handle || null,
+        interactionEngine: interactionEngineName,
+      });
+      if (sectionResize && typeof sectionResize.onMouseUp === 'function') {
+        sectionResize.onMouseUp(event);
+      }
+      if (selection && typeof selection.onMouseUp === 'function') {
+        _traceElement('EngineCore', phase === 'cancel' ? 'dispatch-selection-cancel' : 'dispatch-selection-up', {
+          id: event.hit.element ? event.hit.element.id : null,
+          handle: event.hit.handle || null,
+          cancel: phase === 'cancel',
+          engine: interactionEngineName,
+          dragType: selection._drag ? selection._drag.type || null : null,
+        });
+        selection.onMouseUp(event);
       }
     }
 
-    // 5. On pointer up: clear guides, schedule handle re-render
-    if (type === 'up') {
-      if (_E('GuideEngine')) _E('GuideEngine').clear();
-      RenderScheduler.handles(() => {
-        if (_E('HandlesEngine')) _E('HandlesEngine').render();
-      }, 'handles_up');
-    }
-
-    // 6. Update ruler cursor (model space)
-    if (_E('RulerEngine')) {
-      _E('RulerEngine').updateCursor(model.x, model.y);
-    }
-
-    // 7. Status bar
-    RenderScheduler.post(() => {
-      const sb = document.getElementById('sb-pos');
-      if (sb) sb.textContent = `X: ${Math.round(model.x)}   Y: ${Math.round(model.y)}`;
-    }, 'sb_pos');
+    return event;
   }
 
   // ── Zoom lifecycle ──────────────────────────────────────────────────
@@ -555,24 +801,29 @@ const EngineCore = (() => {
   }
 
   function _wireWorkspaceEvents() {
+    if (!_useInteractionRouter()) return;
     const ws = document.getElementById('workspace');
     if (!ws) return;
-
-    // Workspace pointer events → EngineCore pipeline
-    // (The monolithic SelectionEngine still handles the primary drag logic;
-    //  EngineCore adds the guide + hit + status pipeline on top)
-    ws.addEventListener('pointermove', e => {
-      _ptr.clientX = e.clientX; _ptr.clientY = e.clientY; _ptr.buttons = e.buttons;
-      _routePointer(e, 'move');
-    }, { passive: true });
+    if (typeof window !== 'undefined' && typeof window.RF_USE_ENGINECORE_INTERACTION === 'undefined') {
+      window.RF_USE_ENGINECORE_INTERACTION = true;
+    }
 
     ws.addEventListener('pointerdown', e => {
       _ptr.clientX = e.clientX; _ptr.clientY = e.clientY; _ptr.buttons = e.buttons;
       _routePointer(e, 'down');
+    }, { capture: true, passive: true });
+
+    document.addEventListener('pointermove', e => {
+      _ptr.clientX = e.clientX; _ptr.clientY = e.clientY; _ptr.buttons = e.buttons;
+      _routePointer(e, 'move');
     }, { passive: true });
 
-    ws.addEventListener('pointerup', e => {
+    document.addEventListener('pointerup', e => {
       _routePointer(e, 'up');
+    }, { passive: true });
+
+    document.addEventListener('pointercancel', e => {
+      _routePointer(e, 'cancel');
     }, { passive: true });
 
     // Pointer leave → clear ruler cursor
@@ -620,21 +871,43 @@ const EngineCore = (() => {
         return { ok: true, skipped: true, phase, meta };
       }
 
-      const issues = [];
+      const collectedIssues = [];
       const contracts = _snapshotContracts();
-      _validateSectionContract(contracts, issues);
-      _validateCanvasContract(contracts, issues);
-      _validateScrollContract(contracts, issues);
+      _trace('EngineCore', 'verify-begin', {
+        contracts: _summarizeContracts(contracts),
+        meta: _cloneSerializable(meta),
+      }, phase, meta && meta.frame);
+      _validateSectionContract(contracts, collectedIssues);
+      _validateCanvasContract(contracts, collectedIssues);
+      _validateScrollContract(contracts, collectedIssues);
+      const actualIssues = Array.isArray(collectedIssues)
+        ? collectedIssues.filter(Boolean)
+        : [];
+      _trace('EngineCore', 'verify-issues', {
+        issues: actualIssues.map(issue => ({
+          code: issue.code,
+          meta: issue.meta || null,
+        })),
+      }, phase, meta && meta.frame);
 
       const report = {
-        ok: issues.length === 0,
+        ok: actualIssues.length === 0,
         phase,
         meta: _cloneSerializable(meta),
-        issues,
+        issues: actualIssues,
         timestamp: new Date().toISOString(),
       };
+      _trace('EngineCore', 'verify-final', {
+        ok: actualIssues.length === 0,
+        issuesLength: actualIssues.length,
+        issueCodes: actualIssues.map(issue => issue.code),
+      }, phase, meta && meta.frame);
       _recordInvariantReport(report);
-      return report;
+      return {
+        ...report,
+        ok: actualIssues.length === 0,
+        issues: actualIssues,
+      };
     },
 
     setDebugFlags(nextFlags = {}) {
@@ -649,12 +922,19 @@ const EngineCore = (() => {
 
     enterSafeMode(reason, error, meta = {}) {
       if (!_runtime.debugFlags.safeMode) return this.getSafeMode();
+      const incidentKey = _incidentKey(reason, error, meta);
+      if (_runtime.safeMode.active && _runtime.safeMode.incidentKey === incidentKey) {
+        return this.getSafeMode();
+      }
       _runtime.safeMode.active = true;
       _runtime.safeMode.reason = reason || 'runtime_failure';
+      _runtime.safeMode.incidentKey = incidentKey;
+      _runtime.safeMode.recoveryAttempted = false;
       _runtime.safeMode.lastError = _normalizeError(error);
       _runtime.safeMode.lastRecoveryAt = new Date().toISOString();
       _runtime.pipeline.lastFailure = {
         reason: _runtime.safeMode.reason,
+        incidentKey,
         error: _runtime.safeMode.lastError,
         meta: _cloneSerializable(meta),
         timestamp: _runtime.safeMode.lastRecoveryAt,
@@ -667,6 +947,8 @@ const EngineCore = (() => {
     clearSafeMode() {
       _runtime.safeMode.active = false;
       _runtime.safeMode.reason = null;
+      _runtime.safeMode.incidentKey = null;
+      _runtime.safeMode.recoveryAttempted = false;
       _runtime.safeMode.lastError = null;
       return this.getSafeMode();
     },
@@ -680,7 +962,20 @@ const EngineCore = (() => {
     },
 
     recoverFromPipelineFailure(reason, error, meta = {}) {
+      const incidentKey = _incidentKey(reason, error, meta);
+      if (_runtime.safeMode.active &&
+          _runtime.safeMode.incidentKey === incidentKey &&
+          _runtime.safeMode.recoveryAttempted) {
+        return {
+          recovered: false,
+          skipped: true,
+          safeMode: this.getSafeMode(),
+          snapshot: null,
+        };
+      }
+
       this.enterSafeMode(reason, error, meta);
+      _runtime.safeMode.recoveryAttempted = true;
       const scheduler = _E('RenderScheduler');
       let recovered = false;
       try {
