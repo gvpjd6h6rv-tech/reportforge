@@ -21,8 +21,65 @@
 
 const SelectionEngineV19 = (() => {
   let _drag = null;
+  let _lastRenderHandlesSignature = null;
 
   // ── Helpers ───────────────────────────────────────────────────────
+  function _traceChannelsFor(event) {
+    if (event === 'selection-clear' || event === 'selection-toggle-off' || event === 'renderHandles') {
+      return ['elements', 'selection'];
+    }
+    if (event === 'resize-start' || event === 'onHandlePointerDown-enter' || event === 'onHandlePointerDown-blocked') {
+      return ['elements', 'resize'];
+    }
+    if (event === 'edit-start' || event === 'edit-focus' || event === 'edit-keydown' || event === 'edit-commit' || event === 'startTextEdit-skip') {
+      return ['elements', 'edit'];
+    }
+    return ['elements'];
+  }
+
+  function _trace(event, payload) {
+    if (typeof window === 'undefined' || typeof window.rfTrace !== 'function') return;
+    if (typeof event === 'string' && event.toLowerCase().includes('move') && !window.DebugTrace?.isEnabled('move')) return;
+    const channel = _traceChannelsFor(event).find(name => window.DebugTrace?.isEnabled(name));
+    if (!channel) return;
+    window.rfTrace(channel, event, {
+      source: 'SelectionEngineV19',
+      id: payload && typeof payload.id !== 'undefined' ? payload.id : null,
+      handle: payload && typeof payload.handle !== 'undefined' ? payload.handle : null,
+      state: payload || null,
+    });
+  }
+
+  function _selectionSnapshot(extra) {
+    const selectedIds = typeof DS !== 'undefined' && DS.selection ? [...DS.selection] : [];
+    const dragType = _drag ? _drag.type || null : null;
+    const handlesLayer = typeof document !== 'undefined' ? document.getElementById('handles-layer') : null;
+    const handles = handlesLayer ? handlesLayer.querySelectorAll('.sel-handle') : [];
+    const activeElementId = dragType === 'resize'
+      ? _drag.elId
+      : (dragType === 'move' && Array.isArray(_drag.startPositions) && _drag.startPositions.length > 0
+          ? _drag.startPositions[0].id
+          : (selectedIds.length === 1 ? selectedIds[0] : null));
+    const editingNode = typeof document !== 'undefined'
+      ? document.querySelector('.cr-element.editing')
+      : null;
+    return {
+      selectedIds,
+      activeElementId,
+      dragActive: !!_drag,
+      dragType,
+      resizeActive: dragType === 'resize',
+      editActive: !!editingNode,
+      handlesVisible: handles.length > 0,
+      handlesCount: handles.length,
+      ...(extra || {}),
+    };
+  }
+
+  function _useCentralRouter() {
+    return typeof window === 'undefined' || window.RF_USE_ENGINECORE_INTERACTION !== false;
+  }
+
   function _CE() {
     return (typeof EngineRegistry !== 'undefined' && EngineRegistry.get('CanvasEngineV19'))
         || (typeof CanvasLayoutEngine !== 'undefined' ? CanvasLayoutEngine : null)
@@ -30,20 +87,48 @@ const SelectionEngineV19 = (() => {
   }
 
   function _getCanvasPos(e) {
+    if (e && e.model && typeof e.model.x === 'number' && typeof e.model.y === 'number') {
+      return e.model;
+    }
+    if (e && e.client && typeof e.client.x === 'number' && typeof e.client.y === 'number') {
+      return RF.Geometry.toCanvasSpace(e.client.x, e.client.y);
+    }
     return RF.Geometry.toCanvasSpace(e.clientX, e.clientY);
+  }
+
+  function _pointerId(e) {
+    if (e && typeof e.pointerId === 'number') return e.pointerId;
+    if (e && e.originalEvent && typeof e.originalEvent.pointerId === 'number') {
+      return e.originalEvent.pointerId;
+    }
+    return null;
   }
 
   // ── renderHandles ────────────────────────────────────────────────
   function renderHandles() {
     RF.Geometry.invalidate();
     const layer = document.getElementById('handles-layer');
-    if (!layer) return;
+    if (!layer) {
+      return;
+    }
     while (layer.firstChild) layer.removeChild(layer.firstChild);
 
     document.querySelectorAll('.cr-element').forEach(d => {
       d.classList.toggle('selected', DS.selection.has(d.dataset.id));
     });
-    if (DS.selection.size === 0) return;
+    if (DS.selection.size === 0) {
+      const nextState = _selectionSnapshot({ id: null, targetElementId: null });
+      const signature = JSON.stringify({
+        targetElementId: nextState.targetElementId,
+        handlesVisible: nextState.handlesVisible,
+        handlesCount: nextState.handlesCount,
+      });
+      if (_lastRenderHandlesSignature !== signature) {
+        _lastRenderHandlesSignature = signature;
+        _trace('renderHandles', nextState);
+      }
+      return;
+    }
 
     if (DS.selection.size === 1) {
       const id  = [...DS.selection][0];
@@ -85,11 +170,29 @@ const SelectionEngineV19 = (() => {
       POSITIONS.forEach(({pos, sx, sy}) => {
         const h = document.createElement('div');
         h.className = `sel-handle sel-handle-${pos}`;
+        h.dataset.pos = pos;
         h.dataset.handlePos = pos;
         h.style.cssText = `position:absolute;left:${sx-3}px;top:${sy-3}px;width:6px;height:6px;cursor:${pos}-resize`;
         attachHandleEvent(h, pos);
         layer.appendChild(h);
       });
+      const nextState = _selectionSnapshot({
+        id,
+        targetElementId: id,
+        handleDatasets: [...layer.querySelectorAll('.sel-handle')].map(h => ({
+          pos: h.dataset.pos || null,
+          handlePos: h.dataset.handlePos || null,
+        })),
+      });
+      const signature = JSON.stringify({
+        targetElementId: nextState.targetElementId,
+        handlesVisible: nextState.handlesVisible,
+        handlesCount: nextState.handlesCount,
+      });
+      if (_lastRenderHandlesSignature !== signature) {
+        _lastRenderHandlesSignature = signature;
+        _trace('renderHandles', nextState);
+      }
     } else {
       // Multi-selection: show bounding box only
       let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
@@ -106,46 +209,94 @@ const SelectionEngineV19 = (() => {
       box.className = 'sel-box sel-box-multi';
       box.style.cssText = `position:absolute;left:${minX}px;top:${minY}px;width:${maxX-minX}px;height:${maxY-minY}px;pointer-events:none`;
       layer.appendChild(box);
+      const nextState = _selectionSnapshot({
+        id: null,
+        targetElementId: null,
+      });
+      const signature = JSON.stringify({
+        targetElementId: nextState.targetElementId,
+        handlesVisible: nextState.handlesVisible,
+        handlesCount: nextState.handlesCount,
+      });
+      if (_lastRenderHandlesSignature !== signature) {
+        _lastRenderHandlesSignature = signature;
+        _trace('renderHandles', nextState);
+      }
     }
   }
 
   // ── Event attachment ─────────────────────────────────────────────
+  function onElementPointerDown(e, id) {
+    _trace('onElementPointerDown-enter', _selectionSnapshot({
+      id,
+      elementId: id,
+      detail: e && typeof e.detail === 'number' ? e.detail : null,
+      shiftKey: e && e.modifiers ? !!e.modifiers.shiftKey : !!(e && e.shiftKey),
+    }));
+    if (!e || e.button !== 0) return;
+    const el = DS.getElementById(id);
+    if (!el) {
+      _trace('onElementPointerDown-skip', _selectionSnapshot({ id, reason: 'missing-element', elementId: id }));
+      return;
+    }
+    const div = document.querySelector(`.cr-element[data-id="${id}"]`);
+    if (!div) {
+      _trace('onElementPointerDown-skip', _selectionSnapshot({ id, reason: 'missing-dom', elementId: id }));
+      return;
+    }
+    const pointerId = _pointerId(e);
+    if (div.setPointerCapture && typeof pointerId === 'number') {
+      div.setPointerCapture(pointerId);
+    }
+
+    const detail = typeof e.detail === 'number'
+      ? e.detail
+      : (e.originalEvent && typeof e.originalEvent.detail === 'number' ? e.originalEvent.detail : 0);
+    if (detail === 2 && el.type === 'text') {
+      _trace('onElementPointerDown-edit', _selectionSnapshot({ id, elementId: id, detail }));
+      startTextEdit(div, el);
+      return;
+    }
+
+    const shiftKey = e.modifiers ? !!e.modifiers.shiftKey : !!e.shiftKey;
+    if (!shiftKey && !DS.selection.has(id)) {
+      _trace('selection-clear', _selectionSnapshot({ id, reason: 'exclusive-select', elementId: id }));
+      DS.selection.clear();
+    }
+    if (shiftKey && DS.selection.has(id)) {
+      _trace('selection-toggle-off', _selectionSnapshot({ id, elementId: id }));
+      DS.selection.delete(id);
+    } else {
+      DS.selection.add(id);
+    }
+
+    renderHandles();
+    if (typeof PropertiesEngine !== 'undefined') PropertiesEngine.render();
+    if (typeof FormatEngine !== 'undefined') FormatEngine.updateToolbar();
+
+    const canvasPos = _getCanvasPos(e);
+    _drag = {
+      type: 'move',
+      startX: canvasPos.x,
+      startY: canvasPos.y,
+      startPositions: DS.getSelectedElements().map(el => ({
+        id: el.id, x: el.x, y: el.y,
+        sectionId: el.sectionId,
+        sectionTop: DS.getSectionTop(el.sectionId),
+      })),
+      moved: false,
+    };
+    _trace('drag-start', _selectionSnapshot({ id, elementId: id }));
+  }
+
   function attachElementEvents(div, id) {
-    div.addEventListener('pointerdown', e => {
-      if (e.button !== 0) return;
-      e.stopPropagation(); e.preventDefault();
-      div.setPointerCapture && div.setPointerCapture(e.pointerId);
-      const el = DS.getElementById(id);
-      if (!el) return;
-
-      // Double-click: edit text
-      if (e.detail === 2 && el.type === 'text') {
-        startTextEdit(div, el);
-        return;
-      }
-
-      // Selection
-      if (!e.shiftKey && !DS.selection.has(id)) DS.selection.clear();
-      if (e.shiftKey && DS.selection.has(id)) DS.selection.delete(id);
-      else DS.selection.add(id);
-
-      renderHandles();
-      if (typeof PropertiesEngine !== 'undefined') PropertiesEngine.render();
-      if (typeof FormatEngine     !== 'undefined') FormatEngine.updateToolbar();
-
-      const canvasPos = _getCanvasPos(e);
-      _drag = {
-        type: 'move',
-        startX: canvasPos.x,
-        startY: canvasPos.y,
-        startPositions: DS.getSelectedElements().map(el => ({
-          id: el.id, x: el.x, y: el.y,
-          sectionId: el.sectionId,
-          sectionTop: DS.getSectionTop(el.sectionId),
-        })),
-        moved: false,
-      };
-    });
+    if (!_useCentralRouter()) {
+      div.addEventListener('pointerdown', e => {
+        if (e.button !== 0) return;
+        e.stopPropagation(); e.preventDefault();
+        onElementPointerDown(e, id);
+      });
+    }
 
     div.addEventListener('contextmenu', e => {
       e.preventDefault(); e.stopPropagation();
@@ -154,31 +305,48 @@ const SelectionEngineV19 = (() => {
     });
   }
 
+  function onHandlePointerDown(e, pos) {
+    _trace('onHandlePointerDown-enter', _selectionSnapshot({ handle: pos || null, handlePos: pos || null }));
+    if (!e || e.button !== 0) return;
+    const pos2 = _getCanvasPos(e);
+    const sel = DS.getSelectedElements();
+    if (sel.length === 0) {
+      _trace('onHandlePointerDown-blocked', _selectionSnapshot({ handle: pos || null, reason: 'no-selection', handlePos: pos || null }));
+      return;
+    }
+    const el = sel[0];
+    _drag = {
+      type: 'resize', handlePos: pos, elId: el.id,
+      startX: pos2.x, startY: pos2.y,
+      origX: el.x, origY: el.y, origW: el.w, origH: el.h,
+    };
+    _trace('resize-start', _selectionSnapshot({ id: el.id, handle: pos || null, handlePos: pos || null, elementId: el.id }));
+  }
+
   function attachHandleEvent(handleDiv, pos) {
-    handleDiv.addEventListener('pointerdown', e => {
-      if (e.button !== 0) return;
-      e.stopPropagation(); e.preventDefault();
-      const pos2 = _getCanvasPos(e);
-      const sel  = DS.getSelectedElements();
-      if (sel.length === 0) return;
-      const el = sel[0];
-      _drag = {
-        type: 'resize', handlePos: pos, elId: el.id,
-        startX: pos2.x, startY: pos2.y,
-        origX: el.x, origY: el.y, origW: el.w, origH: el.h,
-      };
-    });
+    if (!_useCentralRouter()) {
+      handleDiv.addEventListener('pointerdown', e => {
+        if (e.button !== 0) return;
+        e.stopPropagation(); e.preventDefault();
+        onHandlePointerDown(e, pos);
+      });
+    }
   }
 
   // ── Text edit ────────────────────────────────────────────────────
   function startTextEdit(div, el) {
+    _trace('edit-start', _selectionSnapshot({ id: el ? el.id : null, elementId: el ? el.id : null, elementType: el ? el.type : null }));
     DS.selection.clear(); DS.selection.add(el.id);
     div.classList.add('editing', 'selected');
     const span = div.querySelector('.el-content');
-    if (!span) return;
+    if (!span) {
+      _trace('startTextEdit-skip', _selectionSnapshot({ id: el.id, reason: 'missing-content', elementId: el.id }));
+      return;
+    }
     span.contentEditable = 'true';
     span.style.pointerEvents = 'all';
     span.focus();
+    _trace('edit-focus', _selectionSnapshot({ id: el.id, elementId: el.id }));
     const range = document.createRange();
     range.selectNodeContents(span);
     const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
@@ -189,9 +357,15 @@ const SelectionEngineV19 = (() => {
       const idx = DS.elements.findIndex(e => e.id === el.id);
       if (idx >= 0) DS.elements[idx].content = span.textContent;
       DS.saveHistory();
+      _trace('edit-commit', _selectionSnapshot({ id: el.id, elementId: el.id }));
     };
     span.addEventListener('blur', commit, { once: true });
-    span.addEventListener('keydown', ke => { if (ke.key === 'Escape' || ke.key === 'Enter') span.blur(); });
+    span.addEventListener('keydown', ke => {
+      if (ke.key === 'Escape' || ke.key === 'Enter') {
+        _trace('edit-keydown', _selectionSnapshot({ id: el.id, elementId: el.id, key: ke.key }));
+        span.blur();
+      }
+    });
   }
 
   // ── Rubber band ──────────────────────────────────────────────────
@@ -312,20 +486,31 @@ const SelectionEngineV19 = (() => {
   function onMouseUp(e) {
     if (!_drag) return;
     const d = _drag;
+    const isCancel = e && e.phase === 'cancel';
+    _trace('onMouseUp-enter', _selectionSnapshot({
+      id: d.elId || (Array.isArray(d.startPositions) && d.startPositions.length ? d.startPositions[0].id : null),
+      cancel: isCancel,
+      commit: !isCancel,
+    }));
     document.querySelectorAll('.cr-element.dragging').forEach(div => div.classList.remove('dragging'));
     if (typeof AlignmentGuides !== 'undefined') AlignmentGuides.clear();
-    if (d.type === 'move'   && d.moved) DS.saveHistory();
-    if (d.type === 'resize')            DS.saveHistory();
+    if (!isCancel && d.type === 'move'   && d.moved) DS.saveHistory();
+    if (!isCancel && d.type === 'resize')            DS.saveHistory();
     if (d.type === 'rubber') {
       const rb = document.getElementById('rubber-band');
       if (rb) rb.style.display = 'none';
-      if (DS.selection.size > 0) {
+      if (!isCancel && DS.selection.size > 0) {
         if (typeof PropertiesEngine !== 'undefined') PropertiesEngine.render();
         if (typeof FormatEngine     !== 'undefined') FormatEngine.updateToolbar();
       }
     }
-    if (d.type === 'insert' && typeof InsertEngine !== 'undefined') InsertEngine.onMouseUp(e);
+    if (!isCancel && d.type === 'insert' && typeof InsertEngine !== 'undefined') InsertEngine.onMouseUp(e);
     _drag = null;
+    _trace('cleanup', _selectionSnapshot({
+      id: d.elId || (Array.isArray(d.startPositions) && d.startPositions.length ? d.startPositions[0].id : null),
+      cancel: isCancel,
+      commit: !isCancel,
+    }));
   }
 
   // ── Selection management ─────────────────────────────────────────
@@ -366,6 +551,8 @@ const SelectionEngineV19 = (() => {
 
     attachElementEvents,
     attachHandleEvent,
+    onElementPointerDown,
+    onHandlePointerDown,
     renderHandles,
     startTextEdit,
     startRubberBand,

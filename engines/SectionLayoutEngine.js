@@ -13,34 +13,82 @@
 
 const SectionLayoutEngine = (() => {
   let _rafId = null;
+  let _lastContractSignature = null;
+
+  function _px(value) {
+    return `${Math.round(value)}px`;
+  }
+
+  function _trace(event, payload) {
+    if (typeof window === 'undefined' || typeof window.rfTrace !== 'function') return;
+    if (!window.DebugTrace?.isEnabled('runtime')) return;
+    const frame = (typeof RenderScheduler !== 'undefined' && typeof RenderScheduler.frame === 'number')
+      ? RenderScheduler.frame
+      : null;
+    window.rfTrace('runtime', event, {
+      frame,
+      source: 'SectionLayoutEngine',
+      phase: 'layout',
+      payload: payload || null,
+    });
+  }
+
+  function _computeLayoutContract() {
+    if (typeof DS === 'undefined') {
+      return { ready: false, pageWidth: 0, totalHeight: 0, sections: [] };
+    }
+
+    const pageWidth = Math.round(RF.Geometry.scale(CFG.PAGE_W));
+    let top = 0;
+    const sections = DS.sections.map(sec => {
+      const height = Math.round(RF.Geometry.scale(sec.height));
+      const band = {
+        id: sec.id,
+        top: Math.round(top),
+        height,
+        visible: sec.visible !== false,
+      };
+      top += height;
+      return band;
+    });
+
+    return {
+      ready: true,
+      pageWidth,
+      totalHeight: top,
+      sections,
+    };
+  }
 
   function _apply() {
     if (typeof DS === 'undefined') return;
-
-    console.log('🔥 REAL SectionLayoutEngine._apply', {
-      sections: Array.isArray(DS?.sections) ? DS.sections.map(sec => ({ id: sec.id, height: sec.height })) : 'no-sections'
+    const contract = _computeLayoutContract();
+    const signature = JSON.stringify(contract);
+    if (_lastContractSignature === signature) return;
+    _lastContractSignature = signature;
+    _trace('updateSync-apply', {
+      sectionsCount: contract.sections.length,
+      totalHeight: contract.totalHeight,
+      pageWidth: contract.pageWidth,
     });
 
-    const scaledPageW = RF.Geometry.scale(CFG.PAGE_W);
-
-    DS.sections.forEach(sec => {
+    contract.sections.forEach(sec => {
       const div = document.querySelector(`.cr-section[data-section-id="${sec.id}"]`);
       if (!div) return;
-      const rect = div.getBoundingClientRect();
-      console.log('🔥 SEC POS', sec.id, 'modelH=', sec.height, 'domH=', div.style.height, 'top=', rect.top);
 
-      if (sec.visible === false) {
-        div.style.display = 'none';
-        return;
-      }
-
-      div.style.display = '';
-      div.style.height  = `${RF.Geometry.scale(sec.height)}px`;
-      div.style.width   = `${scaledPageW}px`;
+      const nextDisplay = sec.visible === false ? 'none' : '';
+      const nextHeight = _px(sec.height);
+      const nextWidth = _px(contract.pageWidth);
+      if (div.style.display !== nextDisplay) div.style.display = nextDisplay;
+      if (div.style.height !== nextHeight) div.style.height = nextHeight;
+      if (div.style.width !== nextWidth) div.style.width = nextWidth;
     });
   }
 
   function _schedule() {
+    if (typeof RenderScheduler !== 'undefined') {
+      RenderScheduler.invalidateLayer('layout', 'SectionLayoutEngine');
+    }
     if (typeof RenderScheduler !== 'undefined') {
       RenderScheduler.layout(_apply, 'SectionLayoutEngine._apply');
     } else {
@@ -53,8 +101,22 @@ const SectionLayoutEngine = (() => {
   }
 
   return {
-    update()     { console.log('🔥 REAL SectionLayoutEngine.update'); _schedule(); },
-    updateSync() { console.log('🔥 REAL SectionLayoutEngine.updateSync'); _apply(); },
+    update()     {
+      const contract = _computeLayoutContract();
+      _trace('update-schedule', {
+        sectionsCount: contract.sections.length,
+        totalHeight: contract.totalHeight,
+      });
+      _schedule();
+    },
+    updateSync() {
+      const contract = _computeLayoutContract();
+      _trace('updateSync-enter', {
+        sectionsCount: contract.sections.length,
+        totalHeight: contract.totalHeight,
+      });
+      _apply();
+    },
 
     getSectionBand(sectionId) {
       if (typeof DS === 'undefined') return { y: 0, h: 0 };
@@ -70,6 +132,10 @@ const SectionLayoutEngine = (() => {
     getTotalViewHeight() {
       if (typeof DS === 'undefined') return 0;
       return DS.sections.reduce((s, sec) => s + RF.Geometry.scale(sec.height), 0);
+    },
+
+    getLayoutContract() {
+      return _computeLayoutContract();
     },
   };
 })();
