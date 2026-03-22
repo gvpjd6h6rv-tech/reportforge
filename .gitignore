@@ -17,3 +17,4 @@ __pycache__/
 *.bak*
 *trace*
 *.fixbak
+.rf_browser_pref
