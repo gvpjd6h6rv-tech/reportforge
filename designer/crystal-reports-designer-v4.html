@@ -261,6 +261,13 @@
     flex-shrink: 0;
     align-items: center;
   }
+  #ui-mode-stack {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+  }
   #ui-mode-btn {
     font-size: 9px;
     color: rgba(255,255,255,.85);
@@ -276,6 +283,180 @@
     white-space: nowrap;
   }
   #ui-mode-btn:hover { background: rgba(255,255,255,.25); }
+  #rf-debug-indicator {
+    display: none;
+    align-items: center;
+    gap: 5px;
+    min-block-size: 17px;
+    font-size: 8px;
+    line-height: 1;
+    color: #b6ffbf;
+    text-transform: lowercase;
+    white-space: nowrap;
+  }
+  #rf-debug-indicator.is-on { display: inline-flex; }
+  #rf-debug-indicator-led {
+    inline-size: 7px;
+    block-size: 7px;
+    border-radius: 50%;
+    background: #52ff7a;
+    box-shadow:
+      0 0 4px rgba(82,255,122,.9),
+      0 0 9px rgba(82,255,122,.75),
+      inset 0 0 2px rgba(255,255,255,.8);
+    border: 1px solid rgba(199,255,210,.95);
+    flex: 0 0 auto;
+  }
+  #rf-debug-panel {
+    position: absolute;
+    inset-block-start: calc(100% + 6px);
+    inset-inline-start: 0;
+    z-index: calc(var(--rf-z-ctx) + 12);
+    min-inline-size: 220px;
+    max-inline-size: 280px;
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px;
+    border-radius: 8px;
+    background: rgba(9, 18, 14, .94);
+    border: 1px solid rgba(82,255,122,.35);
+    box-shadow: 0 8px 20px rgba(0,0,0,.35);
+    color: #d7ffe1;
+    font: 10px/1.2 var(--rf-font-ui);
+    pointer-events: auto;
+    user-select: none;
+    backdrop-filter: blur(4px);
+  }
+  #rf-debug-panel.is-on { display: flex; }
+  #rf-debug-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #9dffb2;
+    font-size: 9px;
+  }
+  #rf-debug-presets,
+  #rf-debug-channels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .rf-debug-chip {
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(255,255,255,.06);
+    color: inherit;
+    border-radius: 999px;
+    padding: 3px 7px;
+    font: inherit;
+    cursor: pointer;
+  }
+  .rf-debug-chip.is-active {
+    background: rgba(82,255,122,.16);
+    border-color: rgba(82,255,122,.4);
+    color: #b8ffca;
+  }
+  .rf-debug-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 6px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.1);
+    background: rgba(255,255,255,.04);
+    cursor: pointer;
+  }
+  .rf-debug-check input {
+    margin: 0;
+    accent-color: #52ff7a;
+  }
+  #rf-debug-overlay {
+    position: fixed;
+    inset-inline-end: 10px;
+    inset-block-end: 26px;
+    z-index: calc(var(--rf-z-ctx) + 10);
+    min-inline-size: 180px;
+    max-inline-size: 220px;
+    padding: 8px 10px;
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    background: rgba(9, 18, 14, .9);
+    border: 1px solid rgba(82,255,122,.4);
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(0,0,0,.35);
+    color: #d7ffe1;
+    font: 11px/1.2 var(--rf-font-ui);
+    pointer-events: none;
+    user-select: none;
+    backdrop-filter: blur(4px);
+  }
+  #rf-debug-overlay.is-on { display: flex; }
+  #rf-debug-overlay-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    color: #9dffb2;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    font-size: 9px;
+  }
+  #rf-debug-overlay-layers {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .rf-debug-layer {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 6px;
+    align-items: center;
+    padding: 4px 6px;
+    border-radius: 5px;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.05);
+    transition: background .12s ease, border-color .12s ease, box-shadow .12s ease;
+  }
+  .rf-debug-layer.active {
+    background: rgba(82,255,122,.14);
+    border-color: rgba(82,255,122,.45);
+    box-shadow: inset 0 0 0 1px rgba(82,255,122,.18), 0 0 10px rgba(82,255,122,.12);
+  }
+  .rf-debug-layer-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+  .rf-debug-layer-dot {
+    inline-size: 7px;
+    block-size: 7px;
+    border-radius: 50%;
+    background: rgba(164,172,168,.55);
+    flex: 0 0 auto;
+  }
+  .rf-debug-layer.active .rf-debug-layer-dot {
+    background: #52ff7a;
+    box-shadow: 0 0 8px rgba(82,255,122,.75);
+  }
+  .rf-debug-layer-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .rf-debug-layer-meta {
+    color: rgba(215,255,225,.72);
+    font-size: 10px;
+  }
+  [data-ui="modern"] #rf-debug-overlay {
+    background: rgba(15, 23, 42, .88);
+    border-color: rgba(110,255,153,.35);
+    color: #e6fff0;
+  }
   .tb-btn {
     inline-size: 16px;
     block-size: 14px;
@@ -1761,6 +1942,14 @@
     font-weight: 500;
   }
   [data-ui="modern"] #ui-mode-btn:hover { background: rgba(255,255,255,.28); }
+  [data-ui="modern"] #rf-debug-indicator {
+    font-size: 9px;
+    color: #b8ffca;
+  }
+  [data-ui="modern"] #rf-debug-indicator-led {
+    inline-size: 8px;
+    block-size: 8px;
+  }
 
   /* Menu bar */
   [data-ui="modern"] #menubar {
@@ -2086,7 +2275,13 @@
   <div id="titlebar-icon">◈</div>
   <div id="titlebar-text">SAP Crystal Reports for SAP Business One - [Factura Electrónica 002-101-000020482]</div>
   <div id="titlebar-controls">
-    <div id="ui-mode-btn" title="Cambiar interfaz (Classic/Modern)" onclick="DesignerUI.toggleMode()">◧ Classic</div>
+    <div id="ui-mode-stack">
+      <div id="ui-mode-btn" title="Cambiar interfaz (Classic/Modern)" onclick="DesignerUI.toggleMode()">◧ Classic</div>
+      <div id="rf-debug-indicator" aria-live="polite">
+        <span id="rf-debug-indicator-led"></span>
+        <span>debug on</span>
+      </div>
+    </div>
     <div class="tb-btn">─</div>
     <div class="tb-btn">□</div>
     <div class="tb-btn close">✕</div>
@@ -3012,6 +3207,9 @@ const SectionEngine = {
     // Notify layout engines via RenderScheduler so WorkspaceScrollEngine updates scroll bounds
     if (typeof RenderScheduler !== 'undefined') {
       RenderScheduler.layout(() => {
+        if (typeof window !== 'undefined' && typeof window.__rfTraceLegacy === 'function') {
+          window.__rfTraceLegacy('SectionEngine.render', 'canvas-sync', { via: 'RenderScheduler.layout' });
+        }
         if (typeof CanvasLayoutEngine !== 'undefined') CanvasLayoutEngine.updateSync();
         if (typeof WorkspaceScrollEngine !== 'undefined') WorkspaceScrollEngine.update();
       }, 'SectionEngine.render.canvasSync');
@@ -3233,41 +3431,70 @@ const AlignmentGuides = {
 
 const SelectionEngine = {
   _drag: null, // {type:'move'|'resize'|'rubber'|'insert', ...}
+  _useCentralRouter(){
+    return window.RF_USE_ENGINECORE_INTERACTION !== false;
+  },
+
+  onElementPointerDown(e, id){
+    if(e.button!==0)return;
+    const el=DS.getElementById(id);if(!el)return;
+    const div=document.querySelector(`.cr-element[data-id="${id}"]`);
+    if(!div)return;
+    if(div.setPointerCapture){
+      const pointerId = typeof e.pointerId === 'number'
+        ? e.pointerId
+        : (e.originalEvent ? e.originalEvent.pointerId : null);
+      if (typeof pointerId === 'number') div.setPointerCapture(pointerId);
+    }
+    if(e.detail===2 && el.type==='text'){
+      this.startTextEdit(div,el);return;
+    }
+    const shiftKey = e.modifiers ? !!e.modifiers.shiftKey : !!e.shiftKey;
+    if(!shiftKey && !DS.selection.has(id)){
+      DS.selection.clear();
+    }
+    if(shiftKey && DS.selection.has(id)){
+      DS.selection.delete(id);
+    } else {
+      DS.selection.add(id);
+    }
+    this.renderHandles();
+    PropertiesEngine.render();
+    FormatEngine.updateToolbar();
+    const canvasPos = getCanvasPos(e);
+    this._drag = {
+      type:'move',
+      startX: canvasPos.x,
+      startY: canvasPos.y,
+      startPositions: DS.getSelectedElements().map(el=>({id:el.id,x:el.x,y:el.y,sectionId:el.sectionId,sectionTop:DS.getSectionTop(el.sectionId)})),
+      moved: false,
+    };
+  },
+
+  onHandlePointerDown(e, pos){
+    if(e.button!==0)return;
+    const pos2=getCanvasPos(e);
+    const sel=DS.getSelectedElements();
+    if(sel.length===0)return;
+    const el=sel[0];
+    this._drag={
+      type:'resize',
+      handlePos:pos,
+      elId:el.id,
+      startX:pos2.x,startY:pos2.y,
+      origX:el.x,origY:el.y,origW:el.w,origH:el.h,
+    };
+  },
 
   attachElementEvents(div, id){
-    div.addEventListener('pointerdown', e=>{
-      if(e.button!==0)return;
-      // Preview: allow drag+selection+guides (Crystal Reports behavior)
-      // Only block structural editing (handled by individual tools)
-      e.stopPropagation();e.preventDefault();
-      div.setPointerCapture && div.setPointerCapture(e.pointerId);
-      const el=DS.getElementById(id);if(!el)return;
-      // Double-click: edit text
-      if(e.detail===2 && el.type==='text'){
-        this.startTextEdit(div,el);return;
-      }
-      // Select
-      if(!e.shiftKey && !DS.selection.has(id)){
-        DS.selection.clear();
-      }
-      if(e.shiftKey && DS.selection.has(id)){
-        DS.selection.delete(id);
-      } else {
-        DS.selection.add(id);
-      }
-      this.renderHandles();
-      PropertiesEngine.render();
-      FormatEngine.updateToolbar();
-      // Start move drag
-      const canvasPos = getCanvasPos(e);
-      this._drag = {
-        type:'move',
-        startX: canvasPos.x,
-        startY: canvasPos.y,
-        startPositions: DS.getSelectedElements().map(el=>({id:el.id,x:el.x,y:el.y,sectionId:el.sectionId,sectionTop:DS.getSectionTop(el.sectionId)})),
-        moved: false,
-      };
-    });
+    if(!this._useCentralRouter()){
+      div.addEventListener('pointerdown', e=>{
+        // Preview: allow drag+selection+guides (Crystal Reports behavior)
+        // Only block structural editing (handled by individual tools)
+        e.stopPropagation();e.preventDefault();
+        this.onElementPointerDown(e, id);
+      });
+    }
     div.addEventListener('contextmenu', e=>{
       e.preventDefault();e.stopPropagation();
       if(!DS.selection.has(id)){ DS.selection.clear();DS.selection.add(id);this.renderHandles(); }
@@ -3312,21 +3539,12 @@ const SelectionEngine = {
   },
 
   attachHandleEvent(handleDiv, pos){
-    handleDiv.addEventListener('pointerdown', e=>{
-      if(e.button!==0)return;
-      e.stopPropagation();e.preventDefault();
-      const pos2=getCanvasPos(e);
-      const sel=DS.getSelectedElements();
-      if(sel.length===0)return;
-      const el=sel[0]; // resize only works on single selection
-      this._drag={
-        type:'resize',
-        handlePos:pos,
-        elId:el.id,
-        startX:pos2.x,startY:pos2.y,
-        origX:el.x,origY:el.y,origW:el.w,origH:el.h,
-      };
-    });
+    if(!this._useCentralRouter()){
+      handleDiv.addEventListener('pointerdown', e=>{
+        e.stopPropagation();e.preventDefault();
+        this.onHandlePointerDown(e, pos);
+      });
+    }
   },
 
   renderHandles(){
@@ -3527,20 +3745,21 @@ const SelectionEngine = {
   onMouseUp(e){
     if(!this._drag)return;
     const d=this._drag;
+    const isCancel = e && e.phase === 'cancel';
     // Remove dragging class from all elements (commit transform)
     document.querySelectorAll('.cr-element.dragging').forEach(div=>{
       div.classList.remove('dragging');
     });
     if(typeof AlignmentGuides!=='undefined') AlignmentGuides.clear();
-    if(d.type==='move' && d.moved) DS.saveHistory();
-    if(d.type==='resize') DS.saveHistory();
+    if(!isCancel && d.type==='move' && d.moved) DS.saveHistory();
+    if(!isCancel && d.type==='resize') DS.saveHistory();
     if(d.type==='rubber'){
       document.getElementById('rubber-band').style.display='none';
-      if(DS.selection.size>0){
+      if(!isCancel && DS.selection.size>0){
         PropertiesEngine.render();FormatEngine.updateToolbar();
       }
     }
-    if(d.type==='insert') InsertEngine.onMouseUp(e);
+    if(!isCancel && d.type==='insert') InsertEngine.onMouseUp(e);
     this._drag=null;
   },
 };
@@ -3585,6 +3804,12 @@ const InsertEngine = {
 
   onMouseUp(e){
     const d=SelectionEngine._drag;if(!d||d.type!=='insert')return;
+    if(e && e.phase === 'cancel'){
+      const ghost=document.getElementById('insert-ghost');
+      ghost.style.display='none';
+      SelectionEngine._drag=null;
+      return;
+    }
     const ghost=document.getElementById('insert-ghost');
     ghost.style.display='none';
     const pos=getCanvasPos(e);
@@ -3625,50 +3850,85 @@ const InsertEngine = {
 // ═══════════════════════════════════════════════════════════════════
 const SectionResizeEngine = {
   _drag:null,
+  _useCentralRouter(){
+    return window.RF_USE_ENGINECORE_INTERACTION !== false;
+  },
+  _clientPoint(e){
+    if(e && e.client && typeof e.client.x === 'number' && typeof e.client.y === 'number'){
+      return e.client;
+    }
+    return { x: e.clientX, y: e.clientY };
+  },
   attach(){
+    if(this._useCentralRouter()) return;
     document.querySelectorAll('.section-resize-handle').forEach(h=>{
       h.addEventListener('pointerdown',e=>{
-        if(e.button!==0)return;
         e.stopPropagation();e.preventDefault();
-        const sec=DS.getSection(h.dataset.sectionId);if(!sec)return;
-        this._drag={sectionId:sec.id,startY:e.clientY,startH:sec.height};
-        h.classList.add('dragging');
-        document.getElementById('resize-badge').style.display='block';
+        this.onPointerDown(e, h.dataset.sectionId);
       });
     });
+  },
+  onPointerDown(e, sectionId){
+    if(e.button!==0)return;
+    const sec=DS.getSection(sectionId);if(!sec)return;
+    const client=this._clientPoint(e);
+    this._drag={sectionId:sec.id,startY:client.y,startH:sec.height};
+    const handle=document.querySelector(`.section-resize-handle[data-section-id="${sectionId}"]`);
+    if(handle) handle.classList.add('dragging');
+    document.getElementById('resize-badge').style.display='block';
   },
   onMouseMove(e){
     if(!this._drag)return;
     const d=this._drag;
     const sec=DS.getSection(d.sectionId);if(!sec)return;
-    const dy=RF.Geometry.unscale(e.clientY-d.startY); // v18.11
+    const client=this._clientPoint(e);
+    const dy=RF.Geometry.unscale(client.y-d.startY); // v18.11
     const newH=Math.round(Math.max(CFG.SECTION_MIN_H,Math.min(CFG.SECTION_MAX_H,d.startH+dy)));
     sec.height=newH;
     if(!d._rafPending){
       d._rafPending=true;
       requestAnimationFrame(()=>{
         d._rafPending=false;
-        // height write removed — SectionLayoutEngine owns all section sizing
-        if (typeof SectionLayoutEngine !== 'undefined') SectionLayoutEngine.updateSync();
-        if (typeof CanvasLayoutEngine !== 'undefined') CanvasLayoutEngine.updateSync();
-        if (typeof WorkspaceScrollEngine !== 'undefined') WorkspaceScrollEngine.update();
-        // v19.10: compute from source of truth — sum scaled section heights directly
-        // Never use previous canvas height; always recompute from model.
-        const _cl = document.getElementById('canvas-layer');
-        const _totalH = DS.sections.reduce((s,sec)=>s + RF.Geometry.scale(sec.height), 0);
-        // canvas height write removed; CanvasLayoutEngine owns canvas sizing
+        if (typeof window !== 'undefined' && typeof window.__rfTraceLegacy === 'function') {
+          window.__rfTraceLegacy('SectionResizeEngine.onMouseMove', 'direct-layout-sync', {
+            sectionId: sec.id,
+            height: sec.height,
+          });
+        }
+        if (typeof RenderScheduler !== 'undefined') {
+          RenderScheduler.layout(() => {
+            if (typeof SectionLayoutEngine !== 'undefined') SectionLayoutEngine.updateSync();
+            if (typeof CanvasLayoutEngine !== 'undefined') CanvasLayoutEngine.updateSync();
+            if (typeof WorkspaceScrollEngine !== 'undefined') WorkspaceScrollEngine.updateSync();
+          }, 'SectionResizeEngine.onMouseMove.layoutSync');
+          RenderScheduler.handles(() => {
+            if (typeof SelectionEngine !== 'undefined') SelectionEngine.renderHandles();
+          }, 'SectionResizeEngine.onMouseMove.handles');
+          RenderScheduler.visual(() => {
+            if (typeof OverlayEngine !== 'undefined') OverlayEngine.render();
+          }, 'SectionResizeEngine.onMouseMove.overlay');
+        } else {
+          if (typeof SectionLayoutEngine !== 'undefined') SectionLayoutEngine.updateSync();
+          if (typeof CanvasLayoutEngine !== 'undefined') CanvasLayoutEngine.updateSync();
+          if (typeof WorkspaceScrollEngine !== 'undefined') WorkspaceScrollEngine.updateSync();
+          if (typeof SelectionEngine !== 'undefined') SelectionEngine.renderHandles();
+          if (typeof OverlayEngine !== 'undefined') OverlayEngine.render();
+        }
         const badge=document.getElementById('resize-badge');
         badge.textContent=`${sec.abbr}: ${sec.height}px`;
-        badge.style.left=(e.clientX+12)+'px';badge.style.top=(e.clientY-20)+'px';
-        SelectionEngine.renderHandles();
-        OverlayEngine.render();
+        badge.style.left=(client.x+12)+'px';badge.style.top=(client.y-20)+'px';
       });
     }
   },
-  onMouseUp(){
+  onMouseUp(e){
     if(!this._drag)return;
+    const isCancel = e && e.phase === 'cancel';
     document.querySelectorAll('.section-resize-handle').forEach(h=>h.classList.remove('dragging'));
     document.getElementById('resize-badge').style.display='none';
+    if(isCancel){
+      this._drag=null;
+      return;
+    }
     DS.saveHistory();
     SectionEngine.updateSectionsList();
     // v19.9: clear minHeight, set only height
@@ -3676,6 +3936,9 @@ const SectionResizeEngine = {
     // canvas sizing delegated to CanvasLayoutEngine.updateSync()
     if (typeof RenderScheduler !== 'undefined') {
       RenderScheduler.layout(() => {
+        if (typeof window !== 'undefined' && typeof window.__rfTraceLegacy === 'function') {
+          window.__rfTraceLegacy('SectionResizeEngine.onMouseUp', 'canvas-sync', { via: 'RenderScheduler.layout' });
+        }
         if (typeof SectionLayoutEngine !== 'undefined') SectionLayoutEngine.updateSync();
         if (typeof CanvasLayoutEngine !== 'undefined') CanvasLayoutEngine.updateSync();
         if (typeof WorkspaceScrollEngine !== 'undefined') WorkspaceScrollEngine.update();
@@ -4712,34 +4975,20 @@ const DesignZoomEngine={
     vp.style.transform       = 'none';   // enforce: never scale via CSS
     vp.style.transformOrigin = '';       // enforce: no origin offset
     vp.style.marginBottom    = '16px';   // fixed margin regardless of zoom
-    // ── 2. Scale viewport and canvas-layer width ────────────────────
+    // ── 2. Scale viewport width ─────────────────────────────────────
     vp.style.display = 'block';
     vp.style.width   = (PAGE_W * z) + 'px';
     cl.style.transform = '';  // ensure clean — no CSS transform on canvas-layer
-    cl.style.width     = (PAGE_W * z) + 'px';
     cl.style.setProperty('--geo-zoom', z);
-    // ── 3. Scale section heights ────────────────────────────────────
-    DS.sections.forEach(sec => {
-      const div = document.querySelector(`.cr-section[data-section-id="${sec.id}"]`);
-      if (div) {
-        div.style.height = RF.Geometry.scale(sec.height) + 'px'; // v18.10
-        div.style.width  = RF.Geometry.scale(CFG.PAGE_W) + 'px'; // v18.12: explicit scaled width
-      }
-    });
-    // ── 4. Scale element positions and sizes ─────────────────────────
-    DS.elements.forEach(el => {
-      const div = document.querySelector(`.cr-element[data-id="${el.id}"]`);
-      if (!div) return;
-      const _lp = RF.Geometry.modelToView(el.x, el.y); // v18.10
-      div.style.left     = _lp.x + 'px';
-      div.style.top      = _lp.y + 'px';
-      div.style.width    = RF.Geometry.scale(el.w) + 'px';
-      div.style.height   = RF.Geometry.scale(el.h) + 'px';
-      div.style.fontSize = RF.Geometry.scale(el.fontSize * 96/72) + 'px'; // v18.12: scale font
-    });
-    // ── 5. Update canvas-layer total height ─────────────────────────
+    // ── 3. Geometry/layout ownership delegated to engines ───────────
+    if (typeof window !== 'undefined' && typeof window.__rfTraceLegacy === 'function') {
+      window.__rfTraceLegacy('DesignZoomEngine._apply', 'direct-canvas-sync', { via: 'legacy' });
+    }
+    if (typeof SectionLayoutEngine !== 'undefined') SectionLayoutEngine.updateSync();
+    if (typeof ElementLayoutEngine !== 'undefined') ElementLayoutEngine.updateSync();
     if (typeof CanvasLayoutEngine !== 'undefined') CanvasLayoutEngine.updateSync();
-    // ── 6. Re-render rulers + overlays (already geometry-based) ──────
+    if (typeof WorkspaceScrollEngine !== 'undefined') WorkspaceScrollEngine.updateSync();
+    // ── 4. Re-render rulers + overlays (already geometry-based) ──────
     OverlayEngine.render();
     SelectionEngine.renderHandles();
     ZoomWidget.sync();
@@ -4874,6 +5123,9 @@ const FileEngine = {
 //  CANVAS POSITION HELPER
 // ═══════════════════════════════════════════════════════════════════
 function getCanvasPos(e){
+  if(e && e.model && typeof e.model.x === 'number' && typeof e.model.y === 'number'){
+    return { x: e.model.x, y: e.model.y };
+  }
   return RF.Geometry.toCanvasSpace(e.clientX, e.clientY);
 }
 
@@ -5048,13 +5300,7 @@ function initToolbars(){
 function initMouseEvents(){
   const canvasScroll=document.getElementById('workspace');
   const canvasInner=document.getElementById('canvas-layer');
-
-  canvasScroll.addEventListener('pointerdown',e=>{
-    if(e.button!==0)return;
-    if(e.target.closest('.cr-element')) return;
-    if(DS.previewMode)return;  // block canvas-level insert in preview, not element drag
-    InsertEngine.onCanvasMouseDown(e);
-  });
+  const useEngineCoreInteraction = window.RF_USE_ENGINECORE_INTERACTION !== false;
 
   canvasScroll.addEventListener('contextmenu',e=>{
     if(DS.previewMode)return;
@@ -5065,27 +5311,36 @@ function initMouseEvents(){
     }
   });
 
-  // Unified pointer move — batched with RAF
-  let _rafMove=null;
-  document.addEventListener('pointermove',e=>{
-    if(_rafMove) return; // already scheduled
-    _rafMove=requestAnimationFrame(()=>{
-      _rafMove=null;
-      if(SectionResizeEngine._drag) SectionResizeEngine.onMouseMove(e);
-      else SelectionEngine.onMouseMove(e);
+  if(!useEngineCoreInteraction){
+    canvasScroll.addEventListener('pointerdown',e=>{
+      if(e.button!==0)return;
+      if(e.target.closest('.cr-element')) return;
+      if(DS.previewMode)return;  // block canvas-level insert in preview, not element drag
+      InsertEngine.onCanvasMouseDown(e);
     });
-  });
 
-  document.addEventListener('pointerup',e=>{
-    if(e.button!==0)return;
-    SectionResizeEngine.onMouseUp(e);
-    SelectionEngine.onMouseUp(e);
-  });
+    // Unified pointer move — batched with RAF
+    let _rafMove=null;
+    document.addEventListener('pointermove',e=>{
+      if(_rafMove) return; // already scheduled
+      _rafMove=requestAnimationFrame(()=>{
+        _rafMove=null;
+        if(SectionResizeEngine._drag) SectionResizeEngine.onMouseMove(e);
+        else SelectionEngine.onMouseMove(e);
+      });
+    });
 
-  document.addEventListener('pointerdown',e=>{
-    if(!e.target.closest('#ctx-menu')) ContextMenuEngine.hide();
-    if(!e.target.closest('.menu-item') && !e.target.closest('.dropdown')) MenuEngine.closeAll();
-  });
+    document.addEventListener('pointerup',e=>{
+      if(e.button!==0)return;
+      SectionResizeEngine.onMouseUp(e);
+      SelectionEngine.onMouseUp(e);
+    });
+
+    document.addEventListener('pointerdown',e=>{
+      if(!e.target.closest('#ctx-menu')) ContextMenuEngine.hide();
+      if(!e.target.closest('.menu-item') && !e.target.closest('.dropdown')) MenuEngine.closeAll();
+    });
+  }
 
   canvasScroll.addEventListener('scroll',()=>OverlayEngine.render());
 
@@ -5715,8 +5970,392 @@ const DesignerUI = {
   },
 };
 
+const DebugTrace = {
+  STORAGE_KEY: 'RF_DEBUG_STATE_V1',
+  DEFAULT_STATE: {
+    enabled: false,
+    channels: {
+      runtime: false,
+      scheduler: false,
+      invariants: false,
+      elements: true,
+      selection: false,
+      resize: false,
+      edit: false,
+      overlay: false,
+      zoom: false,
+      scroll: false,
+      move: false,
+    },
+  },
+  PRESETS: {
+    quiet: {
+      runtime: false, scheduler: false, invariants: false, elements: false,
+      selection: false, resize: false, edit: false, overlay: false, zoom: false, scroll: false, move: false,
+    },
+    elements: {
+      runtime: false, scheduler: false, invariants: false, elements: true,
+      selection: true, resize: true, edit: true, overlay: false, zoom: false, scroll: false, move: false,
+    },
+    runtime: {
+      runtime: true, scheduler: true, invariants: true, elements: false,
+      selection: false, resize: false, edit: false, overlay: false, zoom: false, scroll: false, move: false,
+    },
+    geometry: {
+      runtime: false, scheduler: false, invariants: false, elements: false,
+      selection: false, resize: false, edit: false, overlay: true, zoom: true, scroll: true, move: false,
+    },
+    all: {
+      runtime: true, scheduler: true, invariants: true, elements: true,
+      selection: true, resize: true, edit: true, overlay: true, zoom: true, scroll: true, move: true,
+    },
+  },
+
+  _clone(v) {
+    return JSON.parse(JSON.stringify(v));
+  },
+
+  _ensureState() {
+    if (window.RF_DEBUG && window.RF_DEBUG.channels) return window.RF_DEBUG;
+    let nextState = this._clone(this.DEFAULT_STATE);
+    try {
+      const raw = localStorage.getItem(this.STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        nextState = {
+          enabled: !!parsed.enabled,
+          channels: {
+            ...this.DEFAULT_STATE.channels,
+            ...(parsed.channels || {}),
+          },
+        };
+      }
+    } catch (_) {}
+    window.RF_DEBUG = nextState;
+    this._syncGlobals();
+    return window.RF_DEBUG;
+  },
+
+  _persist() {
+    try {
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.getState()));
+    } catch (_) {}
+  },
+
+  _syncGlobals() {
+    const state = this._ensureState();
+    window.RF_DEBUG_TRACE = state.enabled;
+    window.RF_DEBUG_TRACE_RUNTIME = !!state.channels.runtime;
+    window.RF_DEBUG_TRACE_ELEMENTS = !!state.channels.elements;
+  },
+
+  getState() {
+    return this._clone(this._ensureState());
+  },
+
+  isEnabled(channel) {
+    const state = this._ensureState();
+    return state.enabled === true && !!state.channels[channel];
+  },
+
+  isAnyEnabled(channels) {
+    return (channels || []).some(channel => this.isEnabled(channel));
+  },
+
+  setEnabled(value) {
+    const state = this._ensureState();
+    state.enabled = !!value;
+    if (state.enabled && !Object.values(state.channels || {}).some(Boolean)) {
+      state.channels = { ...this.PRESETS.elements };
+    }
+    this._syncGlobals();
+    this._persist();
+  },
+
+  setChannel(channel, value) {
+    const state = this._ensureState();
+    state.channels[channel] = !!value;
+    this._syncGlobals();
+    this._persist();
+  },
+
+  toggleChannel(channel) {
+    this.setChannel(channel, !this.isEnabled(channel));
+  },
+
+  applyPreset(name) {
+    if (!this.PRESETS[name]) return;
+    const state = this._ensureState();
+    state.channels = { ...this.PRESETS[name] };
+    state.enabled = true;
+    this._syncGlobals();
+    this._persist();
+  },
+
+  shouldAllowConsoleCall(args) {
+    const first = args && args.length ? args[0] : '';
+    if (typeof first !== 'string') return this._ensureState().enabled === true;
+    const match = first.match(/^\[RFTRACE:([a-z]+)\]/i);
+    if (match) return this.isEnabled(match[1].toLowerCase());
+    if (first.startsWith('[RFTRACE]')) return this.isEnabled('runtime');
+    return this._ensureState().enabled === true;
+  },
+
+  log(channel, source, event, payload) {
+    if (!this.isEnabled(channel)) return;
+    console.log(`[RFTRACE:${channel}]`, event, {
+      source,
+      payload: payload || null,
+    });
+  },
+};
+
+window.DebugTrace = DebugTrace;
+window.RF_DEBUG = window.RF_DEBUG || DebugTrace.getState();
+window.rfTrace = function(channel, event, payload) {
+  if (!window.RF_DEBUG?.enabled) return;
+  if (!window.RF_DEBUG.channels?.[channel]) return;
+  console.log(`[RFTRACE:${channel}]`, event, payload);
+};
+
+const DebugChannelsPanel = {
+  _channels: ['elements', 'selection', 'resize', 'edit', 'runtime', 'scheduler', 'invariants', 'overlay', 'zoom', 'scroll'],
+  _presets: ['quiet', 'elements', 'runtime', 'geometry', 'all'],
+
+  _root() {
+    return document.getElementById('rf-debug-panel');
+  },
+
+  _ensure() {
+    if (this._root()) return this._root();
+    const host = document.getElementById('ui-mode-stack');
+    if (!host) return null;
+    const root = document.createElement('div');
+    root.id = 'rf-debug-panel';
+    root.innerHTML = `
+      <div id="rf-debug-panel-head"><span>debug channels</span></div>
+      <div id="rf-debug-presets"></div>
+      <div id="rf-debug-channels"></div>
+    `;
+    host.appendChild(root);
+    const presets = root.querySelector('#rf-debug-presets');
+    this._presets.forEach(name => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'rf-debug-chip';
+      btn.dataset.preset = name;
+      btn.textContent = name;
+      btn.addEventListener('click', () => {
+        DebugTrace.applyPreset(name);
+        this.render();
+        DebugTraceToggle.syncIndicator();
+      });
+      presets.appendChild(btn);
+    });
+    const channels = root.querySelector('#rf-debug-channels');
+    this._channels.forEach(channel => {
+      const label = document.createElement('label');
+      label.className = 'rf-debug-check';
+      label.innerHTML = `<input type="checkbox" data-channel="${channel}"><span>${channel}</span>`;
+      label.querySelector('input').addEventListener('change', e => {
+        DebugTrace.setChannel(channel, e.target.checked);
+        this.render();
+      });
+      channels.appendChild(label);
+    });
+    return root;
+  },
+
+  render() {
+    const root = this._ensure();
+    if (!root) return;
+    const state = DebugTrace.getState();
+    root.classList.toggle('is-on', state.enabled === true);
+    root.querySelectorAll('[data-channel]').forEach(input => {
+      input.checked = !!state.channels[input.dataset.channel];
+    });
+    root.querySelectorAll('[data-preset]').forEach(btn => {
+      const active = JSON.stringify(state.channels) === JSON.stringify(DebugTrace.PRESETS[btn.dataset.preset]);
+      btn.classList.toggle('is-active', active);
+    });
+  },
+};
+
+const DebugTraceToggle = {
+  _clickCount: 0,
+  _lastClickAt: 0,
+  _maxGapMs: 1000,
+
+  _isDebugConsoleCall(method, args) {
+    if (method === 'debug') return true;
+    if (method === 'warn') return false;
+    const first = args && args.length ? args[0] : '';
+    if (typeof first !== 'string') return false;
+    return (
+      first.startsWith('[RFTRACE') ||
+      first.startsWith('[EngineCore]') ||
+      first.startsWith('[ReportForge]') ||
+      first.startsWith('[v19') ||
+      first.startsWith('[RF] Preview') ||
+      first.startsWith('[PreviewEngineV19]') ||
+      first.startsWith('🔥 ')
+    );
+  },
+
+  _installConsoleGate() {
+    if (window.__rfConsoleGateInstalled === true || typeof console === 'undefined') return;
+    window.__rfConsoleGateInstalled = true;
+    window.__rfConsoleOriginal = {
+      debug: console.debug ? console.debug.bind(console) : null,
+      log: console.log ? console.log.bind(console) : null,
+      info: console.info ? console.info.bind(console) : null,
+      warn: console.warn ? console.warn.bind(console) : null,
+    };
+
+    ['debug', 'log', 'info', 'warn'].forEach(method => {
+      const original = window.__rfConsoleOriginal[method];
+      if (typeof original !== 'function') return;
+      console[method] = (...args) => {
+        if (!DebugTraceToggle._isDebugConsoleCall(method, args) || DebugTrace.shouldAllowConsoleCall(args)) {
+          original(...args);
+        }
+      };
+    });
+  },
+
+  _indicator() {
+    return document.getElementById('rf-debug-indicator');
+  },
+
+  syncIndicator() {
+    const indicator = this._indicator();
+    if (!indicator) return;
+    const enabled = DebugTrace.getState().enabled === true;
+    indicator.classList.toggle('is-on', enabled);
+    DebugChannelsPanel.render();
+    if (typeof DebugOverlay !== 'undefined') DebugOverlay.syncVisibility();
+  },
+
+  setEnabled(nextValue) {
+    DebugTrace.setEnabled(!!nextValue);
+    if (nextValue) DebugTrace.applyPreset('elements');
+    this.syncIndicator();
+    console.info(`[ReportForge] RF_DEBUG ${DebugTrace.getState().enabled ? 'enabled' : 'disabled'}`);
+  },
+
+  toggle() {
+    this.setEnabled(!DebugTrace.getState().enabled);
+  },
+
+  _handleHomeClick() {
+    const now = Date.now();
+    this._clickCount = (now - this._lastClickAt <= this._maxGapMs) ? this._clickCount + 1 : 1;
+    this._lastClickAt = now;
+    if (this._clickCount >= 4) {
+      this._clickCount = 0;
+      this._lastClickAt = 0;
+      this.toggle();
+    }
+  },
+
+  init() {
+    DebugTrace._ensureState();
+    this._installConsoleGate();
+    const homeTab = Array.from(document.querySelectorAll('.file-tab'))
+      .find(node => (node.textContent || '').trim() === 'Página de inicio');
+    if (!homeTab) return;
+    homeTab.addEventListener('click', () => this._handleHomeClick());
+    this.syncIndicator();
+  },
+};
+
+const DebugOverlay = {
+  _frame: 0,
+  _layers: ['layout', 'canvas', 'overlay', 'handles', 'scroll'],
+
+  _root() {
+    return document.getElementById('rf-debug-overlay');
+  },
+
+  _ensure() {
+    if (this._root()) return this._root();
+    const root = document.createElement('div');
+    root.id = 'rf-debug-overlay';
+    root.innerHTML = `
+      <div id="rf-debug-overlay-head">
+        <span>runtime layers</span>
+        <span id="rf-debug-overlay-frame">f:0</span>
+      </div>
+      <div id="rf-debug-overlay-layers"></div>
+    `;
+    document.body.appendChild(root);
+    const list = root.querySelector('#rf-debug-overlay-layers');
+    this._layers.forEach(layer => {
+      const row = document.createElement('div');
+      row.className = 'rf-debug-layer';
+      row.dataset.layer = layer;
+      row.innerHTML = `
+        <div class="rf-debug-layer-name">
+          <span class="rf-debug-layer-dot"></span>
+          <span class="rf-debug-layer-label">${layer}</span>
+        </div>
+        <span class="rf-debug-layer-meta">0</span>
+      `;
+      list.appendChild(row);
+    });
+    return root;
+  },
+
+  syncVisibility() {
+    const root = this._ensure();
+    root.classList.toggle('is-on', window.RF_DEBUG_TRACE === true);
+  },
+
+  _snapshot() {
+    if (typeof RenderScheduler === 'undefined' || typeof RenderScheduler.getInvalidationState !== 'function') {
+      return null;
+    }
+    return RenderScheduler.getInvalidationState();
+  },
+
+  render(frameMeta) {
+    const root = this._ensure();
+    if (window.RF_DEBUG_TRACE !== true) {
+      root.classList.remove('is-on');
+      return;
+    }
+    root.classList.add('is-on');
+    const frame = frameMeta && typeof frameMeta.frame === 'number' ? frameMeta.frame : this._frame;
+    this._frame = frame;
+    const frameEl = document.getElementById('rf-debug-overlay-frame');
+    if (frameEl) frameEl.textContent = `f:${frame}`;
+    const state = this._snapshot();
+    this._layers.forEach(layer => {
+      const row = root.querySelector(`.rf-debug-layer[data-layer="${layer}"]`);
+      if (!row) return;
+      const item = state && state[layer] ? state[layer] : { dirty: false, frame: 0, reason: null, count: 0 };
+      const active = item.dirty === true || item.frame === frame;
+      row.classList.toggle('active', active);
+      row.title = item.reason || '';
+      const meta = row.querySelector('.rf-debug-layer-meta');
+      if (meta) meta.textContent = `${item.count || 0}${item.reason ? ` · ${item.reason}` : ''}`;
+    });
+  },
+
+  init() {
+    this._ensure();
+    this.syncVisibility();
+    document.addEventListener('rf:runtime-frame', event => {
+      this.render(event.detail || null);
+    });
+    this.render(null);
+  },
+};
+
 document.addEventListener('DOMContentLoaded',()=>{
   DesignerUI.init();
+  DebugTraceToggle.init();
+  DebugOverlay.init();
   SectionEngine.init();
   FieldExplorerEngine.init();
   FieldExplorerEngine.setupCanvasDrop();
@@ -6819,13 +7458,35 @@ document.addEventListener('DOMContentLoaded', () => {
 <script src="/engines/KeyboardEngine.js"></script>
 <script src="/engines/ClipboardEngine.js"></script>
 <script>
+window.__rfTraceLegacy = window.__rfTraceLegacy || function(source, event, payload) {
+  if (typeof window.rfTrace !== 'function') return;
+  const channel = source.includes('DesignZoomEngine')
+    ? 'zoom'
+    : (source.includes('SectionResizeEngine') ? 'resize' : 'runtime');
+  if (!window.DebugTrace?.isEnabled(channel)) return;
+  const frame = (typeof RenderScheduler !== 'undefined' && typeof RenderScheduler.frame === 'number')
+    ? RenderScheduler.frame
+    : null;
+  window.rfTrace(channel, event, {
+    frame,
+    source,
+    phase: 'legacy',
+    payload: payload || null,
+  });
+};
 // ── ReportForge v19 Phase 3 Boot ─────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
 
   // ── CanvasEngine ────────────────────────────────────────────────
+  if (typeof window !== 'undefined' && typeof window.__rfTraceLegacy === 'function') {
+    window.__rfTraceLegacy('Phase3Boot', 'direct-canvas-sync', { hook: 'DOMContentLoaded' });
+  }
   if (typeof CanvasLayoutEngine !== 'undefined') CanvasLayoutEngine.updateSync();
 
   // ── SectionLayoutEngine ─────────────────────────────────────────
+  if (typeof window !== 'undefined' && typeof window.__rfTraceLegacy === 'function') {
+    window.__rfTraceLegacy('Phase3Boot', 'direct-section-sync', { hook: 'DOMContentLoaded' });
+  }
   if (typeof SectionLayoutEngine !== 'undefined') SectionLayoutEngine.updateSync();
 
   // ── ElementLayoutEngine ─────────────────────────────────────────
@@ -6868,13 +7529,22 @@ document.addEventListener('DOMContentLoaded', () => {
   if (typeof DesignZoomEngine !== 'undefined') {
     const _prevApply3 = DesignZoomEngine._apply.bind(DesignZoomEngine);
     DesignZoomEngine._apply = function(z, ax, ay) {
+      if (typeof window !== 'undefined' && typeof window.__rfTraceLegacy === 'function') {
+        window.__rfTraceLegacy('DesignZoomEngine._apply', 'phase3-patched-enter', { zoom: z });
+      }
       _prevApply3(z, ax, ay);
       if (typeof RenderScheduler !== 'undefined') {
         RenderScheduler.layout(() => {
+          if (typeof window !== 'undefined' && typeof window.__rfTraceLegacy === 'function') {
+            window.__rfTraceLegacy('DesignZoomEngine._apply', 'phase3-layout-scheduled', { zoom: z });
+          }
           if (typeof CanvasLayoutEngine        !== 'undefined') CanvasLayoutEngine.update();
           if (typeof SectionLayoutEngine !== 'undefined') SectionLayoutEngine.update();
         });
         RenderScheduler.visual(() => {
+          if (typeof window !== 'undefined' && typeof window.__rfTraceLegacy === 'function') {
+            window.__rfTraceLegacy('DesignZoomEngine._apply', 'phase3-visual-scheduled', { zoom: z });
+          }
           if (typeof OverlayEngineV19 !== 'undefined') OverlayEngineV19.render();
         });
       }
@@ -6930,11 +7600,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // 2. SelectionEngine → SelectionEngineV19 (full v19 implementation)
       if (typeof SelectionEngineV19 !== 'undefined' && typeof SelectionEngine !== 'undefined') {
-        ['attachElementEvents','attachHandleEvent','renderHandles','startTextEdit',
+        const __rfTraceElementBridge = (event, state) => {
+          if (typeof window.rfTrace !== 'function' || !window.DebugTrace?.isEnabled('elements')) return;
+          window.rfTrace('elements', event, {
+            source: 'SelectionBridge',
+            id: state && typeof state.id !== 'undefined' ? state.id : null,
+            handle: state && typeof state.handle !== 'undefined' ? state.handle : null,
+            state: state || null,
+          });
+        };
+        ['attachElementEvents','attachHandleEvent','onElementPointerDown','onHandlePointerDown','renderHandles','startTextEdit',
          'startRubberBand','clearSelection','updateSelectionInfo','onMouseMove','onMouseUp']
           .forEach(m => {
             if (typeof SelectionEngineV19[m] === 'function') {
               SelectionEngine[m] = SelectionEngineV19[m].bind(SelectionEngineV19);
+              __rfTraceElementBridge('method-copied', { method: m, from: 'SelectionEngineV19', to: 'SelectionEngine' });
             }
           });
         // Sync _drag state
@@ -6944,6 +7624,13 @@ document.addEventListener('DOMContentLoaded', () => {
           configurable: true,
         });
         SelectionEngine.__active = false;
+        __rfTraceElementBridge('bridge-active', {
+          selectionEngineActive: 'SelectionEngineV19',
+          onElementPointerDown: typeof SelectionEngine.onElementPointerDown,
+          onHandlePointerDown: typeof SelectionEngine.onHandlePointerDown,
+          onMouseMove: typeof SelectionEngine.onMouseMove,
+          onMouseUp: typeof SelectionEngine.onMouseUp,
+        });
         console.log('[v19.6] SelectionEngine patched → SelectionEngineV19 (v19 owns selection)');
       }
 
