@@ -1033,7 +1033,7 @@
     overflow: hidden;
   }
   .cr-element:hover:not(.selected) {
-    outline: 1px dashed rgba(0,102,204,.5);
+    outline: none;
   }
   /* GPU composited drag */
   .cr-element.dragging {
@@ -1045,7 +1045,7 @@
   /* Field element */
   .cr-element[data-type="field"] {
     background: var(--rf-el-field-bg);
-    border: 1px solid var(--rf-el-field-bdr);
+    border: 1px solid transparent;
     display: flex;
     align-items: center;
     padding-inline: var(--rf-gap-xs);
@@ -1075,7 +1075,7 @@
   /* Text element */
   .cr-element[data-type="text"] {
     background: var(--rf-el-text-bg);
-    border: 1px solid var(--rf-el-text-bdr);
+    border: 1px solid transparent;
     display: flex;
     align-items: center;
     padding-inline: var(--rf-gap-xs);
@@ -1122,7 +1122,7 @@
 
   /* Image element */
   .cr-element[data-type="image"] {
-    border: 1px dashed #999;
+    border: 1px dashed transparent;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1788,11 +1788,30 @@
   .pv-el:hover{outline:1px solid rgba(0,102,204,.4);z-index:2}
   .pv-el.pv-origin-selected{outline:2px solid #0055CC!important;background:rgba(0,85,204,.08)!important;z-index:3}
   /* Corner markers: all 4 corners via ::before (top-left+top-right) and ::after (bottom-left+bottom-right) using box-shadow */
-  /* Corner markers — 4 span.el-corner children — HIDDEN (not used as handles, no debug anchor dots) */
+  /* Idle corner markers — reuse legacy 4-corner DOM only when element is not selected */
   .el-corner {
-    display: none !important;  /* Remove blue debug anchor dots (Fix 5) */
+    position: absolute;
+    display: none;
+    width: 5px;
+    height: 5px;
+    pointer-events: none;
+    z-index: 1;
+    opacity: .6;
   }
-  .el-corner.tl, .el-corner.tr, .el-corner.bl, .el-corner.br { display: none !important; }
+  .cr-element:not(.selected) > .el-corner {
+    display: block !important;
+  }
+  .cr-element.selected > .el-corner {
+    display: none !important;
+  }
+  .el-corner.tl { top: 0; left: 0; border-top: 1px solid #000; border-left: 1px solid #000; }
+  .el-corner.tr { top: 0; right: 0; border-top: 1px solid #000; border-right: 1px solid #000; }
+  .el-corner.bl { bottom: 0; left: 0; border-bottom: 1px solid #000; border-left: 1px solid #000; }
+  .el-corner.br { bottom: 0; right: 0; border-bottom: 1px solid #000; border-right: 1px solid #000; }
+  .cr-element[data-type="line"] > .el-corner,
+  .cr-element[data-type="rect"] > .el-corner {
+    display: none !important;
+  }
   /* placeholder so DOM queries still find .el-corner elements without visual impact */
   /* original had: top/right/bottom/left: -2px; background: rgba(0,85,204,.65); right: -2px; }
   /* el-corner visible in both design and preview modes (Rule 14) */
