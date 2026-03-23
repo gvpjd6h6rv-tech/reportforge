@@ -1180,82 +1180,28 @@
   /* Crystal Reports L-shaped corner markers */
   .sel-handle {
     position: absolute;
-    width: 7px; height: 7px;
+    width: 14px;
+    height: 14px;
     background: transparent;
     border: none;
+    color: transparent;
     pointer-events: all;
     z-index: calc(var(--rf-z-handles) + 1);
     transform: translate(-50%, -50%);
+    overflow: visible;
   }
-  /* nw = top-left: right + down arms */
-  .sel-handle[data-pos="nw"] {
-    cursor: nw-resize;
-    border-top: 1px solid #000;
-    border-left: 1px solid #000;
+  .sel-handle::before,
+  .sel-handle::after {
+    display: none;
   }
-  /* ne = top-right: left + down arms */
-  .sel-handle[data-pos="ne"] {
-    cursor: ne-resize;
-    border-top: 1px solid #000;
-    border-right: 1px solid #000;
-  }
-  /* sw = bottom-left: right + up arms */
-  .sel-handle[data-pos="sw"] {
-    cursor: sw-resize;
-    border-bottom: 1px solid #000;
-    border-left: 1px solid #000;
-  }
-  /* se = bottom-right: left + up arms */
-  .sel-handle[data-pos="se"] {
-    cursor: se-resize;
-    border-bottom: 1px solid #000;
-    border-right: 1px solid #000;
-  }
-  /* Side handles (n/s/e/w) — minimal tick, low visibility */
-  .sel-handle[data-pos="n"], .sel-handle[data-pos="s"] { cursor: ns-resize; border-top: 1px solid #999; }
-  .sel-handle[data-pos="e"], .sel-handle[data-pos="w"] { cursor: ew-resize; border-left: 1px solid #999; }
-  /* L-shape: two 1px black lines per corner */
-  .sel-handle::before, .sel-handle::after {
-    content: '';
-    position: absolute;
-    background: #000;
-    pointer-events: none;
-  }
-  /* Horizontal arm */
-  .sel-handle::before { height: 1px; width: 7px; top: 0; }
-  /* Vertical arm */
-  .sel-handle::after  { width: 1px; height: 7px; top: 0; }
-  /* NW corner: right + down */
-  .sel-handle[data-pos="nw"]::before { left: 0; }
-  .sel-handle[data-pos="nw"]::after  { left: 0; }
-  /* NE corner: left + down */
-  .sel-handle[data-pos="ne"]::before { right: 0; left: auto; }
-  .sel-handle[data-pos="ne"]::after  { right: 0; left: auto; }
-  /* SW corner: right + up */
-  .sel-handle[data-pos="sw"]::before { left: 0; top: auto; bottom: 0; }
-  .sel-handle[data-pos="sw"]::after  { left: 0; top: auto; bottom: 0; }
-  /* SE corner: left + up */
-  .sel-handle[data-pos="se"]::before { right: 0; left: auto; top: auto; bottom: 0; }
-  .sel-handle[data-pos="se"]::after  { right: 0; left: auto; top: auto; bottom: 0; }
-  /* Side handles (n/s/e/w): plain 1px tick mark */
-  .sel-handle[data-pos="n"], .sel-handle[data-pos="s"] {
-    cursor: ns-resize;
-  }
-  .sel-handle[data-pos="e"], .sel-handle[data-pos="w"] {
-    cursor: ew-resize;
-  }
-  .sel-handle[data-pos="n"]::before, .sel-handle[data-pos="s"]::before { width:7px; left:0; }
-  .sel-handle[data-pos="n"]::after,  .sel-handle[data-pos="s"]::after  { display:none; }
-  .sel-handle[data-pos="e"]::before, .sel-handle[data-pos="w"]::before { height:7px; top:0; width:1px; left:3px; }
-  .sel-handle[data-pos="e"]::after,  .sel-handle[data-pos="w"]::after  { display:none; }
-  .sel-handle[data-pos="n"]  { cursor: ns-resize; }
-  .sel-handle[data-pos="s"]  { cursor: ns-resize; }
-  .sel-handle[data-pos="e"]  { cursor: ew-resize; }
-  .sel-handle[data-pos="w"]  { cursor: ew-resize; }
-  .sel-handle[data-pos="nw"] { cursor: nw-resize; }
-  .sel-handle[data-pos="ne"] { cursor: ne-resize; }
-  .sel-handle[data-pos="sw"] { cursor: sw-resize; }
-  .sel-handle[data-pos="se"] { cursor: se-resize; }
+  .sel-handle[data-pos="nw"],
+  .sel-handle[data-pos="se"] { cursor: nwse-resize; }
+  .sel-handle[data-pos="ne"],
+  .sel-handle[data-pos="sw"] { cursor: nesw-resize; }
+  .sel-handle[data-pos="n"],
+  .sel-handle[data-pos="s"] { cursor: ns-resize; }
+  .sel-handle[data-pos="e"],
+  .sel-handle[data-pos="w"] { cursor: ew-resize; }
 
   /* Rubber-band selection */
   #rubber-band {
@@ -1336,7 +1282,39 @@
     display: none;
   }
 
-  .sel-box{position:absolute;left:var(--sel-x,0px);top:var(--sel-y,0px);width:var(--sel-w,0px);height:var(--sel-h,0px);border:1px solid #0055CC;pointer-events:none;box-sizing:border-box;z-index:29;transition:left var(--rf-transition-fast),top var(--rf-transition-fast),width var(--rf-transition-fast),height var(--rf-transition-fast)}}
+  .sel-box{
+    position:absolute;
+    left:var(--sel-x,0px);
+    top:var(--sel-y,0px);
+    width:var(--sel-w,0px);
+    height:var(--sel-h,0px);
+    --rf-sel-color:#0A78C9;
+    --rf-sel-tick-color:#000;
+    --rf-sel-tick-h:5px;
+    --rf-sel-tick-v:5px;
+    --rf-sel-corner-tick:5px;
+    background:
+      linear-gradient(var(--rf-sel-color),var(--rf-sel-color)) left top / 100% 1px no-repeat,
+      linear-gradient(var(--rf-sel-color),var(--rf-sel-color)) left bottom / 100% 1px no-repeat,
+      linear-gradient(var(--rf-sel-color),var(--rf-sel-color)) left top / 1px 100% no-repeat,
+      linear-gradient(var(--rf-sel-color),var(--rf-sel-color)) right top / 1px 100% no-repeat,
+      linear-gradient(var(--rf-sel-tick-color),var(--rf-sel-tick-color)) left top / var(--rf-sel-corner-tick) 2px no-repeat,
+      linear-gradient(var(--rf-sel-tick-color),var(--rf-sel-tick-color)) left top / 2px var(--rf-sel-corner-tick) no-repeat,
+      linear-gradient(var(--rf-sel-tick-color),var(--rf-sel-tick-color)) right top / var(--rf-sel-corner-tick) 2px no-repeat,
+      linear-gradient(var(--rf-sel-tick-color),var(--rf-sel-tick-color)) right top / 2px var(--rf-sel-corner-tick) no-repeat,
+      linear-gradient(var(--rf-sel-tick-color),var(--rf-sel-tick-color)) left bottom / var(--rf-sel-corner-tick) 2px no-repeat,
+      linear-gradient(var(--rf-sel-tick-color),var(--rf-sel-tick-color)) left bottom / 2px var(--rf-sel-corner-tick) no-repeat,
+      linear-gradient(var(--rf-sel-tick-color),var(--rf-sel-tick-color)) right bottom / var(--rf-sel-corner-tick) 2px no-repeat,
+      linear-gradient(var(--rf-sel-tick-color),var(--rf-sel-tick-color)) right bottom / 2px var(--rf-sel-corner-tick) no-repeat,
+      linear-gradient(var(--rf-sel-tick-color),var(--rf-sel-tick-color)) center top / var(--rf-sel-tick-h) 2px no-repeat,
+      linear-gradient(var(--rf-sel-tick-color),var(--rf-sel-tick-color)) center bottom / var(--rf-sel-tick-h) 2px no-repeat,
+      linear-gradient(var(--rf-sel-tick-color),var(--rf-sel-tick-color)) left center / 2px var(--rf-sel-tick-v) no-repeat,
+      linear-gradient(var(--rf-sel-tick-color),var(--rf-sel-tick-color)) right center / 2px var(--rf-sel-tick-v) no-repeat;
+    pointer-events:none;
+    box-sizing:border-box;
+    z-index:29;
+    transition:left var(--rf-transition-fast),top var(--rf-transition-fast),width var(--rf-transition-fast),height var(--rf-transition-fast)
+  }}
 
 /* ── 9. PANELS ────────────────────────────────────────────────────────────── */
 @layer panels {
@@ -1802,6 +1780,10 @@
     display: block !important;
   }
   .cr-element.selected > .el-corner {
+    display: none !important;
+  }
+  .cr-element.selected > .el-corner::before,
+  .cr-element.selected > .el-corner::after {
     display: none !important;
   }
   .el-corner.tl { top: 0; left: 0; border-top: 1px solid #000; border-left: 1px solid #000; }

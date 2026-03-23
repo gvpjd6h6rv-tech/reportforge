@@ -168,16 +168,26 @@ const SelectionEngineV19 = (() => {
       // Resize handles
       const POSITIONS = [
         {pos:'nw', sx:absX,           sy:absY          },
+        {pos:'n',  sx:absX+absW/2,    sy:absY          },
         {pos:'ne', sx:absX+absW,      sy:absY          },
+        {pos:'w',  sx:absX,           sy:absY+absH/2   },
+        {pos:'e',  sx:absX+absW,      sy:absY+absH/2   },
         {pos:'sw', sx:absX,           sy:absY+absH     },
+        {pos:'s',  sx:absX+absW/2,    sy:absY+absH     },
         {pos:'se', sx:absX+absW,      sy:absY+absH     },
       ];
       POSITIONS.forEach(({pos, sx, sy}) => {
+        const cursor = (
+          pos === 'nw' || pos === 'se' ? 'nwse-resize' :
+          pos === 'ne' || pos === 'sw' ? 'nesw-resize' :
+          pos === 'n' || pos === 's' ? 'ns-resize' :
+          'ew-resize'
+        );
         const h = document.createElement('div');
         h.className = `sel-handle sel-handle-${pos}`;
         h.dataset.pos = pos;
         h.dataset.handlePos = pos;
-        h.style.cssText = `position:absolute;left:${sx-3}px;top:${sy-3}px;width:6px;height:6px;cursor:${pos}-resize`;
+        h.style.cssText = `position:absolute;left:${sx-3}px;top:${sy-3}px;width:6px;height:6px;cursor:${cursor}`;
         attachHandleEvent(h, pos);
         layer.appendChild(h);
       });
