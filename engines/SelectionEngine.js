@@ -138,11 +138,20 @@ const SelectionEngineV19 = (() => {
       const gr  = RF.Geometry.elementRect(elDiv);
       let absX, absY, absW, absH;
       if (gr) {
-        const clR = RF.Geometry.canvasRect();
-        absX = gr.left - clR.left;
-        absY = gr.top  - clR.top;
-        absW = gr.width;
-        absH = gr.height;
+        if (typeof gr.left === 'number' && typeof gr.top === 'number' &&
+            typeof gr.width === 'number' && typeof gr.height === 'number') {
+          const clR = RF.Geometry.canvasRect();
+          absX = gr.left - clR.left;
+          absY = gr.top  - clR.top;
+          absW = gr.width;
+          absH = gr.height;
+        } else {
+          const zoom = (typeof DS !== 'undefined' ? DS.zoom : 1) || 1;
+          absX = gr.x * zoom;
+          absY = gr.y * zoom;
+          absW = gr.w * zoom;
+          absH = gr.h * zoom;
+        }
       } else {
         absX = RF.Geometry.scale(el.x);
         absY = RF.Geometry.scale(DS.getSectionTop(el.sectionId) + el.y);
@@ -159,12 +168,8 @@ const SelectionEngineV19 = (() => {
       // Resize handles
       const POSITIONS = [
         {pos:'nw', sx:absX,           sy:absY          },
-        {pos:'n',  sx:absX+absW/2,    sy:absY          },
         {pos:'ne', sx:absX+absW,      sy:absY          },
-        {pos:'w',  sx:absX,           sy:absY+absH/2   },
-        {pos:'e',  sx:absX+absW,      sy:absY+absH/2   },
         {pos:'sw', sx:absX,           sy:absY+absH     },
-        {pos:'s',  sx:absX+absW/2,    sy:absY+absH     },
         {pos:'se', sx:absX+absW,      sy:absY+absH     },
       ];
       POSITIONS.forEach(({pos, sx, sy}) => {
