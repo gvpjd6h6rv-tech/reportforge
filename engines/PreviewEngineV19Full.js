@@ -68,8 +68,8 @@ const PreviewEngineV19Full = (() => {
     const fs = RF.Geometry.scale(el.fontSize * 96 / 72);
 
     const st = [
-      `position:absolute`, `left:${r.x}px`, `top:${r.y}px`,
-      `width:${r.w}px`, `height:${r.h}px`,
+      `position:absolute`, `left:${r.left}px`, `top:${r.top}px`,
+      `width:${r.width}px`, `height:${r.height}px`,
       `font-family:${el.fontFamily}`, `font-size:${fs}px`,
       `font-weight:${el.bold ? 'bold' : 'normal'}`,
       `font-style:${el.italic ? 'italic' : 'normal'}`,
@@ -80,8 +80,8 @@ const PreviewEngineV19Full = (() => {
 
     if (el.type === 'line') {
       const lc  = el.borderColor === 'transparent' ? '#000' : el.borderColor;
-      const mid = Math.max(r.h / 2, 1);
-      return `<div style="${st};background:transparent"><svg style="overflow:visible" width="${r.w}" height="${Math.max(r.h,2)}"><line x1="0" y1="${mid}" x2="${r.w}" y2="${mid}" stroke="${lc}" stroke-width="${RF.Geometry.scale(el.lineWidth||1)}"/></svg></div>`;
+      const mid = Math.max(r.height / 2, 1);
+      return `<div style="${st};background:transparent"><svg style="overflow:visible" width="${r.width}" height="${Math.max(r.height,2)}"><line x1="0" y1="${mid}" x2="${r.width}" y2="${mid}" stroke="${lc}" stroke-width="${RF.Geometry.scale(el.lineWidth||1)}"/></svg></div>`;
     }
     if (el.type === 'rect') {
       const bg  = el.bgColor === 'transparent' ? 'transparent' : el.bgColor;
@@ -107,8 +107,8 @@ const PreviewEngineV19Full = (() => {
     const _r    = RF.Geometry.rectToView(el);
     const _fs   = RF.Geometry.scale(el.fontSize * 96 / 72);
     const st    = [
-      `position:absolute`, `left:${_r.x}px`, `top:${_r.y}px`,
-      `width:${_r.w}px`, `height:${_r.h}px`,
+      `position:absolute`, `left:${_r.left}px`, `top:${_r.top}px`,
+      `width:${_r.width}px`, `height:${_r.height}px`,
       `font-family:${el.fontFamily}`, `font-size:${_fs}px`,
       `font-weight:${el.bold ? 'bold' : 'normal'}`,
       `font-style:${el.italic ? 'italic' : 'normal'}`,

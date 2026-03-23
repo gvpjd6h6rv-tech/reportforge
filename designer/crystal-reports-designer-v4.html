@@ -2641,7 +2641,7 @@ class AABB{
     const ox=Math.min(this.x2-o.x,o.x2-this.x),oy=Math.min(this.y2-o.y,o.y2-this.y);
     return ox<oy?{dx:(this.cx<o.cx?-ox:ox),dy:0}:{dx:0,dy:(this.cy<o.cy?-oy:oy)};}
   expand(m){return new AABB(this.x-m,this.y-m,this.w+m*2,this.h+m*2);}
-  static fromRect(r){return new AABB(r.x,r.y,r.w,r.h);}
+  static fromRect(r){return new AABB(r.left,r.top,r.width,r.height);}
 }
 const MagneticSnap={
   GRID:8, TOLERANCE:4, PRECISION:1e-3,
@@ -2708,17 +2708,32 @@ RF.Geometry = {
 
   // Element BoundingClientRect → pre-transform canvas-layer space
   // Divides by zoom so result is in the same coordinate space as handles-layer (inset:0 on canvas-layer)
+  _invalidLegacyRectProp(prop){
+    const msg = `INVALID GEOMETRY SHAPE: use left/top/width/height only (${prop})`;
+    console.error(msg);
+    throw new Error(msg);
+  },
+  _rect(left, top, width, height){
+    const rect = { left, top, width, height };
+    Object.defineProperties(rect, {
+      x: { get: () => this._invalidLegacyRectProp('x'), enumerable: false },
+      y: { get: () => this._invalidLegacyRectProp('y'), enumerable: false },
+      w: { get: () => this._invalidLegacyRectProp('w'), enumerable: false },
+      h: { get: () => this._invalidLegacyRectProp('h'), enumerable: false },
+    });
+    return Object.freeze(rect);
+  },
   elementRect(elDiv){
     if(!elDiv) return null;
     const zoom = (typeof DS !== 'undefined' ? DS.zoom : 1) || 1;
     const eR = elDiv.getBoundingClientRect();
     const cR = this.canvasRect();
-    return {
-      x: (eR.left - cR.left) / zoom,
-      y: (eR.top  - cR.top)  / zoom,
-      w: eR.width  / zoom,
-      h: eR.height / zoom,
-    };
+    return this._rect(
+      (eR.left - cR.left) / zoom,
+      (eR.top  - cR.top)  / zoom,
+      eR.width  / zoom,
+      eR.height / zoom
+    );
   },
 
   // Section BoundingClientRect → y-offset relative to canvas-layer top (post-transform, for ruler drawing)
@@ -2774,19 +2789,24 @@ RF.Geometry = {
   /** @public Canonical API: BoundingClientRect of #canvas-layer */
   getCanvasRect(){ return this.canvasRect(); },
 
-  /** @public Canonical API: element → {x,y,w,h} in pre-transform canvas space */
+  /** @public Canonical API: element → {left,top,width,height} in pre-transform canvas space */
   getElementRect(elOrId){
     const el=(typeof elOrId==='string')?document.querySelector(`.cr-element[data-id="${elOrId}"]`):elOrId;
     return this.elementRect(el);
   },
 
-  /** @public Canonical API: section → {x,y,w,h} in pre-transform canvas space */
+  /** @public Canonical API: section → {left,top,width,height} in pre-transform canvas space */
   getSectionRect(secOrId){
     const sec=(typeof secOrId==='string')?document.querySelector(`.cr-section[data-section-id="${secOrId}"]`):secOrId;
     if(!sec)return null;
     const zoom=(typeof DS!=='undefined'?DS.zoom:1)||1;
     const sR=sec.getBoundingClientRect();const cR=this.canvasRect();
-    return{x:(sR.left-cR.left)/zoom,y:(sR.top-cR.top)/zoom,w:sR.width/zoom,h:sR.height/zoom};
+    return this._rect(
+      (sR.left-cR.left)/zoom,
+      (sR.top-cR.top)/zoom,
+      sR.width/zoom,
+      sR.height/zoom
+    );
   },
 
   // ── v18.10: Unified Geometry API — single source of truth for zoom ──────
@@ -2817,10 +2837,10 @@ RF.Geometry = {
     };
   },
 
-  /** Convert a model-space rect {x,y,w,h} to view-space rect */
+  /** Convert a model-space rect {x,y,w,h} to canonical view-space rect */
   rectToView(r) {
     const z = this.zoom();
-    return { x: r.x * z, y: r.y * z, w: r.w * z, h: r.h * z };
+    return this._rect(r.x * z, r.y * z, r.w * z, r.h * z);
   },
 
   // ── Phase 3: sub-pixel + infinite zoom ─────────────────────────────
@@ -3560,12 +3580,13 @@ const SelectionEngine = {
     if(DS.selection.size===1){
       const id=[...DS.selection][0];
       const el=DS.getElementById(id);if(!el)return;
-      // RF.Geometry.elementRect() → pre-transform canvas coords (zoom-corrected DOMRect)
+      // RF.Geometry.elementRect() → pre-transform canvas coords (canonical geometry rect)
       const elDiv=document.querySelector(`.cr-element[data-id="${id}"]`);
       const gr=RF.Geometry.elementRect(elDiv);
       let absX, absY, absW, absH;
       if(gr){
-        absX=gr.x; absY=gr.y; absW=gr.w; absH=gr.h;
+        const z = RF.Geometry.zoom();
+        absX=gr.left*z; absY=gr.top*z; absW=gr.width*z; absH=gr.height*z;
       } else {
         const secTop=DS.getSectionTop(el.sectionId);
         absX=el.x; absY=secTop+el.y; absW=el.w; absH=el.h;
@@ -3607,8 +3628,9 @@ const SelectionEngine = {
         const d=document.querySelector(`.cr-element[data-id="${el.id}"]`);
         const gr2=RF.Geometry.elementRect(d);
         if(gr2){
-          bMinX=Math.min(bMinX,gr2.x);bMinY=Math.min(bMinY,gr2.y);
-          bMaxX=Math.max(bMaxX,gr2.x+gr2.w);bMaxY=Math.max(bMaxY,gr2.y+gr2.h);
+          const z = RF.Geometry.zoom();
+          bMinX=Math.min(bMinX,gr2.left*z);bMinY=Math.min(bMinY,gr2.top*z);
+          bMaxX=Math.max(bMaxX,gr2.left*z+gr2.width*z);bMaxY=Math.max(bMaxY,gr2.top*z+gr2.height*z);
         } else {
           const st=DS.getSectionTop(el.sectionId);
           bMinX=Math.min(bMinX,el.x);bMinY=Math.min(bMinY,st+el.y);
@@ -7032,8 +7054,8 @@ PreviewEngine._renderElementData = function(el, itemData, rootData) {
   const r = RF.Geometry.rectToView(el);
   const fs = RF.Geometry.scale(el.fontSize * 96/72);
   const st = [
-    `position:absolute`,`left:${r.x}px`,`top:${r.y}px`,
-    `width:${r.w}px`,`height:${r.h}px`,
+    `position:absolute`,`left:${r.left}px`,`top:${r.top}px`,
+    `width:${r.width}px`,`height:${r.height}px`,
     `font-family:${el.fontFamily}`,`font-size:${fs}px`,
     `font-weight:${el.bold?'bold':'normal'}`,
     `font-style:${el.italic?'italic':'normal'}`,
@@ -7043,8 +7065,8 @@ PreviewEngine._renderElementData = function(el, itemData, rootData) {
   ].join(';');
   if(el.type==='line'){
     const lc=el.borderColor==='transparent'?'#000':el.borderColor;
-    const mid=Math.max(r.h/2,1);
-    return `<div style="${st};background:transparent"><svg style="overflow:visible" width="${r.w}" height="${Math.max(r.h,2)}"><line x1="0" y1="${mid}" x2="${r.w}" y2="${mid}" stroke="${lc}" stroke-width="${RF.Geometry.scale(el.lineWidth||1)}"/></svg></div>`;
+    const mid=Math.max(r.height/2,1);
+    return `<div style="${st};background:transparent"><svg style="overflow:visible" width="${r.width}" height="${Math.max(r.height,2)}"><line x1="0" y1="${mid}" x2="${r.width}" y2="${mid}" stroke="${lc}" stroke-width="${RF.Geometry.scale(el.lineWidth||1)}"/></svg></div>`;
   }
   if(el.type==='rect'){
     const bg=el.bgColor==='transparent'?'transparent':el.bgColor;
@@ -7160,8 +7182,8 @@ PreviewEngine._renderInstanceElement = function(el, rowData, rootData, rowIndex)
   const _r = RF.Geometry.rectToView(el);
   const _fs = RF.Geometry.scale(el.fontSize * 96/72);
   const st   = [
-    `position:absolute`,`left:${_r.x}px`,`top:${_r.y}px`,
-    `width:${_r.w}px`,`height:${_r.h}px`,
+    `position:absolute`,`left:${_r.left}px`,`top:${_r.top}px`,
+    `width:${_r.width}px`,`height:${_r.height}px`,
     `font-family:${el.fontFamily}`,`font-size:${_fs}px`,
     `font-weight:${el.bold?'bold':'normal'}`,
     `font-style:${el.italic?'italic':'normal'}`,
@@ -7371,12 +7393,12 @@ window.__rfVerify = function(){
     const gr=RF.Geometry.elementRect(elDiv);
     const sbR=selBoxes[0].getBoundingClientRect();
     const sbX=RF.Geometry.unscale(sbR.left-cR.left), sbY=RF.Geometry.unscale(sbR.top-cR.top); // v18.11
-    results.bug3_element_x   = gr?gr.x.toFixed(2):'N/A';
-    results.bug3_element_y   = gr?gr.y.toFixed(2):'N/A';
+    results.bug3_element_x   = gr?gr.left.toFixed(2):'N/A';
+    results.bug3_element_y   = gr?gr.top.toFixed(2):'N/A';
     results.bug3_selbox_x    = sbX.toFixed(2);
     results.bug3_selbox_y    = sbY.toFixed(2);
-    results.bug3_delta_x     = gr?(Math.abs(gr.x-sbX)).toFixed(2):'N/A';
-    results.bug3_delta_y     = gr?(Math.abs(gr.y-sbY)).toFixed(2):'N/A';
+    results.bug3_delta_x     = gr?(Math.abs(gr.left-sbX)).toFixed(2):'N/A';
+    results.bug3_delta_y     = gr?(Math.abs(gr.top-sbY)).toFixed(2):'N/A';
     results.bug3_pass        = gr?parseFloat(results.bug3_delta_x)<2&&parseFloat(results.bug3_delta_y)<2:null;
   } else {
     results.bug3_pass = selBoxes.length===0;

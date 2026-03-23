@@ -138,20 +138,11 @@ const SelectionEngineV19 = (() => {
       const gr  = RF.Geometry.elementRect(elDiv);
       let absX, absY, absW, absH;
       if (gr) {
-        if (typeof gr.left === 'number' && typeof gr.top === 'number' &&
-            typeof gr.width === 'number' && typeof gr.height === 'number') {
-          const clR = RF.Geometry.canvasRect();
-          absX = gr.left - clR.left;
-          absY = gr.top  - clR.top;
-          absW = gr.width;
-          absH = gr.height;
-        } else {
-          const zoom = (typeof DS !== 'undefined' ? DS.zoom : 1) || 1;
-          absX = gr.x * zoom;
-          absY = gr.y * zoom;
-          absW = gr.w * zoom;
-          absH = gr.h * zoom;
-        }
+        const zoom = (typeof DS !== 'undefined' ? DS.zoom : 1) || 1;
+        absX = gr.left * zoom;
+        absY = gr.top  * zoom;
+        absW = gr.width * zoom;
+        absH = gr.height * zoom;
       } else {
         absX = RF.Geometry.scale(el.x);
         absY = RF.Geometry.scale(DS.getSectionTop(el.sectionId) + el.y);

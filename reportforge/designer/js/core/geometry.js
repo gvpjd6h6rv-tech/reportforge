@@ -76,7 +76,7 @@ class AABB {
   /** Expand by margin */
   expand(m){ return new AABB(this.x-m,this.y-m,this.w+m*2,this.h+m*2); }
   /** From a DOM element rect in canvas space */
-  static fromRect(r){ return new AABB(r.x,r.y,r.w,r.h); }
+  static fromRect(r){ return new AABB(r.left,r.top,r.width,r.height); }
 }
 
 /* ── MagneticSnap ─────────────────────────────────────────────────────────
@@ -214,7 +214,14 @@ RF.Geometry = Object.assign(RF.Geometry, {
     const elId = typeof elOrId === 'string' ? elOrId : node?.dataset?.elid;
     const model = elId ? RF.Core.DocumentModel.getElementById(elId) : null;
     if (!model) return null;
-    return { x: model.x, y: model.y, w: model.w, h: model.h };
+    const rect = { left: model.x, top: model.y, width: model.w, height: model.h };
+    Object.defineProperties(rect, {
+      x: { get() { const msg='INVALID GEOMETRY SHAPE: use left/top/width/height only'; console.error(msg); throw new Error(msg); }, enumerable:false },
+      y: { get() { const msg='INVALID GEOMETRY SHAPE: use left/top/width/height only'; console.error(msg); throw new Error(msg); }, enumerable:false },
+      w: { get() { const msg='INVALID GEOMETRY SHAPE: use left/top/width/height only'; console.error(msg); throw new Error(msg); }, enumerable:false },
+      h: { get() { const msg='INVALID GEOMETRY SHAPE: use left/top/width/height only'; console.error(msg); throw new Error(msg); }, enumerable:false },
+    });
+    return Object.freeze(rect);
   },
   /** Detect overlapping pairs */
   findOverlaps(){

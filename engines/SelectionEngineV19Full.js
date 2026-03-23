@@ -162,7 +162,11 @@ const SelectionEngineV19Full = (() => {
       const gr    = RF.Geometry.elementRect(elDiv);
       let absX, absY, absW, absH;
       if (gr) {
-        absX = gr.x; absY = gr.y; absW = gr.w; absH = gr.h;
+        const zoom = (typeof DS !== 'undefined' ? DS.zoom : 1) || 1;
+        absX = gr.left * zoom;
+        absY = gr.top  * zoom;
+        absW = gr.width * zoom;
+        absH = gr.height * zoom;
       } else {
         const secTop = DS.getSectionTop(el.sectionId);
         absX = RF.Geometry.scale(el.x);
@@ -203,8 +207,11 @@ const SelectionEngineV19Full = (() => {
         const d = document.querySelector(`.cr-element[data-id="${el.id}"]`);
         const gr = RF.Geometry.elementRect(d);
         if (gr) {
-          minX = Math.min(minX, gr.x);  minY = Math.min(minY, gr.y);
-          maxX = Math.max(maxX, gr.x + gr.w); maxY = Math.max(maxY, gr.y + gr.h);
+          const zoom = (typeof DS !== 'undefined' ? DS.zoom : 1) || 1;
+          const left = gr.left * zoom;
+          const top = gr.top * zoom;
+          minX = Math.min(minX, left);  minY = Math.min(minY, top);
+          maxX = Math.max(maxX, left + gr.width * zoom); maxY = Math.max(maxY, top + gr.height * zoom);
         } else {
           const st = DS.getSectionTop(el.sectionId);
           const vx = RF.Geometry.scale(el.x), vy = RF.Geometry.scale(st + el.y);

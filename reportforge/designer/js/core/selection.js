@@ -111,10 +111,10 @@ RF.Core.SelectionSystem = {
 
   _drawMultiBBox(els) {
     const rects = els.map(el => this._canvasRect(el));
-    const minX = Math.min(...rects.map(r => r.x));
-    const minY = Math.min(...rects.map(r => r.y));
-    const maxX = Math.max(...rects.map(r => r.x + r.w));
-    const maxY = Math.max(...rects.map(r => r.y + r.h));
+    const minX = Math.min(...rects.map(r => r.left));
+    const minY = Math.min(...rects.map(r => r.top));
+    const maxX = Math.max(...rects.map(r => r.left + r.width));
+    const maxY = Math.max(...rects.map(r => r.top + r.height));
     const box = document.createElement('div');
     box.className = 'sel-box multi';
     box.style.cssText = `left:${minX-1}px;top:${minY-1}px;width:${maxX-minX+2}px;height:${maxY-minY+2}px;`;
@@ -124,18 +124,28 @@ RF.Core.SelectionSystem = {
   _canvasRect(el) {
     const body = RF.DOM.sectionBody(el.sectionId);
     const surface = RF.DOM.canvasLayer();
-    if (!body || !surface) return { x: el.x, y: el.y, w: el.w, h: el.h };
+    const buildRect = (left, top, width, height) => {
+      const rect = { left, top, width, height };
+      Object.defineProperties(rect, {
+        x: { get() { const msg='INVALID GEOMETRY SHAPE: use left/top/width/height only'; console.error(msg); throw new Error(msg); }, enumerable:false },
+        y: { get() { const msg='INVALID GEOMETRY SHAPE: use left/top/width/height only'; console.error(msg); throw new Error(msg); }, enumerable:false },
+        w: { get() { const msg='INVALID GEOMETRY SHAPE: use left/top/width/height only'; console.error(msg); throw new Error(msg); }, enumerable:false },
+        h: { get() { const msg='INVALID GEOMETRY SHAPE: use left/top/width/height only'; console.error(msg); throw new Error(msg); }, enumerable:false },
+      });
+      return Object.freeze(rect);
+    };
+    if (!body || !surface) return buildRect(el.x, el.y, el.w, el.h);
 
     const bodyRect = body.getBoundingClientRect();
     const surfaceRect = surface.getBoundingClientRect();
     const zoom = RF.Geometry?.getZoom?.() ?? RF.Core.DocumentModel?.zoom ?? 1;
 
-    return {
-      x: el.x + (bodyRect.left - surfaceRect.left) / zoom,
-      y: el.y + (bodyRect.top - surfaceRect.top) / zoom,
-      w: el.w,
-      h: el.h,
-    };
+    return buildRect(
+      el.x + (bodyRect.left - surfaceRect.left) / zoom,
+      el.y + (bodyRect.top - surfaceRect.top) / zoom,
+      el.w,
+      el.h
+    );
   },
 };
 
