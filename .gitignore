@@ -19,3 +19,4 @@ __pycache__/
 *.fixbak
 .rf_browser_pref
 .venv/
+.debug-archive/
