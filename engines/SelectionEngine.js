@@ -23,6 +23,14 @@ const SelectionEngineV19 = (() => {
   let _drag = null;
   let _lastRenderHandlesSignature = null;
 
+  function _assertBridgeInactive(method) {
+    if (typeof window !== 'undefined' && window.__RF_CANONICAL_SELECTION_OWNER__ === 'SelectionEngine') {
+      const message = `SELECTION BRIDGE SHOULD NOT BE ACTIVE IN CANONICAL RUNTIME (${method})`;
+      if (typeof console !== 'undefined' && console.error) console.error(message);
+      throw new Error(message);
+    }
+  }
+
   // ── Helpers ───────────────────────────────────────────────────────
   function _traceChannelsFor(event) {
     if (event === 'selection-clear' || event === 'selection-toggle-off' || event === 'renderHandles') {
@@ -106,6 +114,7 @@ const SelectionEngineV19 = (() => {
 
   // ── renderHandles ────────────────────────────────────────────────
   function renderHandles() {
+    _assertBridgeInactive('renderHandles');
     RF.Geometry.invalidate();
     const layer = document.getElementById('handles-layer');
     if (!layer) {
@@ -233,6 +242,7 @@ const SelectionEngineV19 = (() => {
 
   // ── Event attachment ─────────────────────────────────────────────
   function onElementPointerDown(e, id) {
+    _assertBridgeInactive('onElementPointerDown');
     _trace('onElementPointerDown-enter', _selectionSnapshot({
       id,
       elementId: id,
@@ -296,6 +306,7 @@ const SelectionEngineV19 = (() => {
   }
 
   function attachElementEvents(div, id) {
+    _assertBridgeInactive('attachElementEvents');
     if (!_useCentralRouter()) {
       div.addEventListener('pointerdown', e => {
         if (e.button !== 0) return;
@@ -312,6 +323,7 @@ const SelectionEngineV19 = (() => {
   }
 
   function onHandlePointerDown(e, pos) {
+    _assertBridgeInactive('onHandlePointerDown');
     _trace('onHandlePointerDown-enter', _selectionSnapshot({ handle: pos || null, handlePos: pos || null }));
     if (!e || e.button !== 0) return;
     const pos2 = _getCanvasPos(e);
@@ -330,6 +342,7 @@ const SelectionEngineV19 = (() => {
   }
 
   function attachHandleEvent(handleDiv, pos) {
+    _assertBridgeInactive('attachHandleEvent');
     if (!_useCentralRouter()) {
       handleDiv.addEventListener('pointerdown', e => {
         if (e.button !== 0) return;
@@ -341,6 +354,7 @@ const SelectionEngineV19 = (() => {
 
   // ── Text edit ────────────────────────────────────────────────────
   function startTextEdit(div, el) {
+    _assertBridgeInactive('startTextEdit');
     _trace('edit-start', _selectionSnapshot({ id: el ? el.id : null, elementId: el ? el.id : null, elementType: el ? el.type : null }));
     DS.selection.clear(); DS.selection.add(el.id);
     div.classList.add('editing', 'selected');
@@ -376,6 +390,7 @@ const SelectionEngineV19 = (() => {
 
   // ── Rubber band ──────────────────────────────────────────────────
   function startRubberBand(e) {
+    _assertBridgeInactive('startRubberBand');
     const pos = _getCanvasPos(e);
     _drag = { type: 'rubber', startX: pos.x, startY: pos.y, curX: pos.x, curY: pos.y };
     const rb = document.getElementById('rubber-band');
@@ -477,6 +492,7 @@ const SelectionEngineV19 = (() => {
 
   // ── Mouse event handlers ─────────────────────────────────────────
   function onMouseMove(e) {
+    _assertBridgeInactive('onMouseMove');
     const pos = _getCanvasPos(e);
     const sb = document.getElementById('sb-pos');
     if (sb) sb.textContent = `X: ${Math.round(pos.x)}   Y: ${Math.round(pos.y)}`;
@@ -490,6 +506,7 @@ const SelectionEngineV19 = (() => {
   }
 
   function onMouseUp(e) {
+    _assertBridgeInactive('onMouseUp');
     if (!_drag) return;
     const d = _drag;
     const isCancel = e && e.phase === 'cancel';
@@ -521,6 +538,7 @@ const SelectionEngineV19 = (() => {
 
   // ── Selection management ─────────────────────────────────────────
   function clearSelection() {
+    _assertBridgeInactive('clearSelection');
     DS.selection.clear();
     renderHandles();
     if (typeof PropertiesEngine !== 'undefined') PropertiesEngine.render();
@@ -529,6 +547,7 @@ const SelectionEngineV19 = (() => {
   }
 
   function updateSelectionInfo() {
+    _assertBridgeInactive('updateSelectionInfo');
     const info = document.getElementById('selection-info');
     if (!info) return;
     if (DS.selection.size > 1) {

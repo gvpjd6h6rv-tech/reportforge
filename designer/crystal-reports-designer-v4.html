@@ -3591,12 +3591,16 @@ const SelectionEngine = {
         const secTop=DS.getSectionTop(el.sectionId);
         absX=el.x; absY=secTop+el.y; absW=el.w; absH=el.h;
       }
-      // Crystal Reports: 4 corner handles only (Fix 4 — L-shaped markers)
+      // Canonical runtime: 8 resize hit-targets, sel-box owns the visual.
       const positions=[
-        {pos:'nw',cx:absX,       cy:absY},
-        {pos:'ne',cx:absX+absW,  cy:absY},
-        {pos:'sw',cx:absX,       cy:absY+absH},
-        {pos:'se',cx:absX+absW,  cy:absY+absH},
+        {pos:'nw',cx:absX,          cy:absY},
+        {pos:'n', cx:absX+absW/2,   cy:absY},
+        {pos:'ne',cx:absX+absW,     cy:absY},
+        {pos:'w', cx:absX,          cy:absY+absH/2},
+        {pos:'e', cx:absX+absW,     cy:absY+absH/2},
+        {pos:'sw',cx:absX,          cy:absY+absH},
+        {pos:'s', cx:absX+absW/2,   cy:absY+absH},
+        {pos:'se',cx:absX+absW,     cy:absY+absH},
       ];
       // sel-box: single selection rectangle (element border hidden when selected)
       const selBox=document.createElement('div');
@@ -3638,7 +3642,8 @@ const SelectionEngine = {
         }
       });
       const outline=document.createElement('div');
-      outline.style.cssText=`position:absolute;left:${bMinX}px;top:${bMinY}px;width:${bMaxX-bMinX}px;height:${bMaxY-bMinY}px;border:1px dashed #0066CC;pointer-events:none;z-index:39;background:rgba(0,102,204,.04)`;
+      outline.className='sel-box sel-box-multi';
+      outline.style.cssText=`position:absolute;left:${bMinX}px;top:${bMinY}px;width:${bMaxX-bMinX}px;height:${bMaxY-bMinY}px;pointer-events:none`;
       layer.appendChild(outline);
     }
     this.updateSelectionInfo();
@@ -7525,10 +7530,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── HandlesEngine ───────────────────────────────────────────────
   if (typeof HandlesEngine !== 'undefined' && HandlesEngine.init) HandlesEngine.init();
 
-  // ── SelectionEngine v19 facade ──────────────────────────────────
-  // SelectionEngineV19: FACADE ONLY — no event binding, no DOM writes.
-  // The monolithic SelectionEngine owns ALL drag/resize/rubber-band logic.
-  // SelectionEngineV19 exposes a clean v19 API surface only.
+  // ── Canonical selection owner ───────────────────────────────────
+  // The canonical runtime uses the monolithic SelectionEngine as the
+  // only owner for selection, overlay, handles, drag, resize, and
+  // rubber-band interaction. SelectionEngineV19 remains loaded only as
+  // a non-canonical artifact and must not be active in this runtime.
 
   // ── Patch DesignZoomEngine to use RenderScheduler ──────────────
   // Wrap the existing _apply patch so ALL downstream visual updates
@@ -7547,7 +7553,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // v19.4: workspace pointermove routing handled exclusively by EngineCore._wireWorkspaceEvents()
 
-  console.log('[ReportForge v19.2] Phase 2 engines active: RenderScheduler, ZoomEngine, HitTestEngine, DragEngine, HandlesEngine, GuideEngine, AlignmentEngine, SelectionEngineV19');
+  console.log('[ReportForge v19.2] Phase 2 engines active: RenderScheduler, ZoomEngine, HitTestEngine, DragEngine, HandlesEngine, GuideEngine, AlignmentEngine, SelectionEngine');
 });
 </script>
 
@@ -7701,43 +7707,23 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('[v19.6] CanvasEngine patched → CanvasLayoutEngine (v19 owns DOM)');
       }
 
-      // 2. SelectionEngine → SelectionEngineV19 (full v19 implementation)
+      // 2. SelectionEngine remains canonical in the active runtime.
+      //    SelectionEngineV19 must not be part of the critical path.
       if (typeof SelectionEngineV19 !== 'undefined' && typeof SelectionEngine !== 'undefined') {
-        const __rfTraceElementBridge = (event, state) => {
-          if (typeof window.rfTrace !== 'function' || !window.DebugTrace?.isEnabled('elements')) return;
-          window.rfTrace('elements', event, {
+        window.__RF_CANONICAL_SELECTION_OWNER__ = 'SelectionEngine';
+        SelectionEngine.__active = true;
+        SelectionEngineV19.__bridgeDisabled = true;
+        if (typeof window.rfTrace === 'function' && window.DebugTrace?.isEnabled('elements')) {
+          window.rfTrace('elements', 'bridge-disabled', {
             source: 'SelectionBridge',
-            id: state && typeof state.id !== 'undefined' ? state.id : null,
-            handle: state && typeof state.handle !== 'undefined' ? state.handle : null,
-            state: state || null,
+            state: {
+              selectionEngineActive: 'SelectionEngine',
+              bridge: 'SelectionEngine<-SelectionEngineV19.bind',
+              status: 'disabled',
+            },
           });
-        };
-        ['attachElementEvents','attachHandleEvent','onElementPointerDown','onHandlePointerDown','renderHandles','startTextEdit',
-         'startRubberBand','clearSelection','updateSelectionInfo','onMouseMove','onMouseUp']
-          .forEach(m => {
-            if (typeof SelectionEngineV19[m] === 'function') {
-              SelectionEngine[m] = SelectionEngineV19[m].bind(SelectionEngineV19);
-              __rfTraceElementBridge('method-copied', { method: m, from: 'SelectionEngineV19', to: 'SelectionEngine' });
-            }
-          });
-        // Sync _drag state
-        Object.defineProperty(SelectionEngine, '_drag', {
-          get() { return SelectionEngineV19._drag; },
-          set(v) { SelectionEngineV19._drag = v; },
-          configurable: true,
-        });
-        SelectionEngine.__active = false;
-        __rfTraceElementBridge('bridge-active', {
-          selectionEngineActive: 'SelectionEngineV19',
-          methodOwner: 'SelectionEngine<-SelectionEngineV19.bind',
-          onElementPointerDown: typeof SelectionEngine.onElementPointerDown,
-          onElementPointerDownName: SelectionEngine.onElementPointerDown ? (SelectionEngine.onElementPointerDown.name || null) : null,
-          onElementPointerDownMatchesV19: SelectionEngine.onElementPointerDown === SelectionEngineV19.onElementPointerDown,
-          onHandlePointerDown: typeof SelectionEngine.onHandlePointerDown,
-          onMouseMove: typeof SelectionEngine.onMouseMove,
-          onMouseUp: typeof SelectionEngine.onMouseUp,
-        });
-        console.log('[v19.6] SelectionEngine patched → SelectionEngineV19 (v19 owns selection)');
+        }
+        console.log('[v19.6] SelectionEngine remains canonical owner; SelectionEngineV19 bridge disabled');
       }
 
       // 3. PreviewEngine → PreviewEngineV19 (full v19 implementation)
@@ -7756,8 +7742,8 @@ document.addEventListener('DOMContentLoaded', () => {
       // ── Phase 3.4 console.assert verification ─────────────────────────
       console.assert(!CanvasEngine.__active,
         '[v19.6] FAIL: CanvasEngine should be inactive (v19 owns DOM)');
-      console.assert(!SelectionEngine.__active,
-        '[v19.6] FAIL: SelectionEngine should be inactive (v19 owns selection)');
+      console.assert(!!SelectionEngine.__active,
+        '[v19.6] FAIL: SelectionEngine should be active (canonical runtime owns selection)');
       console.assert(!PreviewEngine.__active,
         '[v19.6] FAIL: PreviewEngine should be inactive (v19 owns preview)');
       console.log('[v19.6] Phase 3.4 assertions passed — zero runtime dependency on monolithic engines');

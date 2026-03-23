@@ -15,6 +15,13 @@
 'use strict';
 
 const SelectionEngineV19Full = (() => {
+  function _assertBridgeInactive(method) {
+    if (typeof window !== 'undefined' && window.__RF_CANONICAL_SELECTION_OWNER__ === 'SelectionEngine') {
+      const message = `SELECTION BRIDGE SHOULD NOT BE ACTIVE IN CANONICAL RUNTIME (${method})`;
+      if (typeof console !== 'undefined' && console.error) console.error(message);
+      throw new Error(message);
+    }
+  }
 
   // ── State ─────────────────────────────────────────────────────────
   let _drag = null;
@@ -36,6 +43,7 @@ const SelectionEngineV19Full = (() => {
 
   // ── attachElementEvents ──────────────────────────────────────────
   function attachElementEvents(div, id) {
+    _assertBridgeInactive('attachElementEvents');
     div.addEventListener('pointerdown', e => {
       if (e.button !== 0) return;
       e.stopPropagation(); e.preventDefault();
@@ -86,6 +94,7 @@ const SelectionEngineV19Full = (() => {
 
   // ── startTextEdit ─────────────────────────────────────────────────
   function startTextEdit(div, el) {
+    _assertBridgeInactive('startTextEdit');
     DS.selection.clear(); DS.selection.add(el.id);
     div.classList.add('editing', 'selected');
     const span = div.querySelector('.el-content');
@@ -111,6 +120,7 @@ const SelectionEngineV19Full = (() => {
 
   // ── startRubberBand ────────────────────────────────────────────────
   function startRubberBand(e) {
+    _assertBridgeInactive('startRubberBand');
     const pos = _getCanvasPos(e);
     _drag = { type: 'rubber', startX: pos.x, startY: pos.y, curX: pos.x, curY: pos.y };
     const rb = document.getElementById('rubber-band');
@@ -123,6 +133,7 @@ const SelectionEngineV19Full = (() => {
 
   // ── attachHandleEvent ─────────────────────────────────────────────
   function attachHandleEvent(handleDiv, pos) {
+    _assertBridgeInactive('attachHandleEvent');
     handleDiv.addEventListener('pointerdown', e => {
       if (e.button !== 0) return;
       e.stopPropagation(); e.preventDefault();
@@ -142,6 +153,7 @@ const SelectionEngineV19Full = (() => {
 
   // ── renderHandles ─────────────────────────────────────────────────
   function renderHandles() {
+    _assertBridgeInactive('renderHandles');
     RF.Geometry.invalidate();
     const layer = document.getElementById('handles-layer');
     if (!layer) return;
@@ -231,6 +243,7 @@ const SelectionEngineV19Full = (() => {
 
   // ── clearSelection ────────────────────────────────────────────────
   function clearSelection() {
+    _assertBridgeInactive('clearSelection');
     DS.selection.clear();
     renderHandles();
     const propsEng = _reg('PropertiesEngine');
@@ -242,6 +255,7 @@ const SelectionEngineV19Full = (() => {
 
   // ── updateSelectionInfo ───────────────────────────────────────────
   function updateSelectionInfo() {
+    _assertBridgeInactive('updateSelectionInfo');
     const info = document.getElementById('selection-info');
     if (info) {
       if (DS.selection.size > 1) {
@@ -363,6 +377,7 @@ const SelectionEngineV19Full = (() => {
 
   // ── onMouseMove ────────────────────────────────────────────────────
   function onMouseMove(e) {
+    _assertBridgeInactive('onMouseMove');
     const pos = _getCanvasPos(e);
     const sb  = document.getElementById('sb-pos');
     if (sb) sb.textContent = `X: ${Math.round(pos.x)}   Y: ${Math.round(pos.y)}`;
@@ -380,6 +395,7 @@ const SelectionEngineV19Full = (() => {
 
   // ── onMouseUp ──────────────────────────────────────────────────────
   function onMouseUp(e) {
+    _assertBridgeInactive('onMouseUp');
     if (!_drag) return;
     const d = _drag;
     document.querySelectorAll('.cr-element.dragging').forEach(div => div.classList.remove('dragging'));

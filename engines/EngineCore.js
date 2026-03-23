@@ -546,15 +546,10 @@ const EngineCore = (() => {
     ) {
       return selection;
     }
-    const selectionV19 = _E('SelectionEngineV19');
-    if (
-      selectionV19 &&
-      typeof selectionV19.onElementPointerDown === 'function' &&
-      typeof selectionV19.onHandlePointerDown === 'function'
-    ) {
-      return selectionV19;
+    if (typeof console !== 'undefined' && console.error) {
+      console.error('SELECTION OWNER MISSING IN CANONICAL RUNTIME: expected SelectionEngine');
     }
-    return selectionV19 || selection;
+    return selection || null;
   }
 
   function _routePointer(e, phase) {
@@ -587,7 +582,7 @@ const EngineCore = (() => {
     const sectionHandleNode = closest('.section-resize-handle');
     const interactionEngineName = selection === _E('SelectionEngine')
       ? 'SelectionEngine'
-      : (selection === _E('SelectionEngineV19') ? 'SelectionEngineV19' : null);
+      : null;
 
     if (phase === 'down') {
       if (elementNode || handleNode) {
@@ -753,7 +748,6 @@ const EngineCore = (() => {
     reg('HandlesEngine',         typeof HandlesEngine         !== 'undefined' ? HandlesEngine         : null);
     reg('GuideEngine',           typeof GuideEngine           !== 'undefined' ? GuideEngine           : null);
     reg('AlignmentEngine',       typeof AlignmentEngine       !== 'undefined' ? AlignmentEngine       : null);
-    reg('SelectionEngineV19',    typeof SelectionEngineV19    !== 'undefined' ? SelectionEngineV19    : null);
     // v19 Phase 3 — Layout & System
     reg('CanvasEngineV19',       typeof CanvasLayoutEngine    !== 'undefined' ? CanvasLayoutEngine    : null);  // file: CanvasLayoutEngine.js
     reg('SectionLayoutEngine',   typeof SectionLayoutEngine   !== 'undefined' ? SectionLayoutEngine   : null);
