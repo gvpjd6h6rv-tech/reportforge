@@ -18,3 +18,4 @@ __pycache__/
 *trace*
 *.fixbak
 .rf_browser_pref
+.venv/

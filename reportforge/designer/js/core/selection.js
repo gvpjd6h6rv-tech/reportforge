@@ -83,7 +83,7 @@ RF.Core.SelectionSystem = {
   },
 
   _drawHandles(el) {
-    const {x,y,w,h} = el;
+    const {x,y,w,h} = this._canvasRect(el);
     // Box
     const box = document.createElement('div');
     box.className = 'sel-box';
@@ -110,14 +110,32 @@ RF.Core.SelectionSystem = {
   },
 
   _drawMultiBBox(els) {
-    const minX = Math.min(...els.map(e=>e.x));
-    const minY = Math.min(...els.map(e=>e.y));
-    const maxX = Math.max(...els.map(e=>e.x+e.w));
-    const maxY = Math.max(...els.map(e=>e.y+e.h));
+    const rects = els.map(el => this._canvasRect(el));
+    const minX = Math.min(...rects.map(r => r.x));
+    const minY = Math.min(...rects.map(r => r.y));
+    const maxX = Math.max(...rects.map(r => r.x + r.w));
+    const maxY = Math.max(...rects.map(r => r.y + r.h));
     const box = document.createElement('div');
     box.className = 'sel-box multi';
     box.style.cssText = `left:${minX-1}px;top:${minY-1}px;width:${maxX-minX+2}px;height:${maxY-minY+2}px;`;
     this._layer.appendChild(box);
+  },
+
+  _canvasRect(el) {
+    const body = RF.DOM.sectionBody(el.sectionId);
+    const surface = RF.DOM.canvasLayer();
+    if (!body || !surface) return { x: el.x, y: el.y, w: el.w, h: el.h };
+
+    const bodyRect = body.getBoundingClientRect();
+    const surfaceRect = surface.getBoundingClientRect();
+    const zoom = RF.Geometry?.getZoom?.() ?? RF.Core.DocumentModel?.zoom ?? 1;
+
+    return {
+      x: el.x + (bodyRect.left - surfaceRect.left) / zoom,
+      y: el.y + (bodyRect.top - surfaceRect.top) / zoom,
+      w: el.w,
+      h: el.h,
+    };
   },
 };
 

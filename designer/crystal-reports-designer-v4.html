@@ -308,9 +308,7 @@
     flex: 0 0 auto;
   }
   #rf-debug-panel {
-    position: absolute;
-    inset-block-start: calc(100% + 6px);
-    inset-inline-start: 0;
+    position: fixed;
     z-index: calc(var(--rf-z-ctx) + 12);
     min-inline-size: 220px;
     max-inline-size: 280px;
@@ -338,7 +336,10 @@
     letter-spacing: .06em;
     color: #9dffb2;
     font-size: 9px;
+    cursor: grab;
   }
+  #rf-debug-panel-head.is-dragging,
+  #rf-debug-overlay-head.is-dragging { cursor: grabbing; }
   #rf-debug-presets,
   #rf-debug-channels {
     display: flex;
@@ -390,7 +391,7 @@
     box-shadow: 0 8px 20px rgba(0,0,0,.35);
     color: #d7ffe1;
     font: 11px/1.2 var(--rf-font-ui);
-    pointer-events: none;
+    pointer-events: auto;
     user-select: none;
     backdrop-filter: blur(4px);
   }
@@ -404,6 +405,7 @@
     text-transform: uppercase;
     letter-spacing: .06em;
     font-size: 9px;
+    cursor: grab;
   }
   #rf-debug-overlay-layers {
     display: grid;
@@ -6118,6 +6120,76 @@ window.rfTrace = function(channel, event, payload) {
   console.log(`[RFTRACE:${channel}]`, event, payload);
 };
 
+function makePanelDraggable(el, handle, storageKey, defaults) {
+  if (!el || !handle) return;
+  const clampPosition = (left, top) => {
+    const width = el.offsetWidth || 0;
+    const height = el.offsetHeight || 0;
+    const maxLeft = Math.max(8, window.innerWidth - width - 8);
+    const maxTop = Math.max(8, window.innerHeight - height - 8);
+    return {
+      left: Math.min(Math.max(8, left), maxLeft),
+      top: Math.min(Math.max(8, top), maxTop),
+    };
+  };
+  const applyPosition = (left, top, persist = true) => {
+    const next = clampPosition(left, top);
+    el.style.left = `${next.left}px`;
+    el.style.top = `${next.top}px`;
+    el.style.right = 'auto';
+    el.style.bottom = 'auto';
+    if (persist) {
+      try { localStorage.setItem(storageKey, JSON.stringify(next)); } catch (_) {}
+    }
+  };
+  const loadPosition = () => {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        if (typeof saved.left === 'number' && typeof saved.top === 'number') {
+          applyPosition(saved.left, saved.top, false);
+          return;
+        }
+      }
+    } catch (_) {}
+    applyPosition(defaults.left, defaults.top, false);
+  };
+
+  let drag = null;
+  handle.addEventListener('pointerdown', e => {
+    if (e.button !== 0) return;
+    drag = {
+      startX: e.clientX,
+      startY: e.clientY,
+      left: el.offsetLeft,
+      top: el.offsetTop,
+    };
+    handle.classList.add('is-dragging');
+    handle.setPointerCapture && handle.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  handle.addEventListener('pointermove', e => {
+    if (!drag) return;
+    applyPosition(drag.left + (e.clientX - drag.startX), drag.top + (e.clientY - drag.startY), false);
+  });
+  const stopDrag = e => {
+    if (!drag) return;
+    applyPosition(el.offsetLeft, el.offsetTop, true);
+    drag = null;
+    handle.classList.remove('is-dragging');
+    if (handle.releasePointerCapture && typeof e.pointerId === 'number') {
+      handle.releasePointerCapture(e.pointerId);
+    }
+  };
+  handle.addEventListener('pointerup', stopDrag);
+  handle.addEventListener('pointercancel', stopDrag);
+  window.addEventListener('resize', () => {
+    applyPosition(el.offsetLeft || defaults.left, el.offsetTop || defaults.top, true);
+  });
+  loadPosition();
+}
+
 const DebugChannelsPanel = {
   _channels: ['elements', 'selection', 'resize', 'edit', 'runtime', 'scheduler', 'invariants', 'overlay', 'zoom', 'scroll'],
   _presets: ['quiet', 'elements', 'runtime', 'geometry', 'all'],
@@ -6137,7 +6209,11 @@ const DebugChannelsPanel = {
       <div id="rf-debug-presets"></div>
       <div id="rf-debug-channels"></div>
     `;
-    host.appendChild(root);
+    document.body.appendChild(root);
+    makePanelDraggable(root, root.querySelector('#rf-debug-panel-head'), 'RF_DEBUG_PANEL_POS', {
+      left: Math.max(12, host.getBoundingClientRect().left),
+      top: host.getBoundingClientRect().bottom + 8,
+    });
     const presets = root.querySelector('#rf-debug-presets');
     this._presets.forEach(name => {
       const btn = document.createElement('button');
@@ -6289,6 +6365,10 @@ const DebugOverlay = {
       <div id="rf-debug-overlay-layers"></div>
     `;
     document.body.appendChild(root);
+    makePanelDraggable(root, root.querySelector('#rf-debug-overlay-head'), 'RF_DEBUG_OVERLAY_POS', {
+      left: Math.max(8, window.innerWidth - 240),
+      top: Math.max(8, window.innerHeight - 220),
+    });
     const list = root.querySelector('#rf-debug-overlay-layers');
     this._layers.forEach(layer => {
       const row = document.createElement('div');
@@ -7626,7 +7706,10 @@ document.addEventListener('DOMContentLoaded', () => {
         SelectionEngine.__active = false;
         __rfTraceElementBridge('bridge-active', {
           selectionEngineActive: 'SelectionEngineV19',
+          methodOwner: 'SelectionEngine<-SelectionEngineV19.bind',
           onElementPointerDown: typeof SelectionEngine.onElementPointerDown,
+          onElementPointerDownName: SelectionEngine.onElementPointerDown ? (SelectionEngine.onElementPointerDown.name || null) : null,
+          onElementPointerDownMatchesV19: SelectionEngine.onElementPointerDown === SelectionEngineV19.onElementPointerDown,
           onHandlePointerDown: typeof SelectionEngine.onHandlePointerDown,
           onMouseMove: typeof SelectionEngine.onMouseMove,
           onMouseUp: typeof SelectionEngine.onMouseUp,

@@ -119,9 +119,33 @@
 .rf-el {
   position: absolute; min-width: 4px; min-height: 2px;
   cursor: move; user-select: none; box-sizing: border-box; overflow: visible;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
-.rf-el:hover { outline: 1px dashed #C0C0C0; outline-offset: 0; z-index:100 !important; }
-.rf-el.selected { outline: 1px solid var(--sel-blue) !important; outline-offset: 0; z-index:200 !important; }
+.cr-element.rf-el {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+.rf-el::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--sel-blue), var(--sel-blue)) 0 0 / 7px 1px no-repeat,
+    linear-gradient(var(--sel-blue), var(--sel-blue)) 0 0 / 1px 7px no-repeat,
+    linear-gradient(var(--sel-blue), var(--sel-blue)) 100% 0 / 7px 1px no-repeat,
+    linear-gradient(var(--sel-blue), var(--sel-blue)) 100% 0 / 1px 7px no-repeat,
+    linear-gradient(var(--sel-blue), var(--sel-blue)) 0 100% / 7px 1px no-repeat,
+    linear-gradient(var(--sel-blue), var(--sel-blue)) 0 100% / 1px 7px no-repeat,
+    linear-gradient(var(--sel-blue), var(--sel-blue)) 100% 100% / 7px 1px no-repeat,
+    linear-gradient(var(--sel-blue), var(--sel-blue)) 100% 100% / 1px 7px no-repeat;
+}
+.rf-el:hover { z-index:100 !important; }
+.rf-el.selected { z-index:200 !important; }
+.rf-el.selected::before { display: none; }
 .rf-el.locked { cursor: not-allowed !important; }
 .rf-el.locked::after {
   content: '';
@@ -136,7 +160,16 @@
 }
 
 /* ── Selection handles ── */
-#sel-layer { position:absolute; top:0; left:0; width:0; height:0; pointer-events:none; z-index:9999; }
+#sel-layer,
+#handles-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 9999;
+}
 .sel-box { position:absolute; border:1px solid var(--sel-blue); pointer-events:none; box-sizing:border-box; }
 .sel-box.multi { border-style: dashed; }
 .sel-handle {
@@ -149,6 +182,13 @@
   z-index: 10001;
 }
 .sel-handle:hover { background: var(--primary-dk); }
+
+/* Legacy per-element corner glyphs stay in DOM for compatibility, but
+   visual selection semantics come only from handles-layer/sel-box. */
+.cr-element .el-corner {
+  display: none !important;
+  pointer-events: none !important;
+}
 
 /* ── Distance indicators ── */
 .dist-line {
