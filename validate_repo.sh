@@ -195,7 +195,7 @@ hdr "Browser Runtime Regression"
 if [[ "$QUICK" != "--quick" ]]; then
   cd "$ROOT"
   if command -v node &>/dev/null; then
-    if node reportforge/tests/run_runtime_regression.mjs >/tmp/rf_runtime_regression.out 2>&1; then
+    if npm run test:runtime >/tmp/rf_runtime_regression.out 2>&1; then
       ok "Browser runtime regression suite"
     else
       fail "Browser runtime regression suite" "see /tmp/rf_runtime_regression.out"
