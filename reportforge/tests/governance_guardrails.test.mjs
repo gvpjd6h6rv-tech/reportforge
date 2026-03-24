@@ -94,6 +94,14 @@ test('canonical runtime files do not call legacy canvas or preview facades', () 
   }
 });
 
+test('monolith no longer defines the document store inline', () => {
+  const html = fs.readFileSync(path.resolve('designer/crystal-reports-designer-v4.html'), 'utf8');
+  assert.doesNotMatch(html, /\bconst\s+DS\s*=\s*\{/);
+  assert.doesNotMatch(html, /\bfunction\s+newId\s*\(/);
+  assert.doesNotMatch(html, /\bfunction\s+mkEl\s*\(/);
+  assert.match(html, /<script src="\/engines\/DocumentStore\.js"><\/script>/);
+});
+
 test('canonical runtime files do not reference retired bridge implementations', () => {
   const files = [
     path.resolve('designer/crystal-reports-designer-v4.html'),
