@@ -728,7 +728,7 @@ const EngineCore = (() => {
      * Responsibility ownership (one active engine per concern):
      *   Selection   → SelectionEngine      (monolithic, owns drag/rubber-band/move)
      *   Overlay     → OverlayEngineV19     (v19 compositor → delegates to RulerEngine)
-     *   Canvas      → CanvasEngine         (monolithic, owns buildElementDiv)
+     *   Canvas      → CanvasLayoutEngine   (canonical owner for canvas/layout DOM)
      *   Preview     → PreviewEngine        (monolithic, owns HTML generation)
      */
     function reg(key, instance) {
@@ -764,7 +764,6 @@ const EngineCore = (() => {
     reg('SelectionEngine',       typeof SelectionEngine       !== 'undefined' ? SelectionEngine       : null);
     reg('SectionResizeEngine',   typeof SectionResizeEngine   !== 'undefined' ? SectionResizeEngine   : null);
     reg('OverlayEngine',         typeof OverlayEngine         !== 'undefined' ? OverlayEngine         : null);
-    reg('CanvasEngine',          typeof CanvasEngine          !== 'undefined' ? CanvasEngine          : null);
     reg('PreviewEngine',         typeof PreviewEngine         !== 'undefined' ? PreviewEngine         : null);
     reg('DesignZoomEngine',      typeof DesignZoomEngine      !== 'undefined' ? DesignZoomEngine      : null);
     reg('PreviewZoomEngine',     typeof PreviewZoomEngine     !== 'undefined' ? PreviewZoomEngine     : null);

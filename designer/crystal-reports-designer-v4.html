@@ -3222,9 +3222,15 @@ const SectionEngine = {
 
       this.container.appendChild(div);
     }
-    CanvasEngine.renderAll();
     OverlayEngine.render();
     SectionResizeEngine.attach();
+    if (typeof CanvasLayoutEngine !== 'undefined') {
+      CanvasLayoutEngine.renderAll();
+    } else {
+      const message = 'CANVAS LEGACY WRITER SHOULD NOT BE ACTIVE IN CANONICAL RUNTIME (SectionEngine.render)';
+      console.error(message);
+      throw new Error(message);
+    }
     // v19.7 FIX: always scale canvas dimensions through RF.Geometry — never raw model px
     // canvas sizing delegated to CanvasLayoutEngine.updateSync()
     // Notify layout engines via RenderScheduler so WorkspaceScrollEngine updates scroll bounds
@@ -3261,18 +3267,36 @@ const SectionEngine = {
 // ═══════════════════════════════════════════════════════════════════
 
 const CanvasEngine = {
+  _getSectionNode(sectionId){
+    return document.querySelector(`.cr-section[data-section-id="${sectionId}"]`);
+  },
+  _delegate(method, args){
+    if (typeof window !== 'undefined' && window.__RF_CANONICAL_CANVAS_OWNER__ === 'CanvasLayoutEngine') {
+      if (typeof CanvasLayoutEngine === 'undefined' || typeof CanvasLayoutEngine[method] !== 'function') {
+        const message = `CANVAS LEGACY WRITER SHOULD NOT BE ACTIVE IN CANONICAL RUNTIME (${method})`;
+        console.error(message);
+        throw new Error(message);
+      }
+      CanvasLayoutEngine[method](...args);
+      return true;
+    }
+    return false;
+  },
   renderAll(){
+    if (this._delegate('renderAll', [])) return;
     // Clear existing element divs from sections
     document.querySelectorAll('.cr-element').forEach(e=>e.remove());
     for(const el of DS.elements) this.renderElement(el);
   },
   renderElement(el){
-    const secDiv = document.querySelector(`[data-section-id="${el.sectionId}"]`);
+    if (this._delegate('renderElement', [el])) return;
+    const secDiv = this._getSectionNode(el.sectionId);
     if(!secDiv) return;
     const div = this.buildElementDiv(el);
     secDiv.appendChild(div);
   },
   buildElementDiv(el){
+    if (this._delegate('buildElementDiv', [el])) return;
     const div = document.createElement('div');
     div.className = 'cr-element';
     div.dataset.id = el.id;
@@ -3349,6 +3373,7 @@ const CanvasEngine = {
     return div;
   },
   updateElement(id){
+    if (this._delegate('updateElement', [id])) return;
     const old=document.querySelector(`.cr-element[data-id="${id}"]`);
     if(!old) return;
     const el=DS.getElementById(id);if(!el)return;
@@ -3357,6 +3382,7 @@ const CanvasEngine = {
     if(DS.selection.has(id)) SelectionEngine.renderHandles();
   },
   updateElementPosition(id){
+    if (this._delegate('updateElementPosition', [id])) return;
     const div=document.querySelector(`.cr-element[data-id="${id}"]`);
     if(!div) return;
     const el=DS.getElementById(id);if(!el)return;
@@ -3368,7 +3394,8 @@ const CanvasEngine = {
     div.style.height = RF.Geometry.scale(el.h) + 'px';
   },
 };
-CanvasEngine.__active = true; // v19.5: runtime monitor
+window.__RF_CANONICAL_CANVAS_OWNER__ = 'CanvasLayoutEngine';
+CanvasEngine.__active = false; // legacy facade only in canonical runtime
 
 // ═══════════════════════════════════════════════════════════════════
 //  SELECTION ENGINE — selection, move, resize
@@ -5124,7 +5151,7 @@ const FileEngine = {
       const parsed=JSON.parse(data);
       DS.sections=parsed.sections;DS.elements=parsed.elements;
       DS.selection.clear();
-      SectionEngine.render();CanvasEngine.renderAll();SelectionEngine.clearSelection();
+      SectionEngine.render();SelectionEngine.clearSelection();
       document.getElementById('sb-msg').textContent=`✓ Abierto: ${choice}`;
     }catch(e){alert('Error al cargar: '+e.message);}
   },
@@ -5140,7 +5167,7 @@ const FileEngine = {
       try{
         const data=JSON.parse(e.target.result);
         DS.sections=data.sections;DS.elements=data.elements;
-        DS.selection.clear();SectionEngine.render();CanvasEngine.renderAll();
+        DS.selection.clear();SectionEngine.render();
         SelectionEngine.clearSelection();
         document.getElementById('sb-msg').textContent='✓ Diseño importado';
       }catch(err){alert('Error: '+err.message);}
@@ -5167,7 +5194,7 @@ function handleAction(action){
   switch(action){
     case 'new':if(confirm('¿Nuevo reporte? Se perderán los cambios no guardados.')){
       DS.elements=[];DS.sections.forEach(s=>{if(s.stype==='det')s.height=14;else s.height=60;});
-      DS.selection.clear();SectionEngine.render();CanvasEngine.renderAll();SelectionEngine.clearSelection();
+      DS.selection.clear();SectionEngine.render();SelectionEngine.clearSelection();
       DS.saveHistory();
     }break;
     case 'open': FileEngine.load(); break;
@@ -5178,8 +5205,8 @@ function handleAction(action){
       document.getElementById('sb-msg').textContent='PDF: instala WeasyPrint y usa el CLI: python -m core.render.cli generate -d 20482';
       break;
     case 'quit': if(confirm('¿Cerrar ReportForge?'))window.close();break;
-    case 'undo': DS.undo();SectionEngine.render();CanvasEngine.renderAll();SelectionEngine.clearSelection();break;
-    case 'redo': DS.redo();SectionEngine.render();CanvasEngine.renderAll();SelectionEngine.clearSelection();break;
+    case 'undo': DS.undo();SectionEngine.render();SelectionEngine.clearSelection();break;
+    case 'redo': DS.redo();SectionEngine.render();SelectionEngine.clearSelection();break;
     case 'cut': CommandEngine.cut();break;
     case 'copy': CommandEngine.copy();break;
     case 'paste': CommandEngine.paste();break;
@@ -6991,7 +7018,6 @@ function switchDocType(key) {
     DS.elements = [];
     DS.selection.clear();
     SectionEngine.render();
-    CanvasEngine.renderAll();
     SelectionEngine.clearSelection();
     DS.saveHistory();
   }
@@ -7694,17 +7720,13 @@ document.addEventListener('DOMContentLoaded', () => {
       // ── Phase 3.4: Activate v19 full replacements ──────────────────────
       // Route all internal canvas/selection/preview ops to v19 engines.
 
-      // 1. CanvasEngine → CanvasLayoutEngine (full v19 implementation)
+      // 1. CanvasLayoutEngine remains canonical in the active runtime.
+      //    CanvasEngine stays as a legacy facade only and must not write DOM.
       if (typeof CanvasLayoutEngine !== 'undefined' && typeof CanvasEngine !== 'undefined') {
-        // Patch all CanvasEngine methods to delegate to CanvasLayoutEngine
-        ['renderAll','renderElement','updateElement','updateElementPosition','buildElementDiv']
-          .forEach(m => {
-            if (typeof CanvasLayoutEngine[m] === 'function') {
-              CanvasEngine[m] = CanvasLayoutEngine[m].bind(CanvasLayoutEngine);
-            }
-          });
+        window.__RF_CANONICAL_CANVAS_OWNER__ = 'CanvasLayoutEngine';
+        CanvasLayoutEngine.__active = true;
         CanvasEngine.__active = false;
-        console.log('[v19.6] CanvasEngine patched → CanvasLayoutEngine (v19 owns DOM)');
+        console.log('[v19.6] CanvasLayoutEngine remains canonical owner; CanvasEngine legacy writer disabled');
       }
 
       // 2. SelectionEngine remains canonical in the active runtime.
@@ -7742,6 +7764,8 @@ document.addEventListener('DOMContentLoaded', () => {
       // ── Phase 3.4 console.assert verification ─────────────────────────
       console.assert(!CanvasEngine.__active,
         '[v19.6] FAIL: CanvasEngine should be inactive (v19 owns DOM)');
+      console.assert(!!CanvasLayoutEngine.__active,
+        '[v19.6] FAIL: CanvasLayoutEngine should be active (canonical runtime owns canvas)');
       console.assert(!!SelectionEngine.__active,
         '[v19.6] FAIL: SelectionEngine should be active (canonical runtime owns selection)');
       console.assert(!PreviewEngine.__active,

@@ -35,6 +35,10 @@ const CanvasLayoutEngine = (() => {
     });
   }
 
+  function _getSectionNode(sectionId) {
+    return document.querySelector(`.cr-section[data-section-id="${sectionId}"]`);
+  }
+
   function _computeLayoutContract() {
     if (typeof DS === 'undefined') {
       return { ready: false, width: 0, height: 0, minHeight: 0, maxHeight: 0 };
@@ -187,7 +191,7 @@ const CanvasLayoutEngine = (() => {
   }
 
   function renderElement(el) {
-    const secDiv = document.querySelector(`[data-section-id="${el.sectionId}"]`);
+    const secDiv = _getSectionNode(el.sectionId);
     if (!secDiv) return;
     const div = buildElementDiv(el);
     secDiv.appendChild(div);
