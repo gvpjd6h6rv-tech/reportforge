@@ -3,6 +3,45 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
+const SHELL_HTML_PATH = path.resolve('designer/crystal-reports-designer-v4.html');
+const SHELL_MAX_BYTES = 30_000;
+const ALLOWED_WINDOW_EXPORTS = [
+  'RF',
+  'CFG',
+  'FIELD_TREE',
+  'SAMPLE_DATA',
+  'FORMATS',
+  'resolveField',
+  'formatValue',
+  'getCanvasPos',
+  'initKeyboard_DISABLED_v19',
+  'initClock',
+  '__rfTraceLegacy',
+  'FormulaEngine',
+  'FormulaEditorDialog',
+  'DesignerUI',
+  'RF_DEBUG',
+  'RF_DEBUG_TRACE',
+  'RF_DEBUG_TRACE_RUNTIME',
+  'RF_DEBUG_TRACE_ELEMENTS',
+  'DebugTrace',
+  'rfTrace',
+  'makePanelDraggable',
+  'DebugChannelsPanel',
+  '__rfConsoleGateInstalled',
+  '__rfConsoleOriginal',
+  'DebugTraceToggle',
+  'DebugOverlay',
+  'DOC_TYPES',
+  'shadeColor',
+  'canvas',
+  '__rfVerify',
+  'SnapEngine',
+  'GridEngine',
+  'RulerEngine',
+  'WorkspaceScrollEngine',
+].sort();
+
 function countMatches(source, regex) {
   return (source.match(regex) || []).length;
 }
@@ -103,7 +142,7 @@ test('canonical runtime files do not call legacy canvas or preview facades', () 
 });
 
 test('monolith no longer defines the document store inline', () => {
-  const html = fs.readFileSync(path.resolve('designer/crystal-reports-designer-v4.html'), 'utf8');
+  const html = fs.readFileSync(SHELL_HTML_PATH, 'utf8');
   assert.doesNotMatch(html, /\bconst\s+DS\s*=\s*\{/);
   assert.doesNotMatch(html, /\bfunction\s+newId\s*\(/);
   assert.doesNotMatch(html, /\bfunction\s+mkEl\s*\(/);
@@ -111,7 +150,7 @@ test('monolith no longer defines the document store inline', () => {
 });
 
 test('monolith no longer keeps deferred boot handlers inline', () => {
-  const html = fs.readFileSync(path.resolve('designer/crystal-reports-designer-v4.html'), 'utf8');
+  const html = fs.readFileSync(SHELL_HTML_PATH, 'utf8');
   const matches = html.match(/document\.addEventListener\('DOMContentLoaded'/g) || [];
   assert.equal(matches.length, 0, 'monolith should not keep DOMContentLoaded boot handlers inline');
   assert.match(html, /<script src="\/engines\/RuntimeBootstrap\.js"><\/script>/);
@@ -119,7 +158,7 @@ test('monolith no longer keeps deferred boot handlers inline', () => {
 });
 
 test('monolith no longer registers extracted global root handlers inline', () => {
-  const html = fs.readFileSync(path.resolve('designer/crystal-reports-designer-v4.html'), 'utf8');
+  const html = fs.readFileSync(SHELL_HTML_PATH, 'utf8');
   assert.doesNotMatch(html, /\bfunction\s+initMouseEvents\s*\(/);
   assert.doesNotMatch(html, /document\.addEventListener\('pointermove'/);
   assert.doesNotMatch(html, /document\.addEventListener\('pointerup'/);
@@ -130,7 +169,7 @@ test('monolith no longer registers extracted global root handlers inline', () =>
 });
 
 test('monolith no longer defines command orchestration inline', () => {
-  const html = fs.readFileSync(path.resolve('designer/crystal-reports-designer-v4.html'), 'utf8');
+  const html = fs.readFileSync(SHELL_HTML_PATH, 'utf8');
   assert.doesNotMatch(html, /\bconst\s+CommandEngine\s*=\s*\{/);
   assert.doesNotMatch(html, /\bconst\s+FileEngine\s*=\s*\{/);
   assert.doesNotMatch(html, /\bfunction\s+handleAction\s*\(/);
@@ -144,7 +183,7 @@ test('monolith no longer defines command orchestration inline', () => {
 });
 
 test('monolith no longer defines UI adapter wiring inline', () => {
-  const html = fs.readFileSync(path.resolve('designer/crystal-reports-designer-v4.html'), 'utf8');
+  const html = fs.readFileSync(SHELL_HTML_PATH, 'utf8');
   assert.doesNotMatch(html, /\bfunction\s+initToolbars\s*\(/);
   assert.doesNotMatch(html, /document\.querySelectorAll\('\[data-format\]'\)\.forEach/);
   assert.doesNotMatch(html, /document\.getElementById\('tb-font-name'\)\?\.addEventListener/);
@@ -153,7 +192,7 @@ test('monolith no longer defines UI adapter wiring inline', () => {
 });
 
 test('monolith no longer defines menu engines inline', () => {
-  const html = fs.readFileSync(path.resolve('designer/crystal-reports-designer-v4.html'), 'utf8');
+  const html = fs.readFileSync(SHELL_HTML_PATH, 'utf8');
   assert.doesNotMatch(html, /\bconst\s+MenuEngine\s*=\s*\{/);
   assert.doesNotMatch(html, /\bconst\s+ContextMenuEngine\s*=\s*\{/);
   assert.doesNotMatch(html, /document\.addEventListener\('click',\(\)=>this\.closeAll\(\)\)/);
@@ -161,7 +200,7 @@ test('monolith no longer defines menu engines inline', () => {
 });
 
 test('monolith no longer defines critical interaction engines inline', () => {
-  const html = fs.readFileSync(path.resolve('designer/crystal-reports-designer-v4.html'), 'utf8');
+  const html = fs.readFileSync(SHELL_HTML_PATH, 'utf8');
   assert.doesNotMatch(html, /\bconst\s+SelectionEngine\s*=\s*\{/);
   assert.doesNotMatch(html, /\bconst\s+SectionEngine\s*=\s*\{/);
   assert.doesNotMatch(html, /\bconst\s+SectionResizeEngine\s*=\s*\{/);
@@ -175,7 +214,7 @@ test('monolith no longer defines critical interaction engines inline', () => {
 });
 
 test('monolith no longer defines properties, explorer, or zoom engines inline', () => {
-  const html = fs.readFileSync(path.resolve('designer/crystal-reports-designer-v4.html'), 'utf8');
+  const html = fs.readFileSync(SHELL_HTML_PATH, 'utf8');
   assert.doesNotMatch(html, /\bconst\s+PropertiesEngine\s*=\s*\{/);
   assert.doesNotMatch(html, /\bconst\s+FormatEngine\s*=\s*\{/);
   assert.doesNotMatch(html, /\bconst\s+FieldExplorerEngine\s*=\s*\{/);
@@ -193,7 +232,7 @@ test('monolith no longer defines properties, explorer, or zoom engines inline', 
 });
 
 test('monolith no longer keeps runtime globals, formula/debug, or doc-type probes inline', () => {
-  const html = fs.readFileSync(path.resolve('designer/crystal-reports-designer-v4.html'), 'utf8');
+  const html = fs.readFileSync(SHELL_HTML_PATH, 'utf8');
   assert.doesNotMatch(html, /\bconst\s+FormulaEngine\s*=\s*\(/);
   assert.doesNotMatch(html, /\bconst\s+FormulaEditorDialog\s*=\s*\{/);
   assert.doesNotMatch(html, /\bconst\s+DesignerUI\s*=\s*\{/);
@@ -214,8 +253,32 @@ test('monolith no longer keeps runtime globals, formula/debug, or doc-type probe
   assert.match(html, /<script src="\/engines\/DocTypeAndProbes\.js"><\/script>/);
 });
 
+test('shell HTML stays pure: no inline script, style, or DOM event attributes', () => {
+  const html = fs.readFileSync(SHELL_HTML_PATH, 'utf8');
+  assert.doesNotMatch(html, /<script(?!\s+src=)[^>]*>/, 'shell must not contain inline <script> blocks');
+  assert.doesNotMatch(html, /<style\b/i, 'shell must not contain inline <style> blocks');
+  assert.doesNotMatch(html, /\sstyle=/i, 'shell must not contain inline style= attributes');
+  assert.doesNotMatch(
+    html,
+    /\son(?:click|change|input|load|mousedown|mouseup|mousemove|pointerdown|pointerup|wheel)=/i,
+    'shell must not contain inline DOM event attributes',
+  );
+});
+
+test('shell HTML stays structurally pure and below strict size threshold', () => {
+  const html = fs.readFileSync(SHELL_HTML_PATH, 'utf8');
+  assert.equal(Buffer.byteLength(html, 'utf8') <= SHELL_MAX_BYTES, true,
+    `shell exceeded ${SHELL_MAX_BYTES} byte threshold`);
+  assert.doesNotMatch(html, /\bfunction\s+/);
+  assert.doesNotMatch(html, /\bconst\s+\w+Engine\b/);
+  assert.doesNotMatch(html, /document\.addEventListener/);
+  assert.doesNotMatch(html, /window\.addEventListener/);
+  assert.doesNotMatch(html, /\bhandleAction\b/);
+  assert.doesNotMatch(html, /\binit[A-Z]\w*\b/);
+});
+
 test('monolith shell keeps CSS externalized and below shell-size thresholds', () => {
-  const html = fs.readFileSync(path.resolve('designer/crystal-reports-designer-v4.html'), 'utf8');
+  const html = fs.readFileSync(SHELL_HTML_PATH, 'utf8');
   const styleTagCount = countMatches(html, /<style\b/g);
   const inlineStyleAttrCount = countMatches(html, /\sstyle="/g);
   const stylesheetLinkCount = countMatches(html, /<link rel="stylesheet" href="\/designer\/styles\/index\.css">/g);
@@ -223,7 +286,7 @@ test('monolith shell keeps CSS externalized and below shell-size thresholds', ()
   assert.equal(styleTagCount, 0, 'monolith should not keep inline <style> blocks');
   assert.equal(inlineStyleAttrCount, 0, 'monolith should not keep inline style= attributes');
   assert.equal(stylesheetLinkCount, 1, 'monolith should load the canonical CSS entrypoint exactly once');
-  assert.ok(Buffer.byteLength(html, 'utf8') <= 100_000, 'monolith shell exceeded 100 KB threshold');
+  assert.ok(Buffer.byteLength(html, 'utf8') <= SHELL_MAX_BYTES, `monolith shell exceeded ${SHELL_MAX_BYTES} byte threshold`);
 
   const cssFiles = [
     'designer/styles/index.css',
@@ -274,7 +337,7 @@ test('runtime boundary modules use RuntimeServices instead of raw structural glo
   }
 
   assert.ok(fs.existsSync(path.resolve('engines/RuntimeServices.js')), 'RuntimeServices.js missing');
-  const html = fs.readFileSync(path.resolve('designer/crystal-reports-designer-v4.html'), 'utf8');
+  const html = fs.readFileSync(SHELL_HTML_PATH, 'utf8');
   assert.match(html, /<script src="\/engines\/RuntimeServices\.js"><\/script>/);
 });
 
@@ -296,44 +359,7 @@ test('engine globals are reduced to the approved window export whitelist', () =>
     for (const name of collectWindowWrites(src)) actual.add(name);
   }
 
-  const allowed = new Set([
-    'RF',
-    'CFG',
-    'FIELD_TREE',
-    'SAMPLE_DATA',
-    'FORMATS',
-    'resolveField',
-    'formatValue',
-    'getCanvasPos',
-    'initKeyboard_DISABLED_v19',
-    'initClock',
-    '__rfTraceLegacy',
-    'FormulaEngine',
-    'FormulaEditorDialog',
-    'DesignerUI',
-    'RF_DEBUG',
-    'RF_DEBUG_TRACE',
-    'RF_DEBUG_TRACE_RUNTIME',
-    'RF_DEBUG_TRACE_ELEMENTS',
-    'DebugTrace',
-    'rfTrace',
-    'makePanelDraggable',
-    'DebugChannelsPanel',
-    '__rfConsoleGateInstalled',
-    '__rfConsoleOriginal',
-    'DebugTraceToggle',
-    'DebugOverlay',
-    'DOC_TYPES',
-    'shadeColor',
-    'canvas',
-    '__rfVerify',
-    'SnapEngine',
-    'GridEngine',
-    'RulerEngine',
-    'WorkspaceScrollEngine',
-  ]);
-
-  assert.deepEqual([...actual].sort(), [...allowed].sort(), 'window export whitelist drifted');
+  assert.deepEqual([...actual].sort(), ALLOWED_WINDOW_EXPORTS, 'window export whitelist drifted');
 
   const prohibited = [
     'window.SelectionEngine =',
@@ -374,6 +400,41 @@ test('engine globals are reduced to the approved window export whitelist', () =>
       assert.doesNotMatch(src, new RegExp(needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
         `${path.basename(file)} reintroduced prohibited window export: ${needle}`);
     }
+  }
+});
+
+test('layering rules: adapters stay thin and bootstrap stays orchestration-only', () => {
+  const uiAdapters = fs.readFileSync(path.resolve('engines/UIAdapters.js'), 'utf8');
+  const globalHandlers = fs.readFileSync(path.resolve('engines/GlobalEventHandlers.js'), 'utf8');
+  const runtimeBootstrap = fs.readFileSync(path.resolve('engines/RuntimeBootstrap.js'), 'utf8');
+  const commandRuntime = fs.readFileSync(path.resolve('engines/CommandRuntime.js'), 'utf8');
+
+  assert.doesNotMatch(uiAdapters, /\bDS\./, 'UIAdapters must not access DS directly');
+  assert.doesNotMatch(uiAdapters, /\bsaveHistory\b/, 'UIAdapters must not mutate history');
+  assert.doesNotMatch(uiAdapters, /_canonicalCanvasWriter/, 'UIAdapters must not write canvas directly');
+
+  assert.doesNotMatch(runtimeBootstrap, /\bhandleAction\s*\(/, 'RuntimeBootstrap must not dispatch commands directly');
+  assert.doesNotMatch(runtimeBootstrap, /\bhandleFormatAction\s*\(/, 'RuntimeBootstrap must not absorb UI command logic');
+  assert.doesNotMatch(runtimeBootstrap, /querySelectorAll\('\[data-action\]'\)/, 'RuntimeBootstrap must not wire toolbar commands');
+  assert.doesNotMatch(runtimeBootstrap, /querySelectorAll\('\[data-format\]'\)/, 'RuntimeBootstrap must not wire format controls');
+
+  assert.doesNotMatch(commandRuntime, /querySelectorAll\('\[data-action\]'\)/, 'CommandRuntime must not wire DOM directly');
+  assert.doesNotMatch(commandRuntime, /addEventListener\('click'/, 'CommandRuntime must not own click bindings');
+
+  assert.match(globalHandlers, /\bDS\./, 'GlobalEventHandlers remains the root input adapter');
+});
+
+test('critical boundary files stay below growth thresholds', () => {
+  const thresholds = new Map([
+    [path.resolve('designer/crystal-reports-designer-v4.html'), SHELL_MAX_BYTES],
+    [path.resolve('engines/RuntimeBootstrap.js'), 12_000],
+    [path.resolve('engines/UIAdapters.js'), 3_000],
+    [path.resolve('reportforge/tests/governance_guardrails.test.mjs'), 25_000],
+  ]);
+
+  for (const [file, limit] of thresholds.entries()) {
+    const size = Buffer.byteLength(fs.readFileSync(file, 'utf8'), 'utf8');
+    assert.ok(size <= limit, `${path.basename(file)} exceeded ${limit} bytes (actual ${size})`);
   }
 });
 

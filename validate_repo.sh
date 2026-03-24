@@ -230,7 +230,7 @@ fi
 # ── 8. Designer HTML checks ────────────────────────────────────────────────────
 hdr "Designer HTML"
 
-DESIGNER="$ROOT/designer/crystal-reports-designer-v3.html"
+DESIGNER="$ROOT/designer/crystal-reports-designer-v4.html"
 if [[ -f "$DESIGNER" ]]; then
   html_check() {
     local label="$1" pattern="$2" should_exist="${3:-yes}"
@@ -241,23 +241,31 @@ if [[ -f "$DESIGNER" ]]; then
     fi
   }
 
-  html_check "FormulaEngine present"         "FormulaEngine"
-  html_check "FormulaEditorDialog present"   "FormulaEditorDialog"
-  html_check "Pointer events (pointerdown)"  "pointerdown"
-  html_check "RAF batching"                  "requestAnimationFrame"
-  html_check "content-visibility CSS"        "content-visibility"
-  html_check "CSS contain"                   "contain:"
-  html_check "No mousedown listeners"        "addEventListener('mousedown'" no
-  html_check "No mousemove listeners"        "addEventListener('mousemove'" no
-  html_check "No innerHTML= destruction"     "handles-layer.innerHTML=''"    no
-  html_check "Script tags balanced" "" # handled below
+  html_check "Canonical CSS entrypoint"      "/designer/styles/index.css"
+  html_check "No inline <style>"             "<style" no
+  html_check "No inline style="              "style=" no
+  html_check "No inline onclick="            "onclick=" no
+  html_check "No inline onchange="           "onchange=" no
+  html_check "No inline oninput="            "oninput=" no
+  html_check "No inline function declarations" "function " no
+  html_check "No inline engine declarations" "const .*Engine" no
+  html_check "No inline document listeners"  "document.addEventListener" no
+  html_check "No inline window listeners"    "window.addEventListener" no
+  html_check "No inline command dispatcher"  "handleAction" no
 
   OPENS=$(grep -c '<script' "$DESIGNER" 2>/dev/null || echo 0)
   CLOSES=$(grep -c '</script>' "$DESIGNER" 2>/dev/null || echo 0)
   [[ "$OPENS" -eq "$CLOSES" ]] && ok "Script tags balanced ($OPENS)" || \
     fail "Script tags balanced" "open=$OPENS close=$CLOSES"
+
+  HTML_BYTES=$(wc -c < "$DESIGNER" | tr -d ' ')
+  if [[ "$HTML_BYTES" -le 30000 ]]; then
+    ok "Shell HTML below 30KB threshold ($HTML_BYTES bytes)"
+  else
+    fail "Shell HTML below 30KB threshold" "actual=$HTML_BYTES"
+  fi
 else
-  fail "Designer HTML" "file not found: designer/crystal-reports-designer-v3.html"
+  fail "Designer HTML" "file not found: designer/crystal-reports-designer-v4.html"
 fi
 
 # ── 8. Formula engine Python checks ───────────────────────────────────────────
