@@ -30,17 +30,10 @@ check_dir  "reportforge"
 check_dir  "reportforge/core"
 check_dir  "reportforge/core/render"
 check_dir  "reportforge/core/render/expressions"
-check_dir  "reportforge/core/render/engines"
-check_dir  "reportforge/core/render/export"
 check_dir  "reportforge/server"
 check_dir  "reportforge/tests"
-check_dir  "reportforge/designer"
-check_dir  "reportforge/designer/js"
-check_dir  "reportforge/designer/js/core"
-check_dir  "reportforge/designer/js/classic"
-check_dir  "reportforge/designer/js/modules"
-check_dir  "reportforge/designer/js/ux"
 check_dir  "designer"
+check_dir  "engines"
 
 check_file "reportforge_server.py"
 check_file "reportforge/core/render/expressions/formula_parser.py"
@@ -48,13 +41,11 @@ check_file "reportforge/core/render/expressions/eval_context.py"
 check_file "reportforge/core/render/expressions/evaluator.py"
 check_file "reportforge/core/render/expressions/cr_functions.py"
 check_file "reportforge/core/render/expressions/aggregator.py"
-check_file "reportforge/designer/js/core/formula-engine.js"
-check_file "reportforge/designer/js/core/document-model.js"
-check_file "reportforge/designer/js/core/history.js"
-check_file "reportforge/designer/js/core/layout-tools.js"
-check_file "reportforge/designer/js/core/render-pipeline.js"
-check_file "reportforge/designer/js/core/selection.js"
-check_file "designer/crystal-reports-designer-v3.html"
+check_file "designer/crystal-reports-designer-v4.html"
+check_file "engines/EngineCore.js"
+check_file "engines/SelectionEngine.js"
+check_file "engines/CanvasLayoutEngine.js"
+check_file "engines/PreviewEngine.js"
 
 # ── 2. Python syntax ───────────────────────────────────────────────────────────
 hdr "Python Syntax (py_compile)"
@@ -79,7 +70,7 @@ if command -v node &>/dev/null; then
       fail "js syntax: ${f#$ROOT/}"
       JS_ERRORS=$((JS_ERRORS+1))
     fi
-  done < <(find "$ROOT/reportforge/designer/js" -name "*.js" -print0)
+  done < <(find "$ROOT/engines" -name "*.js" -print0)
   [[ $JS_ERRORS -eq 0 ]] && ok "All JS files syntax-valid ($JS_ERRORS errors)"
 else
   skip "node not installed — skipping JS syntax checks"
