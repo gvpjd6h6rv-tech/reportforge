@@ -24,6 +24,7 @@ const FormatEngine = {
   },
   applyFormat(key,value){
     const sel=DS.getSelectedElements();
+    if(!sel.length)return;
     sel.forEach(el=>{el[key]=value;_canonicalCanvasWriter().updateElement(el.id);});
     DS.saveHistory();this.updateToolbar();PropertiesEngine.render();
   },
