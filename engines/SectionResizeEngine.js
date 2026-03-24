@@ -3,7 +3,7 @@
 const SectionResizeEngine = {
   _drag:null,
   _useCentralRouter(){
-    return window.RF_USE_ENGINECORE_INTERACTION !== false;
+    return window.RF?.RuntimeServices?.isEngineCoreInteractionEnabled?.() !== false;
   },
   _clientPoint(e){
     if(e && e.client && typeof e.client.x === 'number' && typeof e.client.y === 'number'){
@@ -98,10 +98,6 @@ const SectionResizeEngine = {
     this._drag=null;
   },
 };
-
-if (typeof window !== 'undefined') {
-  window.SectionResizeEngine = SectionResizeEngine;
-}
 
 if (typeof module !== 'undefined') {
   module.exports = SectionResizeEngine;

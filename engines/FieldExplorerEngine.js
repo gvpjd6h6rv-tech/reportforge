@@ -125,10 +125,6 @@ const FieldExplorerEngine = {
   },
 };
 
-if (typeof window !== 'undefined') {
-  window.FieldExplorerEngine = FieldExplorerEngine;
-}
-
 if (typeof module !== 'undefined') {
   module.exports = FieldExplorerEngine;
 }

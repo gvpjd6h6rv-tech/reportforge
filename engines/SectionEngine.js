@@ -1,7 +1,7 @@
 'use strict';
 
 function _canonicalCanvasWriter(){
-  window.__RF_CANONICAL_CANVAS_OWNER__ = 'CanvasLayoutEngine';
+  window.RF?.RuntimeServices?.setOwner?.('canvas', 'CanvasLayoutEngine');
   if (typeof CanvasLayoutEngine === 'undefined') {
     const message = 'CANVAS OWNER MISSING IN CANONICAL RUNTIME';
     console.error(message);
@@ -100,11 +100,6 @@ const SectionEngine = {
     }
   },
 };
-
-if (typeof window !== 'undefined') {
-  window._canonicalCanvasWriter = _canonicalCanvasWriter;
-  window.SectionEngine = SectionEngine;
-}
 
 if (typeof module !== 'undefined') {
   module.exports = SectionEngine;

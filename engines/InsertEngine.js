@@ -77,10 +77,6 @@ const InsertEngine = {
   },
 };
 
-if (typeof window !== 'undefined') {
-  window.InsertEngine = InsertEngine;
-}
-
 if (typeof module !== 'undefined') {
   module.exports = InsertEngine;
 }

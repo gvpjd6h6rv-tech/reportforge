@@ -204,10 +204,6 @@ const PropertiesEngine = {
   }
 };
 
-if (typeof window !== 'undefined') {
-  window.PropertiesEngine = PropertiesEngine;
-}
-
 if (typeof module !== 'undefined') {
   module.exports = PropertiesEngine;
 }

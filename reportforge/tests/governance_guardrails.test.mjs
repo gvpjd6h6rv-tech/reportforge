@@ -60,6 +60,14 @@ function retiredEngineRegex(parts) {
   return new RegExp(`\\b${parts.join('')}\\b`);
 }
 
+function collectWindowWrites(source) {
+  const writes = new Set();
+  const re = /window\.([A-Za-z0-9_]+)\s*=/g;
+  let match;
+  while ((match = re.exec(source))) writes.add(match[1]);
+  return writes;
+}
+
 test('guardrail detector catches synthetic architectural violations', () => {
   const bad = `
     CanvasEngine.renderAll();
@@ -236,6 +244,136 @@ test('monolith shell keeps CSS externalized and below shell-size thresholds', ()
 
   for (const relPath of cssFiles) {
     assert.ok(fs.existsSync(path.resolve(relPath)), `${relPath} missing`);
+  }
+});
+
+test('runtime boundary modules use RuntimeServices instead of raw structural globals', () => {
+  const files = [
+    path.resolve('engines/RuntimeBootstrap.js'),
+    path.resolve('engines/GlobalEventHandlers.js'),
+    path.resolve('engines/EngineCore.js'),
+    path.resolve('engines/DeferredBootstrap.js'),
+    path.resolve('engines/SectionEngine.js'),
+    path.resolve('engines/ZoomEngine.js'),
+  ];
+
+  for (const file of files) {
+    const src = fs.readFileSync(file, 'utf8');
+    assert.doesNotMatch(src, /window\.__RF_CANONICAL_/,
+      `${path.basename(file)} should not write canonical owner globals directly`);
+    assert.doesNotMatch(src, /window\.RF_USE_ENGINECORE_INTERACTION/,
+      `${path.basename(file)} should not read interaction flag directly from window`);
+    assert.doesNotMatch(src, /window\.RFContractGuards/,
+      `${path.basename(file)} should not read contract guards directly from window`);
+    assert.doesNotMatch(src, /window\.RF_DEBUG_FLAGS/,
+      `${path.basename(file)} should not read debug flags directly from window`);
+    assert.doesNotMatch(src, /window\.__rfCommandRegistry/,
+      `${path.basename(file)} should not write command registry directly to window`);
+    assert.doesNotMatch(src, /window\._rfCanvas|window\._rfViewport|window\._rfWorkspace/,
+      `${path.basename(file)} should not write DOM refs directly to window`);
+  }
+
+  assert.ok(fs.existsSync(path.resolve('engines/RuntimeServices.js')), 'RuntimeServices.js missing');
+  const html = fs.readFileSync(path.resolve('designer/crystal-reports-designer-v4.html'), 'utf8');
+  assert.match(html, /<script src="\/engines\/RuntimeServices\.js"><\/script>/);
+});
+
+test('engine globals are reduced to the approved window export whitelist', () => {
+  const files = [
+    path.resolve('engines/RuntimeGlobals.js'),
+    path.resolve('engines/DeferredBootstrap.js'),
+    path.resolve('engines/FormulaAndDebug.js'),
+    path.resolve('engines/DocTypeAndProbes.js'),
+    path.resolve('engines/SnapEngine.js'),
+    path.resolve('engines/GridEngine.js'),
+    path.resolve('engines/RulerEngine.js'),
+    path.resolve('engines/WorkspaceScrollEngine.js'),
+  ];
+
+  const actual = new Set();
+  for (const file of files) {
+    const src = fs.readFileSync(file, 'utf8');
+    for (const name of collectWindowWrites(src)) actual.add(name);
+  }
+
+  const allowed = new Set([
+    'RF',
+    'CFG',
+    'FIELD_TREE',
+    'SAMPLE_DATA',
+    'FORMATS',
+    'resolveField',
+    'formatValue',
+    'getCanvasPos',
+    'initKeyboard_DISABLED_v19',
+    'initClock',
+    '__rfTraceLegacy',
+    'FormulaEngine',
+    'FormulaEditorDialog',
+    'DesignerUI',
+    'RF_DEBUG',
+    'RF_DEBUG_TRACE',
+    'RF_DEBUG_TRACE_RUNTIME',
+    'RF_DEBUG_TRACE_ELEMENTS',
+    'DebugTrace',
+    'rfTrace',
+    'makePanelDraggable',
+    'DebugChannelsPanel',
+    '__rfConsoleGateInstalled',
+    '__rfConsoleOriginal',
+    'DebugTraceToggle',
+    'DebugOverlay',
+    'DOC_TYPES',
+    'shadeColor',
+    'canvas',
+    '__rfVerify',
+    'SnapEngine',
+    'GridEngine',
+    'RulerEngine',
+    'WorkspaceScrollEngine',
+  ]);
+
+  assert.deepEqual([...actual].sort(), [...allowed].sort(), 'window export whitelist drifted');
+
+  const prohibited = [
+    'window.SelectionEngine =',
+    'window.AlignEngine =',
+    'window.AlignmentGuides =',
+    'window.SectionEngine =',
+    'window.SectionResizeEngine =',
+    'window.InsertEngine =',
+    'window.OverlayEngine =',
+    'window.PropertiesEngine =',
+    'window.FormatEngine =',
+    'window.FieldExplorerEngine =',
+    'window.DesignZoomEngine =',
+    'window.PreviewZoomEngine =',
+    'window.ZoomWidget =',
+    'window.ZoomEngine =',
+    'window.ZoomEngineV19 =',
+    'window.LayoutEngine =',
+    'window._canonicalCanvasWriter =',
+    'window._canonicalPreviewWriter =',
+  ];
+
+  const engineFiles = [
+    path.resolve('engines/SelectionEngine.js'),
+    path.resolve('engines/SectionEngine.js'),
+    path.resolve('engines/SectionResizeEngine.js'),
+    path.resolve('engines/InsertEngine.js'),
+    path.resolve('engines/OverlayEngine.js'),
+    path.resolve('engines/PropertiesEngine.js'),
+    path.resolve('engines/FormatEngine.js'),
+    path.resolve('engines/FieldExplorerEngine.js'),
+    path.resolve('engines/ZoomEngine.js'),
+  ];
+
+  for (const file of engineFiles) {
+    const src = fs.readFileSync(file, 'utf8');
+    for (const needle of prohibited) {
+      assert.doesNotMatch(src, new RegExp(needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
+        `${path.basename(file)} reintroduced prohibited window export: ${needle}`);
+    }
   }
 });
 

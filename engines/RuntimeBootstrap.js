@@ -1,5 +1,9 @@
 'use strict';
 
+const RuntimeServicesBootstrap = typeof window !== 'undefined'
+  ? (window.RF?.RuntimeServices || null)
+  : null;
+
 document.addEventListener('DOMContentLoaded', () => {
   DesignerUI.init();
   DebugTraceToggle.init();
@@ -40,9 +44,9 @@ document.addEventListener('DOMContentLoaded', () => {
     real.appendChild(ph);
   });
 
-  window._rfCanvas = document.getElementById('canvas-layer');
-  window._rfViewport = document.getElementById('viewport');
-  window._rfWorkspace = document.getElementById('workspace');
+  RuntimeServicesBootstrap?.setDomRef('canvas', document.getElementById('canvas-layer'));
+  RuntimeServicesBootstrap?.setDomRef('viewport', document.getElementById('viewport'));
+  RuntimeServicesBootstrap?.setDomRef('workspace', document.getElementById('workspace'));
 
   const CMD_REGISTRY = [
     'bring-forward', 'send-backward', 'group', 'ungroup', 'invert-selection',
@@ -63,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
     regContainer.appendChild(btn);
   });
   document.body.appendChild(regContainer);
-  window.__rfCommandRegistry = CMD_REGISTRY;
+  RuntimeServicesBootstrap?.setMeta('commandRegistry', CMD_REGISTRY);
 
   const addIdAlias = (realId, aliasId) => {
     if (document.getElementById(aliasId)) return;
@@ -94,14 +98,14 @@ document.addEventListener('DOMContentLoaded', () => {
     window.RF.Core.DocumentModel = DS;
 
     const coreEngines = {
-      DataEngine: window.DataEngine || window.RF_DataEngine || null,
-      LayoutEngine: window.LayoutEngine || window.RF_LayoutEngine || null,
-      ExecutionGraph: window.ExecutionGraph || window.RF_ExecutionGraph || null,
-      ParameterEngine: window.ParameterEngine || window.RF_ParameterEngine || null,
-      SceneGraphEngine: window.SceneGraphEngine || window.RF_SceneGraphEngine || null,
-      QueryGraph: window.QueryGraph || window.RF_QueryGraph || null,
-      RenderPipeline: window.RenderPipeline || window.RF_RenderPipeline || null,
-      FormulaEngine: window.FormulaEngine || window.RF_FormulaEngine || null,
+      DataEngine: typeof DataEngine !== 'undefined' ? DataEngine : (window.RF_DataEngine || null),
+      LayoutEngine: typeof LayoutEngine !== 'undefined' ? LayoutEngine : (window.RF_LayoutEngine || null),
+      ExecutionGraph: typeof ExecutionGraph !== 'undefined' ? ExecutionGraph : (window.RF_ExecutionGraph || null),
+      ParameterEngine: typeof ParameterEngine !== 'undefined' ? ParameterEngine : (window.RF_ParameterEngine || null),
+      SceneGraphEngine: typeof SceneGraphEngine !== 'undefined' ? SceneGraphEngine : (window.RF_SceneGraphEngine || null),
+      QueryGraph: typeof QueryGraph !== 'undefined' ? QueryGraph : (window.RF_QueryGraph || null),
+      RenderPipeline: typeof RenderPipeline !== 'undefined' ? RenderPipeline : (window.RF_RenderPipeline || null),
+      FormulaEngine: typeof FormulaEngine !== 'undefined' ? FormulaEngine : (window.RF_FormulaEngine || null),
     };
 
     const mkStub = (name) => {

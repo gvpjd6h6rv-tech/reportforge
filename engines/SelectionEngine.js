@@ -2,7 +2,7 @@
 
 function _contracts() {
   return (typeof ContractGuards !== 'undefined' && ContractGuards)
-    || (typeof window !== 'undefined' ? window.RFContractGuards : null)
+    || (window.RF?.RuntimeServices?.getContractGuards?.() || null)
     || null;
 }
 
@@ -93,7 +93,7 @@ const AlignmentGuides = {
 const SelectionEngine = {
   _drag: null,
   _useCentralRouter(){
-    return window.RF_USE_ENGINECORE_INTERACTION !== false;
+    return window.RF?.RuntimeServices?.isEngineCoreInteractionEnabled?.() !== false;
   },
   _previewRect(el){
     const pvEl=document.querySelector(`.pv-el[data-origin-id="${el.id}"]`);
@@ -455,12 +455,6 @@ const SelectionEngine = {
   },
 };
 SelectionEngine.__active = true;
-
-if (typeof window !== 'undefined') {
-  window.AlignEngine = AlignEngine;
-  window.AlignmentGuides = AlignmentGuides;
-  window.SelectionEngine = SelectionEngine;
-}
 
 if (typeof module !== 'undefined') {
   module.exports = SelectionEngine;

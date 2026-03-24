@@ -118,10 +118,6 @@ const OverlayEngine = {
 };
 OverlayEngine.__active = true;
 
-if (typeof window !== 'undefined') {
-  window.OverlayEngine = OverlayEngine;
-}
-
 if (typeof module !== 'undefined') {
   module.exports = OverlayEngine;
 }

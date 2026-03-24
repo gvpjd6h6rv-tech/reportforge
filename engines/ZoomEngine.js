@@ -1,7 +1,7 @@
 'use strict';
 
 function _canonicalPreviewWriter(){
-  window.__RF_CANONICAL_PREVIEW_OWNER__ = 'PreviewEngineV19';
+  window.RF?.RuntimeServices?.setOwner?.('preview', 'PreviewEngineV19');
   if (typeof PreviewEngineV19 === 'undefined') {
     const message = 'PREVIEW OWNER MISSING IN CANONICAL RUNTIME';
     console.error(message);
@@ -186,18 +186,6 @@ const ZoomEngineV19 = (() => {
     onChange(fn) { _listeners.push(fn); },
   };
 })();
-
-if (typeof window !== 'undefined') {
-  window._canonicalPreviewWriter = _canonicalPreviewWriter;
-  window.computeLayout = computeLayout;
-  window.LayoutEngine = { computeLayout, get: computeLayout };
-  window.applyLayout = applyLayout;
-  window.DesignZoomEngine = DesignZoomEngine;
-  window.PreviewZoomEngine = PreviewZoomEngine;
-  window.ZoomWidget = ZoomWidget;
-  window.ZoomEngine = ZoomEngine;
-  window.ZoomEngineV19 = ZoomEngineV19;
-}
 
 if (typeof module !== 'undefined') {
   module.exports = ZoomEngine;

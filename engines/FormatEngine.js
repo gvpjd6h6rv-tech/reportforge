@@ -35,10 +35,6 @@ const FormatEngine = {
   },
 };
 
-if (typeof window !== 'undefined') {
-  window.FormatEngine = FormatEngine;
-}
-
 if (typeof module !== 'undefined') {
   module.exports = FormatEngine;
 }
