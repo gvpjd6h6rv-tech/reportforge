@@ -1574,7 +1574,7 @@
     z-index: 50;
   }
   #preview-content {
-    /* v18.15: width set by PreviewEngine via RF.Geometry */
+    /* v18.15: width set by canonical preview engine via RF.Geometry */
     margin-inline: auto;
     background: #fff;
     min-height: 100%;
@@ -1764,7 +1764,6 @@
   .pv-page-break span{padding:0 8px}
   .pv-el{position:absolute;overflow:hidden;box-sizing:border-box;cursor:pointer;user-select:text}
   .pv-el:hover{outline:1px solid rgba(0,102,204,.4);z-index:2}
-  .pv-el.pv-origin-selected{outline:2px solid #0055CC!important;background:rgba(0,85,204,.08)!important;z-index:3}
   /* Corner markers: all 4 corners via ::before (top-left+top-right) and ::after (bottom-left+bottom-right) using box-shadow */
   /* Idle corner markers — reuse legacy 4-corner DOM only when element is not selected */
   .el-corner {
@@ -3318,137 +3317,8 @@ const SectionEngine = {
   },
 };
 
-// ═══════════════════════════════════════════════════════════════════
-//  CANVAS ENGINE — renders elements into section divs
-// ═══════════════════════════════════════════════════════════════════
-
-const CanvasEngine = {
-  _getSectionNode(sectionId){
-    return document.querySelector(`.cr-section[data-section-id="${sectionId}"]`);
-  },
-  _fail(method){
-    if (typeof window !== 'undefined' && window.__RF_CANONICAL_CANVAS_OWNER__ === 'CanvasLayoutEngine') {
-      const message = `LEGACY FACADE SHOULD NOT WRITE (${method})`;
-      console.error(message);
-      throw new Error(message);
-    }
-  },
-  renderAll(){
-    this._fail('CanvasEngine.renderAll');
-    // Clear existing element divs from sections
-    document.querySelectorAll('.cr-element').forEach(e=>e.remove());
-    for(const el of DS.elements) this.renderElement(el);
-  },
-  renderElement(el){
-    this._fail('CanvasEngine.renderElement');
-    const secDiv = this._getSectionNode(el.sectionId);
-    if(!secDiv) return;
-    const div = this.buildElementDiv(el);
-    secDiv.appendChild(div);
-  },
-  buildElementDiv(el){
-    this._fail('CanvasEngine.buildElementDiv');
-    const div = document.createElement('div');
-    div.className = 'cr-element';
-    div.dataset.id = el.id;
-    div.dataset.type = el.type;
-    // v18.10: use RF.Geometry unified API — no direct DS.zoom access
-    const _p = RF.Geometry.modelToView(el.x, el.y);
-    div.style.left = _p.x + 'px';
-    div.style.top  = _p.y + 'px';
-    div.style.width= RF.Geometry.scale(el.w) + 'px';
-    div.style.setProperty('--el-w', el.w+'px');
-    div.style.height = RF.Geometry.scale(el.h) + 'px';
-    // Corner markers (Rule 14) — 4 small squares at element corners
-    ['tl','tr','bl','br'].forEach(pos=>{
-      const m=document.createElement('span');
-      m.className='el-corner '+pos;
-      div.appendChild(m);
-    });
-    div.style.fontFamily = el.fontFamily;
-    div.style.fontSize = RF.Geometry.scale(el.fontSize * 96/72) + 'px'; // v18.12: pt→scaled px
-    div.style.fontWeight = el.bold?'bold':'normal';
-    div.style.fontStyle = el.italic?'italic':'normal';
-    div.style.textDecoration = el.underline?'underline':'none';
-    div.style.textAlign = el.align;
-    div.style.zIndex = el.zIndex||0;
-
-    if(el.type==='field'){
-      div.style.color = el.color;
-      div.style.background = el.bgColor==='transparent'?'var(--cr-field-bg)':el.bgColor;
-      if(el.borderWidth>0) div.style.border=`${el.borderWidth}px ${el.borderStyle} ${el.borderColor}`;
-      const icon=document.createElement('span');icon.className='el-field-icon';icon.textContent='⬚';
-      const span=document.createElement('span');
-      span.className='el-content';
-      span.textContent=el.fieldPath?`{${el.fieldPath}}`:'';
-      div.appendChild(icon);div.appendChild(span);
-    }else if(el.type==='text'){
-      div.style.color = el.color;
-      div.style.background = el.bgColor==='transparent'?'var(--cr-text-bg)':el.bgColor;
-      if(el.borderWidth>0) div.style.border=`${el.borderWidth}px ${el.borderStyle} ${el.borderColor}`;
-      const span=document.createElement('span');
-      span.className='el-content';
-      span.textContent=el.content||'Texto';
-      span.contentEditable=false;
-      div.appendChild(span);
-    }else if(el.type==='line'){
-      div.style.background='transparent';div.style.border='none';div.style.overflow='visible';
-      const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-      svg.style.cssText='position:absolute;overflow:visible;pointer-events:none';
-      svg.setAttribute('width',el.w);svg.setAttribute('height',Math.max(el.h,1));
-      const line=document.createElementNS('http://www.w3.org/2000/svg','line');
-      if(el.lineDir==='v'){
-        line.setAttribute('x1','0');line.setAttribute('y1','0');
-        line.setAttribute('x2','0');line.setAttribute('y2',el.h);
-      }else{
-        line.setAttribute('x1','0');line.setAttribute('y1',Math.max(el.h/2,1));
-        line.setAttribute('x2',el.w);line.setAttribute('y2',Math.max(el.h/2,1));
-      }
-      line.setAttribute('stroke',el.borderColor==='transparent'?'#000':el.borderColor);
-      line.setAttribute('stroke-width',el.lineWidth||1);
-      svg.appendChild(line);
-      const span=document.createElement('span');span.className='el-content';
-      div.appendChild(svg);div.appendChild(span);
-    }else if(el.type==='rect'){
-      div.style.background = el.bgColor;
-      if(el.borderWidth>0) div.style.border=`${el.borderWidth}px ${el.borderStyle} ${el.borderColor}`;
-      else div.style.border='1px dashed #CCC';
-      const span=document.createElement('span');span.className='el-content';div.appendChild(span);
-    }else if(el.type==='image'){
-      const span=document.createElement('span');span.className='el-content';
-      span.textContent='🖼 Imagen';div.appendChild(span);
-    }
-    if(DS.isSelected(el.id)) div.classList.add('selected');
-
-    SelectionEngine.attachElementEvents(div,el.id);
-    return div;
-  },
-  updateElement(id){
-    this._fail('CanvasEngine.updateElement');
-    const old=document.querySelector(`.cr-element[data-id="${id}"]`);
-    if(!old) return;
-    const el=DS.getElementById(id);if(!el)return;
-    const newDiv=this.buildElementDiv(el);
-    old.replaceWith(newDiv);
-    if(DS.isSelected(id)) SelectionEngine.renderHandles();
-  },
-  updateElementPosition(id){
-    this._fail('CanvasEngine.updateElementPosition');
-    const div=document.querySelector(`.cr-element[data-id="${id}"]`);
-    if(!div) return;
-    const el=DS.getElementById(id);if(!el)return;
-    // v18.10: RF.Geometry unified API
-    const _p2 = RF.Geometry.modelToView(el.x, el.y);
-    div.style.left   = _p2.x + 'px';
-    div.style.top    = _p2.y + 'px';
-    div.style.width  = RF.Geometry.scale(el.w) + 'px';
-    div.style.height = RF.Geometry.scale(el.h) + 'px';
-  },
-};
-window.__RF_CANONICAL_CANVAS_OWNER__ = 'CanvasLayoutEngine';
-CanvasEngine.__active = false; // legacy facade only in canonical runtime
-
 function _canonicalCanvasWriter(){
+  window.__RF_CANONICAL_CANVAS_OWNER__ = 'CanvasLayoutEngine';
   if (typeof CanvasLayoutEngine === 'undefined') {
     const message = 'CANVAS OWNER MISSING IN CANONICAL RUNTIME';
     console.error(message);
@@ -4635,110 +4505,8 @@ const FieldExplorerEngine = {
 };
 
 // ═══════════════════════════════════════════════════════════════════
-//  PREVIEW ENGINE — renders report with sample data
-// ═══════════════════════════════════════════════════════════════════
-const PreviewEngine={
-  _sc:{x:0,y:0},
-  _renderMode: 'design',  // 'design' | 'preview'
-  _fail(method){
-    if (typeof window !== 'undefined' && window.__RF_CANONICAL_PREVIEW_OWNER__ === 'PreviewEngineV19') {
-      const message = `LEGACY FACADE SHOULD NOT WRITE (${method})`;
-      console.error(message);
-      throw new Error(message);
-    }
-  },
-
-  /**
-   * CRYSTAL REPORTS–STYLE PREVIEW (v9)
-   * Only the canvas rendering changes. ALL panels, toolbar,
-   * inspector, zoom controls remain fully visible and functional.
-   * Switch time target: < 16ms (single DOM class change + content inject)
-   */
-  show(){
-    this._fail('PreviewEngine.show');
-    const t0 = performance.now();
-    // 1. Save scroll position
-    const ws=document.getElementById('workspace');
-    if(ws)this._sc={x:ws.scrollLeft,y:ws.scrollTop};
-
-    // 2. Toggle ONLY the canvas rendering class — NO panel hiding
-    const cl=document.getElementById('canvas-layer');
-    if(cl) cl.classList.add('preview-mode');
-    this._renderMode='preview';
-    // ── Independent zoom: save design zoom (PreviewZoomEngine handles scale)
-    DS.zoomDesign = DS.zoom;
-
-    // 3. Set body attribute for pointer rules
-    document.body.setAttribute('data-render-mode','preview');
-
-    // 4. Inject rendered content into preview-layer
-    const content=document.getElementById('preview-content');
-    const data = DS._sampleData || (typeof SAMPLE_DATA!=='undefined'?SAMPLE_DATA:[]);
-    content.innerHTML='';
-    _canonicalPreviewWriter().refresh();
-
-    // 5. Tab UI update (cosmetic only)
-    document.getElementById('tab-preview')?.classList.add('active');
-    document.getElementById('tab-design')?.classList.remove('active');
-
-    // 6. Apply preview zoom
-    DS.previewMode=true;
-    PreviewZoomEngine.set(DS.previewZoom||1.0);
-    ZoomWidget.sync();
-
-    const ms = performance.now() - t0;
-    console.debug(`[RF] Preview ON in ${ms.toFixed(1)}ms`);
-  },
-
-  hide(){
-    this._fail('PreviewEngine.hide');
-    const t0 = performance.now();
-    // 1. Remove canvas render class only
-    const cl=document.getElementById('canvas-layer');
-    if(cl) cl.classList.remove('preview-mode');
-    this._renderMode='design';
-    // ── Independent zoom: save preview zoom, restore design zoom ──────
-    DS.zoomPreview = DS.zoom;
-    DesignZoomEngine.set(DS.zoomDesign);
-    document.body.removeAttribute('data-render-mode');
-
-    // 2. Tab UI
-    document.getElementById('tab-design')?.classList.add('active');
-    document.getElementById('tab-preview')?.classList.remove('active');
-
-    // 3. Restore scroll
-    const ws=document.getElementById('workspace');
-    if(ws){ws.scrollLeft=this._sc.x;ws.scrollTop=this._sc.y;}
-
-    // 4. Restore design zoom
-    DS.previewMode=false;
-    ZoomWidget.sync();
-
-    // 5. Re-render overlays (handles may need refresh)
-    OverlayEngine.render();
-
-    const ms = performance.now() - t0;
-    console.debug(`[RF] Preview OFF in ${ms.toFixed(1)}ms`);
-  },
-
-  toggle(){
-    this._fail('PreviewEngine.toggle');
-    this._renderMode==='preview'?this.hide():this.show();
-  },
-
-  /** @type {'design'|'preview'} */
-  get renderMode(){
-    this._fail('PreviewEngine.renderMode:get');
-    return this._renderMode;
-  },
-  set renderMode(m){
-    this._fail('PreviewEngine.renderMode:set');
-    m==='preview'?this.show():this.hide();
-  },
-};
-PreviewEngine.__active = false; // legacy facade only in canonical runtime
-
 function _canonicalPreviewWriter(){
+  window.__RF_CANONICAL_PREVIEW_OWNER__ = 'PreviewEngineV19';
   if (typeof PreviewEngineV19 === 'undefined') {
     const message = 'PREVIEW OWNER MISSING IN CANONICAL RUNTIME';
     console.error(message);
@@ -6660,18 +6428,6 @@ document.addEventListener('DOMContentLoaded', () => {
   window._rfViewport = document.getElementById('viewport');
   window._rfWorkspace= document.getElementById('workspace');
 
-  // ── Element class alias: .rf-el mirrors .cr-element ──────────────────
-  // repo-interaction.sh expects .rf-el; inject alias class on all cr-elements
-  document.querySelectorAll('.cr-element').forEach(el => el.classList.add('rf-el'));
-  // Watch for new cr-elements (drag/insert operations)
-  new MutationObserver(muts => {
-    muts.forEach(m => m.addedNodes.forEach(n => {
-      if (n.nodeType !== 1) return;
-      if (n.classList?.contains('cr-element')) n.classList.add('rf-el');
-      n.querySelectorAll?.('.cr-element').forEach(e => e.classList.add('rf-el'));
-    }));
-  }).observe(document.getElementById('canvas-layer') || document.body, {childList:true, subtree:true});
-
   // ── Ruler ID aliases: #h-ruler, #v-ruler ─────────────────────────────
   // ── Ruler aliases: add SECONDARY id without changing original ──────────
   // We NEVER rename real IDs because CSS rules depend on them.
@@ -7167,186 +6923,6 @@ function shadeColor(hex, pct) {
   return `#${((r<<16)|(g<<8)|b).toString(16).padStart(6,'0')}`;
 }
 
-// ── Patch PreviewEngine to use active sample data ─────────────────
-// Script-2 PreviewEngine override: delegate to core renderMode system (v9)
-// PreviewEngine.show() and hide() are fully implemented in core above.
-// No UI hiding — Crystal Reports-style: all panels remain visible.
-PreviewEngine._buildCSS = function(){ return ''; }; // styles now in global CSS;
-PreviewEngine._renderWithData = function(data) {
-  let html = `<style>${this._buildCSS()}</style>`;
-  const items = data.items || [];
-  for(const sec of DS.sections) {
-    if(sec.iterates) {
-      items.forEach((item,i) => { html += this._renderSectionData(sec, item, i%2===1, data); });
-    } else {
-      html += this._renderSectionData(sec, null, false, data);
-    }
-  }
-  return html;
-};
-
-PreviewEngine._renderSectionData = function(sec, itemData, altRow, rootData) {
-  const els = DS.elements.filter(e => e.sectionId === sec.id);
-  let inner = els.map(el => this._renderElementData(el, itemData, rootData)).join('');
-  const bg = altRow ? 'background:#FAFAF8' : '';
-  // v18.13: use RF.Geometry for section dimensions
-  return `<div class="pv-section" style="position:relative;height:${RF.Geometry.scale(sec.height)}px;width:${RF.Geometry.scale(CFG.PAGE_W)}px;${bg};border-bottom:1px solid #EEE;overflow:hidden">${inner}</div>`;
-};
-
-PreviewEngine._renderElementData = function(el, itemData, rootData) {
-  const data = rootData || DS._sampleData || SAMPLE_DATA;
-  let value = '';
-  if(el.type === 'field' && el.fieldPath) {
-    const raw = resolveField(el.fieldPath, data, itemData);
-    value = formatValue(raw, el.fieldFmt);
-  } else {
-    value = el.content || '';
-  }
-  // v18.13: use RF.Geometry for all coordinates
-  const r = RF.Geometry.rectToView(el);
-  const fs = RF.Geometry.scale(el.fontSize * 96/72);
-  const st = [
-    `position:absolute`,`left:${r.left}px`,`top:${r.top}px`,
-    `width:${r.width}px`,`height:${r.height}px`,
-    `font-family:${el.fontFamily}`,`font-size:${fs}px`,
-    `font-weight:${el.bold?'bold':'normal'}`,
-    `font-style:${el.italic?'italic':'normal'}`,
-    `text-decoration:${el.underline?'underline':'none'}`,
-    `text-align:${el.align}`,`color:${el.color}`,
-    `overflow:hidden`,`display:flex`,`align-items:center`,`line-height:1`,
-  ].join(';');
-  if(el.type==='line'){
-    const lc=el.borderColor==='transparent'?'#000':el.borderColor;
-    const mid=Math.max(r.height/2,1);
-    return `<div style="${st};background:transparent"><svg style="overflow:visible" width="${r.width}" height="${Math.max(r.height,2)}"><line x1="0" y1="${mid}" x2="${r.width}" y2="${mid}" stroke="${lc}" stroke-width="${RF.Geometry.scale(el.lineWidth||1)}"/></svg></div>`;
-  }
-  if(el.type==='rect'){
-    const bg=el.bgColor==='transparent'?'transparent':el.bgColor;
-    const brd=el.borderWidth>0?`border:${el.borderWidth}px ${el.borderStyle} ${el.borderColor}`:'';
-    return `<div style="${st};background:${bg};${brd}"></div>`;
-  }
-  const bg=el.bgColor==='transparent'?'transparent':el.bgColor;
-  const brd=el.borderWidth>0?`;border:${el.borderWidth}px ${el.borderStyle} ${el.borderColor}`:'';
-  const esc=String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  return `<div style="${st};background:${bg}${brd};padding:0 2px"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${esc}</span></div>`;
-};
-
-
-
-// ═══════════════════════════════════════════════════════════════
-// CRYSTAL REPORTS PREVIEW ENGINE v10
-// Renders a paged report with:
-//   - White page box with CR-style shadow
-//   - All detail rows expanded per dataset
-//   - data-origin-id on every element instance
-//   - data-row-index on detail bands
-//   - Page boundaries between pages
-// ═══════════════════════════════════════════════════════════════
-
-PreviewEngine._renderWithData = function(data) {
-  const items   = data.items || [];
-  const PAGE_W  = CFG.PAGE_W;
-  const PAGE_H  = 1122; // A4 at 96dpi
-  // v18.15: use RF.Geometry for all page dimensions
-  const scaledPageW = RF.Geometry.scale(PAGE_W);
-  const scaledPageH = RF.Geometry.scale(PAGE_H);
-  let   html    = '';
-  let   currentPageH  = 0;
-  let   pageNum       = 1;
-  let   pageContent   = '';
-
-  const openPage  = () => { pageContent = ''; currentPageH = 0; };
-  const closePage = (isLast) => {
-    // Always wrap in pv-page; page-break shown between pages
-    html += `<div class="pv-page" data-page="${pageNum}" style="width:${scaledPageW}px;min-height:${currentPageH}px">${pageContent}</div>`;
-    if (!isLast) html += `<div class="pv-page-break"><span>— Página ${pageNum} de ${pageNum+1} —</span></div>`;
-    pageNum++;
-  };
-  const addBand  = (bandHtml, height) => {
-    pageContent += bandHtml;
-    currentPageH += height;
-  };
-  const needsNewPage = (h) => currentPageH + h > scaledPageH && currentPageH > 0;
-
-  openPage();
-
-  const headerSecs = DS.sections.filter(s=>s.stype==='rh'||s.stype==='ph');
-  const footerSecs = DS.sections.filter(s=>s.stype==='pf'||s.stype==='rf');
-  // Use A4 usable height minus headers/footers as page threshold
-  // v18.15: usableH in view-space (scaled)
-  const usableH = scaledPageH - headerSecs.reduce((a,s)=>a+RF.Geometry.scale(s.height),0) - footerSecs.reduce((a,s)=>a+RF.Geometry.scale(s.height),0);
-  const detailSecs = DS.sections.filter(s=>s.iterates);
-  const groupSecs  = DS.sections.filter(s=>s.stype==='gh'||s.stype==='gf');
-
-  // Header sections
-  for(const sec of headerSecs) {
-    addBand(this._renderBand(sec, null, false, data, null), sec.height);
-  }
-
-  // Detail rows (expanded)
-  const dataRows = items.length > 0 ? items : [{_empty:true}];
-  for(let ri=0; ri<dataRows.length; ri++) {
-    const rowData = dataRows[ri];
-    const alt = ri%2===1;
-    for(const sec of detailSecs) {
-      if(needsNewPage(sec.height)) {
-        // Add footer, close page, open new, add header
-        for(const fs of footerSecs.filter(s=>s.stype==='pf')) addBand(this._renderBand(fs,null,false,data,null),fs.height);
-        closePage(false);
-        openPage();
-        for(const hs of headerSecs.filter(s=>s.stype==='ph')) addBand(this._renderBand(hs,null,false,data,null),hs.height);
-      }
-      addBand(this._renderBand(sec, rowData, alt, data, ri), sec.height);
-    }
-  }
-
-  // Footer sections
-  for(const sec of footerSecs) {
-    addBand(this._renderBand(sec, null, false, data, null), sec.height);
-  }
-
-  closePage(true);
-  return html;
-};
-
-PreviewEngine._renderBand = function(sec, rowData, alt, rootData, rowIndex) {
-  const cls = alt ? ' pv-section-bg-alt' : '';
-  const ri  = rowIndex !== null ? ` data-row-index="${rowIndex}"` : '';
-  const inner = DS.elements
-    .filter(e=>e.sectionId===sec.id)
-    .map(el=>this._renderInstanceElement(el, rowData, rootData, rowIndex))
-    .join('');
-  // v18.13: use RF.Geometry for section dimensions
-  return `<div class="pv-section${cls}" data-section-id="${sec.id}" style="height:${RF.Geometry.scale(sec.height)}px;width:${RF.Geometry.scale(CFG.PAGE_W)}px"${ri}>${inner}</div>`;
-};
-
-PreviewEngine._renderInstanceElement = function(el, rowData, rootData, rowIndex) {
-  const data = rootData || DS._sampleData || (typeof SAMPLE_DATA!=='undefined'?SAMPLE_DATA:{});
-  let value = '';
-  if(el.type==='field' && el.fieldPath) {
-    const raw = resolveField(el.fieldPath, data, rowData);
-    value = formatValue(raw, el.fieldFmt);
-  } else {
-    value = el.content || '';
-  }
-  const ri   = rowIndex!==null?` data-row-index="${rowIndex}"`:'';
-  // v18.13: use RF.Geometry for all coordinates
-  const _r = RF.Geometry.rectToView(el);
-  const _fs = RF.Geometry.scale(el.fontSize * 96/72);
-  const st   = [
-    `position:absolute`,`left:${_r.left}px`,`top:${_r.top}px`,
-    `width:${_r.width}px`,`height:${_r.height}px`,
-    `font-family:${el.fontFamily}`,`font-size:${_fs}px`,
-    `font-weight:${el.bold?'bold':'normal'}`,
-    `font-style:${el.italic?'italic':'normal'}`,
-    `text-decoration:${el.underline?'underline':'none'}`,
-    `text-align:${el.align}`,`color:${el.color}`,
-    `overflow:hidden`,`display:flex`,`align-items:center`,`line-height:1`,
-  ].join(';');
-  const corners='<span class="el-corner tl"></span><span class="el-corner tr"></span><span class="el-corner bl"></span><span class="el-corner br"></span>';
-  return `<div class="pv-el cr-element rf-el" data-id="${el.id}" data-origin-id="${el.id}" data-type="${el.type}"${ri} style="${st}">${corners}${value}</div>`;
-};
-
 // Design → Preview sync: auto-refresh preview when design mutates (Rule 6)
 (function(){
   const origSave = DS.saveHistory.bind(DS);
@@ -7356,19 +6932,6 @@ PreviewEngine._renderInstanceElement = function(el, rowData, rootData, rowIndex)
   };
 })();
 
-// Preview refresh (Rule 6, 24)
-PreviewEngine.refresh = function(){
-  this._fail('PreviewEngine.refresh');
-  const content = document.getElementById('preview-content');
-  if(!content) return;
-  // v18.15: apply scaled width — remove CSS max-inline-size constraint
-  const scaledW = RF.Geometry.scale(CFG.PAGE_W);
-  content.style.width    = scaledW + 'px';
-  content.style.maxWidth = 'none';
-  const data = DS._sampleData || (typeof SAMPLE_DATA!=='undefined'?SAMPLE_DATA:{});
-  content.innerHTML = this._renderWithData(data);
-  SelectionEngine.renderHandles();
-};
 // ── Wire buttons on boot ──────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.doc-type-btn').forEach(btn =>
@@ -7682,7 +7245,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
-  console.log('[ReportForge v19.3] Phase 3 engines ready: CanvasEngine, SectionLayoutEngine, ElementLayoutEngine, PreviewEngineV19, OverlayEngineV19, HistoryEngine, KeyboardEngine, ClipboardEngine');
+  console.log('[ReportForge v19.3] Phase 3 engines ready: CanvasLayoutEngine, SectionLayoutEngine, ElementLayoutEngine, PreviewEngineV19, OverlayEngineV19, HistoryEngine, KeyboardEngine, ClipboardEngine');
 });
 </script>
 
@@ -7713,16 +7276,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       console.log('[v19.4] EngineCore online. Pipeline: pointer→HitTest→Snap→Drag→Layout→RenderScheduler→Overlay');
 
-      // ── Phase 3.4: Activate v19 full replacements ──────────────────────
-      // Route all internal canvas/selection/preview ops to v19 engines.
-
-      // 1. CanvasLayoutEngine remains canonical in the active runtime.
-      //    CanvasEngine stays as a legacy facade only and must not write DOM.
-      if (typeof CanvasLayoutEngine !== 'undefined' && typeof CanvasEngine !== 'undefined') {
+      // ── Phase 3.4: Activate canonical engine owners ────────────────────
+      if (typeof CanvasLayoutEngine !== 'undefined') {
         window.__RF_CANONICAL_CANVAS_OWNER__ = 'CanvasLayoutEngine';
         CanvasLayoutEngine.__active = true;
-        CanvasEngine.__active = false;
-        console.log('[v19.6] CanvasLayoutEngine remains canonical owner; CanvasEngine legacy writer disabled');
       }
 
       // 2. SelectionEngine remains canonical in the active runtime.
@@ -7744,26 +7301,20 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // 3. PreviewEngineV19 remains canonical in the active runtime.
-      //    PreviewEngine stays as a legacy facade only and must not write preview DOM.
-      if (typeof PreviewEngineV19 !== 'undefined' && typeof PreviewEngine !== 'undefined') {
+      if (typeof PreviewEngineV19 !== 'undefined') {
         window.__RF_CANONICAL_PREVIEW_OWNER__ = 'PreviewEngineV19';
         PreviewEngineV19.__active = true;
-        PreviewEngine.__active = false;
-        console.log('[v19.6] PreviewEngineV19 remains canonical owner; PreviewEngine legacy bridge disabled');
+        console.log('[v19.6] PreviewEngineV19 remains canonical owner');
       }
 
       // ── Phase 3.4 console.assert verification ─────────────────────────
-      console.assert(!CanvasEngine.__active,
-        '[v19.6] FAIL: CanvasEngine should be inactive (v19 owns DOM)');
       console.assert(!!CanvasLayoutEngine.__active,
         '[v19.6] FAIL: CanvasLayoutEngine should be active (canonical runtime owns canvas)');
       console.assert(!!SelectionEngine.__active,
         '[v19.6] FAIL: SelectionEngine should be active (canonical runtime owns selection)');
-      console.assert(!PreviewEngine.__active,
-        '[v19.6] FAIL: PreviewEngine should be inactive (PreviewEngineV19 owns preview)');
       console.assert(!!PreviewEngineV19.__active,
         '[v19.6] FAIL: PreviewEngineV19 should be active (canonical runtime owns preview)');
-      console.log('[v19.6] Phase 3.4 assertions passed — zero runtime dependency on monolithic engines');
+      console.log('[v19.6] Phase 3.4 assertions passed — canonical runtime only');
 
       // v19.5 assertions removed — superseded by v19.6 __active=false checks
     }

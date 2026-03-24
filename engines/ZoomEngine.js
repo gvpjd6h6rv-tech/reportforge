@@ -9,7 +9,7 @@
  *       ↓ DesignZoomEngine._apply(z)  — DS.zoom = z, DOM updates
  *       ↓ rf:zoom-changed event
  *       ↓ GridEngine, WorkspaceScrollEngine, RulerEngine react
- *       ↓ PreviewEngine.refresh() if preview mode
+ *       ↓ canonical preview refresh if preview mode
  *
  * Architecture:
  *   ZoomEngine never reads DS.zoom directly.

@@ -1,7 +1,7 @@
 /**
- * CanvasLayoutEngine (CanvasEngineV19) — ReportForge v19.6
+ * CanvasLayoutEngine — ReportForge v19.6
  * ─────────────────────────────────────────────────────────────────
- * FULL implementation — zero dependency on monolithic CanvasEngine.
+ * FULL implementation — zero dependency on legacy canvas facades.
  * Owns:
  *   buildElementDiv()      — create element DOM node
  *   renderElement()        — insert into section

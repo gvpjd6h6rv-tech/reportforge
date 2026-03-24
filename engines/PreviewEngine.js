@@ -1,7 +1,7 @@
 /**
  * PreviewEngineV19 — ReportForge v19.6
  * ─────────────────────────────────────────────────────────────────
- * FULL implementation — zero dependency on monolithic PreviewEngine.
+ * FULL implementation — zero dependency on legacy preview facades.
  *
  * All coordinates via RF.Geometry — no raw DS.zoom.
  * Includes full HTML generation pipeline:
@@ -133,7 +133,7 @@ const PreviewEngineV19 = (() => {
       `overflow:hidden`, `display:flex`, `align-items:center`, `line-height:1`,
     ].join(';');
     const corners = '<span class="el-corner tl"></span><span class="el-corner tr"></span><span class="el-corner bl"></span><span class="el-corner br"></span>';
-    return `<div class="pv-el cr-element rf-el" data-id="${el.id}" data-origin-id="${el.id}" data-type="${el.type}"${ri} style="${st}">${corners}${value}</div>`;
+    return `<div class="pv-el cr-element" data-id="${el.id}" data-origin-id="${el.id}" data-type="${el.type}"${ri} style="${st}">${corners}${value}</div>`;
   }
 
   function _renderBand(sec, rowData, alt, rootData, rowIndex) {

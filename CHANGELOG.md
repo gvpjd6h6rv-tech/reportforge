@@ -20,8 +20,8 @@
 |---------|-------|------|
 | Selection | `SelectionEngine` (monolithic) | Owns all drag/resize/rubber-band |
 | Overlay | `OverlayEngineV19` → `RulerEngine` | Single patch on `OverlayEngine.render` |
-| Canvas | `CanvasEngine` (monolithic) | Owns `buildElementDiv` |
-| Preview | `PreviewEngine` (monolithic) | Owns HTML generation |
+| Canvas | `CanvasLayoutEngine` | Owns `buildElementDiv` |
+| Preview | `PreviewEngineV19` | Owns HTML generation |
 
 **Duplicate event handlers removed:**
 - Phase 2 `ws.addEventListener('pointermove')` → removed (EngineCore owns this)
@@ -34,8 +34,8 @@ Registry total:          37 engines
 v19 engines (21/21):     ✅ ALL
 selection owner:         ✅ SelectionEngine (monolithic)
 overlay owner:           ✅ OverlayEngineV19 → RulerEngine
-canvas owner:            ✅ CanvasEngine (monolithic)
-preview owner:           ✅ PreviewEngine (monolithic)
+canvas owner:            ✅ CanvasLayoutEngine
+preview owner:           ✅ PreviewEngineV19
 EngineCore registry-only:✅
 SelectionEngineV19 clean:✅ no addEventListener
 Snap 17→16:              ✅
@@ -62,14 +62,14 @@ HitTest:                 ✅
 ### RenderScheduler (upgraded v19.4)
 - Deduplication by string key — same task scheduled twice in one frame collapses to one call
 - Four priority queues: `LAYOUT(0) → VISUAL(1) → HANDLES(2) → POST(3)`
-- All Phase 1-3 engines migrated: GridEngine, RulerEngine, CanvasEngineV19, SectionLayoutEngine, ElementLayoutEngine → route through `RenderScheduler.layout/visual`
+- All Phase 1-3 engines migrated: GridEngine, RulerEngine, CanvasLayoutEngine, SectionLayoutEngine, ElementLayoutEngine → route through `RenderScheduler.layout/visual`
 
 ### WorkspaceScrollEngine (upgraded)
 - `adjustForZoom(prevZoom, newZoom)` — preserves visual centre on zoom change
 - Called by EngineCore before zoom is applied
 
 ### Phase 3 new engines
-- `CanvasEngineV19` — canvas-layer size management (renamed to avoid conflict with monolithic CanvasEngine)
+- `CanvasLayoutEngine` — canvas-layer size management
 - `SectionLayoutEngine` — section height/width via `RF.Geometry.scale()`
 - `ElementLayoutEngine` — sub-pixel element positioning; `moveElement()`, `resizeElement()`
 - `PreviewEngineV19` — preview facade with `RF.Geometry` metrics
@@ -93,15 +93,15 @@ HitTest:                 ✅
 Total: 37 engines registered
 
 v19 modular (21):
-  AlignmentEngine, CanvasEngineV19, ClipboardEngine, DragEngine,
+  AlignmentEngine, CanvasLayoutEngine, ClipboardEngine, DragEngine,
   ElementLayoutEngine, EngineCore, GridEngine, GuideEngine, HandlesEngine,
   HistoryEngine, HitTestEngine, KeyboardEngine, OverlayEngineV19,
   PreviewEngineV19, RenderScheduler, RulerEngine, SectionLayoutEngine,
   SelectionEngineV19, SnapEngine, WorkspaceScrollEngine, ZoomEngineV19
 
 Monolithic (16):
-  CanvasEngine, CFG, CommandEngine, DesignZoomEngine, DS, EngineRegistry,
-  FormatEngine, InsertEngine, OverlayEngine, PreviewEngine, PreviewZoomEngine,
+  CanvasLayoutEngine, CFG, CommandEngine, DesignZoomEngine, DS, EngineRegistry,
+  FormatEngine, InsertEngine, OverlayEngine, PreviewEngineV19, PreviewZoomEngine,
   PropertiesEngine, RF, SectionResizeEngine, SelectionEngine, ZoomWidget
 ```
 
@@ -176,7 +176,7 @@ DesignZoomEngine._apply(z)
          ↓ WorkspaceScrollEngine.update()  → scroll geometry updated
     ↓ calls OverlayEngine.render()
          ↓ RulerEngine.render()            → DPR-correct rulers redrawn
-    ↓ PreviewEngine.refresh() if previewMode  → preview re-rendered
+    ↓ PreviewEngineV19.refresh() if previewMode  → preview re-rendered
 ```
 
 ### Verification (5/5 zoom levels)
@@ -257,7 +257,7 @@ rectToView({x,y,w,h})         // → rect scaled to view space
 
 ### 13 call sites migrated to RF.Geometry
 
-- `CanvasEngine.buildElementDiv()`, `updateElementPosition()`
+- `CanvasLayoutEngine.buildElementDiv()`, `updateElementPosition()`
 - `SectionEngine.render()`
 - `SelectionEngine._doMove()`
 - `SectionResizeEngine.onMouseMove()` RAF
@@ -314,7 +314,7 @@ rectToView({x,y,w,h})         // → rect scaled to view space
   — preview canvas remains centered, matching Crystal Reports preview mode layout.
 - **PreviewZoomEngine:** `transformOrigin: 'top left'` (was `'top center'`) — zoom anchors
   at ruler edge, not screen center.
-- **double zoom removed:** `DesignZoomEngine.set(DS.zoomPreview)` removed from `PreviewEngine.show()`;
+- **double zoom removed:** `DesignZoomEngine.set(DS.zoomPreview)` removed from preview enter;
   `PreviewZoomEngine` is now the sole zoom engine in preview mode.
 - **canvas centering removed:** `#canvas-layer { margin-inline-end: 0 }` (was `auto`).
 

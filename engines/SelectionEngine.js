@@ -116,7 +116,7 @@ const SelectionEngineV19 = (() => {
 
   function _CE() {
     if (typeof CanvasLayoutEngine !== 'undefined') return CanvasLayoutEngine;
-    const message = 'NON-CANONICAL ENGINE WRITE BLOCKED (SelectionEngine -> CanvasEngine)';
+    const message = 'NON-CANONICAL ENGINE WRITE BLOCKED (SelectionEngine -> legacy canvas facade)';
     if (typeof console !== 'undefined' && console.error) console.error(message);
     throw new Error(message);
   }

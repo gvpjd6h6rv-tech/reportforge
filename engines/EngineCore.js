@@ -476,15 +476,11 @@ const EngineCore = (() => {
       }
     }
 
-    if (typeof CanvasEngine !== 'undefined' && CanvasEngine.__active !== false) {
-      _pushIssue(issues, 'runtime.canvas.legacy-active', 'CanvasEngine facade must remain inactive', {
-        active: CanvasEngine.__active,
-      });
+    if (typeof CanvasEngine !== 'undefined') {
+      _pushIssue(issues, 'runtime.canvas.legacy-present', 'CanvasEngine facade must not exist in canonical runtime', {});
     }
-    if (typeof PreviewEngine !== 'undefined' && PreviewEngine.__active !== false) {
-      _pushIssue(issues, 'runtime.preview.legacy-active', 'PreviewEngine facade must remain inactive', {
-        active: PreviewEngine.__active,
-      });
+    if (typeof PreviewEngine !== 'undefined') {
+      _pushIssue(issues, 'runtime.preview.legacy-present', 'PreviewEngine facade must not exist in canonical runtime', {});
     }
     if (typeof SelectionEngine !== 'undefined' && SelectionEngine.__active !== true) {
       _pushIssue(issues, 'runtime.selection.inactive', 'SelectionEngine must remain active', {

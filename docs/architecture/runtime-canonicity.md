@@ -43,11 +43,11 @@
 
 ## Bridges Keeping Coexistence Alive
 
-- `CanvasEngine -> CanvasLayoutEngine`
+- legacy canvas facade removed; canonical canvas owner is `CanvasLayoutEngine`
   - [designer/crystal-reports-designer-v4.html](/home/mimi/Escritorio/RF/designer/crystal-reports-designer-v4.html#L7669)
-- `SelectionEngine -> SelectionEngineV19`
+- alternate selection bridge removed; canonical selection owner is `SelectionEngine`
   - [designer/crystal-reports-designer-v4.html](/home/mimi/Escritorio/RF/designer/crystal-reports-designer-v4.html#L7682)
-- `PreviewEngine -> PreviewEngineV19`
+- legacy preview facade removed; canonical preview owner is `PreviewEngineV19`
   - [designer/crystal-reports-designer-v4.html](/home/mimi/Escritorio/RF/designer/crystal-reports-designer-v4.html#L7721)
 - Legacy DOM aliases and QA aliases
   - [designer/crystal-reports-designer-v4.html](/home/mimi/Escritorio/RF/designer/crystal-reports-designer-v4.html#L6462)

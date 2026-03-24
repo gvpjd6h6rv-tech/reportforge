@@ -21,7 +21,7 @@ engines/CanvasLayoutEngine.js — _applyCLSize():
   OLD: cl.style.height = `${RF.Geometry.scale(DS.getTotalHeight())}px`;
   NEW: cl.style.height = DS.sections.reduce((s,sec)=>s+RF.Geometry.scale(sec.height),0)+'px';
 
-engines/CanvasEngineV19.js — _applyCLSize():
+Legacy alternate canvas layout implementation — _applyCLSize():
   OLD: cl.style.height = `${RF.Geometry.scale(DS.getTotalHeight())}px`;
   NEW: cl.style.height = DS.sections.reduce((s,sec)=>s+RF.Geometry.scale(sec.height),0)+'px';
 

@@ -10,7 +10,7 @@ engines/CanvasLayoutEngine.js — _applyCLSize(), line 23-24:
   NEW: cl.style.minHeight = '';
        cl.style.height    = `${RF.Geometry.scale(DS.getTotalHeight())}px`;
 
-engines/CanvasEngineV19.js — _apply(), line 199:
+Legacy alternate canvas layout implementation — _apply(), line 199:
   OLD: cl.style.height = cl.style.minHeight = `${scaledH}px`;
   NEW: cl.style.minHeight = '';
        cl.style.height    = `${scaledH}px`;

@@ -89,9 +89,9 @@
 
 - Shapes actuales:
   - canonical real runtime DOM: `.cr-element[data-id][data-type]`
-  - alternate modular DOM: `.rf-el` with `id="el-${id}"`
+  - alternate modular DOM contract with independent identifiers
 - Variantes conflictivas:
-  - alias injection `.rf-el` over `.cr-element`
+  - alias injection over `.cr-element`
   - alternate selection layer names
 - Producers:
   - monolith canvas engine

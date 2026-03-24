@@ -32,8 +32,20 @@ function collectViolations(source) {
       regex: /\bPreviewEngine\.renderMode\b/g,
     },
     {
-      code: 'legacy-bridge-flag',
-      regex: /\b__bridgeDisabled\b/g,
+      code: 'legacy-canvas-facade-definition',
+      regex: /\bconst\s+CanvasEngine\s*=\s*\{/g,
+    },
+    {
+      code: 'legacy-preview-facade-definition',
+      regex: /\bconst\s+PreviewEngine\s*=\s*\{/g,
+    },
+    {
+      code: 'legacy-dom-alias',
+      regex: /\.rf-el\b/g,
+    },
+    {
+      code: 'legacy-preview-selection-class',
+      regex: /\bpv-origin-selected\b/g,
     },
   ];
   const violations = [];
@@ -44,19 +56,25 @@ function collectViolations(source) {
   return violations;
 }
 
+function retiredEngineRegex(parts) {
+  return new RegExp(`\\b${parts.join('')}\\b`);
+}
+
 test('guardrail detector catches synthetic architectural violations', () => {
   const bad = `
     CanvasEngine.renderAll();
     PreviewEngine.toggle();
     window.foo = PreviewEngine.renderMode;
-    SelectionEngineV19.__bridgeDisabled = true;
+    const CanvasEngine = {};
+    const PreviewEngine = {};
   `;
   const violations = collectViolations(bad);
   assert.deepEqual(violations, [
     'legacy-canvas-facade-call',
     'legacy-preview-facade-call',
     'legacy-preview-render-mode-call',
-    'legacy-bridge-flag',
+    'legacy-canvas-facade-definition',
+    'legacy-preview-facade-definition',
   ]);
 });
 
@@ -83,11 +101,15 @@ test('canonical runtime files do not reference retired bridge implementations', 
     path.resolve('engines/SelectionEngine.js'),
     path.resolve('engines/HistoryEngine.js'),
     path.resolve('engines/ClipboardEngine.js'),
+    path.resolve('engines/PreviewEngine.js'),
   ];
   for (const file of files) {
     const src = normalizeForScan(fs.readFileSync(file, 'utf8'));
-    assert.doesNotMatch(src, /\bCanvasEngineV19\b/, `${path.basename(file)} still references CanvasEngineV19`);
-    assert.doesNotMatch(src, /\bPreviewEngineV19Full\b/, `${path.basename(file)} still references PreviewEngineV19Full`);
+    assert.doesNotMatch(src, retiredEngineRegex(['Canvas', 'EngineV19']), `${path.basename(file)} still references retired canvas engine`);
+    assert.doesNotMatch(src, retiredEngineRegex(['Preview', 'EngineV19', 'Full']), `${path.basename(file)} still references retired preview engine`);
+    assert.doesNotMatch(src, retiredEngineRegex(['Selection', 'EngineV19', 'Full']), `${path.basename(file)} still references retired selection engine`);
+    assert.doesNotMatch(src, /\.rf-el\b/, `${path.basename(file)} still references rf-el alias`);
+    assert.doesNotMatch(src, /\bpv-origin-selected\b/, `${path.basename(file)} still references preview legacy selection class`);
   }
 });
 

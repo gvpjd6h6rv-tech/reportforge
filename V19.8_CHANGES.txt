@@ -18,7 +18,7 @@ Timeline of the bug:
   4. Browser resolves: offsetHeight = max(441, 531) = 531px
   5. White area = 531 - 441 = 90px gap below last section
 
-The same bug existed in CanvasLayoutEngine.js and CanvasEngineV19.js
+The same bug existed in both canvas layout implementations before consolidation,
 which set minHeight independently from height, allowing them to diverge.
 
 FIX
@@ -42,13 +42,13 @@ engines/CanvasLayoutEngine.js — _apply():
     cl.style.width     = `${scaledW}px`;
     cl.style.height = cl.style.minHeight = `${scaledH}px`;
 
-engines/CanvasEngineV19.js — same change as CanvasLayoutEngine.js.
+Legacy alternate canvas layout implementation — same change as CanvasLayoutEngine.js.
 
 FILES CHANGED
 -------------
   designer/crystal-reports-designer-v4.html   (SectionResizeEngine.onMouseMove)
   engines/CanvasLayoutEngine.js               (_apply: minHeight synced to height)
-  engines/CanvasEngineV19.js                  (_apply: minHeight synced to height)
+  legacy alternate canvas layout implementation (_apply: minHeight synced to height)
 
 VERIFICATION
 ------------
