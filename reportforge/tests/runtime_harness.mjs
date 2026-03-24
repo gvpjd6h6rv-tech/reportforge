@@ -267,4 +267,12 @@ export async function resizeFromHandle(page, pos, dx, dy) {
   await page.waitForTimeout(150);
 }
 
+export async function reloadRuntime(page, baseUrl) {
+  await page.goto(baseUrl, { waitUntil: 'networkidle' });
+  await page.waitForFunction(
+    () => typeof DS !== 'undefined' && Array.isArray(DS.elements) && DS.elements.length > 0,
+  );
+  await page.waitForTimeout(800);
+}
+
 export { ROOT, BASELINES_DIR, ARTIFACTS_DIR };
