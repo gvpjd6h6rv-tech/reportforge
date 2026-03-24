@@ -120,6 +120,20 @@ test('monolith no longer registers extracted global root handlers inline', () =>
   assert.match(html, /<script src="\/engines\/GlobalEventHandlers\.js"><\/script>/);
 });
 
+test('monolith no longer defines command orchestration inline', () => {
+  const html = fs.readFileSync(path.resolve('designer/crystal-reports-designer-v4.html'), 'utf8');
+  assert.doesNotMatch(html, /\bconst\s+CommandEngine\s*=\s*\{/);
+  assert.doesNotMatch(html, /\bconst\s+FileEngine\s*=\s*\{/);
+  assert.doesNotMatch(html, /\bfunction\s+handleAction\s*\(/);
+  assert.doesNotMatch(html, /\bfunction\s+switchDocType\s*\(/);
+  assert.doesNotMatch(html, /btn\.addEventListener\('click',\(\)=>handleAction\(btn\.dataset\.action\)\)/);
+  assert.doesNotMatch(html, /btn\.addEventListener\('click',\(\)=>InsertEngine\.setTool\(btn\.dataset\.tool\)\)/);
+  assert.doesNotMatch(html, /document\.getElementById\('tb-zoom'\)\?\.addEventListener\('change'/);
+  assert.doesNotMatch(html, /document\.getElementById\('tab-design'\)\?\.addEventListener\('click'/);
+  assert.doesNotMatch(html, /document\.getElementById\('tab-preview'\)\?\.addEventListener\('click'/);
+  assert.match(html, /<script src="\/engines\/CommandRuntime\.js"><\/script>/);
+});
+
 test('canonical runtime files do not reference retired bridge implementations', () => {
   const files = [
     path.resolve('designer/crystal-reports-designer-v4.html'),

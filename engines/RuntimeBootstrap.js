@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   FieldExplorerEngine.init();
   FieldExplorerEngine.setupCanvasDrop();
   MenuEngine.init();
+  initCommandBindings();
   initToolbars();
   registerGlobalEventHandlers();
   initClock();
@@ -132,15 +133,6 @@ document.addEventListener('DOMContentLoaded', () => {
       window.RF.Core[key] = val || mkStub(key);
     });
   }
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.doc-type-btn').forEach((btn) =>
-    btn.addEventListener('click', () => switchDocType(btn.dataset.doctype)));
-  DS._sampleData = SAMPLE_DATA;
-  const items = SAMPLE_DATA.items || [];
-  document.getElementById('sb-records').textContent = `Items: ${items.length}`;
-  console.log('[ReportForge] Multi-doc engine listo — 5 tipos: factura, remision, nota_credito, retencion, liquidacion');
 });
 
 document.addEventListener('DOMContentLoaded', () => {

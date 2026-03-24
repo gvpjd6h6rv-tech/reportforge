@@ -4324,251 +4324,6 @@ function _canonicalPreviewWriter(){
   return PreviewEngineV19;
 }
 // ═══════════════════════════════════════════════════════════════════
-//  COMMAND ENGINE — copy/paste/delete/select-all/alignment
-// ═══════════════════════════════════════════════════════════════════
-const CommandEngine = {
-  copy(){
-    const sel=DS.getSelectedElements();if(!sel.length)return;
-    DS.clipboard=sel.map(el=>JSON.stringify(el));
-    document.getElementById('sb-msg').textContent=`${sel.length} elemento(s) copiado(s)`;
-  },
-  cut(){
-    this.copy();this.delete();
-  },
-  paste(){
-    if(!DS.clipboard.length)return;
-    DS.clearSelectionState();
-    DS.clipboard.forEach(json=>{
-      const el=JSON.parse(json);
-      el.id=newId();el.x=DS.snap(el.x+8);el.y=DS.snap(el.y+8);
-      DS.elements.push(el);_canonicalCanvasWriter().renderElement(el);DS.addSelection(el.id);
-    });
-    SelectionEngine.renderHandles();PropertiesEngine.render();FormatEngine.updateToolbar();
-    DS.saveHistory();
-  },
-  delete(){
-    const sel=[...DS.selection];if(!sel.length)return;
-    sel.forEach(id=>{
-      DS.elements=DS.elements.filter(e=>e.id!==id);
-      const div=document.querySelector(`.cr-element[data-id="${id}"]`);if(div)div.remove();
-    });
-    DS.clearSelectionState();
-    SelectionEngine.renderHandles();PropertiesEngine.render();FormatEngine.updateToolbar();
-    DS.saveHistory();
-  },
-  selectAll(){
-    DS.clearSelectionState();
-    DS.elements.forEach(e=>DS.addSelection(e.id));
-    SelectionEngine.renderHandles();PropertiesEngine.render();FormatEngine.updateToolbar();
-  },
-  alignLefts(){
-    const sel=DS.getSelectedElements();if(sel.length<2)return;
-    const minX=Math.min(...sel.map(e=>e.x));
-    sel.forEach(e=>{DS.updateElementLayout(e.id,{x:minX});_canonicalCanvasWriter().updateElementPosition(e.id);});
-    SelectionEngine.renderHandles();DS.saveHistory();
-  },
-  alignCenters(){
-    const sel=DS.getSelectedElements();if(sel.length<2)return;
-    const c=sel.reduce((a,e)=>a+(e.x+e.w/2),0)/sel.length;
-    sel.forEach(e=>{DS.updateElementLayout(e.id,{x:DS.snap(c-e.w/2)});_canonicalCanvasWriter().updateElementPosition(e.id);});
-    SelectionEngine.renderHandles();DS.saveHistory();
-  },
-  alignRights(){
-    const sel=DS.getSelectedElements();if(sel.length<2)return;
-    const maxR=Math.max(...sel.map(e=>e.x+e.w));
-    sel.forEach(e=>{DS.updateElementLayout(e.id,{x:maxR-e.w});_canonicalCanvasWriter().updateElementPosition(e.id);});
-    SelectionEngine.renderHandles();DS.saveHistory();
-  },
-  alignTops(){
-    const sel=DS.getSelectedElements();if(sel.length<2)return;
-    const minY=Math.min(...sel.map(e=>e.y));
-    sel.forEach(e=>{DS.updateElementLayout(e.id,{y:minY});_canonicalCanvasWriter().updateElementPosition(e.id);});
-    SelectionEngine.renderHandles();DS.saveHistory();
-  },
-  alignBottoms(){
-    const sel=DS.getSelectedElements();if(sel.length<2)return;
-    const maxB=Math.max(...sel.map(e=>e.y+e.h));
-    sel.forEach(e=>{DS.updateElementLayout(e.id,{y:maxB-e.h});_canonicalCanvasWriter().updateElementPosition(e.id);});
-    SelectionEngine.renderHandles();DS.saveHistory();
-  },
-  sameWidth(){
-    const sel=DS.getSelectedElements();if(sel.length<2)return;
-    const ref=sel[0];
-    sel.slice(1).forEach(e=>{DS.updateElementLayout(e.id,{w:ref.w});_canonicalCanvasWriter().updateElementPosition(e.id);});
-    SelectionEngine.renderHandles();DS.saveHistory();
-  },
-  sameHeight(){
-    const sel=DS.getSelectedElements();if(sel.length<2)return;
-    const ref=sel[0];
-    sel.slice(1).forEach(e=>{DS.updateElementLayout(e.id,{h:ref.h});_canonicalCanvasWriter().updateElementPosition(e.id);});
-    SelectionEngine.renderHandles();DS.saveHistory();
-  },
-  bringFront(){
-    const sel=DS.getSelectedElements();if(!sel.length)return;
-    const maxZ=Math.max(0,...DS.elements.map(e=>e.zIndex||0));
-    sel.forEach(e=>{e.zIndex=maxZ+1;_canonicalCanvasWriter().updateElement(e.id);});DS.saveHistory();
-  },
-  sendBack(){
-    const sel=DS.getSelectedElements();if(!sel.length)return;
-    const minZ=Math.min(0,...DS.elements.map(e=>e.zIndex||0));
-    sel.forEach(e=>{e.zIndex=minZ-1;_canonicalCanvasWriter().updateElement(e.id);});DS.saveHistory();
-  },
-  // ── Phase 32: 23 missing commands ────────────────────────────────
-  bringForward(){
-    const sel=DS.getSelectedElements();if(!sel.length)return;
-    sel.forEach(e=>{e.zIndex=(e.zIndex||0)+1;_canonicalCanvasWriter().updateElement(e.id);});DS.saveHistory();
-    document.getElementById('sb-msg')&&(document.getElementById('sb-msg').textContent='Traer adelante');
-  },
-  sendBackward(){
-    const sel=DS.getSelectedElements();if(!sel.length)return;
-    sel.forEach(e=>{e.zIndex=(e.zIndex||0)-1;_canonicalCanvasWriter().updateElement(e.id);});DS.saveHistory();
-    document.getElementById('sb-msg')&&(document.getElementById('sb-msg').textContent='Enviar atrás');
-  },
-  group(){
-    const sel=DS.getSelectedElements();if(sel.length<2)return;
-    // Group: store group membership on elements
-    const gid='grp-'+Date.now();
-    sel.forEach(e=>{e.groupId=gid;});
-    DS.saveHistory();
-    document.getElementById('sb-msg')&&(document.getElementById('sb-msg').textContent='Agrupado ('+sel.length+' objetos)');
-  },
-  ungroup(){
-    const sel=DS.getSelectedElements();if(!sel.length)return;
-    sel.forEach(e=>{delete e.groupId;});
-    DS.saveHistory();
-    document.getElementById('sb-msg')&&(document.getElementById('sb-msg').textContent='Desagrupado');
-  },
-  invertSelection(){
-    const allIds=new Set(DS.elements.map(e=>e.id));
-    const curSel=new Set(DS.selection);
-    DS.clearSelectionState();
-    allIds.forEach(id=>{ if(!curSel.has(id)) DS.addSelection(id); });
-    SelectionEngine.renderHandles&&SelectionEngine.renderHandles();
-    document.getElementById('sb-msg')&&(document.getElementById('sb-msg').textContent='Selección invertida');
-  },
-  zoomFitPage(){
-    // Phase 6: screenX = canvasX + docX * zoom
-    const ws=document.getElementById('workspace');
-    if(!ws)return;
-    const lay=computeLayout();
-    const totalH=DS.getTotalHeight(), pageW=CFG.PAGE_W;
-    const availW=ws.clientWidth  - lay.rulerWidth  - 32;
-    const availH=ws.clientHeight - lay.rulerHeight - 32;
-    const scaleW=availW/pageW;
-    const scaleH=availH/Math.max(totalH,100);
-    DesignZoomEngine.setFree(Math.min(scaleW,scaleH));
-    document.getElementById('sb-msg')&&(document.getElementById('sb-msg').textContent='Ajustar página');
-  },
-  zoomFitWidth(){
-    // Phase 6: fit canvas width to available workspace
-    const ws=document.getElementById('workspace');
-    if(!ws)return;
-    const lay=computeLayout();
-    const availW=ws.clientWidth - lay.rulerWidth - 32;
-    DesignZoomEngine.setFree(availW/CFG.PAGE_W);
-    document.getElementById('sb-msg')&&(document.getElementById('sb-msg').textContent='Ajustar ancho');
-  },
-  addHGuide(){
-    const ws=document.getElementById('workspace');
-    const overlay=document.getElementById('guide-layer');
-    if(!overlay||!ws)return;
-    const y=(ws.scrollTop+(ws.clientHeight/2));
-    const g=document.createElement('div');
-    g.className='rf-guide rf-guide-h user-guide';
-    g.style.cssText='position:absolute;top:'+Math.round(y)+'px;left:0;width:100%;height:1px;background:#0080ff;opacity:0.6;pointer-events:none;';
-    overlay.appendChild(g);
-    document.getElementById('sb-msg')&&(document.getElementById('sb-msg').textContent='Guía horizontal añadida');
-  },
-  addVGuide(){
-    const ws=document.getElementById('workspace');
-    const overlay=document.getElementById('guide-layer');
-    if(!overlay||!ws)return;
-    const x=(ws.scrollLeft+(ws.clientWidth/2));
-    const g=document.createElement('div');
-    g.className='rf-guide rf-guide-v user-guide';
-    g.style.cssText='position:absolute;left:'+Math.round(x)+'px;top:0;width:1px;height:100%;background:#0080ff;opacity:0.6;pointer-events:none;';
-    overlay.appendChild(g);
-    document.getElementById('sb-msg')&&(document.getElementById('sb-msg').textContent='Guía vertical añadida');
-  },
-  removeGuide(){
-    const guides=document.querySelectorAll('.user-guide');
-    if(guides.length>0){guides[guides.length-1].remove();}
-    document.getElementById('sb-msg')&&(document.getElementById('sb-msg').textContent='Guía eliminada');
-  },
-  insertSection(){
-    // Insert a new Detail section after the current selection's section, or at end
-    const sel=DS.selection.size>0?[...DS.selection][0]:null;
-    const el=sel?DS.getElementById(sel):null;
-    const afterId=el?el.sectionId:DS.sections[DS.sections.length-1]?.id;
-    const afterIdx=DS.sections.findIndex(s=>s.id===afterId);
-    const newId='s-det-'+Date.now();
-    const newSec={id:newId, stype:'det', label:'Detalle', abbr:'D', height:20, visible:true};
-    DS.sections.splice(afterIdx+1, 0, newSec);
-    DS.saveHistory(); _canonicalCanvasWriter().renderAll();
-    document.getElementById('sb-msg')&&(document.getElementById('sb-msg').textContent='Sección insertada: '+newSec.label);
-  },
-  deleteSection(){
-    const sel=DS.selection.size>0?[...DS.selection][0]:null;
-    const el=sel?DS.getElementById(sel):null;
-    const secId=el?el.sectionId:DS.sections[DS.sections.length-1]?.id;
-    const sec=DS.sections.find(s=>s.id===secId);
-    if(!sec||DS.sections.length<=1){document.getElementById('sb-msg')&&(document.getElementById('sb-msg').textContent='No se puede eliminar la última sección');return;}
-    // Remove elements in this section
-    DS.elements=DS.elements.filter(e=>e.sectionId!==secId);
-    DS.sections=DS.sections.filter(s=>s.id!==secId);
-    DS.saveHistory();_canonicalCanvasWriter().renderAll();
-    document.getElementById('sb-msg')&&(document.getElementById('sb-msg').textContent='Sección eliminada');
-  },
-  moveSectionUp(){
-    const secId=DS.sections[1]?.id;
-    if(!secId)return;
-    const idx=DS.sections.findIndex(s=>s.id===secId);
-    if(idx>0){[DS.sections[idx-1],DS.sections[idx]]=[DS.sections[idx],DS.sections[idx-1]];}
-    DS.saveHistory();_canonicalCanvasWriter().renderAll();
-    document.getElementById('sb-msg')&&(document.getElementById('sb-msg').textContent='Sección movida arriba');
-  },
-  moveSectionDown(){
-    const idx=1;
-    if(idx<DS.sections.length-1){[DS.sections[idx],DS.sections[idx+1]]=[DS.sections[idx+1],DS.sections[idx]];}
-    DS.saveHistory();_canonicalCanvasWriter().renderAll();
-    document.getElementById('sb-msg')&&(document.getElementById('sb-msg').textContent='Sección movida abajo');
-  },
-  renameSection(){
-    const sec=DS.sections[0];if(!sec)return;
-    const name=prompt('Nombre de sección:',sec.label||sec.stype||sec.id);
-    if(name){sec.label=name;DS.saveHistory();_canonicalCanvasWriter().renderAll();}
-  },
-  lockObject(){
-    DS.getSelectedElements().forEach(e=>{e.locked=true;});
-    DS.saveHistory();_canonicalCanvasWriter().renderAll();
-    document.getElementById('sb-msg')&&(document.getElementById('sb-msg').textContent='Objeto(s) bloqueado(s)');
-  },
-  unlockObject(){
-    DS.getSelectedElements().forEach(e=>{delete e.locked;});
-    DS.saveHistory();_canonicalCanvasWriter().renderAll();
-    document.getElementById('sb-msg')&&(document.getElementById('sb-msg').textContent='Objeto(s) desbloqueado(s)');
-  },
-  hideObject(){
-    DS.getSelectedElements().forEach(e=>{e.hidden=true;_canonicalCanvasWriter().updateElement(e.id);});
-    DS.saveHistory();
-    document.getElementById('sb-msg')&&(document.getElementById('sb-msg').textContent='Objeto(s) oculto(s)');
-  },
-  showObject(){
-    DS.getSelectedElements().forEach(e=>{delete e.hidden;_canonicalCanvasWriter().updateElement(e.id);});
-    DS.saveHistory();
-    document.getElementById('sb-msg')&&(document.getElementById('sb-msg').textContent='Objeto(s) visible(s)');
-  },
-  // Section visibility (Phase 4)
-  toggleSectionVisibility(sectionId){
-    const sec=DS.sections.find(s=>s.id===sectionId);
-    if(!sec) return;
-    sec.visible = !sec.visible;
-    DS.saveHistory(); _canonicalCanvasWriter().renderAll();
-    document.getElementById('sb-msg')&&(document.getElementById('sb-msg').textContent=`Sección ${sec.label}: ${sec.visible?'visible':'oculta'}`);
-  },
-};
-
-// ═══════════════════════════════════════════════════════════════════
 //  CONTEXT MENU ENGINE
 // ═══════════════════════════════════════════════════════════════════
 const ContextMenuEngine = {
@@ -4820,62 +4575,6 @@ const ZoomWidget={
 
 const ZoomEngine={set(z){DesignZoomEngine.set(z);},get(){return DesignZoomEngine.get();},step(d){d>0?DesignZoomEngine.zoomIn():DesignZoomEngine.zoomOut();}};
 // ═══════════════════════════════════════════════════════════════════
-//  SAVE / LOAD / EXPORT
-// ═══════════════════════════════════════════════════════════════════
-const FileEngine = {
-  toJSON(){
-    return JSON.stringify({
-      name:'Factura Electrónica',version:'1.0',
-      pageWidth:CFG.PAGE_W,
-      sections:DS.sections.map(s=>({...s})),
-      elements:DS.elements.map(e=>({...e})),
-      savedAt:new Date().toISOString(),
-    },null,2);
-  },
-  save(){
-    const name=prompt('Nombre del reporte:','Factura Electrónica')||'reporte';
-    const safe=name.replace(/[^a-zA-Z0-9-_ ]/g,'').trim()||'reporte';
-    const key=`rfd_${safe}`;
-    try{localStorage.setItem(key,this.toJSON());document.getElementById('sb-msg').textContent=`✓ Guardado: ${safe}`;}
-    catch(e){alert('No se pudo guardar en localStorage. Descarga el JSON en su lugar.');this.exportJSON();}
-  },
-  load(){
-    const keys=Object.keys(localStorage).filter(k=>k.startsWith('rfd_'));
-    if(!keys.length){alert('No hay reportes guardados.');return;}
-    const choice=prompt('Reportes guardados:\n'+keys.map(k=>k.replace('rfd_','')).join('\n')+'\n\nEscribe el nombre:');
-    if(!choice)return;
-    const data=localStorage.getItem('rfd_'+choice)||localStorage.getItem(choice);
-    if(!data){alert('No encontrado.');return;}
-    try{
-      const parsed=JSON.parse(data);
-      DS.sections=parsed.sections;DS.elements=parsed.elements;
-      DS.clearSelectionState();
-      SectionEngine.render();SelectionEngine.clearSelection();
-      document.getElementById('sb-msg').textContent=`✓ Abierto: ${choice}`;
-    }catch(e){alert('Error al cargar: '+e.message);}
-  },
-  exportJSON(){
-    const blob=new Blob([this.toJSON()],{type:'application/json'});
-    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-    a.download='factura.rfd.json';a.click();URL.revokeObjectURL(a.href);
-    document.getElementById('sb-msg').textContent='✓ JSON exportado';
-  },
-  importJSON(file){
-    const reader=new FileReader();
-    reader.onload=e=>{
-      try{
-        const data=JSON.parse(e.target.result);
-        DS.sections=data.sections;DS.elements=data.elements;
-        DS.clearSelectionState();SectionEngine.render();
-        SelectionEngine.clearSelection();
-        document.getElementById('sb-msg').textContent='✓ Diseño importado';
-      }catch(err){alert('Error: '+err.message);}
-    };
-    reader.readAsText(file);
-  },
-};
-
-// ═══════════════════════════════════════════════════════════════════
 //  CANVAS POSITION HELPER
 // ═══════════════════════════════════════════════════════════════════
 function getCanvasPos(e){
@@ -4883,125 +4582,6 @@ function getCanvasPos(e){
     return { x: e.model.x, y: e.model.y };
   }
   return RF.Geometry.toCanvasSpace(e.clientX, e.clientY);
-}
-
-// ═══════════════════════════════════════════════════════════════════
-//  CENTRAL ACTION DISPATCHER
-// ═══════════════════════════════════════════════════════════════════
-function handleAction(action){
-  if(!action)return;
-  switch(action){
-    case 'new':if(confirm('¿Nuevo reporte? Se perderán los cambios no guardados.')){
-      DS.elements=[];DS.sections.forEach(s=>{if(s.stype==='det')s.height=14;else s.height=60;});
-      DS.clearSelectionState();SectionEngine.render();SelectionEngine.clearSelection();
-      DS.saveHistory();
-    }break;
-    case 'open': FileEngine.load(); break;
-    case 'save': FileEngine.save(); break;
-    case 'save-as': FileEngine.exportJSON(); break;
-    case 'export-json': FileEngine.exportJSON(); break;
-    case 'export-pdf':
-      document.getElementById('sb-msg').textContent='PDF: instala WeasyPrint y usa el CLI: python -m core.render.cli generate -d 20482';
-      break;
-    case 'quit': if(confirm('¿Cerrar ReportForge?'))window.close();break;
-    case 'undo': DS.undo();SectionEngine.render();SelectionEngine.clearSelection();break;
-    case 'redo': DS.redo();SectionEngine.render();SelectionEngine.clearSelection();break;
-    case 'cut': CommandEngine.cut();break;
-    case 'copy': CommandEngine.copy();break;
-    case 'paste': CommandEngine.paste();break;
-    case 'delete': CommandEngine.delete();break;
-    case 'select-all': CommandEngine.selectAll();break;
-    case 'align-lefts': CommandEngine.alignLefts();break;
-    case 'align-centers': CommandEngine.alignCenters();break;
-    case 'align-rights': CommandEngine.alignRights();break;
-    case 'align-tops': CommandEngine.alignTops();break;
-    case 'align-bottoms': CommandEngine.alignBottoms();break;
-    case 'same-width': CommandEngine.sameWidth();break;
-    case 'same-height': CommandEngine.sameHeight();break;
-    case 'bring-front': CommandEngine.bringFront();break;
-    case 'send-back': CommandEngine.sendBack();break;
-    case 'zoom-in': ZoomEngine.step(1);break;
-    case 'zoom-out': ZoomEngine.step(-1);break;
-    case 'zoom-100': ZoomEngine.set(1.0);break;
-    case 'preview': _canonicalPreviewWriter().toggle();break;
-    // ── Phase 32: missing commands implemented ───────────────────
-    // ORDER
-    case 'bring-forward': CommandEngine.bringForward&&CommandEngine.bringForward();break;
-    case 'send-backward': CommandEngine.sendBackward&&CommandEngine.sendBackward();break;
-    // GROUPING
-    case 'group': CommandEngine.group&&CommandEngine.group();break;
-    case 'ungroup': CommandEngine.ungroup&&CommandEngine.ungroup();break;
-    // SELECTION
-    case 'invert-selection': CommandEngine.invertSelection&&CommandEngine.invertSelection();break;
-    case 'deselect-all': DS.clearSelectionState();SelectionEngine.renderHandles&&SelectionEngine.renderHandles();break;
-    // ZOOM
-    case 'zoom-fit-page': CommandEngine.zoomFitPage&&CommandEngine.zoomFitPage();break;
-    case 'zoom-fit-width': CommandEngine.zoomFitWidth&&CommandEngine.zoomFitWidth();break;
-    // GUIDES
-    case 'add-horizontal-guide': CommandEngine.addHGuide&&CommandEngine.addHGuide();break;
-    case 'add-vertical-guide': CommandEngine.addVGuide&&CommandEngine.addVGuide();break;
-    case 'remove-guide': CommandEngine.removeGuide&&CommandEngine.removeGuide();break;
-    case 'clear-guides': AlignmentGuides&&AlignmentGuides.clear();break;
-    // MARGINS (stub — opens page setup)
-    case 'set-margin-left':
-      { const v=parseInt(prompt('Margen izquierdo (px):', DS.pageMarginLeft||0));
-        if(!isNaN(v)){DS.pageMarginLeft=Math.max(0,v);applyLayout&&applyLayout();DS.saveHistory();}
-      } break;
-    case 'set-margin-right':
-      document.getElementById('sb-msg')&&(document.getElementById('sb-msg').textContent='Margen derecho: use Configurar página');break;
-    case 'set-margin-top':
-      { const v=parseInt(prompt('Margen superior (px):', DS.pageMarginTop||0));
-        if(!isNaN(v)){DS.pageMarginTop=Math.max(0,v);applyLayout&&applyLayout();DS.saveHistory();}
-      } break;
-    case 'set-margin-bottom':
-      document.getElementById('sb-msg')&&(document.getElementById('sb-msg').textContent='Margen inferior: use Configurar página');break;
-    // SECTIONS
-    case 'insert-section': CommandEngine.insertSection&&CommandEngine.insertSection();break;
-    case 'delete-section': CommandEngine.deleteSection&&CommandEngine.deleteSection();break;
-    case 'move-section-up': CommandEngine.moveSectionUp&&CommandEngine.moveSectionUp();break;
-    case 'move-section-down': CommandEngine.moveSectionDown&&CommandEngine.moveSectionDown();break;
-    case 'rename-section': CommandEngine.renameSection&&CommandEngine.renameSection();break;
-    // OBJECT PROPERTIES
-    case 'lock-object': CommandEngine.lockObject&&CommandEngine.lockObject();break;
-    case 'unlock-object': CommandEngine.unlockObject&&CommandEngine.unlockObject();break;
-    case 'hide-object': CommandEngine.hideObject&&CommandEngine.hideObject();break;
-    case 'show-object': CommandEngine.showObject&&CommandEngine.showObject();break;
-    case 'toggle-grid':
-      DS.gridVisible=!DS.gridVisible;
-      document.getElementById('grid-overlay').classList.toggle('hidden',!DS.gridVisible);
-      document.getElementById('btn-grid').classList.toggle('active',DS.gridVisible);
-      break;
-    case 'toggle-snap':
-      DS.snapToGrid=!DS.snapToGrid;
-      document.getElementById('btn-snap').classList.toggle('active',DS.snapToGrid);
-      break;
-    case 'insert-text': InsertEngine.setTool('text');break;
-    case 'insert-field': InsertEngine.setTool('field');break;
-    case 'insert-line': InsertEngine.setTool('line');break;
-    case 'insert-box': InsertEngine.setTool('box');break;
-    case 'format-field':
-      if(DS.selection.size>0) PropertiesEngine.render();
-      document.getElementById('panel-right').scrollTop=9999;
-      break;
-    case 'refresh': document.getElementById('sb-msg').textContent='Datos actualizados';break;
-    case 'color-font':{
-      const cp=document.getElementById('color-picker-font');
-      const sel=DS.getSelectedElements();
-      cp.value=sel.length?sel[0].color:'#000000';cp.click();
-      cp.oninput=e=>{FormatEngine.applyFormat('color',e.target.value);
-        document.documentElement.style.setProperty('--swatch-font', e.target.value);};
-      }break;
-    case 'color-bg':{
-      const cp=document.getElementById('color-picker-bg');cp.value='#ffffff';cp.click();
-      cp.oninput=e=>{FormatEngine.applyFormat('bgColor',e.target.value);
-        document.documentElement.style.setProperty('--swatch-bg', e.target.value);};
-      }break;
-    case 'color-border':{
-      const cp=document.getElementById('color-picker-border');cp.value='#000000';cp.click();
-      cp.oninput=e=>{FormatEngine.applyFormat('borderColor',e.target.value);
-        document.documentElement.style.setProperty('--swatch-border', e.target.value);};
-      }break;
-  }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -5017,14 +4597,6 @@ function initKeyboard_DISABLED_v19(){
 //  TOOLBAR WIRING
 // ═══════════════════════════════════════════════════════════════════
 function initToolbars(){
-  // Action buttons
-  document.querySelectorAll('[data-action]').forEach(btn=>{
-    btn.addEventListener('click',()=>handleAction(btn.dataset.action));
-  });
-  // Tool buttons
-  document.querySelectorAll('[data-tool]').forEach(btn=>{
-    btn.addEventListener('click',()=>InsertEngine.setTool(btn.dataset.tool));
-  });
   // Format buttons
   document.querySelectorAll('[data-format]').forEach(btn=>{
     btn.addEventListener('click',()=>{
@@ -5041,13 +4613,6 @@ function initToolbars(){
   document.getElementById('tb-font-size')?.addEventListener('change',e=>{
     FormatEngine.applyFormat('fontSize',parseInt(e.target.value));
   });
-  // Zoom select
-  document.getElementById('tb-zoom')?.addEventListener('change',e=>{
-    ZoomEngine.set(parseFloat(e.target.value)/100);
-  });
-  // Sub-tabs
-  document.getElementById('tab-design')?.addEventListener('click',()=>_canonicalPreviewWriter().hide());
-  document.getElementById('tab-preview')?.addEventListener('click',()=>_canonicalPreviewWriter().show());
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -6431,72 +5996,6 @@ window.resolveField = function(path, data, itemData) {
 };
 
 // ── switchDocType ─────────────────────────────────────────────────
-function switchDocType(key) {
-  if(!(key in DOC_TYPES)) return;
-  const dt = DOC_TYPES[key];
-  const prev = DS._docType;
-  DS._docType = key;
-
-  // Buttons
-  document.querySelectorAll('.doc-type-btn').forEach(btn =>
-    btn.classList.toggle('active', btn.dataset.doctype === key));
-
-  // Titlebar color
-  const tb = document.getElementById('titlebar');
-  if(tb) tb.style.background =
-    `linear-gradient(180deg,${shadeColor(dt.color,20)} 0%,${dt.color} 60%,${shadeColor(dt.color,-10)} 100%)`;
-
-  // Properties panel color
-  const pt = document.getElementById('props-title');
-  if(pt) pt.style.background =
-    `linear-gradient(180deg,${shadeColor(dt.color,30)},${dt.color})`;
-
-  // Field tree
-  FieldExplorerEngine._activeTree = dt.fieldTree || FIELD_TREE;
-  const oldRender = FieldExplorerEngine.render.bind(FieldExplorerEngine);
-  FieldExplorerEngine.render = function(){
-    const tree = this._activeTree || FIELD_TREE;
-    const treeEl = document.getElementById('field-tree');
-    treeEl.innerHTML = '';
-    Object.entries(tree).forEach(([k,node]) => treeEl.appendChild(this._buildNode(k,node,0)));
-  };
-  FieldExplorerEngine.render();
-
-  // Sample data
-  DS._sampleData = dt.sampleData || SAMPLE_DATA;
-
-  // Reset canvas if switching type
-  if(prev !== key) {
-    if(DS.elements.length > 0 &&
-       !confirm(`¿Cambiar a "${dt.label}"?\nSe cargará el layout de secciones para este tipo.\n(Los elementos del canvas se borrarán)`))
-    { // Revert
-      DS._docType = prev;
-      document.querySelectorAll('.doc-type-btn').forEach(btn =>
-        btn.classList.toggle('active', btn.dataset.doctype === prev));
-      return;
-    }
-    DS.sections = dt.defaultSections.map(s=>({...s}));
-    DS.elements = [];
-    DS.clearSelectionState();
-    SectionEngine.render();
-    SelectionEngine.clearSelection();
-    DS.saveHistory();
-  }
-
-  // Titlebar text
-  const tt = document.getElementById('titlebar-text');
-  if(tt) tt.textContent =
-    `SAP Crystal Reports — [${dt.label} — Nuevo reporte (SRI ${dt.sriCode})]`;
-
-  // Status bar
-  const items = DS._sampleData?.items || [];
-  document.getElementById('sb-msg').textContent =
-    `Tipo "${dt.label}" activado — SRI ${dt.sriCode} — Arrastra campos del Explorador al canvas`;
-  document.getElementById('sb-records').textContent = `Items: ${items.length}`;
-
-  console.log(`[ReportForge] Doc type → ${key} (${dt.label}) SRI:${dt.sriCode}`);
-}
-
 function shadeColor(hex, pct) {
   // Lighten/darken a hex color
   const n = parseInt(hex.slice(1), 16);
@@ -6506,16 +6005,6 @@ function shadeColor(hex, pct) {
   return `#${((r<<16)|(g<<8)|b).toString(16).padStart(6,'0')}`;
 }
 
-// Design → Preview sync: auto-refresh preview when design mutates (Rule 6)
-(function(){
-  const origSave = DS.saveHistory.bind(DS);
-  DS.saveHistory = function(){
-    origSave();
-    if(DS.previewMode) _canonicalPreviewWriter().refresh();
-  };
-})();
-
-// ── Wire buttons on boot ──────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════
 //  RUNTIME GEOMETRY PROBES — window.__rfVerify()
 //  Uses RF.Geometry as single source of truth.
@@ -6584,6 +6073,7 @@ window.__rfVerify = function(){
 <script src="/engines/SnapEngine.js"></script>
 <script src="/engines/RulerEngine.js"></script>
 <script src="/engines/GlobalEventHandlers.js"></script>
+<script src="/engines/CommandRuntime.js"></script>
 <script src="/engines/RuntimeBootstrap.js"></script>
 <script>
 </script>
