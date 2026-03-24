@@ -19,6 +19,27 @@ const PreviewEngineV19 = (() => {
   let _sc = { x: 0, y: 0 };
   let _active = false;
 
+  function _contracts() {
+    return (typeof ContractGuards !== 'undefined' && ContractGuards)
+      || (typeof window !== 'undefined' ? window.RFContractGuards : null)
+      || null;
+  }
+
+  function _assertSelectionState(source) {
+    const guards = _contracts();
+    if (guards && typeof DS !== 'undefined') guards.assertSelectionState(DS.selection, source);
+  }
+
+  function _assertLayoutContract(el, source) {
+    const guards = _contracts();
+    if (guards && el) guards.assertLayoutContract(el, source);
+  }
+
+  function _assertZoomContract(value, source) {
+    const guards = _contracts();
+    if (guards) guards.assertZoomContract(value, source);
+  }
+
   // ── Helpers (replicate HTML helpers) ─────────────────────────────
   function _resolveField(path, data, itemData) {
     if (!path) return '';
@@ -39,6 +60,7 @@ const PreviewEngineV19 = (() => {
 
   // ── Element rendering ─────────────────────────────────────────────
   function _renderElementData(el, itemData, rootData) {
+    _assertLayoutContract(el, 'PreviewEngineV19._renderElementData');
     const data = rootData || (typeof DS !== 'undefined' && DS._sampleData) ||
                  (typeof SAMPLE_DATA !== 'undefined' ? SAMPLE_DATA : {});
     let value = '';
@@ -83,6 +105,7 @@ const PreviewEngineV19 = (() => {
   }
 
   function _renderInstanceElement(el, rowData, rootData, rowIndex) {
+    _assertLayoutContract(el, 'PreviewEngineV19._renderInstanceElement');
     const data = rootData || (typeof DS !== 'undefined' && DS._sampleData) ||
                  (typeof SAMPLE_DATA !== 'undefined' ? SAMPLE_DATA : {});
     let value = '';
@@ -182,6 +205,7 @@ const PreviewEngineV19 = (() => {
 
   // ── Show / Hide / Refresh ────────────────────────────────────────
   function show() {
+    _assertZoomContract(DS.zoom, 'PreviewEngineV19.show.zoom');
     const t0  = performance.now();
     const ws  = document.getElementById('workspace');
     if (ws) _sc = { x: ws.scrollLeft, y: ws.scrollTop };
@@ -208,6 +232,7 @@ const PreviewEngineV19 = (() => {
   }
 
   function hide() {
+    _assertZoomContract(DS.zoom, 'PreviewEngineV19.hide.zoom');
     const t0 = performance.now();
     const applyDesignChrome = () => {
       const cl = document.getElementById('canvas-layer');
@@ -234,6 +259,8 @@ const PreviewEngineV19 = (() => {
   }
 
   function refresh() {
+    _assertSelectionState('PreviewEngineV19.refresh.selection');
+    _assertZoomContract(DS.zoom, 'PreviewEngineV19.refresh.zoom');
     if (typeof RenderScheduler !== 'undefined' && !RenderScheduler.allowsDomWrite()) {
       RenderScheduler.post(() => refresh(), 'PreviewEngineV19.refresh');
       return;

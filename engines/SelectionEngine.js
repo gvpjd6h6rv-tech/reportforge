@@ -23,6 +23,32 @@ const SelectionEngineV19 = (() => {
   let _drag = null;
   let _lastRenderHandlesSignature = null;
 
+  function _contracts() {
+    return (typeof ContractGuards !== 'undefined' && ContractGuards)
+      || (typeof window !== 'undefined' ? window.RFContractGuards : null)
+      || null;
+  }
+
+  function _assertSelectionState(source) {
+    const guards = _contracts();
+    if (guards && typeof DS !== 'undefined') guards.assertSelectionState(DS.selection, source);
+  }
+
+  function _assertLayoutContract(el, source) {
+    const guards = _contracts();
+    if (guards && el) guards.assertLayoutContract(el, source);
+  }
+
+  function _assertRectShape(rect, source) {
+    const guards = _contracts();
+    if (guards && rect) guards.assertRectShape(rect, source);
+  }
+
+  function _assertZoomContract(source) {
+    const guards = _contracts();
+    if (guards && typeof DS !== 'undefined') guards.assertZoomContract(DS.zoom, source);
+  }
+
   function _assertBridgeInactive(method) {
     if (typeof window !== 'undefined' && window.__RF_CANONICAL_SELECTION_OWNER__ === 'SelectionEngine') {
       const message = `SELECTION BRIDGE SHOULD NOT BE ACTIVE IN CANONICAL RUNTIME (${method})`;
@@ -114,6 +140,7 @@ const SelectionEngineV19 = (() => {
   // ── renderHandles ────────────────────────────────────────────────
   function renderHandles() {
     _assertBridgeInactive('renderHandles');
+    _assertSelectionState('SelectionEngine.renderHandles.selection');
     RF.Geometry.invalidate();
     const layer = document.getElementById('handles-layer');
     if (!layer) {
@@ -142,10 +169,13 @@ const SelectionEngineV19 = (() => {
       const id  = [...DS.selection][0];
       const el  = DS.getElementById(id);
       if (!el) return;
+      _assertLayoutContract(el, 'SelectionEngine.renderHandles.layout');
       const elDiv = document.querySelector(`.cr-element[data-id="${id}"]`);
       const gr  = RF.Geometry.elementRect(elDiv);
       let absX, absY, absW, absH;
       if (gr) {
+        _assertRectShape(gr, 'SelectionEngine.renderHandles.rect');
+        _assertZoomContract('SelectionEngine.renderHandles.zoom');
         const zoom = (typeof DS !== 'undefined' ? DS.zoom : 1) || 1;
         absX = gr.left * zoom;
         absY = gr.top  * zoom;
@@ -211,6 +241,7 @@ const SelectionEngineV19 = (() => {
       // Multi-selection: show bounding box only
       let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
       DS.getSelectedElements().forEach(el => {
+        _assertLayoutContract(el, 'SelectionEngine.renderHandles.multi');
         const st = DS.getSectionTop(el.sectionId);
         const vx = RF.Geometry.scale(el.x);
         const vy = RF.Geometry.scale(st + el.y);

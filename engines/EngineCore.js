@@ -172,6 +172,72 @@ const EngineCore = (() => {
     return Number.isFinite(n) ? n : 0;
   }
 
+  function _contractFailure(kind, source, detail) {
+    const message = `${kind} (${source})`;
+    if (typeof console !== 'undefined' && console.error) console.error(message, detail || null);
+    throw new Error(message);
+  }
+
+  function _assertRectShape(rect, source = 'unknown') {
+    if (!rect || typeof rect !== 'object') {
+      return _contractFailure('INVALID RECT SHAPE', source, rect);
+    }
+    const keys = ['left', 'top', 'width', 'height'];
+    for (const key of keys) {
+      if (typeof rect[key] !== 'number' || !Number.isFinite(rect[key])) {
+        return _contractFailure('INVALID RECT SHAPE', source, rect);
+      }
+    }
+    if ('x' in rect || 'y' in rect || 'w' in rect || 'h' in rect) {
+      return _contractFailure('INVALID RECT SHAPE', source, rect);
+    }
+    return rect;
+  }
+
+  function _assertSelectionState(selection, source = 'unknown') {
+    if (!(selection instanceof Set)) {
+      return _contractFailure('INVALID SELECTION STATE', source, selection);
+    }
+    for (const id of selection) {
+      if (typeof id !== 'string' || id.length === 0) {
+        return _contractFailure('INVALID SELECTION STATE', source, [...selection]);
+      }
+    }
+    return selection;
+  }
+
+  function _assertLayoutContract(layout, source = 'unknown') {
+    if (!layout || typeof layout !== 'object') {
+      return _contractFailure('INVALID LAYOUT CONTRACT', source, layout);
+    }
+    if (typeof layout.id !== 'string' || typeof layout.sectionId !== 'string') {
+      return _contractFailure('INVALID LAYOUT CONTRACT', source, layout);
+    }
+    for (const key of ['x', 'y', 'w', 'h']) {
+      if (typeof layout[key] !== 'number' || !Number.isFinite(layout[key])) {
+        return _contractFailure('INVALID LAYOUT CONTRACT', source, layout);
+      }
+    }
+    return layout;
+  }
+
+  function _assertZoomContract(zoom, source = 'unknown') {
+    if (typeof zoom !== 'number' || !Number.isFinite(zoom)) {
+      return _contractFailure('INVALID ZOOM CONTRACT', source, zoom);
+    }
+    return zoom;
+  }
+
+  const ContractGuards = {
+    assertRectShape: _assertRectShape,
+    assertSelectionState: _assertSelectionState,
+    assertLayoutContract: _assertLayoutContract,
+    assertZoomContract: _assertZoomContract,
+  };
+  if (typeof window !== 'undefined') {
+    window.RFContractGuards = ContractGuards;
+  }
+
   function _snapshotSections() {
     if (typeof DS === 'undefined' || !Array.isArray(DS.sections)) return [];
     return DS.sections.map(sec => ({
@@ -186,7 +252,9 @@ const EngineCore = (() => {
 
   function _snapshotElements() {
     if (typeof DS === 'undefined' || !Array.isArray(DS.elements)) return [];
-    return DS.elements.map(el => ({
+    return DS.elements.map(el => {
+      _assertLayoutContract(el, 'EngineCore._snapshotElements');
+      return ({
       id: el.id,
       sectionId: el.sectionId,
       type: el.type,
@@ -195,7 +263,8 @@ const EngineCore = (() => {
       w: el.w,
       h: el.h,
       zIndex: el.zIndex || 0,
-    }));
+      });
+    });
   }
 
   function _snapshotContracts() {
@@ -691,6 +760,7 @@ const EngineCore = (() => {
    * Triggers full layout → visual → handles pipeline in correct order.
    */
   function onZoomDidChange(newZoom) {
+    _assertZoomContract(newZoom, 'EngineCore.onZoomDidChange');
     // LAYOUT tier — geometry must be updated first
     RenderScheduler.layout(() => {
       if (_E('CanvasLayoutEngine'))         _E('CanvasLayoutEngine').updateSync();
@@ -870,6 +940,12 @@ const EngineCore = (() => {
         return { ok: true, skipped: true, phase, meta };
       }
 
+      if (typeof DS !== 'undefined') {
+        _assertSelectionState(DS.selection, 'EngineCore.verifyRuntimeInvariants.selection');
+        _assertZoomContract(DS.zoom, 'EngineCore.verifyRuntimeInvariants.zoom');
+        _snapshotElements();
+      }
+
       const collectedIssues = [];
       const contracts = _snapshotContracts();
       _trace('EngineCore', 'verify-begin', {
@@ -1012,9 +1088,11 @@ const EngineCore = (() => {
     getPointer() {
       return RF.Geometry.viewToModel(_ptr.clientX, _ptr.clientY);
     },
+
+    contracts: ContractGuards,
   };
 })();
 
 if (typeof module !== 'undefined') {
-  module.exports = { EngineCore, EngineRegistry };
+  module.exports = { EngineCore, EngineRegistry, ContractGuards: EngineCore.contracts };
 }

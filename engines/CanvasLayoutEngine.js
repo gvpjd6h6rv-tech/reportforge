@@ -17,6 +17,27 @@
 const CanvasLayoutEngine = (() => {
   let _lastCanvasSignature = null;
 
+  function _contracts() {
+    return (typeof ContractGuards !== 'undefined' && ContractGuards)
+      || (typeof window !== 'undefined' ? window.RFContractGuards : null)
+      || null;
+  }
+
+  function _assertSelectionState(source) {
+    const guards = _contracts();
+    if (guards && typeof DS !== 'undefined') guards.assertSelectionState(DS.selection, source);
+  }
+
+  function _assertLayoutContract(el, source) {
+    const guards = _contracts();
+    if (guards && el) guards.assertLayoutContract(el, source);
+  }
+
+  function _assertZoomContract(source) {
+    const guards = _contracts();
+    if (guards && typeof DS !== 'undefined') guards.assertZoomContract(DS.zoom, source);
+  }
+
   function _px(value) {
     return `${Math.round(value)}px`;
   }
@@ -90,6 +111,8 @@ const CanvasLayoutEngine = (() => {
 
   // ── Element div builder ──────────────────────────────────────────
   function buildElementDiv(el) {
+    _assertLayoutContract(el, 'CanvasLayoutEngine.buildElementDiv');
+    _assertZoomContract('CanvasLayoutEngine.buildElementDiv');
     const div = document.createElement('div');
     div.className    = 'cr-element';
     div.dataset.id   = el.id;
@@ -198,6 +221,8 @@ const CanvasLayoutEngine = (() => {
   }
 
   function renderAll() {
+    _assertSelectionState('CanvasLayoutEngine.renderAll.selection');
+    _assertZoomContract('CanvasLayoutEngine.renderAll.zoom');
     if (typeof RenderScheduler !== 'undefined' && !RenderScheduler.allowsDomWrite()) {
       RenderScheduler.layout(() => renderAll(), 'CanvasLayoutEngine.renderAll');
       return;
@@ -216,6 +241,7 @@ const CanvasLayoutEngine = (() => {
     if (!div) return;
     const el = typeof DS !== 'undefined' ? DS.getElementById(id) : null;
     if (!el) return;
+    _assertLayoutContract(el, 'CanvasLayoutEngine.updateElement');
     // Re-apply full styles
     const p = RF.Geometry.modelToView(el.x, el.y);
     div.style.left        = `${p.x}px`;
@@ -247,7 +273,7 @@ const CanvasLayoutEngine = (() => {
     }
     // Update selection state
     if (typeof DS !== 'undefined')
-      div.classList.toggle('selected', DS.selection.has(id));
+      div.classList.toggle('selected', (_assertSelectionState('CanvasLayoutEngine.updateElement.selection'), DS.selection.has(id)));
   }
 
   function updateElementPosition(id) {
@@ -255,6 +281,8 @@ const CanvasLayoutEngine = (() => {
     if (!div) return;
     const el = typeof DS !== 'undefined' ? DS.getElementById(id) : null;
     if (!el) return;
+    _assertLayoutContract(el, 'CanvasLayoutEngine.updateElementPosition');
+    _assertZoomContract('CanvasLayoutEngine.updateElementPosition');
     const p = RF.Geometry.modelToView(el.x, el.y);
     div.style.left   = `${p.x}px`;
     div.style.top    = `${p.y}px`;
