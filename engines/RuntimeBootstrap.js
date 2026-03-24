@@ -8,8 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
   FieldExplorerEngine.init();
   FieldExplorerEngine.setupCanvasDrop();
   MenuEngine.init();
-  initCommandBindings();
-  initToolbars();
+  initCommandRuntimeState();
+  initUIBindings();
   registerGlobalEventHandlers();
   initClock();
   ZoomEngine.set(1.0);

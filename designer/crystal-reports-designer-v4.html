@@ -4594,28 +4594,6 @@ function initKeyboard_DISABLED_v19(){
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  TOOLBAR WIRING
-// ═══════════════════════════════════════════════════════════════════
-function initToolbars(){
-  // Format buttons
-  document.querySelectorAll('[data-format]').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      const f=btn.dataset.format;
-      if(f==='bold'||f==='italic'||f==='underline') FormatEngine.toggleFormat(f);
-      else if(f.startsWith('align-')) FormatEngine.applyFormat('align',f.replace('align-',''));
-    });
-  });
-  // Font name
-  document.getElementById('tb-font-name')?.addEventListener('change',e=>{
-    FormatEngine.applyFormat('fontFamily',e.target.value);
-  });
-  // Font size
-  document.getElementById('tb-font-size')?.addEventListener('change',e=>{
-    FormatEngine.applyFormat('fontSize',parseInt(e.target.value));
-  });
-}
-
-// ═══════════════════════════════════════════════════════════════════
 //  STATUS BAR CLOCK
 // ═══════════════════════════════════════════════════════════════════
 function initClock(){
@@ -6074,6 +6052,7 @@ window.__rfVerify = function(){
 <script src="/engines/RulerEngine.js"></script>
 <script src="/engines/GlobalEventHandlers.js"></script>
 <script src="/engines/CommandRuntime.js"></script>
+<script src="/engines/UIAdapters.js"></script>
 <script src="/engines/RuntimeBootstrap.js"></script>
 <script>
 </script>

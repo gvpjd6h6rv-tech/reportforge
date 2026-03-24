@@ -539,20 +539,41 @@
     console.log(`[ReportForge] Doc type → ${key} (${dt.label}) SRI:${dt.sriCode}`);
   }
 
-  function initCommandBindings() {
-    document.querySelectorAll('[data-action]').forEach((btn) => {
-      btn.addEventListener('click', () => handleAction(btn.dataset.action));
-    });
-    document.querySelectorAll('[data-tool]').forEach((btn) => {
-      btn.addEventListener('click', () => InsertEngine.setTool(btn.dataset.tool));
-    });
-    document.getElementById('tb-zoom')?.addEventListener('change', (e) => {
-      ZoomEngine.set(parseFloat(e.target.value) / 100);
-    });
-    document.getElementById('tab-design')?.addEventListener('click', () => _canonicalPreviewWriter().hide());
-    document.getElementById('tab-preview')?.addEventListener('click', () => _canonicalPreviewWriter().show());
-    document.querySelectorAll('.doc-type-btn').forEach((btn) =>
-      btn.addEventListener('click', () => switchDocType(btn.dataset.doctype)));
+  function handleToolSelection(tool) {
+    InsertEngine.setTool(tool);
+  }
+
+  function handleViewSelection(view) {
+    if (view === 'preview') {
+      _canonicalPreviewWriter().show();
+      return;
+    }
+    _canonicalPreviewWriter().hide();
+  }
+
+  function handleZoomSelection(value) {
+    ZoomEngine.set(parseFloat(value) / 100);
+  }
+
+  function handleFormatAction(format) {
+    if (format === 'bold' || format === 'italic' || format === 'underline') {
+      FormatEngine.toggleFormat(format);
+      return;
+    }
+    if (format.startsWith('align-')) {
+      FormatEngine.applyFormat('align', format.replace('align-', ''));
+    }
+  }
+
+  function handleFontFamilyChange(value) {
+    FormatEngine.applyFormat('fontFamily', value);
+  }
+
+  function handleFontSizeChange(value) {
+    FormatEngine.applyFormat('fontSize', parseInt(value));
+  }
+
+  function initCommandRuntimeState() {
     DS._sampleData = SAMPLE_DATA;
     const items = SAMPLE_DATA.items || [];
     document.getElementById('sb-records').textContent = `Items: ${items.length}`;
@@ -571,5 +592,11 @@
   global.FileEngine = FileEngine;
   global.handleAction = handleAction;
   global.switchDocType = switchDocType;
-  global.initCommandBindings = initCommandBindings;
+  global.handleToolSelection = handleToolSelection;
+  global.handleViewSelection = handleViewSelection;
+  global.handleZoomSelection = handleZoomSelection;
+  global.handleFormatAction = handleFormatAction;
+  global.handleFontFamilyChange = handleFontFamilyChange;
+  global.handleFontSizeChange = handleFontSizeChange;
+  global.initCommandRuntimeState = initCommandRuntimeState;
 })(window);

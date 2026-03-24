@@ -134,6 +134,15 @@ test('monolith no longer defines command orchestration inline', () => {
   assert.match(html, /<script src="\/engines\/CommandRuntime\.js"><\/script>/);
 });
 
+test('monolith no longer defines UI adapter wiring inline', () => {
+  const html = fs.readFileSync(path.resolve('designer/crystal-reports-designer-v4.html'), 'utf8');
+  assert.doesNotMatch(html, /\bfunction\s+initToolbars\s*\(/);
+  assert.doesNotMatch(html, /document\.querySelectorAll\('\[data-format\]'\)\.forEach/);
+  assert.doesNotMatch(html, /document\.getElementById\('tb-font-name'\)\?\.addEventListener/);
+  assert.doesNotMatch(html, /document\.getElementById\('tb-font-size'\)\?\.addEventListener/);
+  assert.match(html, /<script src="\/engines\/UIAdapters\.js"><\/script>/);
+});
+
 test('canonical runtime files do not reference retired bridge implementations', () => {
   const files = [
     path.resolve('designer/crystal-reports-designer-v4.html'),
