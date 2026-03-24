@@ -1,6 +1,12 @@
 {
   "name": "reportforge",
   "version": "14.0.0",
+  "scripts": {
+    "test:contracts": "node --test reportforge/tests/engine_contracts.test.mjs",
+    "test:runtime": "node --test reportforge/tests/runtime_regression.test.mjs",
+    "test:arch": "node --test reportforge/tests/engine_contracts.test.mjs reportforge/tests/runtime_regression.test.mjs",
+    "baselines:runtime": "node reportforge/tests/update_runtime_baselines.mjs"
+  },
   "dependencies": {
     "playwright": "*"
   }

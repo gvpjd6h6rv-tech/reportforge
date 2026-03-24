@@ -133,7 +133,7 @@ const PreviewEngineV19 = (() => {
       `overflow:hidden`, `display:flex`, `align-items:center`, `line-height:1`,
     ].join(';');
     const corners = '<span class="el-corner tl"></span><span class="el-corner tr"></span><span class="el-corner bl"></span><span class="el-corner br"></span>';
-    return `<div class="pv-el" data-origin-id="${el.id}"${ri} style="${st}">${corners}${value}</div>`;
+    return `<div class="pv-el cr-element rf-el" data-id="${el.id}" data-origin-id="${el.id}" data-type="${el.type}"${ri} style="${st}">${corners}${value}</div>`;
   }
 
   function _renderBand(sec, rowData, alt, rootData, rowIndex) {
@@ -276,9 +276,8 @@ const PreviewEngineV19 = (() => {
     const data = (typeof DS !== 'undefined' && DS._sampleData)
               || (typeof SAMPLE_DATA !== 'undefined' ? SAMPLE_DATA : {});
     content.innerHTML = _renderWithData(data);
-    for (const id of DS.selection) {
-      document.querySelectorAll(`.pv-el[data-origin-id="${id}"]`)
-        .forEach(el => el.classList.add('pv-origin-selected'));
+    if (typeof SelectionEngine !== 'undefined' && typeof SelectionEngine.renderHandles === 'function') {
+      SelectionEngine.renderHandles();
     }
   }
 

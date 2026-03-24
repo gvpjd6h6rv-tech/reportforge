@@ -198,7 +198,26 @@ else
   skip "Server runtime checks (--quick mode)"
 fi
 
-# ── 7. Designer HTML checks ────────────────────────────────────────────────────
+# ── 7. Browser runtime regression suite ────────────────────────────────────────
+hdr "Browser Runtime Regression"
+
+if [[ "$QUICK" != "--quick" ]]; then
+  cd "$ROOT"
+  if command -v node &>/dev/null; then
+    if node --test reportforge/tests/runtime_regression.test.mjs >/tmp/rf_runtime_regression.out 2>&1; then
+      ok "Browser runtime regression suite"
+    else
+      fail "Browser runtime regression suite" "see /tmp/rf_runtime_regression.out"
+      tail -40 /tmp/rf_runtime_regression.out || true
+    fi
+  else
+    skip "node not installed — skipping browser runtime regression suite"
+  fi
+else
+  skip "Browser runtime regression suite (--quick mode)"
+fi
+
+# ── 8. Designer HTML checks ────────────────────────────────────────────────────
 hdr "Designer HTML"
 
 DESIGNER="$ROOT/designer/crystal-reports-designer-v3.html"

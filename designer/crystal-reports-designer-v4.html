@@ -1738,7 +1738,7 @@
    * ═══════════════════════════════════════════════════════════════ */
   #canvas-layer.preview-mode #grid-overlay          { display: none !important; }
   #canvas-layer.preview-mode #guides-layer          { display: none !important; }
-  #canvas-layer.preview-mode #handles-layer         { display: none !important; }
+  #canvas-layer.preview-mode #handles-layer         { display: block !important; z-index: 60 !important; }
   #canvas-layer.preview-mode #selection-layer       { display: none !important; }
   #canvas-layer.preview-mode #rubber-band           { display: none !important; }
   #canvas-layer.preview-mode .section-resize-handle { display: none !important; }
@@ -3541,11 +3541,41 @@ const SelectionEngine = {
   _useCentralRouter(){
     return window.RF_USE_ENGINECORE_INTERACTION !== false;
   },
+  _previewRect(el){
+    const pvEl=document.querySelector(`.pv-el[data-origin-id="${el.id}"]`);
+    if(!pvEl) return null;
+    const pR=pvEl.getBoundingClientRect();
+    const cR=RF.Geometry.canvasRect();
+    return {
+      left: pR.left-cR.left,
+      top: pR.top-cR.top,
+      width: pR.width,
+      height: pR.height,
+    };
+  },
+  _selectionRect(el){
+    if(DS.previewMode){
+      const pvRect=this._previewRect(el);
+      if(pvRect) return pvRect;
+      const vr=RF.Geometry.rectToView(el);
+      return { left: vr.left, top: vr.top, width: vr.width, height: vr.height };
+    }
+    const elDiv=document.querySelector(`.cr-element[data-id="${el.id}"]`);
+    const gr=RF.Geometry.elementRect(elDiv);
+    if(gr){
+      const z = RF.Geometry.zoom();
+      return { left: gr.left*z, top: gr.top*z, width: gr.width*z, height: gr.height*z };
+    }
+    const secTop=DS.getSectionTop(el.sectionId);
+    return { left: el.x, top: secTop+el.y, width: el.w, height: el.h };
+  },
 
   onElementPointerDown(e, id){
     if(e.button!==0)return;
     const el=DS.getElementById(id);if(!el)return;
-    const div=document.querySelector(`.cr-element[data-id="${id}"]`);
+    const div=(e.target&&typeof e.target.closest==='function'
+      ? e.target.closest(`.cr-element[data-id="${id}"]`)
+      : null) || document.querySelector(`.cr-element[data-id="${id}"]`);
     if(!div)return;
     if(div.setPointerCapture){
       const pointerId = typeof e.pointerId === 'number'
@@ -3671,17 +3701,8 @@ const SelectionEngine = {
     if(DS.selection.size===1){
       const id=[...DS.selection][0];
       const el=DS.getElementById(id);if(!el)return;
-      // RF.Geometry.elementRect() → pre-transform canvas coords (canonical geometry rect)
-      const elDiv=document.querySelector(`.cr-element[data-id="${id}"]`);
-      const gr=RF.Geometry.elementRect(elDiv);
-      let absX, absY, absW, absH;
-      if(gr){
-        const z = RF.Geometry.zoom();
-        absX=gr.left*z; absY=gr.top*z; absW=gr.width*z; absH=gr.height*z;
-      } else {
-        const secTop=DS.getSectionTop(el.sectionId);
-        absX=el.x; absY=secTop+el.y; absW=el.w; absH=el.h;
-      }
+      const rect=this._selectionRect(el);
+      const absX=rect.left, absY=rect.top, absW=rect.width, absH=rect.height;
       // Canonical runtime: 8 resize hit-targets, sel-box owns the visual.
       const positions=[
         {pos:'nw',cx:absX,          cy:absY},
@@ -3713,28 +3734,13 @@ const SelectionEngine = {
       // Multi-select: show bounding box outline only
       let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
       DS.getSelectedElements().forEach(el=>{
-        const st=DS.getSectionTop(el.sectionId);
-        minX=Math.min(minX,el.x);minY=Math.min(minY,st+el.y);
-        maxX=Math.max(maxX,el.x+el.w);maxY=Math.max(maxY,st+el.y+el.h);
-      });
-      // RF.Geometry bounding box for multi-select
-      let bMinX=Infinity,bMinY=Infinity,bMaxX=-Infinity,bMaxY=-Infinity;
-      DS.getSelectedElements().forEach(el=>{
-        const d=document.querySelector(`.cr-element[data-id="${el.id}"]`);
-        const gr2=RF.Geometry.elementRect(d);
-        if(gr2){
-          const z = RF.Geometry.zoom();
-          bMinX=Math.min(bMinX,gr2.left*z);bMinY=Math.min(bMinY,gr2.top*z);
-          bMaxX=Math.max(bMaxX,gr2.left*z+gr2.width*z);bMaxY=Math.max(bMaxY,gr2.top*z+gr2.height*z);
-        } else {
-          const st=DS.getSectionTop(el.sectionId);
-          bMinX=Math.min(bMinX,el.x);bMinY=Math.min(bMinY,st+el.y);
-          bMaxX=Math.max(bMaxX,el.x+el.w);bMaxY=Math.max(bMaxY,st+el.y+el.h);
-        }
+        const rect=this._selectionRect(el);
+        minX=Math.min(minX,rect.left);minY=Math.min(minY,rect.top);
+        maxX=Math.max(maxX,rect.left+rect.width);maxY=Math.max(maxY,rect.top+rect.height);
       });
       const outline=document.createElement('div');
       outline.className='sel-box sel-box-multi';
-      outline.style.cssText=`position:absolute;left:${bMinX}px;top:${bMinY}px;width:${bMaxX-bMinX}px;height:${bMaxY-bMinY}px;pointer-events:none`;
+      outline.style.cssText=`position:absolute;left:${minX}px;top:${minY}px;width:${maxX-minX}px;height:${maxY-minY}px;pointer-events:none`;
       layer.appendChild(outline);
     }
     this.updateSelectionInfo();
@@ -3816,6 +3822,14 @@ const SelectionEngine = {
         div.style.left=_mp.x+'px';
         div.style.top =_mp.y+'px';
       }
+      if(DS.previewMode){
+        document.querySelectorAll(`.pv-el[data-origin-id="${orig.id}"]`).forEach(pv=>{
+          pv.classList.add('dragging');
+          const _pp = RF.Geometry.rectToView(el);
+          pv.style.left = _pp.left+'px';
+          pv.style.top  = _pp.top+'px';
+        });
+      }
     });
     // Batch DOM reads — schedule handle sync in RAF
     if(!d._rafPending){
@@ -3843,6 +3857,15 @@ const SelectionEngine = {
     if(p.includes('n')){const nh=Math.max(CFG.MIN_EL_H,DS.snap(h-dy));y=DS.snap(y+h-nh);h=nh;}
     DS.updateElementLayout(el.id,{ x, y, w, h });
     CanvasEngine.updateElementPosition(d.elId);
+    if(DS.previewMode){
+      document.querySelectorAll(`.pv-el[data-origin-id="${d.elId}"]`).forEach(pv=>{
+        const _pp = RF.Geometry.rectToView(el);
+        pv.style.left = _pp.left+'px';
+        pv.style.top = _pp.top+'px';
+        pv.style.width = _pp.width+'px';
+        pv.style.height = _pp.height+'px';
+      });
+    }
     this.renderHandles();
     document.getElementById('sb-size').textContent=`W: ${w}  H: ${h}`;
     document.getElementById('sb-size').style.display='flex';
@@ -3871,6 +3894,9 @@ const SelectionEngine = {
     const isCancel = e && e.phase === 'cancel';
     // Remove dragging class from all elements (commit transform)
     document.querySelectorAll('.cr-element.dragging').forEach(div=>{
+      div.classList.remove('dragging');
+    });
+    document.querySelectorAll('.pv-el.dragging').forEach(div=>{
       div.classList.remove('dragging');
     });
     if(typeof AlignmentGuides!=='undefined') AlignmentGuides.clear();
@@ -7333,71 +7359,8 @@ PreviewEngine._renderInstanceElement = function(el, rowData, rootData, rowIndex)
     `overflow:hidden`,`display:flex`,`align-items:center`,`line-height:1`,
   ].join(';');
   const corners='<span class="el-corner tl"></span><span class="el-corner tr"></span><span class="el-corner bl"></span><span class="el-corner br"></span>';
-  return `<div class="pv-el" data-origin-id="${el.id}"${ri} style="${st}">${corners}${value}</div>`;
+  return `<div class="pv-el cr-element rf-el" data-id="${el.id}" data-origin-id="${el.id}" data-type="${el.type}"${ri} style="${st}">${corners}${value}</div>`;
 };
-
-// Click-to-select: clicking preview instance selects origin design element (Rules 4,5,28)
-(function() {
-  const pvContent = document.getElementById('preview-content');
-  if(!pvContent) return;
-  pvContent.addEventListener('click', e => {
-    const pvEl = e.target.closest('[data-origin-id]');
-    if(!pvEl) return;
-    const originId = pvEl.dataset.originId;
-    // Select design element
-    DS.selectOnly(originId);
-    SelectionEngine.renderHandles();
-    PropertiesEngine.render();
-    FormatEngine.updateToolbar();
-    // Highlight ALL preview instances of same origin (Rules 5, 28)
-    document.querySelectorAll('.pv-el').forEach(el=>el.classList.remove('pv-origin-selected'));
-    document.querySelectorAll(`.pv-el[data-origin-id="${originId}"]`).forEach(el=>el.classList.add('pv-origin-selected'));
-    e.stopPropagation();
-  });
-})();
-
-
-// ════════════════════════════════════════════════════
-// DRAG FROM PREVIEW (Rules 22, 3, 6)
-// Dragging a preview instance moves the origin design element
-// and immediately refreshes preview (design↔preview sync)
-// ════════════════════════════════════════════════════
-(function(){
-  let _drag=null;
-  const pvContent=document.getElementById('preview-content');
-  if(!pvContent)return;
-
-  pvContent.addEventListener('pointerdown',e=>{
-    const pvEl=e.target.closest('[data-origin-id]');
-    if(!pvEl)return;
-    e.stopPropagation(); e.preventDefault();
-    pvEl.setPointerCapture(e.pointerId);
-    const originId=pvEl.dataset.originId;
-    const el=DS.getElementById(originId);
-    if(!el)return;
-    _drag={originId, startClientX:e.clientX,startClientY:e.clientY,startX:el.x,startY:el.y};
-  });
-
-  pvContent.addEventListener('pointermove',e=>{
-    if(!_drag)return;
-    const dx=RF.Geometry.unscale(e.clientX-_drag.startClientX); // v18.11
-    const dy=RF.Geometry.unscale(e.clientY-_drag.startClientY);
-    const el=DS.getElementById(_drag.originId);
-    if(!el)return;
-    DS.updateElementLayout(el.id,{
-      x: Math.max(0,Math.round(_drag.startX+dx)),
-      y: Math.max(0,Math.round(_drag.startY+dy)),
-    });
-    if(CanvasEngine.updateElementPosition) CanvasEngine.updateElementPosition(_drag.originId); else { CanvasEngine.renderAll?.(); CanvasEngine.render?.(); }
-    SelectionEngine.renderHandles();
-  });
-
-  pvContent.addEventListener('pointerup',e=>{
-    if(!_drag)return;
-    DS.saveHistory(); // triggers preview refresh via hook
-    _drag=null;
-  });
-})();
 
 // Design → Preview sync: auto-refresh preview when design mutates (Rule 6)
 (function(){
@@ -7421,70 +7384,8 @@ PreviewEngine.refresh = function(){
   content.style.maxWidth = 'none';
   const data = DS._sampleData || (typeof SAMPLE_DATA!=='undefined'?SAMPLE_DATA:{});
   content.innerHTML = this._renderWithData(data);
-  // Re-apply instance selections for current design selection
-  for(const id of DS.selection){
-    document.querySelectorAll(`.pv-el[data-origin-id="${id}"]`).forEach(el=>el.classList.add('pv-origin-selected'));
-  }
+  SelectionEngine.renderHandles();
 };
-
-
-// Drag from preview → moves origin design element (Rule 22, Test 3)
-(function(){
-  const pvLayer = document.getElementById('preview-layer');
-  if(!pvLayer) return;
-  let _pvDrag = null;
-
-  pvLayer.addEventListener('pointerdown', e => {
-    const pvEl = e.target.closest('[data-origin-id]');
-    if(!pvEl) return;
-    e.preventDefault();
-    pvLayer.setPointerCapture && pvLayer.setPointerCapture(e.pointerId);
-    const originId = pvEl.dataset.originId;
-    const el = DS.getElementById(originId);
-    if(!el) return;
-    // v18.11: no z capture — use RF.Geometry at move time
-    _pvDrag = {
-      id: originId,
-      startClientX: e.clientX,
-      startClientY: e.clientY,
-      startElX: el.x,
-      startElY: el.y,
-    };
-    // Select origin element
-    DS.selectOnly(originId);
-    SelectionEngine.renderHandles(); PropertiesEngine?.render();
-    // Highlight all instances
-    document.querySelectorAll('.pv-el').forEach(d=>d.classList.remove('pv-origin-selected'));
-    document.querySelectorAll(`.pv-el[data-origin-id="${originId}"]`).forEach(d=>d.classList.add('pv-origin-selected'));
-  });
-
-  pvLayer.addEventListener('pointermove', e => {
-    if(!_pvDrag) return;
-    const el = DS.getElementById(_pvDrag.id);
-    if(!el) return;
-    const dx = RF.Geometry.unscale(e.clientX - _pvDrag.startClientX); // v18.11
-    const dy = RF.Geometry.unscale(e.clientY - _pvDrag.startClientY);
-    DS.updateElementLayout(el.id,{
-      x: DS.snap(Math.max(0, _pvDrag.startElX + dx)),
-      y: DS.snap(Math.max(0, _pvDrag.startElY + dy)),
-    });
-    // Live update design DOM
-    const div = document.querySelector(`.cr-element[data-id="${_pvDrag.id}"]`);
-    if(div){ const _pp=RF.Geometry.modelToView(el.x,el.y); div.style.left=_pp.x+'px'; div.style.top=_pp.y+'px'; } // v18.10
-    SelectionEngine.renderHandles();
-    // Live update preview (re-render this element's instances only)
-    document.querySelectorAll(`.pv-el[data-origin-id="${_pvDrag.id}"]`).forEach(pv=>{
-      const _pp2 = RF.Geometry.modelToView(el.x, el.y); // v18.11
-      pv.style.left = _pp2.x+'px'; pv.style.top = _pp2.y+'px';
-    });
-  });
-
-  pvLayer.addEventListener('pointerup', e => {
-    if(!_pvDrag) return;
-    DS.saveHistory();
-    _pvDrag = null;
-  });
-})();
 // ── Wire buttons on boot ──────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.doc-type-btn').forEach(btn =>
