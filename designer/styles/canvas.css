@@ -1,0 +1,239 @@
+@layer canvas {
+  #ruler-h-row {
+    block-size: var(--rf-ruler-top);
+    display: flex;
+    flex-shrink: 0;
+    background: var(--rf-ruler-bg);
+    border-block-end: 1px solid var(--rf-border-mid);
+  }
+  #ruler-corner {
+    inline-size: calc(var(--rf-ruler-side) + 1px);
+    block-size: 100%;
+    flex-shrink: 0;
+    border-inline-end: 1px solid var(--rf-border-mid);
+    background: var(--rf-ruler-bg);
+  }
+  #ruler-h-canvas {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    background: var(--rf-ruler-bg);
+  }
+  #ruler-h-inner {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    block-size: 100%;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  #canvas-row {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    min-block-size: 0;
+    min-height: 0;
+    height: 0;
+    position: relative;  /* contains absolutely positioned workspace */
+  }
+  #ruler-v {
+    inline-size: var(--rf-ruler-side);
+    flex-shrink: 0;
+    overflow: hidden;
+    background: var(--rf-ruler-bg);
+    border-inline-end: 1px solid var(--rf-border-mid);
+    position: relative;
+  ;
+    /* v18.6: enforce 16px width, match horizontal ruler height */
+    width: 22px;
+    min-width: 22px;
+    max-width: 22px;
+    background: #EBEBEB;
+  }
+  #ruler-h { height: 16px; /* v18.6 */ }
+
+  #ruler-v-inner {
+    position: absolute;
+    /* top controlled by JS renderVRuler() for scroll-sync */
+    inset-inline-start: 0;
+    inline-size: 100%;
+    pointer-events: none;
+  }
+  #workspace {
+    flex: 1;
+    overflow: auto;
+    background: var(--rf-canvas-bg);
+    position: relative;
+  }
+  /* workspace: flex child after ruler-v, scrollable, centers viewport */
+  #workspace {
+    flex: 1;
+    min-width: 0;
+    position: relative;   /* guide-overlay children positioned relative to this */
+    overflow: auto;
+    background: var(--rf-canvas-bg);
+    scroll-behavior: smooth;
+    text-align: left;   /* design mode: canvas flush to ruler (preview overrides below) */
+  }
+  /* Tool cursors */
+  #workspace.tool-pointer { cursor: default; }
+  #workspace.tool-text    { cursor: crosshair; }
+  #workspace.tool-field   { cursor: crosshair; }
+  #workspace.tool-line    { cursor: crosshair; }
+  #workspace.tool-box     { cursor: crosshair; }
+
+  /* canvas-layer: FIXED coordinate system — zoom is applied to #viewport parent, NOT here */
+  #canvas-layer {
+    /* PHASE 2: Canvas positioned by layout formula:
+       canvasX = rulerWidth + pageMarginLeft
+       Left offset is set dynamically by applyLayout() via CSS var.
+       Default pageMarginLeft=0 so canvas is flush to workspace left edge. */
+    position: relative;
+    margin-block: var(--layout-canvas-top, 16px);
+    margin-inline-start: var(--layout-canvas-left, 0px);
+    margin-inline-end: 0;
+    display: block;
+    background: var(--rf-page-bg);
+    box-shadow: 3px 3px 10px rgba(0,0,0,.4);
+  }
+
+  /* Grid overlay */
+  #grid-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    background-image: radial-gradient(circle, var(--rf-grid-dot) 1px, transparent 1px);
+    background-size: 4px 4px;
+  }
+  #grid-overlay.hidden { display: none; }
+
+  /* Section bands */
+  .cr-section {
+    position: relative;
+    inline-size: 100%;
+    overflow: visible;
+    z-index: 2;
+    border-block-end: 2px solid var(--rf-border-mid);
+    /* Layer invalidation: prevents layout thrashing between sections */
+    contain: layout paint;
+    will-change: contents;
+  }
+  /* Section deferred rendering */
+  .section-wrap {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 100px;
+  }
+  .cr-section[data-stype="rh"]  { background: var(--rf-sec-rh); }
+  .cr-section[data-stype="ph"]  { background: var(--rf-sec-ph); }
+  .cr-section[data-stype="det"] { background: var(--rf-sec-det); }
+  .cr-section[data-stype="pf"]  { background: var(--rf-sec-pf); }
+  .cr-section[data-stype="rf"]  { background: var(--rf-sec-rf); }
+  .cr-section[data-stype="gh"]  { background: var(--rf-sec-gh); }
+  .cr-section[data-stype="gf"]  { background: var(--rf-sec-gf); }
+
+  .section-resize-handle {
+    position: absolute;
+    inset-block-end: -3px;
+    inset-inline: 0;
+    block-size: 6px;
+    cursor: ns-resize;
+    z-index: var(--rf-z-badge);
+    background: transparent;
+    transition: background var(--rf-transition);
+  }
+  .section-resize-handle:hover,
+  .section-resize-handle.dragging {
+    background: rgba(0,102,204,.25);
+    border-block-end: 2px solid var(--rf-handle-color);
+  }
+  .section-label {
+    position: absolute;
+    /* Physical properties — logical props are axis-swapped by writing-mode:vertical-lr */
+    right: 0;       /* right edge of section */
+    top: 0;         /* full section height start */
+    bottom: 0;      /* full section height end */
+    width: 22px;    /* fixed width, not height */
+    border-left: 1px solid var(--rf-border-mid);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: #555;
+    background: rgba(0,0,0,.04);
+    z-index: 10;
+    cursor: default;
+    writing-mode: vertical-lr;
+    text-orientation: mixed;
+    padding-block: 2px;
+  }
+  .section-resize-badge {
+    position: fixed;
+    background: #333;
+    color: #FFF;
+    font-size: 9px;
+    padding-block: 2px;
+    padding-inline: 5px;
+    border-radius: var(--rf-radius-xs, 2px);
+    pointer-events: none;
+    z-index: var(--rf-z-toast);
+    display: none;
+  }
+
+  /* Ruler marks */
+  .ruler-mark {
+    position: absolute;
+    inset-block-start: 0;
+    block-size: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    pointer-events: none;
+  }
+  .ruler-mark-major { inline-size: 1px; background: var(--rf-border-dark); }
+  .ruler-num {
+    font-size: 10px;
+    font-weight: 600;
+    color: #333;
+    position: absolute;
+    inset-block-start: 1px;
+    transform: translateX(-50%);
+    white-space: nowrap;
+  }
+  .ruler-cursor {
+    position: absolute;
+    inset-block-start: 0;
+    inline-size: 1px;
+    block-size: 100%;
+    background: rgba(0,102,204,.6);
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  /* Snap guides */
+  .snap-guide {
+    position: absolute;
+    pointer-events: none;
+    z-index: var(--rf-z-overlay);
+  }
+  .snap-guide.v {
+    inline-size: 1px;
+    inset-block: 0;
+    background: rgba(255,100,0,.7);
+  }
+  .snap-guide.h {
+    block-size: 1px;
+    inset-inline: 0;
+    background: rgba(255,100,0,.7);
+  }
+
+  /* Resize preview ghost */
+  .resize-preview-ghost {
+    position: absolute;
+    border: 2px dashed #0066CC;
+    background: rgba(0,102,204,.06);
+    pointer-events: none;
+    z-index: calc(var(--rf-z-toast) - 1);
+  }
+}
+

@@ -1,0 +1,24 @@
+@layer reset {
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  input, select, textarea {
+    font: inherit;
+  }
+  button {
+    cursor: pointer;
+    border: none;
+    background: none;
+    padding: 0;
+    font: inherit;
+  }
+  canvas { display: block; }
+}
+

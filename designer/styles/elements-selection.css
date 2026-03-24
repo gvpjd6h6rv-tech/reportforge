@@ -1,0 +1,301 @@
+@layer elements {
+  .cr-element {
+    position: absolute;
+    cursor: move;
+    z-index: var(--rf-z-canvas);
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+  .cr-element:hover:not(.selected) {
+    outline: none;
+  }
+  /* GPU composited drag */
+  .cr-element.dragging {
+    will-change: transform;
+    z-index: var(--rf-z-toast) !important;
+    pointer-events: none;
+  }
+
+  /* Field element */
+  .cr-element[data-type="field"] {
+    background: var(--rf-el-field-bg);
+    border: 1px solid transparent;
+    display: flex;
+    align-items: center;
+    padding-inline: var(--rf-gap-xs);
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .cr-element[data-type="field"] .el-content {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1;          /* v18.12: prevent line-height overflow at small sizes */
+    color: #003;
+    /* v18.12: font-size set by buildElementDiv via RF.Geometry.scale() */
+    font-family: Tahoma, sans-serif;
+    flex: 1;
+    min-inline-size: 0;
+    pointer-events: none;
+  }
+  .el-field-icon {
+    /* v18.12: font-size inherits from .cr-element (scaled by RF.Geometry) */
+    flex-shrink: 0;
+    line-height: 1;
+    margin-inline-end: 2px;
+    pointer-events: none;
+  }
+
+  /* Text element */
+  .cr-element[data-type="text"] {
+    background: var(--rf-el-text-bg);
+    border: 1px solid transparent;
+    display: flex;
+    align-items: center;
+    padding-inline: var(--rf-gap-xs);
+    overflow: hidden;
+  }
+  .cr-element[data-type="text"] .el-content {
+    line-height: 1; /* v18.12 */
+    overflow: hidden;
+    white-space: pre;
+    flex: 1;
+    min-inline-size: 0;
+    outline: none;
+    pointer-events: none;
+  }
+  .cr-element[data-type="text"].editing .el-content {
+    pointer-events: all;
+    cursor: text;
+    caret-color: #000;
+  }
+  .cr-element[data-type="text"].editing {
+    cursor: text;
+    outline: 2px solid var(--rf-accent);
+  }
+
+  /* Line element */
+  .cr-element[data-type="line"] {
+    background: transparent;
+    border: none;
+    overflow: visible;
+  }
+  .cr-element[data-type="line"] .el-content {
+    pointer-events: none;
+    display: block;
+  }
+
+  /* Box/rect element */
+  .cr-element[data-type="rect"] { overflow: visible; }
+  .cr-element[data-type="rect"] .el-content {
+    inline-size: 100%;
+    block-size: 100%;
+    display: block;
+    pointer-events: none;
+  }
+
+  /* Image element */
+  .cr-element[data-type="image"] {
+    border: 1px dashed transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #F9F9F9;
+  }
+  .cr-element[data-type="image"] .el-content {
+    font-size: 9px;
+    color: #999;
+    pointer-events: none;
+  }
+
+  /* Selected state — selection rect is sel-box in handles-layer (single source) */
+  .cr-element.selected {
+    z-index: var(--rf-z-selected);
+    border-color: transparent !important;
+  }
+
+  /* Selection handles */
+  /* ── Layer system ────────────────────────────────────────────── */
+  .elements-layer {
+    display: none; /* semantic placeholder — elements live inside .cr-section */
+  }
+  .sections-layer {
+    /* sections-layer is in flow (position:relative sections stack vertically) */
+  }
+  #guides-layer {
+    display: none;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: var(--rf-z-canvas);
+    overflow: visible;
+  }
+  #guide-layer,
+  #snap-layer {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  #guide-layer { z-index: 500; }
+  #snap-layer { z-index: 501; }
+  #selection-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 35;
+    overflow: visible;
+  }
+  #handles-layer {
+    contain: layout style;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: var(--rf-z-handles);
+    overflow: visible;
+  }
+  #labels-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+    overflow: visible;
+  }
+  /* Crystal Reports L-shaped corner markers */
+  .sel-handle {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    background: transparent;
+    border: none;
+    color: transparent;
+    pointer-events: all;
+    z-index: calc(var(--rf-z-handles) + 1);
+    transform: translate(-50%, -50%);
+    overflow: visible;
+  }
+  .sel-handle::before,
+  .sel-handle::after {
+    display: none;
+  }
+  .sel-handle[data-pos="nw"],
+  .sel-handle[data-pos="se"] { cursor: nwse-resize; }
+  .sel-handle[data-pos="ne"],
+  .sel-handle[data-pos="sw"] { cursor: nesw-resize; }
+  .sel-handle[data-pos="n"],
+  .sel-handle[data-pos="s"] { cursor: ns-resize; }
+  .sel-handle[data-pos="e"],
+  .sel-handle[data-pos="w"] { cursor: ew-resize; }
+
+  /* Rubber-band selection */
+  #rubber-band {
+    position: absolute;
+    border: 1px dashed var(--rf-el-sel-bdr);
+    background: rgba(0,102,204,.08);
+    pointer-events: none;
+    z-index: var(--rf-z-overlay);
+    display: none;
+  }
+
+  /* Insert ghost */
+  #insert-ghost {
+    position: absolute;
+    border: 1px dashed #0060C0;
+    background: rgba(0,96,192,.1);
+    pointer-events: none;
+    z-index: var(--rf-z-overlay);
+    display: none;
+  }
+
+  /* Field drag ghost */
+  #field-drag-ghost {
+    position: fixed;
+    z-index: var(--rf-z-toast);
+    background: var(--rf-el-field-bg);
+    border: 1px solid var(--rf-el-field-bdr);
+    padding-block: 2px;
+    padding-inline: var(--rf-gap-md);
+    font-size: 10px;
+    pointer-events: none;
+    display: none;
+    box-shadow: 2px 2px 4px rgba(0,0,0,.3);
+    color: #003;
+  }
+  #field-drop-indicator {
+    position: absolute;
+    pointer-events: none;
+    z-index: calc(var(--rf-z-handles) - 1);
+    border: 2px dashed #0066CC;
+    background: rgba(0,102,204,.08);
+    display: none;
+  }
+}
+
+/* ── 8. SELECTION ─────────────────────────────────────────────────────────── */
+  @layer geometry {
+    #canvas-layer {
+      --geo-canvas-w: 754px;
+      --geo-zoom: 1;
+      min-width: clamp(200px, var(--geo-canvas-w), 100%);
+    }
+    .sel-handle[data-pos="nw"]{--handle-angle:315deg}
+    .sel-handle[data-pos="n"] {--handle-angle:0deg}
+    .sel-handle[data-pos="ne"]{--handle-angle:45deg}
+    .sel-handle[data-pos="e"] {--handle-angle:90deg}
+    .sel-handle[data-pos="se"]{--handle-angle:135deg}
+    .sel-handle[data-pos="s"] {--handle-angle:180deg}
+    .sel-handle[data-pos="sw"]{--handle-angle:225deg}
+    .sel-handle[data-pos="w"] {--handle-angle:270deg}
+    #ruler-h-canvas { min-inline-size: calc(var(--geo-canvas-w) * var(--geo-zoom,1)); }
+  }
+
+@layer selection {
+  #selection-info {
+    position: fixed;
+    inset-block-end: 28px;
+    inset-inline-start: 50%;
+    transform: translateX(-50%);
+    background: rgba(50,50,50,.85);
+    color: #FFF;
+    font-size: 10px;
+    padding-block: 3px;
+    padding-inline: 10px;
+    border-radius: var(--rf-radius-sm);
+    pointer-events: none;
+    z-index: var(--rf-z-dialog);
+    display: none;
+  }
+
+  .sel-box{
+    position:absolute;
+    left:var(--sel-x,0px);
+    top:var(--sel-y,0px);
+    width:var(--sel-w,0px);
+    height:var(--sel-h,0px);
+    --rf-sel-color:#0A78C9;
+    --rf-sel-tick-color:#000;
+    --rf-sel-tick-h:5px;
+    --rf-sel-tick-v:5px;
+    --rf-sel-corner-tick:5px;
+    background:
+      linear-gradient(var(--rf-sel-color),var(--rf-sel-color)) left top / 100% 1px no-repeat,
+      linear-gradient(var(--rf-sel-color),var(--rf-sel-color)) left bottom / 100% 1px no-repeat,
+      linear-gradient(var(--rf-sel-color),var(--rf-sel-color)) left top / 1px 100% no-repeat,
+      linear-gradient(var(--rf-sel-color),var(--rf-sel-color)) right top / 1px 100% no-repeat,
+      linear-gradient(var(--rf-sel-tick-color),var(--rf-sel-tick-color)) left top / var(--rf-sel-corner-tick) 2px no-repeat,
+      linear-gradient(var(--rf-sel-tick-color),var(--rf-sel-tick-color)) left top / 2px var(--rf-sel-corner-tick) no-repeat,
+      linear-gradient(var(--rf-sel-tick-color),var(--rf-sel-tick-color)) right top / var(--rf-sel-corner-tick) 2px no-repeat,
+      linear-gradient(var(--rf-sel-tick-color),var(--rf-sel-tick-color)) right top / 2px var(--rf-sel-corner-tick) no-repeat,
+      linear-gradient(var(--rf-sel-tick-color),var(--rf-sel-tick-color)) left bottom / var(--rf-sel-corner-tick) 2px no-repeat,
+      linear-gradient(var(--rf-sel-tick-color),var(--rf-sel-tick-color)) left bottom / 2px var(--rf-sel-corner-tick) no-repeat,
+      linear-gradient(var(--rf-sel-tick-color),var(--rf-sel-tick-color)) right bottom / var(--rf-sel-corner-tick) 2px no-repeat,
+      linear-gradient(var(--rf-sel-tick-color),var(--rf-sel-tick-color)) right bottom / 2px var(--rf-sel-corner-tick) no-repeat,
+      linear-gradient(var(--rf-sel-tick-color),var(--rf-sel-tick-color)) center top / var(--rf-sel-tick-h) 2px no-repeat,
+      linear-gradient(var(--rf-sel-tick-color),var(--rf-sel-tick-color)) center bottom / var(--rf-sel-tick-h) 2px no-repeat,
+      linear-gradient(var(--rf-sel-tick-color),var(--rf-sel-tick-color)) left center / 2px var(--rf-sel-tick-v) no-repeat,
+      linear-gradient(var(--rf-sel-tick-color),var(--rf-sel-tick-color)) right center / 2px var(--rf-sel-tick-v) no-repeat;
+    pointer-events:none;
+    box-sizing:border-box;
+    z-index:29;
+    transition:left var(--rf-transition-fast),top var(--rf-transition-fast),width var(--rf-transition-fast),height var(--rf-transition-fast)
+  }}

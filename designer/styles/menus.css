@@ -1,0 +1,115 @@
+@layer menus {
+  #ctx-menu {
+    position: fixed;
+    z-index: var(--rf-z-ctx);
+    background: var(--rf-bg);
+    border: 1px solid var(--rf-border-dark);
+    box-shadow: 2px 2px 5px rgba(0,0,0,.35);
+    min-inline-size: 170px;
+    display: none;
+    padding-block: 2px;
+  }
+  #ctx-menu.visible { display: block; }
+  .ctx-item {
+    padding-block: 3px;
+    padding-inline: 20px 24px;
+    cursor: default;
+    font-size: var(--rf-font-size-base);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background var(--rf-transition);
+  }
+  .ctx-item:hover { background: var(--rf-accent); color: #FFF; }
+  .ctx-item.disabled { color: #888; pointer-events: none; }
+  .ctx-item.separator {
+    block-size: 1px;
+    background: var(--rf-border-mid);
+    margin-block: 2px;
+    margin-inline: var(--rf-gap-sm);
+    padding: 0;
+  }
+  .ctx-icon {
+    inline-size: 14px;
+    block-size: 14px;
+    margin-inline-end: var(--rf-gap-sm);
+    flex-shrink: 0;
+    font-size: var(--rf-font-size-base);
+    display: flex;
+    align-items: center;
+  }
+  .ctx-shortcut { font-size: 10px; color: #666; margin-inline-start: auto; }
+  .ctx-item:hover .ctx-shortcut { color: rgba(255,255,255,.8); }
+
+  /* Format dialog */
+  #format-dialog {
+    position: fixed;
+    z-index: var(--rf-z-dialog);
+    background: var(--rf-bg);
+    border: 2px solid var(--rf-title-end);
+    box-shadow: 4px 4px 12px rgba(0,0,0,.5);
+    min-inline-size: 320px;
+    display: none;
+  }
+  #format-dialog.visible { display: block; }
+  .dialog-title {
+    block-size: 20px;
+    background: linear-gradient(180deg, var(--rf-xp-title-s), var(--rf-xp-title-e));
+    color: #FFF;
+    font-size: var(--rf-font-size-base);
+    font-weight: bold;
+    padding-inline: var(--rf-gap-md);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: move;
+  }
+  .dialog-body { padding: var(--rf-gap-lg); }
+  .dialog-footer {
+    padding: var(--rf-gap-md);
+    border-block-start: 1px solid var(--rf-border-mid);
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--rf-gap-md);
+  }
+  .xp-btn {
+    min-inline-size: 70px;
+    block-size: 22px;
+    padding-inline: 10px;
+    background: linear-gradient(180deg, #F5F4EE, #D4D0C8);
+    border: 1px solid var(--rf-border-dark);
+    font-size: var(--rf-font-size-base);
+    cursor: pointer;
+    transition: background var(--rf-transition), border-color var(--rf-transition);
+  }
+  .xp-btn:hover { background: linear-gradient(180deg, var(--rf-accent-hover), #B8CCE4); }
+  .xp-btn:active {
+    background: linear-gradient(180deg, #D4D0C8, #F5F4EE);
+    border-color: var(--rf-border-light);
+  }
+  .xp-btn:focus-visible {
+    outline: 2px solid var(--rf-accent);
+    outline-offset: 1px;
+  }
+  .xp-btn.primary {
+    background: linear-gradient(180deg, #4A80C8, var(--rf-accent));
+    color: #FFF;
+    border-color: #1A4A90;
+  }
+  .xp-btn.primary:hover { background: linear-gradient(180deg, #3A70B8, #2A5AB8); }
+
+  /* Formula editor dialog */
+  .formula-dialog {
+    position: fixed;
+    z-index: var(--rf-z-dialog);
+    background: var(--rf-bg);
+    border: 2px solid var(--rf-title-end);
+    box-shadow: 4px 4px 12px rgba(0,0,0,.5);
+    inline-size: min(700px, 90vw);
+    block-size: min(520px, 80vh);
+    display: flex;
+    flex-direction: column;
+  }
+  .formula-dialog.hidden { display: none; }
+}
+

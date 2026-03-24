@@ -1,0 +1,119 @@
+@layer components {
+  /* Focus management global */
+  :focus-visible {
+    outline: 2px solid var(--rf-accent);
+    outline-offset: 2px;
+  }
+}
+
+/* ── 12. UTILITIES ──────────────────────────────────────────────────────── */
+
+  /* ── Dual-viewport zoom widget ── */
+  #zoom-widget{position:fixed;bottom:28px;right:8px;display:flex;align-items:center;gap:2px;background:var(--rf-bg);border:1px solid var(--rf-border-mid);border-radius:var(--rf-radius-sm);padding:2px 4px;z-index:var(--rf-z-toast);font-size:11px;font-family:var(--rf-font-ui);box-shadow:1px 1px 4px rgba(0,0,0,.2);user-select:none}
+  .zw-btn{width:18px;height:18px;display:flex;align-items:center;justify-content:center;border:1px solid var(--rf-border-mid);border-radius:2px;background:var(--rf-bg);color:var(--rf-fg);cursor:pointer;font-size:14px;line-height:1;transition:background var(--rf-transition-fast)}
+  .zw-btn:hover{background:var(--rf-xp-btn-h)} .zw-btn:active{transform:scale(0.94)}
+  .zw-pct{min-width:36px;text-align:center;font-weight:500;color:var(--rf-fg);cursor:pointer;padding:0 2px}
+  .zw-pct:hover{color:var(--rf-accent)}
+  .zw-sep{width:1px;height:12px;background:var(--rf-border-mid);margin:0 2px}
+  .zw-mode{font-size:9px;font-weight:500;color:var(--rf-accent);letter-spacing:.04em;text-transform:uppercase;padding:0 2px}
+  /* body[data-render-mode] pointer rules: managed by renderMode CSS above */
+  /* Preview: elements draggable (Crystal Reports allows drag in preview) */
+  body[data-mode="preview"] .cr-element{cursor:pointer!important;pointer-events:all!important}
+  body[data-mode="preview"] .cr-element.dragging{cursor:grabbing!important}
+  body[data-mode="preview"] .zw-mode{color:#1976D2}
+
+  /* ═══════════════════════════════════════════════════════════════
+   * RENDER MODE SYSTEM v9 — crystal-reports-style preview
+   * canvas.renderMode = 'design' | 'preview'
+   * Applied as class on #canvas-layer ONLY.
+   * Panels, toolbar, inspector remain 100% visible.
+   * ═══════════════════════════════════════════════════════════════ */
+  #canvas-layer.preview-mode #grid-overlay          { display: none !important; }
+  #canvas-layer.preview-mode #guides-layer          { display: none !important; }
+  #canvas-layer.preview-mode #handles-layer         { display: block !important; z-index: 60 !important; }
+  #canvas-layer.preview-mode #selection-layer       { display: none !important; }
+  #canvas-layer.preview-mode #rubber-band           { display: none !important; }
+  #canvas-layer.preview-mode .section-resize-handle { display: none !important; }
+  #canvas-layer.preview-mode .section-label         { display: none !important; }
+  #canvas-layer.preview-mode .cr-section            { border-block-end: none !important; }
+  #canvas-layer.preview-mode .cr-element            { cursor: pointer !important; }
+  #canvas-layer.preview-mode .cr-element:hover:not(.selected) { outline: none !important; }
+  #canvas-layer.preview-mode .cr-element.selected   { border-color: transparent !important; }
+  /* Show rendered preview content, hide raw sections */
+  #canvas-layer.preview-mode #sections-layer        { display: none !important; }
+  #canvas-layer.preview-mode #preview-layer         { display: block !important; }
+  /* v18.15: no shadows in preview — page merges with canvas surface */
+  #canvas-layer.preview-mode { box-shadow: none !important; border-radius: 0 !important; }
+  #canvas-layer.preview-mode .pv-page { box-shadow: none !important; }
+
+  /* === CR PREVIEW PARITY v10 === */
+  #preview-content{/* v18.15 */margin-inline:auto;padding:32px 40px;min-height:100%}
+  .pv-page{background:#fff;box-shadow:none;position:relative;margin:0 auto 24px}
+  .pv-section{position:relative;overflow:visible;box-sizing:border-box}
+  .pv-section-bg-alt{background:#FAFAF8}
+  .pv-page-break{height:24px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#999}
+  .pv-page-break::before,.pv-page-break::after{content:'';flex:1;height:1px;background:linear-gradient(to right,transparent,#bbb 20%,#bbb 80%,transparent)}
+  .pv-page-break span{padding:0 8px}
+  .pv-el{position:absolute;overflow:hidden;box-sizing:border-box;cursor:pointer;user-select:text}
+  .pv-el:hover{outline:1px solid rgba(0,102,204,.4);z-index:2}
+  /* Corner markers: all 4 corners via ::before (top-left+top-right) and ::after (bottom-left+bottom-right) using box-shadow */
+  /* Idle corner markers — reuse legacy 4-corner DOM only when element is not selected */
+  .el-corner {
+    position: absolute;
+    display: none;
+    width: 5px;
+    height: 5px;
+    pointer-events: none;
+    z-index: 1;
+    opacity: .6;
+  }
+  .cr-element:not(.selected) > .el-corner {
+    display: block !important;
+  }
+  .cr-element.selected > .el-corner {
+    display: none !important;
+  }
+  .cr-element.selected > .el-corner::before,
+  .cr-element.selected > .el-corner::after {
+    display: none !important;
+  }
+  .el-corner.tl { top: 0; left: 0; border-top: 1px solid #000; border-left: 1px solid #000; }
+  .el-corner.tr { top: 0; right: 0; border-top: 1px solid #000; border-right: 1px solid #000; }
+  .el-corner.bl { bottom: 0; left: 0; border-bottom: 1px solid #000; border-left: 1px solid #000; }
+  .el-corner.br { bottom: 0; right: 0; border-bottom: 1px solid #000; border-right: 1px solid #000; }
+  .cr-element[data-type="line"] > .el-corner,
+  .cr-element[data-type="rect"] > .el-corner {
+    display: none !important;
+  }
+  /* placeholder so DOM queries still find .el-corner elements without visual impact */
+  /* original had: top/right/bottom/left: -2px; background: rgba(0,85,204,.65); right: -2px; }
+  /* el-corner visible in both design and preview modes (Rule 14) */
+  #zw-slider{width:72px;height:3px;margin:0 3px;accent-color:var(--rf-accent);cursor:pointer}
+
+  /* Alignment guides (Rule 13) — red 1px lines during drag */
+  .rf-guide {
+    position: absolute;
+    background: #FF2020;
+    pointer-events: none;
+    z-index: var(--rf-z-toast, 9990);
+  }
+  .rf-guide-h { width: 100%; height: 1px; left: 0; }
+  .rf-guide-v { height: 100%; width: 1px; top: 0; }
+
+  /* ── #viewport: zoom target (zoom applied here, NOT on #canvas-layer) ──────
+   * Architecture: workspace > viewport > canvas-layer
+   * transform:scale applied to viewport — canvas-layer offsetWidth stays constant
+   */
+  #viewport {
+    display: inline-block;
+    /* v18.8: no transform — zoom via layout scaling only (DesignZoomEngine._apply) */
+    position: relative;
+    margin-left: 3px;  /* v18.4: 3px gap between vertical ruler and canvas */
+  }
+
+  /* canvas-layer: v18.8 — NO transform ever. Zoom applied via width/height only.
+     Architecture: MODEL SPACE (DS.elements px) × DS.zoom = VIEW SPACE (DOM px) */
+
+  /* ── QA alias selectors: h-ruler / v-ruler ghost divs inherit from parents ─ */
+  #h-ruler { display:block; position:absolute; inset:0; pointer-events:none; }
+  #v-ruler { display:block; position:absolute; inset:0; pointer-events:none; }

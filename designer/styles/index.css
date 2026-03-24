@@ -1,0 +1,17 @@
+/* ReportForge shell CSS entrypoint */
+@layer reset, tokens, base, layout, chrome, canvas, elements,
+       geometry, selection, panels, menus, components, utilities, classic, modern, overrides;
+
+@import url("./reset.css");
+@import url("./tokens.css");
+@import url("./base.css");
+@import url("./layout.css");
+@import url("./chrome.css");
+@import url("./canvas.css");
+@import url("./elements-selection.css");
+@import url("./panels.css");
+@import url("./menus.css");
+@import url("./components.css");
+@import url("./utilities.css");
+@import url("./themes.css");
+@import url("./overrides.css");

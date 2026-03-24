@@ -1,0 +1,35 @@
+@layer overrides {
+  /* Print hides chrome */
+  @media print {
+    #titlebar, #menubar, #toolbars, #tabs-row,
+    #doc-type-bar, #statusbar, #panel-left, #panel-right {
+      display: none !important;
+    }
+    #main-area { grid-template-columns: 0 1fr 0 !important; }
+    #workspace { overflow: visible !important; }
+  }
+  /* Hidden color pickers */
+  .color-picker-hidden {
+    position: fixed;
+    opacity: 0;
+    pointer-events: none;
+  }
+  /* Search input in panel */
+  .fe-search-wrap {
+    display: flex;
+    align-items: center;
+    padding: var(--rf-gap-sm);
+    border-block-end: 1px solid var(--rf-border-mid);
+    gap: var(--rf-gap-xs);
+    flex-shrink: 0;
+  }
+  .fe-search {
+    flex: 1;
+    block-size: 18px;
+    border: 1px inset var(--rf-border-mid);
+    background: var(--rf-bg-light);
+    font-size: 10px;
+    padding-inline: var(--rf-gap-xs);
+    min-inline-size: 0;
+  }
+  .fe-search-icon { font-size: 10px; flex-shrink: 0; }

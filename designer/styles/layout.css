@@ -1,0 +1,35 @@
+@layer layout {
+  #app {
+    display: flex;
+    flex-direction: column;
+    inline-size: 100vi;
+    block-size: 100dvb;
+    border: 2px solid var(--rf-title-end);
+    box-shadow: 2px 2px 6px rgba(0,0,0,.4);
+  }
+
+  /* Three-column grid with logical widths */
+  #main-area {
+    flex: 1;
+    display: grid;
+    grid-template-columns: var(--rf-panel-l) 1fr var(--rf-panel-r);
+    overflow: hidden;
+    min-block-size: 0;
+    background: var(--rf-bg-dark);
+    border-block-start: 1px solid var(--rf-border-mid);
+  }
+
+  /* Panel collapse states */
+  #main-area[data-panels~="no-left"]  { grid-template-columns: 0 1fr var(--rf-panel-r); }
+  #main-area[data-panels~="no-right"] { grid-template-columns: var(--rf-panel-l) 1fr 0; }
+  #main-area[data-panels~="no-both"]  { grid-template-columns: 0 1fr 0; }
+
+  #canvas-area {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-inline-size: 0;
+    border-inline-start: 1px solid #888; /* v18.6: separator from left panel */
+  }
+}
+

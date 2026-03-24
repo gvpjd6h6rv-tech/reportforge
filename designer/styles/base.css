@@ -1,0 +1,11 @@
+@layer base {
+  html, body {
+    inline-size: 100%;
+    block-size: 100%;
+    font-family: var(--rf-font-ui);
+    font-size: var(--rf-font-size-base);
+    background: var(--rf-bg);
+    color: #000;
+  }
+}
+

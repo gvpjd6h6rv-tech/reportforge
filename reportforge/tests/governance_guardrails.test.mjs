@@ -184,6 +184,61 @@ test('monolith no longer defines properties, explorer, or zoom engines inline', 
   assert.match(html, /<script src="\/engines\/ZoomEngine\.js"><\/script>/);
 });
 
+test('monolith no longer keeps runtime globals, formula/debug, or doc-type probes inline', () => {
+  const html = fs.readFileSync(path.resolve('designer/crystal-reports-designer-v4.html'), 'utf8');
+  assert.doesNotMatch(html, /\bconst\s+FormulaEngine\s*=\s*\(/);
+  assert.doesNotMatch(html, /\bconst\s+FormulaEditorDialog\s*=\s*\{/);
+  assert.doesNotMatch(html, /\bconst\s+DesignerUI\s*=\s*\{/);
+  assert.doesNotMatch(html, /\bconst\s+DebugTrace\s*=\s*\{/);
+  assert.doesNotMatch(html, /\bconst\s+DebugChannelsPanel\s*=\s*\{/);
+  assert.doesNotMatch(html, /\bconst\s+DebugTraceToggle\s*=\s*\{/);
+  assert.doesNotMatch(html, /\bconst\s+DebugOverlay\s*=\s*\{/);
+  assert.doesNotMatch(html, /\bconst\s+DOC_TYPES\s*=\s*\{/);
+  assert.doesNotMatch(html, /\bconst\s+canvas\s*=\s*\{/);
+  assert.doesNotMatch(html, /\bfunction\s+resolveField\s*\(/);
+  assert.doesNotMatch(html, /\bfunction\s+formatValue\s*\(/);
+  assert.doesNotMatch(html, /\bfunction\s+getCanvasPos\s*\(/);
+  assert.doesNotMatch(html, /\bfunction\s+initClock\s*\(/);
+  assert.doesNotMatch(html, /onclick="DesignerUI\.toggleMode\(\)"/);
+  assert.doesNotMatch(html, /<script>\s*<\/script>/);
+  assert.match(html, /<script src="\/engines\/RuntimeGlobals\.js"><\/script>/);
+  assert.match(html, /<script src="\/engines\/FormulaAndDebug\.js"><\/script>/);
+  assert.match(html, /<script src="\/engines\/DocTypeAndProbes\.js"><\/script>/);
+});
+
+test('monolith shell keeps CSS externalized and below shell-size thresholds', () => {
+  const html = fs.readFileSync(path.resolve('designer/crystal-reports-designer-v4.html'), 'utf8');
+  const styleTagCount = countMatches(html, /<style\b/g);
+  const inlineStyleAttrCount = countMatches(html, /\sstyle="/g);
+  const stylesheetLinkCount = countMatches(html, /<link rel="stylesheet" href="\/designer\/styles\/index\.css">/g);
+
+  assert.equal(styleTagCount, 0, 'monolith should not keep inline <style> blocks');
+  assert.equal(inlineStyleAttrCount, 0, 'monolith should not keep inline style= attributes');
+  assert.equal(stylesheetLinkCount, 1, 'monolith should load the canonical CSS entrypoint exactly once');
+  assert.ok(Buffer.byteLength(html, 'utf8') <= 100_000, 'monolith shell exceeded 100 KB threshold');
+
+  const cssFiles = [
+    'designer/styles/index.css',
+    'designer/styles/reset.css',
+    'designer/styles/tokens.css',
+    'designer/styles/base.css',
+    'designer/styles/layout.css',
+    'designer/styles/chrome.css',
+    'designer/styles/canvas.css',
+    'designer/styles/elements-selection.css',
+    'designer/styles/panels.css',
+    'designer/styles/menus.css',
+    'designer/styles/components.css',
+    'designer/styles/utilities.css',
+    'designer/styles/themes.css',
+    'designer/styles/overrides.css',
+  ];
+
+  for (const relPath of cssFiles) {
+    assert.ok(fs.existsSync(path.resolve(relPath)), `${relPath} missing`);
+  }
+});
+
 test('canonical runtime files do not reference retired bridge implementations', () => {
   const files = [
     path.resolve('designer/crystal-reports-designer-v4.html'),

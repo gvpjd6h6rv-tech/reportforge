@@ -1,0 +1,125 @@
+@layer tokens {
+  :root {
+    /* ── Typography ── */
+    --rf-font-ui:      Tahoma, 'MS Sans Serif', sans-serif;
+    --rf-font-modern:  'Segoe UI', system-ui, -apple-system, sans-serif;
+    --rf-font-mono:    'Courier New', 'Consolas', monospace;
+    --rf-font-size-base: 11px;
+    --rf-font-size-sm:   10px;
+    --rf-font-size-xs:    9px;
+
+    /* ── Classic XP palette ── */
+    --rf-xp-bg:            #ECE9D8;
+    --rf-xp-bg-dark:       #D4D0C8;
+    --rf-xp-bg-light:      #F5F4EE;
+    --rf-xp-border-light:  #FFFFFF;
+    --rf-xp-border-dark:   #716F64;
+    --rf-xp-border-mid:    #ACA899;
+    --rf-xp-title-s:       #0A246A;
+    --rf-xp-title-e:       #3A6EA5;
+    --rf-xp-sel:           #316AC5;
+    --rf-xp-sel-fg:        #FFFFFF;
+    --rf-xp-btn-h:         #C1D2EE;
+    --rf-xp-btn-hb:        #316AC5;
+
+    /* ── Modern palette ── */
+    --rf-mod-bg:           #F0F2F5;
+    --rf-mod-surface-0:    #FFFFFF;
+    --rf-mod-surface-1:    #F8F9FA;
+    --rf-mod-surface-2:    #F0F2F5;
+    --rf-mod-surface-3:    #E8EAED;
+    --rf-mod-border:       #D1D5DB;
+    --rf-mod-border-mid:   #CBD0D8;
+    --rf-mod-accent:       #1A6EDB;
+    --rf-mod-accent-fg:    #FFFFFF;
+    --rf-mod-accent-hover: #EBF2FF;
+    --rf-mod-title-s:      #1A4E8A;
+    --rf-mod-title-e:      #2563EB;
+
+    /* ── Active skin tokens (Classic defaults) ── */
+    --rf-bg:           var(--rf-xp-bg);
+    --rf-bg-dark:      var(--rf-xp-bg-dark);
+    --rf-bg-light:     var(--rf-xp-bg-light);
+    --rf-border-light: var(--rf-xp-border-light);
+    --rf-border-dark:  var(--rf-xp-border-dark);
+    --rf-border-mid:   var(--rf-xp-border-mid);
+    --rf-title-start:  var(--rf-xp-title-s);
+    --rf-title-end:    var(--rf-xp-title-e);
+    --rf-accent:       var(--rf-xp-sel);
+    --rf-accent-fg:    var(--rf-xp-sel-fg);
+    --rf-accent-hover: var(--rf-xp-btn-h);
+    --rf-surface-0:    var(--rf-xp-bg-light);
+    --rf-surface-1:    var(--rf-xp-bg);
+    --rf-surface-2:    var(--rf-xp-bg-dark);
+    --rf-surface-3:    #C8C4B4;
+
+    /* ── Canvas + sections ── */
+    --rf-canvas-bg:    #808080;
+    --rf-page-bg:      #FFFFFF;
+    --rf-ruler-bg:     #D4D0C8;
+    --rf-grid-dot:     rgba(0,0,128,0.12);
+    --rf-handle-color: #0066CC;
+    --rf-sec-rh:       #FFFDE7;
+    --rf-sec-ph:       #E8F5E9;
+    --rf-sec-det:      #FFFFFF;
+    --rf-sec-pf:       #E3F2FD;
+    --rf-sec-rf:       #FCE4EC;
+    --rf-sec-gh:       #F3E5F5;
+    --rf-sec-gf:       #FFF3E0;
+
+    /* ── Element colors ── */
+    --rf-el-field-bg:  #F0F8FF;
+    --rf-el-field-bdr: #6699CC;
+    --rf-el-text-bg:   #FFFFF0;
+    --rf-el-text-bdr:  #CCCC99;
+    --rf-el-sel-bdr:   #0066CC;
+
+    /* ── Sizing ── */
+    --rf-titlebar-h:   22px;
+    --rf-menubar-h:    20px;
+    --rf-toolbar-h:    26px;
+    --rf-tabs-h:       26px;
+    --rf-docbar-h:     28px;
+    --rf-statusbar-h:  20px;
+    --rf-ruler-top:    16px;
+    --rf-ruler-side:   22px;  /* v18.8: wider ruler for readability */
+    --rf-handle-size:  6px;
+    --rf-panel-l:      clamp(130px, 15vw, 170px);
+    --rf-panel-r:      clamp(180px, 18vw, 220px);
+
+    /* ── Spacing scale ── */
+    --rf-gap-xs:  2px;
+    --rf-gap-sm:  4px;
+    --rf-gap-md:  8px;
+    --rf-gap-lg: 12px;
+    --rf-pad-sm:  3px 8px;
+    --rf-pad-md:  6px 12px;
+
+    /* ── Radii ── */
+    --rf-radius-sm: 2px;
+    --rf-radius-md: 4px;
+    --rf-radius-lg: 6px;
+
+    /* ── Transitions ── */
+    --rf-transition: 80ms cubic-bezier(0.34,1.56,0.64,1);
+    --rf-transition-fast: 60ms cubic-bezier(0.34,1.56,0.64,1);
+    --rf-transition-slow: 160ms cubic-bezier(0.22,1.0,0.36,1);
+
+    /* ── Z-index scale ── */
+    --rf-z-canvas:   20;
+    --rf-z-selected: 30;
+    --rf-z-handles:  40;
+    --rf-z-overlay:  45;
+    --rf-z-badge:    50;
+    --rf-z-preview: 100;
+    --rf-z-ctx:    9500;
+    --rf-z-dialog: 9600;
+    --rf-z-toast:  9999;
+
+    /* ── Swatch custom properties (zero inline styles) ── */
+    --swatch-font:   #000000;
+    --swatch-bg:     transparent;
+    --swatch-border: transparent;
+  }
+}
+
