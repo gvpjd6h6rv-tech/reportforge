@@ -4324,93 +4324,6 @@ function _canonicalPreviewWriter(){
   return PreviewEngineV19;
 }
 // ═══════════════════════════════════════════════════════════════════
-//  CONTEXT MENU ENGINE
-// ═══════════════════════════════════════════════════════════════════
-const ContextMenuEngine = {
-  show(x,y,context='canvas'){
-    const menu=document.getElementById('ctx-menu');
-    const items=context==='element'?[
-      {label:'Formatear campo...', action:'format-field', icon:'⚙'},
-      {label:'Propiedades...', action:'format-field', icon:'📋'},
-      {sep:true},
-      {label:'Cortar', action:'cut', short:'Ctrl+X', icon:'✂'},
-      {label:'Copiar', action:'copy', short:'Ctrl+C', icon:'📋'},
-      {label:'Pegar', action:'paste', short:'Ctrl+V', icon:'📌'},
-      {label:'Eliminar', action:'delete', short:'Del', icon:'🗑'},
-      {sep:true},
-      {label:'Traer al frente', action:'bring-front', icon:'🔼'},
-      {label:'Enviar al fondo', action:'send-back', icon:'🔽'},
-      {sep:true},
-      {label:'Alinear izquierda', action:'align-lefts'},
-      {label:'Alinear centro',   action:'align-centers'},
-      {label:'Alinear derecha',  action:'align-rights'},
-    ]:[
-      {label:'Insertar > Texto', action:'insert-text'},
-      {label:'Insertar > Campo', action:'insert-field'},
-      {label:'Insertar > Línea', action:'insert-line'},
-      {label:'Insertar > Rectángulo', action:'insert-box'},
-      {sep:true},
-      {label:'Pegar', action:'paste', short:'Ctrl+V', icon:'📌'},
-      {sep:true},
-      {label:'Seleccionar todo', action:'select-all', short:'Ctrl+A'},
-    ];
-    menu.innerHTML='';
-    items.forEach(item=>{
-      if(item.sep){const s=document.createElement('div');s.className='ctx-item separator';menu.appendChild(s);return;}
-      const d=document.createElement('div');d.className='ctx-item';
-      d.innerHTML=`<span class="ctx-icon">${item.icon||''}</span><span>${item.label}</span>${item.short?`<span class="ctx-shortcut">${item.short}</span>`:''}`;
-      d.addEventListener('click',()=>{this.hide();handleAction(item.action);});
-      menu.appendChild(d);
-    });
-    // Position
-    const pw=170,ph=items.length*22;
-    menu.style.left=Math.min(x,window.innerWidth-pw-4)+'px';
-    menu.style.top=Math.min(y,window.innerHeight-ph-4)+'px';
-    menu.classList.add('visible');
-  },
-  hide(){
-    document.getElementById('ctx-menu').classList.remove('visible');
-  }
-};
-
-// ═══════════════════════════════════════════════════════════════════
-//  MENU ENGINE — dropdown menus
-// ═══════════════════════════════════════════════════════════════════
-const MenuEngine = {
-  _open:null,
-  init(){
-    document.querySelectorAll('.menu-item').forEach(item=>{
-      item.addEventListener('click',e=>{
-        e.stopPropagation();
-        const menu=item.dataset.menu;
-        if(this._open===menu){this.closeAll();return;}
-        this.closeAll();
-        this._open=menu;
-        item.classList.add('open');
-        const dd=document.getElementById(`dd-${menu}`);
-        if(!dd)return;
-        const rect=item.getBoundingClientRect();
-        dd.style.left=rect.left+'px';dd.style.top=rect.bottom+'px';
-        dd.classList.add('visible');
-      });
-    });
-    document.addEventListener('click',()=>this.closeAll());
-
-    // Wire dropdown items
-    document.querySelectorAll('.dd-item').forEach(item=>{
-      item.addEventListener('click',e=>{
-        e.stopPropagation();this.closeAll();handleAction(item.dataset.action);
-      });
-    });
-  },
-  closeAll(){
-    this._open=null;
-    document.querySelectorAll('.menu-item').forEach(m=>m.classList.remove('open'));
-    document.querySelectorAll('.dropdown').forEach(d=>d.classList.remove('visible'));
-  }
-};
-
-// ═══════════════════════════════════════════════════════════════════
 //  ZOOM ENGINE
 // ═══════════════════════════════════════════════════════════════════
 
@@ -6053,6 +5966,7 @@ window.__rfVerify = function(){
 <script src="/engines/GlobalEventHandlers.js"></script>
 <script src="/engines/CommandRuntime.js"></script>
 <script src="/engines/UIAdapters.js"></script>
+<script src="/engines/MenuAdapters.js"></script>
 <script src="/engines/RuntimeBootstrap.js"></script>
 <script>
 </script>

@@ -143,6 +143,14 @@ test('monolith no longer defines UI adapter wiring inline', () => {
   assert.match(html, /<script src="\/engines\/UIAdapters\.js"><\/script>/);
 });
 
+test('monolith no longer defines menu engines inline', () => {
+  const html = fs.readFileSync(path.resolve('designer/crystal-reports-designer-v4.html'), 'utf8');
+  assert.doesNotMatch(html, /\bconst\s+MenuEngine\s*=\s*\{/);
+  assert.doesNotMatch(html, /\bconst\s+ContextMenuEngine\s*=\s*\{/);
+  assert.doesNotMatch(html, /document\.addEventListener\('click',\(\)=>this\.closeAll\(\)\)/);
+  assert.match(html, /<script src="\/engines\/MenuAdapters\.js"><\/script>/);
+});
+
 test('canonical runtime files do not reference retired bridge implementations', () => {
   const files = [
     path.resolve('designer/crystal-reports-designer-v4.html'),

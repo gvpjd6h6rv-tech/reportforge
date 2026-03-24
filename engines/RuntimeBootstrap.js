@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   SectionEngine.init();
   FieldExplorerEngine.init();
   FieldExplorerEngine.setupCanvasDrop();
-  MenuEngine.init();
+  initMenuBindings();
   initCommandRuntimeState();
   initUIBindings();
   registerGlobalEventHandlers();
