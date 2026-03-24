@@ -102,6 +102,13 @@ test('monolith no longer defines the document store inline', () => {
   assert.match(html, /<script src="\/engines\/DocumentStore\.js"><\/script>/);
 });
 
+test('monolith only keeps the deferred DOMContentLoaded handlers inline', () => {
+  const html = fs.readFileSync(path.resolve('designer/crystal-reports-designer-v4.html'), 'utf8');
+  const matches = html.match(/document\.addEventListener\('DOMContentLoaded'/g) || [];
+  assert.equal(matches.length, 2, 'monolith should keep only the two deferred DOMContentLoaded handlers inline');
+  assert.match(html, /<script src="\/engines\/RuntimeBootstrap\.js"><\/script>/);
+});
+
 test('canonical runtime files do not reference retired bridge implementations', () => {
   const files = [
     path.resolve('designer/crystal-reports-designer-v4.html'),
