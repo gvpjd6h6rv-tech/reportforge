@@ -8,29 +8,29 @@ title: ReportForge Brochure
       <BrochureHero
         kicker="🎪 Brochure de Feria • Runtime vivo • Arquitectura real"
         title="ReportForge"
-        highlight="vistoso por fuera, serio por dentro"
-        copy="Diseñador visual de reportes con canvas real, preview funcional, store canónico, engines dedicados y guardrails de CI que bloquean recaídas. No es una maqueta. No es un demo hueco. Es un frontend vivo de edición documental."
+        highlight="el diseñador de reportes que sí aguanta producción"
+        copy="Crea, ajusta y valida reportes con sensación de editor real: canvas vivo, preview operativo, formato interactivo y una arquitectura gobernada para que el producto no se rompa cuando crece. ReportForge combina velocidad de trabajo, control visual y disciplina técnica."
         side-badge="✨ Pase rápido"
-        side-title="Lo importante sin rodeos"
+        side-title="Por qué llama la atención"
         note-title="Idea fuerza:"
-        note="el HTML ya no es la app. La app vive en módulos con límites, owners y guardrails."
+        note="no estás viendo una demo vistosa por fuera y frágil por dentro. Estás viendo un diseñador que cuida experiencia, consistencia y mantenimiento."
         :actions="[
-          { label: '🖥️ Entrar al Designer Guide', href: '/guide/designer', variant: 'primary' },
-          { label: '🏗️ Ver arquitectura', href: '/architecture/overview', variant: 'secondary' },
-          { label: '🛰️ RuntimeServices', href: '/runtime-services', variant: 'secondary' }
+          { label: '🖥️ Ver la experiencia del diseñador', href: '/guide/designer', variant: 'primary' },
+          { label: '🏗️ Ver por qué es sostenible', href: '/architecture/overview', variant: 'secondary' },
+          { label: '🛰️ Ver la base del runtime', href: '/runtime-services', variant: 'secondary' }
         ]"
         :stats="[
-          { value: 'SSOT', label: 'DocumentStore como fuente canónica' },
-          { value: 'Preview', label: 'Mismo core, distinto chrome' },
-          { value: 'CI', label: 'Contracts + governance + runtime' },
-          { value: 'Shell', label: 'HTML host puro, sin app inline' }
+          { value: 'SSOT', label: 'Un solo estado real para evitar drift' },
+          { value: 'Preview', label: 'Misma capacidad operativa, distinto chrome' },
+          { value: 'CI', label: 'Tests que bloquean recaídas estructurales' },
+          { value: 'Shell', label: 'Host limpio, sin app inline escondida' }
         ]"
         :highlights="[
-          '🧱 Secciones estilo Crystal Reports con layout estable.',
-          '🖱️ Selección, multiselección, drag y resize sobre runtime real.',
-          '🎛️ Toolbar de formato con bold, align, fuentes y tamaños.',
-          '🔎 Zoom, overlay, handles, preview y paridad funcional.',
-          '🛡️ Arquitectura gobernada por tests, límites y whitelist de globals.'
+          '🧱 Modela reportes complejos con secciones estables y layout confiable.',
+          '🖱️ Trabaja rápido con selección, multiselección, drag y resize reales.',
+          '🎛️ Ajusta formato y contenido sin perder consistencia del modelo.',
+          '🔎 Muévete entre zoom y preview sin entrar a un segundo sistema roto.',
+          '🛡️ Escala el producto con guardrails que frenan deuda antes de que explote.'
         ]"
       />
 
@@ -38,11 +38,11 @@ title: ReportForge Brochure
         <div class="rf-col-8">
           <BrochureStrip
             title="🎠 Recorrido de feria"
-            copy="Haz click, arrastra, cambia zoom, entra a preview, vuelve a design, aplica formato y sigue. ReportForge está montado para aguantar interacción continua sin drift, sin doble writer y sin caminos paralelos."
+            copy="Haz click, arrastra, cambia zoom, entra a preview, vuelve a design, aplica formato y sigue trabajando. ReportForge está diseñado para sentirse ágil para quien lo usa y defendible para quien lo mantiene."
             :chips="[
-              '🧠 Store canónico',
-              '⚙️ Command runtime',
-              '🧩 Engines separados',
+              '🧠 Estado confiable',
+              '⚙️ Orquestación clara',
+              '🧩 Engines especializados',
               '🛰️ RuntimeServices',
               '🧪 Anti-regression suite',
               '🎨 Shell puro'
@@ -70,19 +70,19 @@ title: ReportForge Brochure
             {
               title: '🚀 Qué es ReportForge',
               cols: 4,
-              copy: 'Un diseñador visual de reportes orientado a estructura documental: secciones, elementos posicionables, formatos, datos, fórmulas, render y preview operativo.',
+              copy: 'Una plataforma de diseño de reportes pensada para equipos que necesitan editar con libertad, conservar precisión visual y no hipotecar la arquitectura cada vez que agregan una capacidad nueva.',
               chips: ['🧾 Texto', '🔌 Campos', '📏 Líneas', '⬛ Rectángulos']
             },
             {
               title: '💥 Qué NO es',
               cols: 4,
-              copy: 'No es un HTML monolítico con lógica inline, no es una app con DOM como fuente de verdad y no es una preview read-only disfrazada de editor.',
+              copy: 'No vende humo técnico. No depende de hacks frágiles, no es un monolito oculto y no mantiene una preview de juguete separada del flujo real.',
               items: ['❌ sin JS inline', '❌ sin CSS inline grande', '❌ sin writers duplicados', '❌ sin fallback silencioso']
             },
             {
-              title: '🎟️ Qué ofrece hoy',
+              title: '🎟️ Qué te llevas hoy',
               cols: 4,
-              items: ['🖱️ selección y multiselección', '📐 drag, resize y zoom', '🎛️ formato y explorer', '👀 preview funcional real', '🧪 CI con governance']
+              items: ['🖱️ edición directa y rápida', '📐 drag, resize y zoom estable', '🎛️ formato, explorer y paneles útiles', '👀 preview funcional real', '🧪 CI con governance']
             }
           ]"
         />
@@ -92,9 +92,9 @@ title: ReportForge Brochure
         <div class="rf-poster-board">
           <h2>🎡 ReportForge en modo feria</h2>
           <p>
-            Piensa esto como un stand vivo: entras, ves el canvas, tocas el toolbar, cambias zoom,
-            activas preview y el sistema sigue coherente. La experiencia vende el producto; la
-            arquitectura impide que se derrumbe detrás del telón.
+            Piensa esto como un stand que no solo impresiona: también resiste inspección. Entras,
+            ves el canvas, tocas el toolbar, cambias zoom, activas preview y todo sigue coherente.
+            La experiencia atrae; la arquitectura sostiene.
           </p>
           <div class="rf-poster-grid">
             <div class="rf-poster-ticket">
@@ -119,15 +119,15 @@ title: ReportForge Brochure
           <div class="rf-callout">
             <h3>🎯 Mensaje comercial</h3>
             <p>
-              ReportForge combina sensación de editor de escritorio con una arquitectura web moderna,
-              gobernada y verificable.
+              ReportForge te deja mostrar un editor serio, rápido y confiable: algo que un usuario
+              final disfruta y un equipo técnico puede seguir evolucionando sin miedo.
             </p>
           </div>
           <div class="rf-callout">
             <h3>🧭 Mensaje técnico</h3>
             <p>
-              Si una capa intenta invadir a otra, si reaparece wiring inline o si el shell se ensucia,
-              el gate debe cortar el avance.
+              Lo importante no es solo que funcione hoy. Lo importante es que haya límites claros
+              para que siga funcionando cuando el producto crezca, cambie de manos o entre en presión real.
             </p>
           </div>
         </div>
@@ -138,9 +138,9 @@ title: ReportForge Brochure
         <div class="rf-story-grid">
           <div>
             <p>
-              El diseñador tiene canvas con secciones, overlay, handles, status bar, toolbar,
-              paneles, field explorer y properties panel. La experiencia visible es de editor real,
-              no de panel estático.
+              El diseñador ofrece una experiencia de trabajo continua: canvas con secciones,
+              overlay, handles, status bar, toolbar, paneles, field explorer y properties panel.
+              Todo está pensado para que la edición se sienta directa, no burocrática.
             </p>
             <div class="rf-mini-metrics">
               <div class="rf-stat">
@@ -159,12 +159,12 @@ title: ReportForge Brochure
           </div>
           <div>
             <p>
-              La parte importante no es solo que “se vea bien”, sino que el flujo real esté
-              gobernado: action → store → scheduler → engine → render.
+              La promesa no es solo “que se vea bien”. La promesa es que la interacción visible esté
+              apoyada por un flujo real y limpio: action → store → scheduler → engine → render.
             </p>
             <p>
-              Si rompes contratos, reintroduces wiring inline o creas un writer paralelo, la suite
-              debe romper. Esa es la diferencia entre demo y producto serio.
+              Si reaparecen atajos, wiring inline o writers paralelos, la suite debe romper. Esa es
+              la diferencia entre una demo simpática y un producto que puede venderse con la cara en alto.
             </p>
           </div>
         </div>
@@ -174,8 +174,9 @@ title: ReportForge Brochure
         <div class="rf-card rf-col-6">
           <h2>🏗️ Cómo está construido</h2>
           <p>
-            El shell HTML solo hospeda markup, CSS y scripts externos. El estado y el comportamiento
-            viven fuera:
+            La arquitectura actual está hecha para sostener velocidad sin desorden. El shell HTML
+            hospeda markup, CSS y scripts externos; el comportamiento real vive fuera, en capas con
+            responsabilidades claras:
           </p>
           <ul>
             <li><a href="/architecture/overview">Architecture Overview</a></li>
@@ -188,13 +189,13 @@ title: ReportForge Brochure
         <div class="rf-card rf-col-6">
           <h2>🧱 Capas del sistema</h2>
           <ul>
-            <li><strong>Shell HTML:</strong> host puro.</li>
-            <li><strong>DocumentStore:</strong> SSOT.</li>
-            <li><strong>CommandRuntime:</strong> orquestación.</li>
-            <li><strong>UIAdapters:</strong> DOM → commands.</li>
-            <li><strong>Engines:</strong> comportamiento de dominio.</li>
-            <li><strong>RuntimeServices:</strong> owners, flags, refs y guards.</li>
-            <li><strong>Bootstrap:</strong> arranque, no negocio.</li>
+            <li><strong>Shell HTML:</strong> host puro, no app escondida.</li>
+            <li><strong>DocumentStore:</strong> un solo estado real.</li>
+            <li><strong>CommandRuntime:</strong> orquestación explícita.</li>
+            <li><strong>UIAdapters:</strong> DOM → commands, sin lógica de negocio.</li>
+            <li><strong>Engines:</strong> dominio con owner claro.</li>
+            <li><strong>RuntimeServices:</strong> owners, flags, refs y guards compartidos.</li>
+            <li><strong>Bootstrap:</strong> arranque, no comportamiento de producto.</li>
           </ul>
         </div>
       </section>
@@ -203,8 +204,8 @@ title: ReportForge Brochure
         <div class="rf-card rf-col-8">
           <h2>🎨 Canvas, formato y operaciones</h2>
           <p>
-            Sobre el canvas puedes seleccionar, mover, redimensionar, alinear, cambiar tipografía y
-            jugar con zoom sin perder determinismo.
+            En el canvas puedes trabajar con ritmo: seleccionar, mover, redimensionar, alinear,
+            cambiar tipografía y recorrer distintos niveles de zoom sin sacrificar consistencia.
           </p>
           <div class="rf-chip-row">
             <span class="rf-chip">𝐁 Bold</span>
@@ -220,10 +221,10 @@ title: ReportForge Brochure
         <div class="rf-card rf-col-4">
           <h2>📍 Lo que importa aquí</h2>
           <ul>
-            <li>DS refleja el estado real.</li>
-            <li>El DOM es representación.</li>
-            <li>El overlay no debe driftar.</li>
-            <li>Los format controls tienen suite propia.</li>
+            <li>El modelo refleja el estado real.</li>
+            <li>La UI acompaña, no inventa estado.</li>
+            <li>El overlay debe seguir alineado.</li>
+            <li>Los format controls ya están blindados con suite propia.</li>
           </ul>
         </div>
       </section>
@@ -232,14 +233,14 @@ title: ReportForge Brochure
         <div class="rf-card rf-col-6">
           <h2>👀 Design vs Preview</h2>
           <p>
-            La regla canónica es simple y dura:
+            La diferencia entre ambos modos es visual, no de capacidad:
           </p>
           <p class="rf-note">
             <strong>Preview = mismo core + distinto render/chrome.</strong>
           </p>
           <p>
-            Eso significa selección, drag, resize y zoom consistentes; la diferencia está en el
-            chrome visual, no en un segundo sistema paralelo.
+            Eso se traduce en menos sorpresas para el usuario y menos deuda para el equipo. Selección,
+            drag, resize y zoom siguen siendo consistentes; cambia el chrome, no el sistema.
           </p>
         </div>
 
@@ -252,7 +253,7 @@ title: ReportForge Brochure
             <li>governance guardrails</li>
           </ul>
           <p>
-            Si preview vuelve a comportarse como read-only, eso debería romper la suite.
+            Si preview vuelve a comportarse como modo pasivo, la suite tiene que hacerlo visible de inmediato.
           </p>
         </div>
       </section>
@@ -261,8 +262,8 @@ title: ReportForge Brochure
         <div class="rf-card rf-col-12">
           <h2>🛡️ Guardrails que hacen ruido</h2>
           <p>
-            ReportForge ya no depende de “acordarse” de respetar la arquitectura. Hay checks para
-            impedir recaídas:
+            ReportForge ya no depende de disciplina oral o memoria institucional. Hay checks para
+            impedir recaídas antes de que lleguen a producción:
           </p>
           <div class="rf-chip-row">
             <span class="rf-chip">🚫 no JS inline</span>
@@ -282,6 +283,10 @@ npm run test:runtime</code></pre>
         <h2>📚 Sigue explorando</h2>
         <div class="rf-story-grid">
           <div>
+            <p>
+              Si quieres ver la parte más visible del producto, empieza por la guía del diseñador y
+              el recorrido de uso.
+            </p>
             <ul class="rf-link-list">
               <li><a href="/">🏠 Home</a></li>
               <li><a href="/guide/getting-started">🚀 Getting Started</a></li>
@@ -290,6 +295,10 @@ npm run test:runtime</code></pre>
             </ul>
           </div>
           <div>
+            <p>
+              Si quieres entender por qué este proyecto puede crecer sin volver al caos, entra a la
+              documentación de arquitectura.
+            </p>
             <ul class="rf-link-list">
               <li><a href="/architecture/overview">🏗️ Architecture Overview</a></li>
               <li><a href="/layers">🧱 Layers</a></li>
