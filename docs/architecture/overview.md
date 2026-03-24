@@ -1,236 +1,94 @@
-# ReportForge Architecture — v19.0
+# Architecture Overview
 
-> **Current version:** v19.0 — Modular Engine Architecture
+## Estado Actual
 
-## Engine Layer (`/engines/`)
+El sistema vivo ya no es un monolito inline.
 
-v19 introduces dedicated engine modules. Each engine owns one concern and
-communicates via the `rf:zoom-changed` custom event.
+El runtime canónico es:
 
-```
-/engines/
-  WorkspaceScrollEngine.js   — scroll container sizing
-  GridEngine.js              — zoom-aware dot grid
-  SnapEngine.js              — model-space snap pipeline
-  RulerEngine.js             — DPR-correct ruler canvas (rewrite)
-```
+- shell: [`designer/crystal-reports-designer-v4.html`](/home/mimi/Escritorio/RF/designer/crystal-reports-designer-v4.html)
+- lógica: [`engines/*.js`](/home/mimi/Escritorio/RF/engines)
 
-## Coordinate Spaces
+La arquitectura actual persigue cuatro objetivos:
 
-| Space | Units | Owner |
-|-------|-------|-------|
-| MODEL | document px | `DS.elements` |
-| VIEW | `model × zoom` | DOM styles |
-| SCREEN | `view × dpr` | Canvas buffers |
+1. `DS` como única fuente de verdad del path crítico
+2. owners y writers únicos por subsistema
+3. boundaries fuertes entre shell, bootstrap, adapters, commands y engines
+4. guardrails de CI para impedir recaídas
 
-Conversions: **only through `RF.Geometry`**.
-`DS.zoom` is read only by `RF.Geometry.zoom()`.
+## Mapa de Capas
 
-## Zoom Pipeline
-
-```
-DesignZoomEngine._apply(z)
-    ↓ DS.zoom = z
-    ↓ RF.Geometry.scale/modelToView for all DOM writes
-    ↓ fires  rf:zoom-changed
-         ↓ GridEngine        → backgroundSize
-         ↓ WorkspaceScroll   → scroll geometry
-    ↓ RulerEngine.render()   → tick positions via RF.Geometry.scale()
-    ↓ PreviewEngine.refresh() if previewMode
+```text
+Shell HTML
+  -> RuntimeBootstrap / DeferredBootstrap
+    -> RuntimeServices
+    -> UIAdapters / MenuAdapters / GlobalEventHandlers
+      -> CommandRuntime
+        -> Engines
+          -> DocumentStore (DS)
+          -> RenderScheduler
+            -> DOM
 ```
 
----
+## Núcleo Canónico
 
-## Geometry Engine (v18.10+)
+Store:
 
-All coordinate conversions go through `RF.Geometry` — the single source of truth for zoom.
+- [`engines/DocumentStore.js`](/home/mimi/Escritorio/RF/engines/DocumentStore.js)
 
-### Rule: DS.zoom is only read by RF.Geometry.zoom()
+Orquestación:
 
-```
-MODEL SPACE  — DS.elements coordinates (document px, never scaled)
-VIEW SPACE   — DOM pixels = RF.Geometry.scale(model)
-MOUSE INPUT  — RF.Geometry.viewToModel(clientX, clientY) → model coords
-SNAP         — operates in model space only
-RULERS       — RF.Geometry.scale(unit) for all tick positions
-PREVIEW      — RF.Geometry.rectToView(el) for all element positioning
-```
+- [`engines/CommandRuntime.js`](/home/mimi/Escritorio/RF/engines/CommandRuntime.js)
+- [`engines/EngineCore.js`](/home/mimi/Escritorio/RF/engines/EngineCore.js)
+- [`engines/RenderScheduler.js`](/home/mimi/Escritorio/RF/engines/RenderScheduler.js)
 
-### API
+Adapters:
 
-| Method | Description |
-|--------|-------------|
-| `RF.Geometry.zoom()` | Returns current `DS.zoom` |
-| `RF.Geometry.scale(v)` | `v × zoom` — model to view |
-| `RF.Geometry.unscale(v)` | `v / zoom` — view to model |
-| `RF.Geometry.modelToView(x, y)` | Point: model → view |
-| `RF.Geometry.viewToModel(clientX, clientY)` | Client → model (canvas-relative) |
-| `RF.Geometry.rectToView({x,y,w,h})` | Rect: model → view |
+- [`engines/UIAdapters.js`](/home/mimi/Escritorio/RF/engines/UIAdapters.js)
+- [`engines/MenuAdapters.js`](/home/mimi/Escritorio/RF/engines/MenuAdapters.js)
+- [`engines/GlobalEventHandlers.js`](/home/mimi/Escritorio/RF/engines/GlobalEventHandlers.js)
 
----
+Services:
 
-# Architecture Overview — ReportForge v18.0
+- [`engines/RuntimeServices.js`](/home/mimi/Escritorio/RF/engines/RuntimeServices.js)
 
-## Four-Layer Layout Architecture
+Engines principales:
 
-The designer enforces a strict separation of concerns across four layers:
+- [`engines/SelectionEngine.js`](/home/mimi/Escritorio/RF/engines/SelectionEngine.js)
+- [`engines/CanvasLayoutEngine.js`](/home/mimi/Escritorio/RF/engines/CanvasLayoutEngine.js)
+- [`engines/PreviewEngine.js`](/home/mimi/Escritorio/RF/engines/PreviewEngine.js)
+- [`engines/SectionEngine.js`](/home/mimi/Escritorio/RF/engines/SectionEngine.js)
+- [`engines/SectionResizeEngine.js`](/home/mimi/Escritorio/RF/engines/SectionResizeEngine.js)
+- [`engines/ZoomEngine.js`](/home/mimi/Escritorio/RF/engines/ZoomEngine.js)
+- [`engines/PropertiesEngine.js`](/home/mimi/Escritorio/RF/engines/PropertiesEngine.js)
+- [`engines/FormatEngine.js`](/home/mimi/Escritorio/RF/engines/FormatEngine.js)
+- [`engines/FieldExplorerEngine.js`](/home/mimi/Escritorio/RF/engines/FieldExplorerEngine.js)
 
-```
-┌─────────────────────────────────────────┐
-│  VIEWPORT  (#viewport)                  │
-│  Responsibility: zoom transform, scroll │
-│  transform: scale(z) — ONLY here        │
-│                                         │
-│  ┌───────────────────────────────────┐  │
-│  │  WORKSPACE  (#workspace)          │  │
-│  │  Responsibility: UI layout        │  │
-│  │  Contains: rulers, guides, canvas │  │
-│  │                                   │  │
-│  │  ┌─────────────────────────────┐  │  │
-│  │  │  CANVAS  (#canvas-layer)    │  │  │
-│  │  │  Responsibility: rendering  │  │  │
-│  │  │  offsetWidth: 754px always  │  │  │
-│  │  │                             │  │  │
-│  │  │  ┌───────────────────────┐  │  │  │
-│  │  │  │  DOCUMENT             │  │  │  │
-│  │  │  │  sections, objects    │  │  │  │
-│  │  │  │  coordinates in px    │  │  │  │
-│  │  │  └───────────────────────┘  │  │  │
-│  │  └─────────────────────────────┘  │  │
-│  └───────────────────────────────────┘  │
-└─────────────────────────────────────────┘
-```
+## Reglas de Arquitectura
 
-## Layout Formula
+- El HTML no contiene JS inline ni CSS inline.
+- `DS` vive fuera del HTML.
+- `CommandRuntime` centraliza commands.
+- `UIAdapters` traduce DOM -> commands/actions.
+- `RuntimeServices` centraliza owners, flags, refs y guards estructurales.
+- Los writes del path crítico pasan por scheduler.
+- `Preview` comparte el mismo core de interacción con `Design`.
 
-All canvas positioning derives from one formula:
+## Qué Está Prohibido
 
-```
-canvasX = rulerWidth  + pageMarginLeft    (= 196px at default margins)
-canvasY = rulerHeight + pageMarginTop     (= 184px at default margins)
-```
+- reintroducir engines en el HTML
+- reintroducir wiring inline
+- exportar nuevos engines a `window.*`
+- leer estado desde DOM como truth
+- meter lógica de negocio en bootstrap
+- tocar `DS` desde adapters UI generales
 
-This is enforced by `#canvas-row` flexbox order — `#ruler-v` is always the first flex child, `#workspace` the second. No mode-specific offsets exist.
+## Validación
 
-## Zoom Architecture
+El runtime canónico se considera sano solo si pasan:
 
-Zoom is applied **exclusively** to `#viewport`:
-
-```javascript
-viewport.style.transform = `scale(${z})`  // ONLY zoom target
-canvas.style.transform = 'none'           // NEVER scaled
-canvas.offsetWidth === 754                 // invariant at ALL zoom levels
-```
-
-`DesignZoomEngine.set(z)` snaps to ZOOM_STEPS for buttons (~25% increments).  
-`DesignZoomEngine.setFree(z)` bypasses snap for wheel zoom (~10% increments).
-
-## DOM Structure
-
-```html
-<div id="canvas-area">
-  <div id="ruler-h-row">
-    <div id="ruler-corner"></div>
-    <canvas id="ruler-h-canvas"></canvas>
-  </div>
-  <div id="canvas-row">
-    <div id="ruler-v">
-      <canvas id="ruler-v-inner"></canvas>
-    </div>
-    <div id="workspace">
-      <div id="viewport">
-        <div id="canvas-layer">
-          <!-- sections, elements, guides, handles -->
-        </div>
-      </div>
-      <div id="guide-layer"><!-- snap guides (position:fixed) --></div>
-    </div>
-  </div>
-</div>
-```
-
-**Critical rule:** `#ruler-v` and `#ruler-h-canvas` must NEVER be inside `#viewport`. They exist in screen space and must not be affected by zoom transform.
-
-## Engine Modules
-
-| Module | Responsibility |
-|--------|---------------|
-| `DocumentStore (DS)` | Central state: elements, sections, history, zoom, selection |
-| `CanvasEngine` | DOM rendering of elements and sections |
-| `SelectionEngine` | Selection handles, resize, drag |
-| `DesignZoomEngine` | Zoom state with viewport transform |
-| `AlignmentGuides` | Snap guide rendering (position:fixed overlay) |
-| `CommandEngine` | 84 commands with undo/redo integration |
-| `OverlayEngine` | Rulers, handles, guides render loop |
-| `RulerEngine` | Ruler canvas drawing with scroll sync |
-| `PreviewEngine` | Mode switch: design ↔ preview |
-| `InsertEngine` | Element insertion tools |
-| `FormatEngine` | Toolbar sync with selection state |
-| `RF.Geometry` | World-coord math, MagneticSnap, cached DOMRects |
-
-## State Model
-
-```javascript
-DS = {
-  zoom: 1.0,          // current zoom (shared reference)
-  zoomDesign: 1.0,    // saved design zoom (restored on preview→design)
-  zoomPreview: 1.0,   // saved preview zoom (restored on design→preview)
-  previewMode: false,
-  elements: [],       // {id, type, x, y, w, h, sectionId, zIndex, ...}
-  sections: [],       // {id, stype, height, label, visible}
-  selection: Set,     // selected element IDs
-  clipboard: [],      // copied element JSONs
-  history: [],        // undo stack
-  historyIndex: 0,
-  gridVisible: true,
-  snapToGrid: true,
-}
-```
-
-## Layout Invariants (enforced by repo-layout-invariants.sh)
-
-```
-INV-01  canvasLeft >= verticalRulerRight
-INV-02  canvasTop >= horizontalRulerBottom
-INV-03  workspaceLeft == verticalRulerRight
-INV-04  canvas.transform === 'none'
-INV-05  verticalRuler visible (offsetWidth > 0)
-INV-06  horizontalRuler visible (width > 0)
-INV-07  canvas offsetWidth === 754px
-INV-08  canvas never overlaps ruler
-INV-09  workspace never overlaps ruler
-INV-10  zoom ∈ [0.25, 4.0]
-INV-11  ruler-v-inner height >= workspace.clientHeight
-INV-12  DS.elements.length > 0
-```
-
-These are validated across 6 scenarios: baseline, zoom×2, zoom×0.5, selection, preview, 30-op stress.
-
-## Repository Structure
-
-```
-reportforge-complete/
-├── designer/
-│   └── crystal-reports-designer-v4.html   # ~270KB, single-file designer
-├── sandbox/
-│   ├── god-level-qa.js                     # 955 engine tests
-│   └── full-verification.js                # 66 runtime checks
-├── repo-*.sh                               # 43 QA scripts
-├── repo-super.sh                           # Master orchestrator (7 groups)
-├── docs/
-│   ├── architecture/
-│   │   ├── overview.md       ← this file
-│   │   ├── modules.md        # Engine module API reference
-│   │   ├── events.md         # DS.subscribe event system
-│   │   └── render.md         # Python render pipeline
-│   ├── guide/
-│   │   ├── getting-started.md
-│   │   ├── designer.md
-│   │   ├── shortcuts.md
-│   │   ├── sections.md
-│   │   └── formulas.md
-│   └── api/                  # REST API reference
-└── reportforge/
-    ├── core/render/           # Python render engine
-    └── server/                # FastAPI REST server
+```bash
+npm run test:contracts
+npm run test:governance
+npm run test:runtime
 ```

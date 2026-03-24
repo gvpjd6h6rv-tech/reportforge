@@ -1,55 +1,55 @@
-# Getting Started — ReportForge v18.0
+# Getting Started
 
-## Installation
+## Requisitos
 
-**Requirements:** Python 3.10+, modern browser (Chrome/Firefox/Edge)
+- Python 3
+- Node.js para la documentación y suites browser-based
+- navegador moderno
+
+## Arranque rápido
 
 ```bash
-git clone <repo>
-cd reportforge-complete
-pip install -r requirements.txt
 python3 reportforge_server.py
 ```
 
-Open **http://localhost:8080** in your browser.
+Abrir:
 
-## Docker
+- `http://127.0.0.1:PORT/`
 
-```bash
-docker compose up -d
-open http://localhost:8080
-```
+El runtime canónico servido en `/` usa:
 
-## Creating a Report
+- [`designer/crystal-reports-designer-v4.html`](/home/mimi/Escritorio/RF/designer/crystal-reports-designer-v4.html)
+- [`engines/*.js`](/home/mimi/Escritorio/RF/engines)
 
-1. Click **New** (Ctrl+N) to start a blank report
-2. Drag fields from the **Field Explorer** onto the canvas
-3. Use the toolbar to format text, set fonts, add borders
-4. Click **Preview** to see the rendered output
-5. Click **Save** (Ctrl+S) to save as `.rfd.json`
-6. Use the Render API to generate PDF/HTML output
-
-## Render API
+## Gates obligatorios antes de tocar runtime
 
 ```bash
-# Start the render server
-uvicorn reportforge.server.main:app --port 8000
-
-# Render to PDF
-curl -X POST http://localhost:8000/render \
-  -H "Content-Type: application/json" \
-  -d '{"layout": "path/to/report.rfd.json", "data": {...}}' \
-  --output report.pdf
-
-# Validate a formula
-curl -X POST http://localhost:8000/validate-formula \
-  -d '{"formula": "=IIf({sales} > 1000, \"High\", \"Low\")"}'
+npm run test:contracts
+npm run test:governance
+npm run test:runtime
 ```
 
-## Next Steps
+## Flujo básico de uso
 
-- [Designer Interface →](./designer.md)
-- [Keyboard Shortcuts →](./shortcuts.md)
-- [Formula Reference →](./formulas.md)
-- [Section System →](./sections.md)
-- [Architecture →](../architecture/overview.md)
+1. abrir el diseñador
+2. insertar o arrastrar campos al canvas
+3. seleccionar elementos
+4. aplicar formato
+5. ajustar layout y secciones
+6. alternar entre design y preview
+
+## Si vas a desarrollar
+
+Antes de cambiar arquitectura:
+
+- revisa [Architecture Overview](../architecture/overview.md)
+- revisa [Layers](../layers.md)
+- revisa [RuntimeServices](../runtime-services.md)
+- revisa [Governance](../governance.md)
+
+## Navegación recomendada
+
+- [🎪 Brochure](../brochure.md)
+- [🖥️ Designer Guide](./designer.md)
+- [🏗️ Architecture](../architecture/overview.md)
+- [🛡️ Governance](../governance.md)

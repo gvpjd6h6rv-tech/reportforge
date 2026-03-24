@@ -3,32 +3,32 @@ layout: home
 
 hero:
   name: ReportForge
-  text: Crystal Reports–compatible Visual Designer
-  tagline: Open-source report designer with Crystal Reports XI fidelity, Python render engine, and enterprise QA pipeline.
+  text: Runtime Canónico, Designer Visual y Arquitectura Gobernada
+  tagline: Diseñador visual de reportes con shell HTML puro, engines modulares, store canónico y guardrails de CI para evitar recaídas arquitectónicas.
   actions:
     - theme: brand
-      text: Get Started
-      link: /guide/getting-started
+      text: 🎪 Ver Brochure
+      link: /brochure
     - theme: alt
-      text: Architecture
+      text: 🏗️ Ver Arquitectura
       link: /architecture/overview
 
 features:
   - icon: 🖥️
-    title: Visual Designer
-    details: Crystal Reports XI–style designer with rulers, banded sections, snap guides, L-shaped handles, property inspector, and field explorer.
-  - icon: ⚙️
-    title: Render Engine
-    details: Python engine renders layouts to HTML, PDF, XLSX, CSV. Formula engine supports IIf, aggregates, date functions, and Crystal syntax.
-  - icon: 🔌
-    title: REST API
-    details: FastAPI server with OpenAPI docs. POST /render for PDF generation, /validate-formula for formula checking.
+    title: Designer Visual Vivo
+    details: Canvas con secciones, selección, resize, zoom, preview funcional y toolbars conectados al runtime canónico.
+  - icon: 🧠
+    title: Store + Engines
+    details: DocumentStore como SSOT, CommandRuntime para orquestación y engines dedicados para selection, canvas, preview, zoom, properties y explorer.
+  - icon: 🛰️
+    title: RuntimeServices
+    details: Registry central para owners, flags, refs DOM y contract guards. Reemplaza globals estructurales crudos.
   - icon: 🧪
-    title: QA Pipeline
-    details: 43 QA scripts, 1000+ automated tests, 12 layout invariants. Zero regressions since v15.1.
-  - icon: 📐
-    title: Layout Invariant Engine
-    details: Strict four-layer architecture (Viewport → Workspace → Canvas → Document). 12 invariants validated across 6 interaction scenarios.
-  - icon: ⌨️
-    title: Complete Command System
-    details: 84/84 commands implemented (100% coverage) — alignment, ordering, grouping, zoom, sections, object properties.
+    title: Governance Fuerte
+    details: Contracts, governance y runtime browser-based rompen si reaparecen inline JS, globals no permitidos, layering ilegal o shell impuro.
+  - icon: 🎨
+    title: Shell Puro
+    details: El HTML ya es host real: markup, CSS externo y scripts externos. Sin engines inline. Sin CSS inline. Sin wiring inline.
+  - icon: 🔌
+    title: API y Render
+    details: Motor Python, validación de fórmulas y endpoints para render y preview conviven con el diseñador sin mezclar responsabilidades.

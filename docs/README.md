@@ -1,19 +1,26 @@
 # ReportForge Documentation
 
-Built with [VitePress](https://vitepress.dev). Includes Mermaid diagrams.
+Built with [VitePress](https://vitepress.dev).
+
+La documentación visible describe el sistema vivo real:
+
+- shell HTML puro
+- runtime canónico en `designer/crystal-reports-designer-v4.html`
+- engines en `engines/`
+- guardrails de governance, contracts y runtime
 
 ## Setup
 
 ```bash
 cd docs
 npm install
-npm run dev      # development server on http://localhost:5173
-npm run build    # build to docs/.vitepress/dist/
+npm run dev
+npm run build
 ```
 
-## Architectural gate
+## Gates obligatorios
 
-Canonical runtime changes must pass:
+Cambios del runtime canónico deben pasar:
 
 ```bash
 npm run test:contracts
@@ -21,21 +28,13 @@ npm run test:governance
 npm run test:runtime
 ```
 
-## Structure
+## Entradas principales
 
-```
-docs/
-├── .vitepress/
-│   └── config.js          # VitePress configuration
-├── src/
-│   ├── index.md            # Home page
-│   ├── designer/
-│   │   └── index.md        # Designer user guide
-│   ├── architecture/
-│   │   ├── index.md        # Module dependency graphs (Mermaid)
-│   │   └── refactor.md     # 8-phase CR fidelity refactor log
-│   └── api/
-│       └── designer.md     # Preview endpoint + layout JSON schema
-├── package.json
-└── README.md
-```
+- `docs/index.md`: home
+- `docs/brochure.md`: brochure visual y navegable
+- `docs/guide/*`: uso del diseñador
+- `docs/architecture/*`: arquitectura histórica y técnica
+- `docs/architecture.md`: resumen normativo
+- `docs/layers.md`: límites por capa
+- `docs/runtime-services.md`: registry estructural
+- `docs/governance.md`: reglas de CI y guardrails

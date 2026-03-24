@@ -1,81 +1,114 @@
-# Designer Guide — ReportForge v18.0
+# Designer Guide
 
-## Interface Layout
+## Qué Ves en Pantalla
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  Menu Bar  [File] [Edit] [Insert] [Format] [Report] [View]      │
-├─────────────────────────────────────────────────────────────────┤
-│  Main Toolbar  [New][Open][Save] | [Undo][Redo] | [Zoom] ...    │
-├─────────────────────────────────────────────────────────────────┤
-│  Format Toolbar  [Bold][Italic] | [Align] | [Color] ...         │
-├───────────┬────────────────────────────────────────┬────────────┤
-│  Sections │  ┌─ Ruler (H) ──────────────────────┐  │  Field     │
-│  Panel    │  │  Canvas Area                     │  │  Explorer  │
-│           │  │  ┌─ Report Header ─────────────┐ │  │           │
-│           │  │  │  {elements}                 │ │  │           │
-│           │  │  ├─ Page Header ───────────────┤ │  │           │
-│           │  │  │  {elements}                 │ │  │           │
-│  Ruler    │  │  ├─ Detail ────────────────────┤ │  ├────────────┤
-│  (V)      │  │  │  {elements}                 │ │  │ Properties │
-│           │  │  └──────────────────────────────┘ │  │  Panel     │
-├───────────┴──┴──────────────────────────────────┴──┴────────────┤
-│  Status Bar:  X: 100   Y: 50   Items: 9   100%   Design         │
-└─────────────────────────────────────────────────────────────────┘
-```
+El diseñador actual combina:
 
-## Sections
+- barra de menú
+- toolbar principal
+- toolbar de formato
+- panel de secciones
+- canvas con reglas y viewport
+- field explorer
+- panel de propiedades
+- status bar
 
-ReportForge uses Crystal Reports–style banded sections:
+## Secciones
 
-| Section | Purpose |
-|---------|---------|
-| Report Header | Prints once at the beginning |
-| Page Header | Prints at the top of each page |
-| Group Header | Prints before each group |
-| Detail | Repeats for each data record |
-| Group Footer | Prints after each group |
-| Page Footer | Prints at the bottom of each page |
-| Report Footer | Prints once at the end |
+El canvas trabaja con bandas tipo Crystal Reports:
 
-**Managing sections:**
-- Right-click a section label to insert, delete, or rename
-- Drag the section border to resize
-- Use Section Expert (Format → Section) for advanced options
+- encabezado de informe
+- encabezado de página
+- detalle
+- pie de página
+- resumen / footer
 
-## Elements
+Operaciones principales:
 
-Insert elements from the toolbar or Insert menu:
+- seleccionar una sección desde el panel lateral
+- cambiar su alto con drag vertical
+- insertar, mover o eliminar secciones vía commands
 
-| Element | Description |
-|---------|-------------|
-| Text | Static label or formatted text |
-| Field | Data field from a dataset |
-| Box | Rectangle / border shape |
-| Line | Horizontal or vertical line |
+## Elementos
 
-**Selection:** Click to select, Shift+click for multi-select, Ctrl+A for all.
+Tipos operativos más comunes:
 
-**Drag:** Click and drag to move. Position updates in real-time during drag. Snap grid is 8px.
+- `text`
+- `field`
+- `line`
+- `rect`
 
-**Resize:** Drag the L-shaped corner handles.
+Flujos principales:
 
-## Snap & Guides
+- insertar desde toolbar
+- insertar campos desde el explorer
+- mover con drag
+- redimensionar con handles
+- editar propiedades desde el panel derecho
 
-- **Snap to grid:** 8px grid, toggle with Ctrl+Shift+G
-- **Alignment guides:** appear automatically when dragging near aligned objects (works in both Design and Preview)
-- **Manual guides:** Insert → Guide to add horizontal/vertical guides
+## Selección
+
+La selección canónica la gobierna `SelectionEngine`.
+
+Comportamiento:
+
+- click: selección simple
+- `Shift+click`: multiselección
+- overlay visible y alineado
+- handles activos en selección simple
+- bbox único en multiselección
+
+## Formato
+
+Controles principales:
+
+- **bold**
+- *italic*
+- underline
+- font family
+- font size
+- align left / center / right
+
+Los controles de toolbar no mutan el DOM directo.
+
+Flujo real:
+
+`toolbar -> UIAdapters -> CommandRuntime/FormatEngine -> DS -> render`
 
 ## Zoom
 
-Zoom range: 25% – 400%
+El diseñador soporta:
 
-- Mouse wheel + Ctrl: smooth ~10% increments
-- + / − buttons: snaps to predefined steps (25%, 50%, 75%, 100%, 150%, 200%, 300%, 400%)
-- Design and Preview maintain separate zoom levels
+- zoom `45 / 100 / 200`
+- zoom libre
+- wheel con `Ctrl`
+- widget de zoom
 
-## Preview Mode
+Diseño y preview comparten el mismo core, pero pueden mantener estado de zoom por modo.
 
-Click **Preview** or press F5 to switch to Preview mode. The canvas renders the document as it will print. All panels and toolbars remain visible. Drag operations and snap guides work in Preview mode too.
+## Preview
 
-Click **Design** to return to edit mode.
+Preview no es read-only.
+
+Regla canónica actual:
+
+- mismo core de interacción que design
+- distinto render/chrome
+
+Eso implica que en preview siguen funcionando:
+
+- selección
+- multiselección
+- drag
+- resize
+- zoom
+
+## Qué No Debe Pasar
+
+Si ocurre alguno de estos síntomas, es regresión:
+
+- overlay desalineado
+- doble selección visual
+- canvas duplicado
+- preview sin paridad funcional
+- toolbar desincronizado del modelo
