@@ -3194,54 +3194,70 @@ const SectionEngine = {
     this.render();
   },
   render(){
-    this.container.innerHTML='';
-    this.container.style.width = RF.Geometry.scale(CFG.PAGE_W) + 'px'; // v18.12
-    for(const sec of DS.sections){
-      const div = document.createElement('div');
-      div.className='cr-section';
-      div.dataset.sectionId = sec.id;
-      div.dataset.stype = sec.stype;
-      div.style.height = RF.Geometry.scale(sec.height) + 'px'; // v18.10
-      div.style.position='relative';
-      div.style.width = RF.Geometry.scale(CFG.PAGE_W) + 'px'; // v18.12: explicit scaled width
-      // Phase 4: section visibility
-      if(sec.visible === false) div.style.display='none';
-
-      // Section label
-      const label = document.createElement('div');
-      label.className='section-label';
-      label.textContent = sec.abbr;
-      label.title=sec.label;
-      div.appendChild(label);
-
-      // Resize handle
-      const handle = document.createElement('div');
-      handle.className='section-resize-handle';
-      handle.dataset.sectionId = sec.id;
-      div.appendChild(handle);
-
-      this.container.appendChild(div);
-    }
-    OverlayEngine.render();
-    SectionResizeEngine.attach();
-    if (typeof CanvasLayoutEngine !== 'undefined') {
-      CanvasLayoutEngine.renderAll();
+    if (typeof RenderScheduler !== 'undefined') {
+      RenderScheduler.flushSync(() => {
+        this.container.innerHTML='';
+        this.container.style.width = RF.Geometry.scale(CFG.PAGE_W) + 'px'; // v18.12
+        for(const sec of DS.sections){
+          const div = document.createElement('div');
+          div.className='cr-section';
+          div.dataset.sectionId = sec.id;
+          div.dataset.stype = sec.stype;
+          div.style.height = RF.Geometry.scale(sec.height) + 'px'; // v18.10
+          div.style.position='relative';
+          div.style.width = RF.Geometry.scale(CFG.PAGE_W) + 'px'; // v18.12: explicit scaled width
+          if(sec.visible === false) div.style.display='none';
+          const label = document.createElement('div');
+          label.className='section-label';
+          label.textContent = sec.abbr;
+          label.title=sec.label;
+          div.appendChild(label);
+          const handle = document.createElement('div');
+          handle.className='section-resize-handle';
+          handle.dataset.sectionId = sec.id;
+          div.appendChild(handle);
+          this.container.appendChild(div);
+        }
+      }, 'SectionEngine.render');
     } else {
-      const message = 'CANVAS LEGACY WRITER SHOULD NOT BE ACTIVE IN CANONICAL RUNTIME (SectionEngine.render)';
-      console.error(message);
-      throw new Error(message);
+      this.container.innerHTML='';
+      this.container.style.width = RF.Geometry.scale(CFG.PAGE_W) + 'px';
+      for(const sec of DS.sections){
+        const div = document.createElement('div');
+        div.className='cr-section';
+        div.dataset.sectionId = sec.id;
+        div.dataset.stype = sec.stype;
+        div.style.height = RF.Geometry.scale(sec.height) + 'px';
+        div.style.position='relative';
+        div.style.width = RF.Geometry.scale(CFG.PAGE_W) + 'px';
+        if(sec.visible === false) div.style.display='none';
+        const label = document.createElement('div');
+        label.className='section-label';
+        label.textContent = sec.abbr;
+        label.title=sec.label;
+        div.appendChild(label);
+        const handle = document.createElement('div');
+        handle.className='section-resize-handle';
+        handle.dataset.sectionId = sec.id;
+        div.appendChild(handle);
+        this.container.appendChild(div);
+      }
     }
-    // v19.7 FIX: always scale canvas dimensions through RF.Geometry — never raw model px
-    // canvas sizing delegated to CanvasLayoutEngine.updateSync()
-    // Notify layout engines via RenderScheduler so WorkspaceScrollEngine updates scroll bounds
+    SectionResizeEngine.attach();
     if (typeof RenderScheduler !== 'undefined') {
       RenderScheduler.layout(() => {
-        if (typeof window !== 'undefined' && typeof window.__rfTraceLegacy === 'function') {
-          window.__rfTraceLegacy('SectionEngine.render', 'canvas-sync', { via: 'RenderScheduler.layout' });
+        if (typeof CanvasLayoutEngine === 'undefined') {
+          const message = 'CANVAS LEGACY WRITER SHOULD NOT BE ACTIVE IN CANONICAL RUNTIME (SectionEngine.render.layout)';
+          console.error(message);
+          throw new Error(message);
         }
+        CanvasLayoutEngine.renderAll();
         if (typeof CanvasLayoutEngine !== 'undefined') CanvasLayoutEngine.updateSync();
         if (typeof WorkspaceScrollEngine !== 'undefined') WorkspaceScrollEngine.update();
-      }, 'SectionEngine.render.canvasSync');
+      }, 'SectionEngine.render.layout');
+      RenderScheduler.visual(() => {
+        if (typeof OverlayEngine !== 'undefined') OverlayEngine.render();
+      }, 'SectionEngine.render.overlay');
     }
     this.updateSectionsList();
   },
@@ -3598,6 +3614,13 @@ const SelectionEngine = {
   },
 
   renderHandles(){
+    if (typeof RenderScheduler !== 'undefined' && !RenderScheduler.allowsDomWrite()) {
+      RenderScheduler.handles(() => SelectionEngine.renderHandles(), 'SelectionEngine.renderHandles');
+      return;
+    }
+    if (typeof RenderScheduler !== 'undefined') {
+      RenderScheduler.assertDomWriteAllowed('SelectionEngine.renderHandles');
+    }
     RF.Geometry.invalidate();  // ensure fresh DOMRects when called outside OverlayEngine.render()
     const layer=document.getElementById('handles-layer');while(layer.firstChild)layer.removeChild(layer.firstChild);
     document.querySelectorAll('.cr-element').forEach(d=>{
@@ -3965,11 +3988,9 @@ const SectionResizeEngine = {
             if (typeof OverlayEngine !== 'undefined') OverlayEngine.render();
           }, 'SectionResizeEngine.onMouseMove.overlay');
         } else {
-          if (typeof SectionLayoutEngine !== 'undefined') SectionLayoutEngine.updateSync();
-          if (typeof CanvasLayoutEngine !== 'undefined') CanvasLayoutEngine.updateSync();
-          if (typeof WorkspaceScrollEngine !== 'undefined') WorkspaceScrollEngine.updateSync();
-          if (typeof SelectionEngine !== 'undefined') SelectionEngine.renderHandles();
-          if (typeof OverlayEngine !== 'undefined') OverlayEngine.render();
+          const message = 'updateSync SHOULD NOT BE ACTIVE IN CANONICAL RUNTIME (SectionResizeEngine.onMouseMove)';
+          console.error(message);
+          throw new Error(message);
         }
         const badge=document.getElementById('resize-badge');
         badge.textContent=`${sec.abbr}: ${sec.height}px`;
@@ -4000,6 +4021,10 @@ const SectionResizeEngine = {
         if (typeof CanvasLayoutEngine !== 'undefined') CanvasLayoutEngine.updateSync();
         if (typeof WorkspaceScrollEngine !== 'undefined') WorkspaceScrollEngine.update();
       }, 'SectionResizeEngine.onMouseUp.canvasSync');
+    } else {
+      const message = 'updateSync SHOULD NOT BE ACTIVE IN CANONICAL RUNTIME (SectionResizeEngine.onMouseUp)';
+      console.error(message);
+      throw new Error(message);
     }
     this._drag=null;
   },
@@ -4010,6 +4035,13 @@ const SectionResizeEngine = {
 // ═══════════════════════════════════════════════════════════════════
 const OverlayEngine = {
   render(){
+    if (typeof RenderScheduler !== 'undefined' && !RenderScheduler.allowsDomWrite()) {
+      RenderScheduler.visual(() => OverlayEngine.render(), 'OverlayEngine.render');
+      return;
+    }
+    if (typeof RenderScheduler !== 'undefined') {
+      RenderScheduler.assertDomWriteAllowed('OverlayEngine.render');
+    }
     RF.Geometry.invalidate();  // clear frame cache before any getBoundingClientRect calls
     this.renderHRuler();
     this.renderVRuler();
@@ -5071,35 +5103,25 @@ const DesignZoomEngine={
       }
     }
     DS.zoom = z;
-    // ── 1. Architecture: NO transforms. Zoom = layout scaling only. ──────
-    vp.style.transform       = 'none';   // enforce: never scale via CSS
-    vp.style.transformOrigin = '';       // enforce: no origin offset
-    vp.style.marginBottom    = '16px';   // fixed margin regardless of zoom
-    // ── 2. Scale viewport width ─────────────────────────────────────
-    vp.style.display = 'block';
-    vp.style.width   = (PAGE_W * z) + 'px';
-    cl.style.transform = '';  // ensure clean — no CSS transform on canvas-layer
-    cl.style.setProperty('--geo-zoom', z);
-    // ── 3. Geometry/layout ownership delegated to engines ───────────
-    if (typeof window !== 'undefined' && typeof window.__rfTraceLegacy === 'function') {
-      window.__rfTraceLegacy('DesignZoomEngine._apply', 'direct-canvas-sync', { via: 'legacy' });
+    const applyZoomChrome = () => {
+      vp.style.transform       = 'none';
+      vp.style.transformOrigin = '';
+      vp.style.marginBottom    = '16px';
+      vp.style.display = 'block';
+      vp.style.width   = (PAGE_W * z) + 'px';
+      cl.style.transform = '';
+      cl.style.setProperty('--geo-zoom', z);
+    };
+    if (typeof RenderScheduler !== 'undefined') {
+      RenderScheduler.flushSync(applyZoomChrome, 'DesignZoomEngine._apply');
+    } else {
+      applyZoomChrome();
     }
-    if (typeof SectionLayoutEngine !== 'undefined') SectionLayoutEngine.updateSync();
-    if (typeof ElementLayoutEngine !== 'undefined') ElementLayoutEngine.updateSync();
-    if (typeof CanvasLayoutEngine !== 'undefined') CanvasLayoutEngine.updateSync();
-    if (typeof WorkspaceScrollEngine !== 'undefined') WorkspaceScrollEngine.updateSync();
-    // ── 4. Re-render rulers + overlays (already geometry-based) ──────
-    OverlayEngine.render();
-    SelectionEngine.renderHandles();
+    // Geometry/layout/overlay/preview invalidation is canonicalized in EngineCore.onZoomDidChange().
     ZoomWidget.sync();
-    // ── 7. Sync zoom dropdown ────────────────────────────────────────
     const pct = Math.round(z * 100) + '%';
     const sel = document.getElementById('tb-zoom');
     if (sel) { for (let o of sel.options) if (o.text === pct) { o.selected = true; break; } }
-    // ── 8. Refresh preview layout on zoom change (v18.16) ──────────────
-    if (DS.previewMode && typeof PreviewEngine !== 'undefined') {
-      PreviewEngine.refresh();
-    }
   },
   set(z, anchorClientX, anchorClientY){
     z = Math.max(0.01, Math.min(64.0, parseFloat(z)));
@@ -7658,25 +7680,21 @@ window.__rfTraceLegacy = window.__rfTraceLegacy || function(source, event, paylo
 // ── ReportForge v19 Phase 3 Boot ─────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
 
-  // ── CanvasEngine ────────────────────────────────────────────────
-  if (typeof window !== 'undefined' && typeof window.__rfTraceLegacy === 'function') {
-    window.__rfTraceLegacy('Phase3Boot', 'direct-canvas-sync', { hook: 'DOMContentLoaded' });
-  }
-  if (typeof CanvasLayoutEngine !== 'undefined') CanvasLayoutEngine.updateSync();
-
-  // ── SectionLayoutEngine ─────────────────────────────────────────
-  if (typeof window !== 'undefined' && typeof window.__rfTraceLegacy === 'function') {
-    window.__rfTraceLegacy('Phase3Boot', 'direct-section-sync', { hook: 'DOMContentLoaded' });
-  }
-  if (typeof SectionLayoutEngine !== 'undefined') SectionLayoutEngine.updateSync();
-
-  // ── ElementLayoutEngine ─────────────────────────────────────────
-  if (typeof ElementLayoutEngine !== 'undefined') {
-    ElementLayoutEngine.updateSync();
-    // Expose on window for legacy code that calls DS.updateElementPosition
-    if (typeof DS !== 'undefined' && !DS._elementLayoutV19) {
-      DS._elementLayoutV19 = true;
-    }
+  if (typeof RenderScheduler !== 'undefined') {
+    RenderScheduler.flushSync(() => {
+      if (typeof CanvasLayoutEngine !== 'undefined') CanvasLayoutEngine.updateSync();
+      if (typeof SectionLayoutEngine !== 'undefined') SectionLayoutEngine.updateSync();
+      if (typeof ElementLayoutEngine !== 'undefined') {
+        ElementLayoutEngine.updateSync();
+        if (typeof DS !== 'undefined' && !DS._elementLayoutV19) {
+          DS._elementLayoutV19 = true;
+        }
+      }
+    }, 'Phase3Boot');
+  } else {
+    const message = 'updateSync SHOULD NOT BE ACTIVE IN CANONICAL RUNTIME (Phase3Boot)';
+    console.error(message);
+    throw new Error(message);
   }
 
   // ── OverlayEngineV19 — unified compositor ────────────────────────

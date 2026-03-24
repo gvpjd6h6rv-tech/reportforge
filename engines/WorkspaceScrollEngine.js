@@ -171,6 +171,9 @@ window.WorkspaceScrollEngine = (() => {
     /** Immediate synchronous update (use sparingly) */
     updateSync() {
       if (typeof RenderScheduler !== 'undefined') {
+        RenderScheduler.assertDomWriteAllowed('WorkspaceScrollEngine.updateSync');
+      }
+      if (typeof RenderScheduler !== 'undefined') {
         RenderScheduler.invalidateLayer('scroll', 'WorkspaceScrollEngine');
       }
       _trace('updateSync-enter', _computeLayoutContract());

@@ -110,6 +110,9 @@ const SectionLayoutEngine = (() => {
       _schedule();
     },
     updateSync() {
+      if (typeof RenderScheduler !== 'undefined') {
+        RenderScheduler.assertDomWriteAllowed('SectionLayoutEngine.updateSync');
+      }
       const contract = _computeLayoutContract();
       _trace('updateSync-enter', {
         sectionsCount: contract.sections.length,

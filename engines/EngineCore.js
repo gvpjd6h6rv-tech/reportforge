@@ -694,7 +694,8 @@ const EngineCore = (() => {
     // LAYOUT tier — geometry must be updated first
     RenderScheduler.layout(() => {
       if (_E('CanvasLayoutEngine'))         _E('CanvasLayoutEngine').updateSync();
-      if (_E('SectionLayoutEngine'))  _E('SectionLayoutEngine').updateSync();
+      if (_E('SectionLayoutEngine'))        _E('SectionLayoutEngine').updateSync();
+      if (_E('ElementLayoutEngine'))        _E('ElementLayoutEngine').updateSync();
     }, 'zoom_layout');
 
     // VISUAL tier — rulers + grid
@@ -719,7 +720,7 @@ const EngineCore = (() => {
           throw new Error(message);
         }
       }
-      if (_E('WorkspaceScrollEngine')) _E('WorkspaceScrollEngine').update();
+      if (_E('WorkspaceScrollEngine')) _E('WorkspaceScrollEngine').updateSync();
     }, 'zoom_post');
   }
 

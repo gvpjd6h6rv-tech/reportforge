@@ -24,6 +24,8 @@ const RenderScheduler = (() => {
   let _rafId  = null;
   let _frame  = 0;
   let _locked = false;  // prevents re-entrant scheduling during flush
+  let _writeScope = null;
+  let _writeScopeDepth = 0;
   let _recovering = false;
   let _stableInvariantRafId = null;
   let _stableInvariantToken = 0;
@@ -197,12 +199,18 @@ const RenderScheduler = (() => {
         q.clear();
         for (const [key, fn] of tasks) {
           try {
+            _writeScope = priorityName;
+            _writeScopeDepth += 1;
             fn();
+            _writeScopeDepth -= 1;
+            if (_writeScopeDepth === 0) _writeScope = null;
             if (i === PRIORITY.LAYOUT) frameMeta.executed.layout += 1;
             else if (i === PRIORITY.VISUAL) frameMeta.executed.visual += 1;
             else if (i === PRIORITY.HANDLES) frameMeta.executed.handles += 1;
             else if (i === PRIORITY.POST) frameMeta.executed.post += 1;
           } catch (e) {
+            if (_writeScopeDepth > 0) _writeScopeDepth -= 1;
+            if (_writeScopeDepth === 0) _writeScope = null;
             if (!firstError) firstError = e;
             console.error('[RenderScheduler]', e);
             _trace('RenderScheduler', 'task-error', {
@@ -321,7 +329,31 @@ const RenderScheduler = (() => {
     },
 
     /** Synchronous flush — ONLY for boot init, never in hot paths */
-    flushSync(fn) { fn(); },
+    flushSync(fn, source = 'sync') {
+      _writeScope = source;
+      _writeScopeDepth += 1;
+      try {
+        fn();
+      } finally {
+        _writeScopeDepth -= 1;
+        if (_writeScopeDepth === 0) _writeScope = null;
+      }
+    },
+
+    allowsDomWrite() {
+      return _writeScopeDepth > 0;
+    },
+
+    currentWriteScope() {
+      return _writeScope;
+    },
+
+    assertDomWriteAllowed(source = 'unknown') {
+      if (this.allowsDomWrite()) return true;
+      const message = `DOM WRITE OUTSIDE RENDER SCHEDULER IS FORBIDDEN IN CANONICAL RUNTIME (${source})`;
+      console.error(message);
+      throw new Error(message);
+    },
 
     /** Frame counter for cache invalidation */
     get frame() { return _frame; },

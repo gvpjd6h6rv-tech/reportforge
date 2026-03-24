@@ -198,6 +198,13 @@ const CanvasLayoutEngine = (() => {
   }
 
   function renderAll() {
+    if (typeof RenderScheduler !== 'undefined' && !RenderScheduler.allowsDomWrite()) {
+      RenderScheduler.layout(() => renderAll(), 'CanvasLayoutEngine.renderAll');
+      return;
+    }
+    if (typeof RenderScheduler !== 'undefined') {
+      RenderScheduler.assertDomWriteAllowed('CanvasLayoutEngine.renderAll');
+    }
     document.querySelectorAll('.cr-element').forEach(e => e.remove());
     if (typeof DS !== 'undefined') {
       for (const el of DS.elements) renderElement(el);
@@ -266,6 +273,9 @@ const CanvasLayoutEngine = (() => {
       _scheduleSize();
     },
     updateSync() {
+      if (typeof RenderScheduler !== 'undefined') {
+        RenderScheduler.assertDomWriteAllowed('CanvasLayoutEngine.updateSync');
+      }
       const contract = _computeLayoutContract();
       _trace('updateSync-enter', {
         width: contract.width,

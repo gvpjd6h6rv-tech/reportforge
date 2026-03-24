@@ -81,7 +81,12 @@ const ElementLayoutEngine = (() => {
     update() { _schedule(); },
 
     /** Apply layout to all elements (synchronous — boot only) */
-    updateSync() { applyAll(); },
+    updateSync() {
+      if (typeof RenderScheduler !== 'undefined') {
+        RenderScheduler.assertDomWriteAllowed('ElementLayoutEngine.updateSync');
+      }
+      applyAll();
+    },
 
     /**
      * Move an element by delta in MODEL SPACE.
