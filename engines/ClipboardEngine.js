@@ -58,11 +58,20 @@ const ClipboardEngine = (() => {
     // Re-render and select new elements
     if (typeof CanvasLayoutEngine !== 'undefined') CanvasLayoutEngine.update();
     if (typeof SelectionEngine !== 'undefined') {
-      SelectionEngine.clear();
-      newIds.forEach(id => SelectionEngine.select(id));
+      DS.clearSelectionState();
+      newIds.forEach(id => DS.addSelection(id));
+      SelectionEngine.renderHandles();
     }
     if (typeof DS.saveHistory === 'function') DS.saveHistory();
     return newIds;
+  }
+
+  /**
+   * Cut selected elements: copy them then delete the originals.
+   */
+  function cut() {
+    copy();
+    if (typeof CommandEngine !== 'undefined') CommandEngine.delete();
   }
 
   /**
@@ -78,6 +87,7 @@ const ClipboardEngine = (() => {
 
   return {
     copy,
+    cut,
     paste,
     duplicate,
     hasContent() { return _clipboard.length > 0; },

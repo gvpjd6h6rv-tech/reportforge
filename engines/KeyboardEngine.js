@@ -69,6 +69,9 @@ const KeyboardEngine = (() => {
     _register('ctrl+c', () => {
       if (typeof ClipboardEngine !== 'undefined') ClipboardEngine.copy();
     });
+    _register('ctrl+x', () => {
+      if (typeof ClipboardEngine !== 'undefined') ClipboardEngine.cut();
+    });
     _register('ctrl+v', () => {
       if (typeof ClipboardEngine !== 'undefined') ClipboardEngine.paste();
     });
@@ -78,12 +81,15 @@ const KeyboardEngine = (() => {
 
     // ── Selection ────────────────────────────────────────────────
     _register('ctrl+a', () => {
-      if (typeof SelectionEngine !== 'undefined' && typeof DS !== 'undefined') {
-        DS.elements.forEach(el => SelectionEngine.select(el.id));
+      if (typeof DS !== 'undefined' && typeof SelectionEngine !== 'undefined') {
+        DS.clearSelectionState();
+        DS.elements.forEach(el => DS.addSelection(el.id));
+        SelectionEngine.renderHandles();
       }
     });
     _register('escape', () => {
-      if (typeof SelectionEngine !== 'undefined') SelectionEngine.clear();
+      if (typeof ContextMenuEngine !== 'undefined') ContextMenuEngine.hide();
+      if (typeof SelectionEngine !== 'undefined') SelectionEngine.clearSelection();
       if (typeof DragEngine !== 'undefined' && DragEngine.cancel) DragEngine.cancel();
     });
 
@@ -135,13 +141,8 @@ const KeyboardEngine = (() => {
   }
 
   function _deleteSelected() {
-    if (typeof DS === 'undefined') return;
-    const sel = [...DS.selection];
-    if (!sel.length) return;
-    if (typeof HistoryEngine !== 'undefined') HistoryEngine.push('delete');
-    sel.forEach(id => DS.deleteElement && DS.deleteElement(id));
-    if (typeof SelectionEngine !== 'undefined') SelectionEngine.clear();
-    if (typeof DS.saveHistory === 'function') DS.saveHistory();
+    if (typeof DS === 'undefined' || !DS.selection.size) return;
+    if (typeof CommandEngine !== 'undefined') CommandEngine.delete();
   }
 
   return {
