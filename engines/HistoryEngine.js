@@ -55,7 +55,7 @@ const HistoryEngine = (() => {
       if (typeof CanvasLayoutEngine !== 'undefined') CanvasLayoutEngine.update();
       if (typeof SectionLayoutEngine !== 'undefined') SectionLayoutEngine.update();
       if (typeof ElementLayoutEngine !== 'undefined') ElementLayoutEngine.update();
-      if (typeof OverlayEngineV19 !== 'undefined') OverlayEngineV19.render();
+      if (typeof OverlayEngine !== 'undefined') OverlayEngine.render();
     } catch (e) {
       console.error('[HistoryEngine] restore failed:', e);
     }

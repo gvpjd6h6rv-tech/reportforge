@@ -151,6 +151,20 @@ test('monolith no longer defines menu engines inline', () => {
   assert.match(html, /<script src="\/engines\/MenuAdapters\.js"><\/script>/);
 });
 
+test('monolith no longer defines critical interaction engines inline', () => {
+  const html = fs.readFileSync(path.resolve('designer/crystal-reports-designer-v4.html'), 'utf8');
+  assert.doesNotMatch(html, /\bconst\s+SelectionEngine\s*=\s*\{/);
+  assert.doesNotMatch(html, /\bconst\s+SectionEngine\s*=\s*\{/);
+  assert.doesNotMatch(html, /\bconst\s+SectionResizeEngine\s*=\s*\{/);
+  assert.doesNotMatch(html, /\bconst\s+OverlayEngine\s*=\s*\{/);
+  assert.doesNotMatch(html, /\bconst\s+InsertEngine\s*=\s*\{/);
+  assert.match(html, /<script src="\/engines\/SectionEngine\.js"><\/script>/);
+  assert.match(html, /<script src="\/engines\/SectionResizeEngine\.js"><\/script>/);
+  assert.match(html, /<script src="\/engines\/InsertEngine\.js"><\/script>/);
+  assert.match(html, /<script src="\/engines\/SelectionEngine\.js"><\/script>/);
+  assert.match(html, /<script src="\/engines\/OverlayEngine\.js"><\/script>/);
+});
+
 test('canonical runtime files do not reference retired bridge implementations', () => {
   const files = [
     path.resolve('designer/crystal-reports-designer-v4.html'),
@@ -172,7 +186,7 @@ test('canonical runtime files do not reference retired bridge implementations', 
 
 test('critical engine style.cssText usage stays frozen at approved baseline', () => {
   const expectations = new Map([
-    [path.resolve('engines/SelectionEngine.js'), 3],
+    [path.resolve('engines/SelectionEngine.js'), 1],
     [path.resolve('engines/CanvasLayoutEngine.js'), 1],
     [path.resolve('engines/PreviewEngine.js'), 0],
     [path.resolve('engines/EngineCore.js'), 0],

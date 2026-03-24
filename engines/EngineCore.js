@@ -17,7 +17,7 @@
  *       ↓ DragEngine     (update model positions)
  *       ↓ ElementLayoutEngine / SectionLayoutEngine  (layout tier)
  *       ↓ RenderScheduler.layout/visual/handles
- *       ↓ OverlayEngineV19 (rulers + handles + guides)
+ *       ↓ OverlayEngine (rulers + guides)
  *
  * Architecture rules:
  *   • All engines accessed via EngineRegistry.get(name)
@@ -856,7 +856,7 @@ const EngineCore = (() => {
     // VISUAL tier — rulers + grid
     RenderScheduler.visual(() => {
       if (_E('GridEngine'))       _E('GridEngine').updateSync();
-      if (_E('OverlayEngineV19')) _E('OverlayEngineV19').renderSync();
+      if (_E('OverlayEngine')) _E('OverlayEngine').render();
     }, 'zoom_visual');
 
     // HANDLES tier — selection boxes
@@ -888,7 +888,7 @@ const EngineCore = (() => {
      *
      * Responsibility ownership (one active engine per concern):
      *   Selection   → SelectionEngine      (monolithic, owns drag/rubber-band/move)
-     *   Overlay     → OverlayEngineV19     (v19 compositor → delegates to RulerEngine)
+     *   Overlay     → OverlayEngine        (canonical overlay/ruler compositor)
      *   Canvas      → CanvasLayoutEngine   (canonical owner for canvas/layout DOM)
      *   Preview     → PreviewEngineV19     (canonical owner for preview DOM)
      */
@@ -914,7 +914,7 @@ const EngineCore = (() => {
     reg('SectionLayoutEngine',   typeof SectionLayoutEngine   !== 'undefined' ? SectionLayoutEngine   : null);
     reg('ElementLayoutEngine',   typeof ElementLayoutEngine   !== 'undefined' ? ElementLayoutEngine   : null);
     reg('PreviewEngineV19',      typeof PreviewEngineV19      !== 'undefined' ? PreviewEngineV19      : null);
-    reg('OverlayEngineV19',      typeof OverlayEngineV19      !== 'undefined' ? OverlayEngineV19      : null);
+    reg('OverlayEngine',         typeof OverlayEngine         !== 'undefined' ? OverlayEngine         : null);
     reg('HistoryEngine',         typeof HistoryEngine         !== 'undefined' ? HistoryEngine         : null);
     reg('KeyboardEngine',        typeof KeyboardEngine        !== 'undefined' ? KeyboardEngine        : null);
     reg('ClipboardEngine',       typeof ClipboardEngine       !== 'undefined' ? ClipboardEngine       : null);
@@ -924,7 +924,6 @@ const EngineCore = (() => {
     // Monolithic (canonical — one instance each)
     reg('SelectionEngine',       typeof SelectionEngine       !== 'undefined' ? SelectionEngine       : null);
     reg('SectionResizeEngine',   typeof SectionResizeEngine   !== 'undefined' ? SectionResizeEngine   : null);
-    reg('OverlayEngine',         typeof OverlayEngine         !== 'undefined' ? OverlayEngine         : null);
     reg('DesignZoomEngine',      typeof DesignZoomEngine      !== 'undefined' ? DesignZoomEngine      : null);
     reg('PreviewZoomEngine',     typeof PreviewZoomEngine     !== 'undefined' ? PreviewZoomEngine     : null);
     reg('InsertEngine',          typeof InsertEngine          !== 'undefined' ? InsertEngine          : null);
