@@ -4536,6 +4536,17 @@ const FieldExplorerEngine = {
 const PreviewEngine={
   _sc:{x:0,y:0},
   _renderMode: 'design',  // 'design' | 'preview'
+  _delegate(method, args = []){
+    if (typeof window !== 'undefined' && window.__RF_CANONICAL_PREVIEW_OWNER__ === 'PreviewEngineV19') {
+      if (typeof PreviewEngineV19 === 'undefined' || typeof PreviewEngineV19[method] !== 'function') {
+        const message = `PREVIEW BRIDGE SHOULD NOT BE ACTIVE IN CANONICAL RUNTIME (${method})`;
+        console.error(message);
+        throw new Error(message);
+      }
+      return PreviewEngineV19[method](...args);
+    }
+    return undefined;
+  },
 
   /**
    * CRYSTAL REPORTS–STYLE PREVIEW (v9)
@@ -4544,6 +4555,9 @@ const PreviewEngine={
    * Switch time target: < 16ms (single DOM class change + content inject)
    */
   show(){
+    if (typeof window !== 'undefined' && window.__RF_CANONICAL_PREVIEW_OWNER__ === 'PreviewEngineV19') {
+      return this._delegate('show');
+    }
     const t0 = performance.now();
     // 1. Save scroll position
     const ws=document.getElementById('workspace');
@@ -4579,6 +4593,9 @@ const PreviewEngine={
   },
 
   hide(){
+    if (typeof window !== 'undefined' && window.__RF_CANONICAL_PREVIEW_OWNER__ === 'PreviewEngineV19') {
+      return this._delegate('hide');
+    }
     const t0 = performance.now();
     // 1. Remove canvas render class only
     const cl=document.getElementById('canvas-layer');
@@ -4608,13 +4625,39 @@ const PreviewEngine={
     console.debug(`[RF] Preview OFF in ${ms.toFixed(1)}ms`);
   },
 
-  toggle(){ this._renderMode==='preview'?this.hide():this.show(); },
+  toggle(){
+    if (typeof window !== 'undefined' && window.__RF_CANONICAL_PREVIEW_OWNER__ === 'PreviewEngineV19') {
+      return this._delegate('toggle');
+    }
+    this._renderMode==='preview'?this.hide():this.show();
+  },
 
   /** @type {'design'|'preview'} */
-  get renderMode(){ return this._renderMode; },
-  set renderMode(m){ m==='preview'?this.show():this.hide(); },
+  get renderMode(){
+    if (typeof window !== 'undefined' && window.__RF_CANONICAL_PREVIEW_OWNER__ === 'PreviewEngineV19') {
+      if (typeof PreviewEngineV19 === 'undefined') {
+        const message = 'PREVIEW BRIDGE SHOULD NOT BE ACTIVE IN CANONICAL RUNTIME (renderMode:get)';
+        console.error(message);
+        throw new Error(message);
+      }
+      return PreviewEngineV19.renderMode;
+    }
+    return this._renderMode;
+  },
+  set renderMode(m){
+    if (typeof window !== 'undefined' && window.__RF_CANONICAL_PREVIEW_OWNER__ === 'PreviewEngineV19') {
+      if (typeof PreviewEngineV19 === 'undefined') {
+        const message = 'PREVIEW BRIDGE SHOULD NOT BE ACTIVE IN CANONICAL RUNTIME (renderMode:set)';
+        console.error(message);
+        throw new Error(message);
+      }
+      PreviewEngineV19.renderMode = m;
+      return;
+    }
+    m==='preview'?this.show():this.hide();
+  },
 };
-PreviewEngine.__active = true; // v19.5: runtime monitor
+PreviewEngine.__active = false; // legacy facade only in canonical runtime
 // ═══════════════════════════════════════════════════════════════════
 //  COMMAND ENGINE — copy/paste/delete/select-all/alignment
 // ═══════════════════════════════════════════════════════════════════
@@ -7299,6 +7342,9 @@ PreviewEngine._renderInstanceElement = function(el, rowData, rootData, rowIndex)
 
 // Preview refresh (Rule 6, 24)
 PreviewEngine.refresh = function(){
+  if (typeof window !== 'undefined' && window.__RF_CANONICAL_PREVIEW_OWNER__ === 'PreviewEngineV19') {
+    return this._delegate('refresh');
+  }
   const content = document.getElementById('preview-content');
   if(!content) return;
   // v18.15: apply scaled width — remove CSS max-inline-size constraint
@@ -7748,17 +7794,16 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('[v19.6] SelectionEngine remains canonical owner; SelectionEngineV19 bridge disabled');
       }
 
-      // 3. PreviewEngine → PreviewEngineV19 (full v19 implementation)
+      // 3. PreviewEngineV19 remains canonical in the active runtime.
+      //    PreviewEngine stays as a legacy facade only and must not write preview DOM.
       if (typeof PreviewEngineV19 !== 'undefined' && typeof PreviewEngine !== 'undefined') {
-        ['show','hide','toggle','refresh','_renderWithData','_renderBand',
-         '_renderSectionData','_renderElementData','_renderInstanceElement','_buildCSS']
-          .forEach(m => {
-            if (typeof PreviewEngineV19[m] === 'function') {
-              PreviewEngine[m] = PreviewEngineV19[m].bind(PreviewEngineV19);
-            }
-          });
+        window.__RF_CANONICAL_PREVIEW_OWNER__ = 'PreviewEngineV19';
+        PreviewEngineV19.__active = true;
         PreviewEngine.__active = false;
-        console.log('[v19.6] PreviewEngine patched → PreviewEngineV19 (v19 owns preview)');
+        if (typeof PreviewEngineV19Full !== 'undefined') {
+          PreviewEngineV19Full.__bridgeDisabled = true;
+        }
+        console.log('[v19.6] PreviewEngineV19 remains canonical owner; PreviewEngine legacy bridge disabled');
       }
 
       // ── Phase 3.4 console.assert verification ─────────────────────────
@@ -7769,7 +7814,9 @@ document.addEventListener('DOMContentLoaded', () => {
       console.assert(!!SelectionEngine.__active,
         '[v19.6] FAIL: SelectionEngine should be active (canonical runtime owns selection)');
       console.assert(!PreviewEngine.__active,
-        '[v19.6] FAIL: PreviewEngine should be inactive (v19 owns preview)');
+        '[v19.6] FAIL: PreviewEngine should be inactive (PreviewEngineV19 owns preview)');
+      console.assert(!!PreviewEngineV19.__active,
+        '[v19.6] FAIL: PreviewEngineV19 should be active (canonical runtime owns preview)');
       console.log('[v19.6] Phase 3.4 assertions passed — zero runtime dependency on monolithic engines');
 
       // v19.5 assertions removed — superseded by v19.6 __active=false checks

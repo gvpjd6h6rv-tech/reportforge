@@ -711,7 +711,13 @@ const EngineCore = (() => {
     // POST tier — preview refresh
     RenderScheduler.post(() => {
       if (typeof DS !== 'undefined' && DS.previewMode) {
-        if (typeof PreviewEngine !== 'undefined') PreviewEngine.refresh();
+        if (typeof PreviewEngineV19 !== 'undefined') {
+          PreviewEngineV19.refresh();
+        } else if (typeof PreviewEngine !== 'undefined') {
+          const message = 'PREVIEW BRIDGE SHOULD NOT BE ACTIVE IN CANONICAL RUNTIME (zoom_post.refresh)';
+          console.error(message);
+          throw new Error(message);
+        }
       }
       if (_E('WorkspaceScrollEngine')) _E('WorkspaceScrollEngine').update();
     }, 'zoom_post');
@@ -729,7 +735,7 @@ const EngineCore = (() => {
      *   Selection   → SelectionEngine      (monolithic, owns drag/rubber-band/move)
      *   Overlay     → OverlayEngineV19     (v19 compositor → delegates to RulerEngine)
      *   Canvas      → CanvasLayoutEngine   (canonical owner for canvas/layout DOM)
-     *   Preview     → PreviewEngine        (monolithic, owns HTML generation)
+     *   Preview     → PreviewEngineV19     (canonical owner for preview DOM)
      */
     function reg(key, instance) {
       if (instance != null) EngineRegistry.register(key, instance);
@@ -764,7 +770,6 @@ const EngineCore = (() => {
     reg('SelectionEngine',       typeof SelectionEngine       !== 'undefined' ? SelectionEngine       : null);
     reg('SectionResizeEngine',   typeof SectionResizeEngine   !== 'undefined' ? SectionResizeEngine   : null);
     reg('OverlayEngine',         typeof OverlayEngine         !== 'undefined' ? OverlayEngine         : null);
-    reg('PreviewEngine',         typeof PreviewEngine         !== 'undefined' ? PreviewEngine         : null);
     reg('DesignZoomEngine',      typeof DesignZoomEngine      !== 'undefined' ? DesignZoomEngine      : null);
     reg('PreviewZoomEngine',     typeof PreviewZoomEngine     !== 'undefined' ? PreviewZoomEngine     : null);
     reg('InsertEngine',          typeof InsertEngine          !== 'undefined' ? InsertEngine          : null);
