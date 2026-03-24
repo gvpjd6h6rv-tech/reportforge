@@ -17,6 +17,13 @@
 'use strict';
 
 const PreviewEngineV19Full = (() => {
+  function _assertBridgeInactive(method) {
+    if (typeof window !== 'undefined' && window.__RF_CANONICAL_PREVIEW_OWNER__ === 'PreviewEngineV19') {
+      const message = `NON-CANONICAL ENGINE WRITE BLOCKED (${method})`;
+      if (typeof console !== 'undefined' && console.error) console.error(message);
+      throw new Error(message);
+    }
+  }
 
   // ── State ─────────────────────────────────────────────────────────
   let _sc = { x: 0, y: 0 };
@@ -209,6 +216,7 @@ const PreviewEngineV19Full = (() => {
 
   // ── refresh ────────────────────────────────────────────────────────
   function refresh() {
+    _assertBridgeInactive('PreviewEngineV19Full.refresh');
     const content = document.getElementById('preview-content');
     if (!content) return;
     const scaledW = RF.Geometry.scale(CFG.PAGE_W);
@@ -224,6 +232,7 @@ const PreviewEngineV19Full = (() => {
 
   // ── show / hide / toggle ──────────────────────────────────────────
   function show() {
+    _assertBridgeInactive('PreviewEngineV19Full.show');
     const t0 = performance.now();
     const ws = document.getElementById('workspace');
     if (ws) _sc = { x: ws.scrollLeft, y: ws.scrollTop };
@@ -251,6 +260,7 @@ const PreviewEngineV19Full = (() => {
   }
 
   function hide() {
+    _assertBridgeInactive('PreviewEngineV19Full.hide');
     const t0 = performance.now();
     const cl = document.getElementById('canvas-layer');
     if (cl) cl.classList.remove('preview-mode');
@@ -277,15 +287,24 @@ const PreviewEngineV19Full = (() => {
     console.debug(`[PreviewEngineV19] OFF in ${(performance.now()-t0).toFixed(1)}ms`);
   }
 
-  function toggle() { _renderMode === 'preview' ? hide() : show(); }
+  function toggle() {
+    _assertBridgeInactive('PreviewEngineV19Full.toggle');
+    _renderMode === 'preview' ? hide() : show();
+  }
 
   // ── Public API ─────────────────────────────────────────────────────
   return {
     show, hide, toggle, refresh,
     _renderWithData, _renderBand, _renderSectionData,
     _renderElementData, _renderInstanceElement, _buildCSS,
-    get renderMode()   { return _renderMode; },
-    set renderMode(m)  { m === 'preview' ? show() : hide(); },
+    get renderMode()   {
+      _assertBridgeInactive('PreviewEngineV19Full.renderMode:get');
+      return _renderMode;
+    },
+    set renderMode(m)  {
+      _assertBridgeInactive('PreviewEngineV19Full.renderMode:set');
+      m === 'preview' ? show() : hide();
+    },
     isActive()         { return _renderMode === 'preview'; },
   };
 })();

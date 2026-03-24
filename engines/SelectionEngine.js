@@ -89,8 +89,7 @@ const SelectionEngineV19 = (() => {
   }
 
   function _CE() {
-    return (typeof EngineRegistry !== 'undefined' && EngineRegistry.get('CanvasEngineV19'))
-        || (typeof CanvasLayoutEngine !== 'undefined' ? CanvasLayoutEngine : null)
+    return (typeof CanvasLayoutEngine !== 'undefined' ? CanvasLayoutEngine : null)
         || (typeof CanvasEngine !== 'undefined' ? CanvasEngine : null);
   }
 

@@ -348,8 +348,9 @@ const SelectionEngineV19Full = (() => {
     if (p.includes('n')) { const nh = Math.max(CFG.MIN_EL_H, DS.snap(h - dy)); y = DS.snap(y + h - nh); h = nh; }
     el.x = x; el.y = y; el.w = w; el.h = h;
 
-    // Route through CanvasEngineV19 (no monolithic dep)
-    const cveng = _reg('CanvasEngineV19') || (typeof CanvasEngineV19 !== 'undefined' ? CanvasEngineV19 : null);
+    // Route through canonical canvas owner only.
+    const cveng = _reg('CanvasLayoutEngine')
+      || (typeof CanvasLayoutEngine !== 'undefined' ? CanvasLayoutEngine : null);
     if (cveng?.updateElementPosition) cveng.updateElementPosition(d.elId);
     renderHandles();
 

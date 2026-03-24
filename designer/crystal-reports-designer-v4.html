@@ -3452,6 +3452,7 @@ const CanvasEngine = {
 };
 window.__RF_CANONICAL_CANVAS_OWNER__ = 'CanvasLayoutEngine';
 CanvasEngine.__active = false; // legacy facade only in canonical runtime
+CanvasEngine.__bridgeDisabled = true;
 
 // ═══════════════════════════════════════════════════════════════════
 //  SELECTION ENGINE — selection, move, resize
@@ -4732,6 +4733,7 @@ const PreviewEngine={
   },
 };
 PreviewEngine.__active = false; // legacy facade only in canonical runtime
+PreviewEngine.__bridgeDisabled = true;
 // ═══════════════════════════════════════════════════════════════════
 //  COMMAND ENGINE — copy/paste/delete/select-all/alignment
 // ═══════════════════════════════════════════════════════════════════
@@ -7836,6 +7838,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.__RF_CANONICAL_CANVAS_OWNER__ = 'CanvasLayoutEngine';
         CanvasLayoutEngine.__active = true;
         CanvasEngine.__active = false;
+        CanvasEngine.__bridgeDisabled = true;
         console.log('[v19.6] CanvasLayoutEngine remains canonical owner; CanvasEngine legacy writer disabled');
       }
 
@@ -7864,6 +7867,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.__RF_CANONICAL_PREVIEW_OWNER__ = 'PreviewEngineV19';
         PreviewEngineV19.__active = true;
         PreviewEngine.__active = false;
+        PreviewEngine.__bridgeDisabled = true;
         if (typeof PreviewEngineV19Full !== 'undefined') {
           PreviewEngineV19Full.__bridgeDisabled = true;
         }

@@ -200,7 +200,7 @@ const EngineCore = (() => {
 
   function _snapshotContracts() {
     const section = _E('SectionLayoutEngine');
-    const canvas = _E('CanvasLayoutEngine') || _E('CanvasEngineV19');
+    const canvas = _E('CanvasLayoutEngine');
     const scroll = _E('WorkspaceScrollEngine');
     return {
       section: section && typeof section.getLayoutContract === 'function'
@@ -756,7 +756,7 @@ const EngineCore = (() => {
     reg('GuideEngine',           typeof GuideEngine           !== 'undefined' ? GuideEngine           : null);
     reg('AlignmentEngine',       typeof AlignmentEngine       !== 'undefined' ? AlignmentEngine       : null);
     // v19 Phase 3 — Layout & System
-    reg('CanvasEngineV19',       typeof CanvasLayoutEngine    !== 'undefined' ? CanvasLayoutEngine    : null);  // file: CanvasLayoutEngine.js
+    reg('CanvasLayoutEngine',    typeof CanvasLayoutEngine    !== 'undefined' ? CanvasLayoutEngine    : null);
     reg('SectionLayoutEngine',   typeof SectionLayoutEngine   !== 'undefined' ? SectionLayoutEngine   : null);
     reg('ElementLayoutEngine',   typeof ElementLayoutEngine   !== 'undefined' ? ElementLayoutEngine   : null);
     reg('PreviewEngineV19',      typeof PreviewEngineV19      !== 'undefined' ? PreviewEngineV19      : null);
