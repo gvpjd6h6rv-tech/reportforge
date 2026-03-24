@@ -3177,8 +3177,48 @@ const DS = {
     return null;
   },
   getTotalHeight(){return this.sections.reduce((a,s)=>a+s.height,0);},
-  getSelectedElements(){ return this.elements.filter(e=>this.selection.has(e.id)); },
+  isSelected(id){ return this.selection.has(id); },
+  clearSelectionState(){ this.selection.clear(); return this.selection; },
+  replaceSelection(ids){
+    const nextIds = ids instanceof Set ? [...ids] : Array.from(ids || []);
+    this.selection.clear();
+    nextIds.forEach(id => this.selection.add(id));
+    return this.selection;
+  },
+  selectOnly(id){
+    this.selection.clear();
+    if(id != null) this.selection.add(id);
+    return this.selection;
+  },
+  addSelection(id){
+    if(id != null) this.selection.add(id);
+    return this.selection;
+  },
+  removeSelection(id){
+    this.selection.delete(id);
+    return this.selection;
+  },
+  toggleSelection(id){
+    if(this.selection.has(id)){
+      this.selection.delete(id);
+      return false;
+    }
+    this.selection.add(id);
+    return true;
+  },
+  getSelectedElements(){ return this.elements.filter(e=>this.isSelected(e.id)); },
   getElementById(id){ return this.elements.find(e=>e.id===id); },
+  setZoom(z){ this.zoom = z; return this.zoom; },
+  updateElementLayout(id, patch = {}){
+    const el = this.getElementById(id);
+    if(!el) return null;
+    if(Object.prototype.hasOwnProperty.call(patch,'sectionId')) el.sectionId = patch.sectionId;
+    if(Object.prototype.hasOwnProperty.call(patch,'x')) el.x = patch.x;
+    if(Object.prototype.hasOwnProperty.call(patch,'y')) el.y = patch.y;
+    if(Object.prototype.hasOwnProperty.call(patch,'w')) el.w = patch.w;
+    if(Object.prototype.hasOwnProperty.call(patch,'h')) el.h = patch.h;
+    return el;
+  },
   snap(v){ return this.snapToGrid ? Math.round(v/CFG.GRID)*CFG.GRID : v; },
 };
 // Initialize history
@@ -3383,7 +3423,7 @@ const CanvasEngine = {
       const span=document.createElement('span');span.className='el-content';
       span.textContent='🖼 Imagen';div.appendChild(span);
     }
-    if(DS.selection.has(el.id)) div.classList.add('selected');
+    if(DS.isSelected(el.id)) div.classList.add('selected');
 
     SelectionEngine.attachElementEvents(div,el.id);
     return div;
@@ -3395,7 +3435,7 @@ const CanvasEngine = {
     const el=DS.getElementById(id);if(!el)return;
     const newDiv=this.buildElementDiv(el);
     old.replaceWith(newDiv);
-    if(DS.selection.has(id)) SelectionEngine.renderHandles();
+    if(DS.isSelected(id)) SelectionEngine.renderHandles();
   },
   updateElementPosition(id){
     if (this._delegate('updateElementPosition', [id])) return;
@@ -3428,10 +3468,10 @@ const AlignEngine = {
   _fallback(dir){
     const ids=[...DS.selection]; if(ids.length<2) return;
     const els=ids.map(id=>DS.getElementById(id)).filter(Boolean);
-    if(dir==='left'){ const minX=Math.min(...els.map(e=>e.x)); els.forEach(e=>e.x=minX); }
-    if(dir==='right'){ const maxR=Math.max(...els.map(e=>e.x+e.w)); els.forEach(e=>e.x=maxR-e.w); }
-    if(dir==='top'){ const minY=Math.min(...els.map(e=>e.y)); els.forEach(e=>e.y=minY); }
-    if(dir==='bottom'){ const maxB=Math.max(...els.map(e=>e.y+e.h)); els.forEach(e=>e.y=maxB-e.h); }
+    if(dir==='left'){ const minX=Math.min(...els.map(e=>e.x)); els.forEach(e=>DS.updateElementLayout(e.id,{x:minX})); }
+    if(dir==='right'){ const maxR=Math.max(...els.map(e=>e.x+e.w)); els.forEach(e=>DS.updateElementLayout(e.id,{x:maxR-e.w})); }
+    if(dir==='top'){ const minY=Math.min(...els.map(e=>e.y)); els.forEach(e=>DS.updateElementLayout(e.id,{y:minY})); }
+    if(dir==='bottom'){ const maxB=Math.max(...els.map(e=>e.y+e.h)); els.forEach(e=>DS.updateElementLayout(e.id,{y:maxB-e.h})); }
     CanvasEngine.renderAll();
   },
 };
@@ -3516,13 +3556,13 @@ const SelectionEngine = {
       this.startTextEdit(div,el);return;
     }
     const shiftKey = e.modifiers ? !!e.modifiers.shiftKey : !!e.shiftKey;
-    if(!shiftKey && !DS.selection.has(id)){
-      DS.selection.clear();
+    if(!shiftKey && !DS.isSelected(id)){
+      DS.clearSelectionState();
     }
-    if(shiftKey && DS.selection.has(id)){
-      DS.selection.delete(id);
+    if(shiftKey && DS.isSelected(id)){
+      DS.removeSelection(id);
     } else {
-      DS.selection.add(id);
+      DS.addSelection(id);
     }
     this.renderHandles();
     PropertiesEngine.render();
@@ -3563,13 +3603,13 @@ const SelectionEngine = {
     }
     div.addEventListener('contextmenu', e=>{
       e.preventDefault();e.stopPropagation();
-      if(!DS.selection.has(id)){ DS.selection.clear();DS.selection.add(id);this.renderHandles(); }
+      if(!DS.isSelected(id)){ DS.selectOnly(id);this.renderHandles(); }
       ContextMenuEngine.show(e.clientX,e.clientY,'element');
     });
   },
 
   startTextEdit(div, el){
-    DS.selection.clear();DS.selection.add(el.id);
+    DS.selectOnly(el.id);
     div.classList.add('editing','selected');
     const span=div.querySelector('.el-content');
     if(!span)return;
@@ -3624,7 +3664,7 @@ const SelectionEngine = {
     RF.Geometry.invalidate();  // ensure fresh DOMRects when called outside OverlayEngine.render()
     const layer=document.getElementById('handles-layer');while(layer.firstChild)layer.removeChild(layer.firstChild);
     document.querySelectorAll('.cr-element').forEach(d=>{
-      d.classList.toggle('selected',DS.selection.has(d.dataset.id));
+      d.classList.toggle('selected',DS.isSelected(d.dataset.id));
     });
     if(DS.selection.size===0) return;
     if(DS.selection.size===1){
@@ -3700,7 +3740,7 @@ const SelectionEngine = {
   },
 
   clearSelection(){
-    DS.selection.clear();
+    DS.clearSelectionState();
     this.renderHandles();
     PropertiesEngine.render();
     FormatEngine.updateToolbar();
@@ -3759,12 +3799,14 @@ const SelectionEngine = {
       const target=DS.getSectionAtY(newAbsY+el.h/2);
       let tX, tY;
       if(target){
-        el.sectionId=target.section.id;
-        el.y=DS.snap(Math.max(0,newAbsY-DS.getSectionTop(target.section.id)));
+        DS.updateElementLayout(el.id,{
+          sectionId: target.section.id,
+          y: DS.snap(Math.max(0,newAbsY-DS.getSectionTop(target.section.id))),
+        });
       } else {
-        el.y=DS.snap(Math.max(0,orig.y+dy));
+        DS.updateElementLayout(el.id,{ y: DS.snap(Math.max(0,orig.y+dy)) });
       }
-      el.x=DS.snap(Math.max(0,Math.min(CFG.PAGE_W-el.w,newX)));
+      DS.updateElementLayout(el.id,{ x: DS.snap(Math.max(0,Math.min(CFG.PAGE_W-el.w,newX))) });
       // Apply zoom-scaled position to DOM (model × zoom = view)
       const div=document.querySelector(`.cr-element[data-id="${orig.id}"]`);
       if(div){
@@ -3798,7 +3840,7 @@ const SelectionEngine = {
     if(p.includes('s')) h=Math.max(CFG.MIN_EL_H, DS.snap(h+dy));
     if(p.includes('w')){const nw=Math.max(CFG.MIN_EL_W,DS.snap(w-dx));x=DS.snap(x+w-nw);w=nw;}
     if(p.includes('n')){const nh=Math.max(CFG.MIN_EL_H,DS.snap(h-dy));y=DS.snap(y+h-nh);h=nh;}
-    el.x=x;el.y=y;el.w=w;el.h=h;
+    DS.updateElementLayout(el.id,{ x, y, w, h });
     CanvasEngine.updateElementPosition(d.elId);
     this.renderHandles();
     document.getElementById('sb-size').textContent=`W: ${w}  H: ${h}`;
@@ -3813,11 +3855,11 @@ const SelectionEngine = {
     const w=Math.abs(pos.x-d.startX),h=Math.abs(pos.y-d.startY);
     rb.style.left=x+'px';rb.style.top=y+'px';rb.style.width=w+'px';rb.style.height=h+'px';
     // Live selection
-    DS.selection.clear();
+    DS.clearSelectionState();
     DS.elements.forEach(el=>{
       const st=DS.getSectionTop(el.sectionId);
       const ex=el.x,ey=st+el.y,ew=el.w,eh=el.h;
-      if(ex<x+w && ex+ew>x && ey<y+h && ey+eh>y) DS.selection.add(el.id);
+      if(ex<x+w && ex+ew>x && ey<y+h && ey+eh>y) DS.addSelection(el.id);
     });
     this.renderHandles();
   },
@@ -3910,7 +3952,7 @@ const InsertEngine = {
     if(!newEl)return;
     DS.elements.push(newEl);
     CanvasEngine.renderElement(newEl);
-    DS.selection.clear();DS.selection.add(newEl.id);
+    DS.selectOnly(newEl.id);
     SelectionEngine.renderHandles();
     PropertiesEngine.render();FormatEngine.updateToolbar();
     DS.saveHistory();
@@ -4515,7 +4557,7 @@ const FieldExplorerEngine = {
       content:field.path,fontSize:8,
     });
     DS.elements.push(el);CanvasEngine.renderElement(el);
-    DS.selection.clear();DS.selection.add(el.id);
+    DS.selectOnly(el.id);
     SelectionEngine.renderHandles();PropertiesEngine.render();FormatEngine.updateToolbar();
     DS.saveHistory();
     document.getElementById('sb-msg').textContent=`Campo '${field.path}' insertado`;
@@ -4551,7 +4593,7 @@ const FieldExplorerEngine = {
         fieldPath:field.path,fieldFmt:fmtDef,content:field.path,fontSize:8,
       });
       DS.elements.push(el);CanvasEngine.renderElement(el);
-      DS.selection.clear();DS.selection.add(el.id);
+      DS.selectOnly(el.id);
       SelectionEngine.renderHandles();PropertiesEngine.render();FormatEngine.updateToolbar();
       DS.saveHistory();
       document.getElementById('sb-msg').textContent=`Campo '${field.path}' colocado`;
@@ -4704,11 +4746,11 @@ const CommandEngine = {
   },
   paste(){
     if(!DS.clipboard.length)return;
-    DS.selection.clear();
+    DS.clearSelectionState();
     DS.clipboard.forEach(json=>{
       const el=JSON.parse(json);
       el.id=newId();el.x=DS.snap(el.x+8);el.y=DS.snap(el.y+8);
-      DS.elements.push(el);CanvasEngine.renderElement(el);DS.selection.add(el.id);
+      DS.elements.push(el);CanvasEngine.renderElement(el);DS.addSelection(el.id);
     });
     SelectionEngine.renderHandles();PropertiesEngine.render();FormatEngine.updateToolbar();
     DS.saveHistory();
@@ -4719,54 +4761,55 @@ const CommandEngine = {
       DS.elements=DS.elements.filter(e=>e.id!==id);
       const div=document.querySelector(`.cr-element[data-id="${id}"]`);if(div)div.remove();
     });
-    DS.selection.clear();
+    DS.clearSelectionState();
     SelectionEngine.renderHandles();PropertiesEngine.render();FormatEngine.updateToolbar();
     DS.saveHistory();
   },
   selectAll(){
-    DS.elements.forEach(e=>DS.selection.add(e.id));
+    DS.clearSelectionState();
+    DS.elements.forEach(e=>DS.addSelection(e.id));
     SelectionEngine.renderHandles();PropertiesEngine.render();FormatEngine.updateToolbar();
   },
   alignLefts(){
     const sel=DS.getSelectedElements();if(sel.length<2)return;
     const minX=Math.min(...sel.map(e=>e.x));
-    sel.forEach(e=>{e.x=minX;CanvasEngine.updateElementPosition(e.id);});
+    sel.forEach(e=>{DS.updateElementLayout(e.id,{x:minX});CanvasEngine.updateElementPosition(e.id);});
     SelectionEngine.renderHandles();DS.saveHistory();
   },
   alignCenters(){
     const sel=DS.getSelectedElements();if(sel.length<2)return;
     const c=sel.reduce((a,e)=>a+(e.x+e.w/2),0)/sel.length;
-    sel.forEach(e=>{e.x=DS.snap(c-e.w/2);CanvasEngine.updateElementPosition(e.id);});
+    sel.forEach(e=>{DS.updateElementLayout(e.id,{x:DS.snap(c-e.w/2)});CanvasEngine.updateElementPosition(e.id);});
     SelectionEngine.renderHandles();DS.saveHistory();
   },
   alignRights(){
     const sel=DS.getSelectedElements();if(sel.length<2)return;
     const maxR=Math.max(...sel.map(e=>e.x+e.w));
-    sel.forEach(e=>{e.x=maxR-e.w;CanvasEngine.updateElementPosition(e.id);});
+    sel.forEach(e=>{DS.updateElementLayout(e.id,{x:maxR-e.w});CanvasEngine.updateElementPosition(e.id);});
     SelectionEngine.renderHandles();DS.saveHistory();
   },
   alignTops(){
     const sel=DS.getSelectedElements();if(sel.length<2)return;
     const minY=Math.min(...sel.map(e=>e.y));
-    sel.forEach(e=>{e.y=minY;CanvasEngine.updateElementPosition(e.id);});
+    sel.forEach(e=>{DS.updateElementLayout(e.id,{y:minY});CanvasEngine.updateElementPosition(e.id);});
     SelectionEngine.renderHandles();DS.saveHistory();
   },
   alignBottoms(){
     const sel=DS.getSelectedElements();if(sel.length<2)return;
     const maxB=Math.max(...sel.map(e=>e.y+e.h));
-    sel.forEach(e=>{e.y=maxB-e.h;CanvasEngine.updateElementPosition(e.id);});
+    sel.forEach(e=>{DS.updateElementLayout(e.id,{y:maxB-e.h});CanvasEngine.updateElementPosition(e.id);});
     SelectionEngine.renderHandles();DS.saveHistory();
   },
   sameWidth(){
     const sel=DS.getSelectedElements();if(sel.length<2)return;
     const ref=sel[0];
-    sel.slice(1).forEach(e=>{e.w=ref.w;CanvasEngine.updateElementPosition(e.id);});
+    sel.slice(1).forEach(e=>{DS.updateElementLayout(e.id,{w:ref.w});CanvasEngine.updateElementPosition(e.id);});
     SelectionEngine.renderHandles();DS.saveHistory();
   },
   sameHeight(){
     const sel=DS.getSelectedElements();if(sel.length<2)return;
     const ref=sel[0];
-    sel.slice(1).forEach(e=>{e.h=ref.h;CanvasEngine.updateElementPosition(e.id);});
+    sel.slice(1).forEach(e=>{DS.updateElementLayout(e.id,{h:ref.h});CanvasEngine.updateElementPosition(e.id);});
     SelectionEngine.renderHandles();DS.saveHistory();
   },
   bringFront(){
@@ -4807,8 +4850,8 @@ const CommandEngine = {
   invertSelection(){
     const allIds=new Set(DS.elements.map(e=>e.id));
     const curSel=new Set(DS.selection);
-    DS.selection.clear();
-    allIds.forEach(id=>{ if(!curSel.has(id)) DS.selection.add(id); });
+    DS.clearSelectionState();
+    allIds.forEach(id=>{ if(!curSel.has(id)) DS.addSelection(id); });
     SelectionEngine.renderHandles&&SelectionEngine.renderHandles();
     document.getElementById('sb-msg')&&(document.getElementById('sb-msg').textContent='Selección invertida');
   },
@@ -5102,7 +5145,7 @@ const DesignZoomEngine={
         ws.scrollTop  = (cy + ws.scrollTop)  * ratio - cy;
       }
     }
-    DS.zoom = z;
+    DS.setZoom(z);
     const applyZoomChrome = () => {
       vp.style.transform       = 'none';
       vp.style.transformOrigin = '';
@@ -5215,7 +5258,7 @@ const FileEngine = {
     try{
       const parsed=JSON.parse(data);
       DS.sections=parsed.sections;DS.elements=parsed.elements;
-      DS.selection.clear();
+      DS.clearSelectionState();
       SectionEngine.render();SelectionEngine.clearSelection();
       document.getElementById('sb-msg').textContent=`✓ Abierto: ${choice}`;
     }catch(e){alert('Error al cargar: '+e.message);}
@@ -5232,7 +5275,7 @@ const FileEngine = {
       try{
         const data=JSON.parse(e.target.result);
         DS.sections=data.sections;DS.elements=data.elements;
-        DS.selection.clear();SectionEngine.render();
+        DS.clearSelectionState();SectionEngine.render();
         SelectionEngine.clearSelection();
         document.getElementById('sb-msg').textContent='✓ Diseño importado';
       }catch(err){alert('Error: '+err.message);}
@@ -5259,7 +5302,7 @@ function handleAction(action){
   switch(action){
     case 'new':if(confirm('¿Nuevo reporte? Se perderán los cambios no guardados.')){
       DS.elements=[];DS.sections.forEach(s=>{if(s.stype==='det')s.height=14;else s.height=60;});
-      DS.selection.clear();SectionEngine.render();SelectionEngine.clearSelection();
+      DS.clearSelectionState();SectionEngine.render();SelectionEngine.clearSelection();
       DS.saveHistory();
     }break;
     case 'open': FileEngine.load(); break;
@@ -5299,7 +5342,7 @@ function handleAction(action){
     case 'ungroup': CommandEngine.ungroup&&CommandEngine.ungroup();break;
     // SELECTION
     case 'invert-selection': CommandEngine.invertSelection&&CommandEngine.invertSelection();break;
-    case 'deselect-all': DS.selection.clear();SelectionEngine.renderHandles&&SelectionEngine.renderHandles();break;
+    case 'deselect-all': DS.clearSelectionState();SelectionEngine.renderHandles&&SelectionEngine.renderHandles();break;
     // ZOOM
     case 'zoom-fit-page': CommandEngine.zoomFitPage&&CommandEngine.zoomFitPage();break;
     case 'zoom-fit-width': CommandEngine.zoomFitWidth&&CommandEngine.zoomFitWidth();break;
@@ -7081,7 +7124,7 @@ function switchDocType(key) {
     }
     DS.sections = dt.defaultSections.map(s=>({...s}));
     DS.elements = [];
-    DS.selection.clear();
+    DS.clearSelectionState();
     SectionEngine.render();
     SelectionEngine.clearSelection();
     DS.saveHistory();
@@ -7300,8 +7343,7 @@ PreviewEngine._renderInstanceElement = function(el, rowData, rootData, rowIndex)
     if(!pvEl) return;
     const originId = pvEl.dataset.originId;
     // Select design element
-    DS.selection.clear();
-    DS.selection.add(originId);
+    DS.selectOnly(originId);
     SelectionEngine.renderHandles();
     PropertiesEngine.render();
     FormatEngine.updateToolbar();
@@ -7340,8 +7382,10 @@ PreviewEngine._renderInstanceElement = function(el, rowData, rootData, rowIndex)
     const dy=RF.Geometry.unscale(e.clientY-_drag.startClientY);
     const el=DS.getElementById(_drag.originId);
     if(!el)return;
-    el.x=Math.max(0,Math.round(_drag.startX+dx));
-    el.y=Math.max(0,Math.round(_drag.startY+dy));
+    DS.updateElementLayout(el.id,{
+      x: Math.max(0,Math.round(_drag.startX+dx)),
+      y: Math.max(0,Math.round(_drag.startY+dy)),
+    });
     if(CanvasEngine.updateElementPosition) CanvasEngine.updateElementPosition(_drag.originId); else { CanvasEngine.renderAll?.(); CanvasEngine.render?.(); }
     SelectionEngine.renderHandles();
   });
@@ -7405,7 +7449,7 @@ PreviewEngine.refresh = function(){
       startElY: el.y,
     };
     // Select origin element
-    DS.selection.clear(); DS.selection.add(originId);
+    DS.selectOnly(originId);
     SelectionEngine.renderHandles(); PropertiesEngine?.render();
     // Highlight all instances
     document.querySelectorAll('.pv-el').forEach(d=>d.classList.remove('pv-origin-selected'));
@@ -7418,8 +7462,10 @@ PreviewEngine.refresh = function(){
     if(!el) return;
     const dx = RF.Geometry.unscale(e.clientX - _pvDrag.startClientX); // v18.11
     const dy = RF.Geometry.unscale(e.clientY - _pvDrag.startClientY);
-    el.x = DS.snap(Math.max(0, _pvDrag.startElX + dx));
-    el.y = DS.snap(Math.max(0, _pvDrag.startElY + dy));
+    DS.updateElementLayout(el.id,{
+      x: DS.snap(Math.max(0, _pvDrag.startElX + dx)),
+      y: DS.snap(Math.max(0, _pvDrag.startElY + dy)),
+    });
     // Live update design DOM
     const div = document.querySelector(`.cr-element[data-id="${_pvDrag.id}"]`);
     if(div){ const _pp=RF.Geometry.modelToView(el.x,el.y); div.style.left=_pp.x+'px'; div.style.top=_pp.y+'px'; } // v18.10
