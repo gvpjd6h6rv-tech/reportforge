@@ -52,7 +52,7 @@ const HistoryEngine = (() => {
       DS.elements = state.elements;
       DS.sections = state.sections;
       // Trigger re-render
-      if (typeof CanvasEngine    !== 'undefined') CanvasEngine.update();
+      if (typeof CanvasLayoutEngine !== 'undefined') CanvasLayoutEngine.update();
       if (typeof SectionLayoutEngine !== 'undefined') SectionLayoutEngine.update();
       if (typeof ElementLayoutEngine !== 'undefined') ElementLayoutEngine.update();
       if (typeof OverlayEngineV19 !== 'undefined') OverlayEngineV19.render();

@@ -3,8 +3,9 @@
   "version": "14.0.0",
   "scripts": {
     "test:contracts": "node --test reportforge/tests/engine_contracts.test.mjs",
-    "test:runtime": "node --test reportforge/tests/runtime_regression.test.mjs",
-    "test:arch": "node --test reportforge/tests/engine_contracts.test.mjs reportforge/tests/runtime_regression.test.mjs",
+    "test:runtime": "node reportforge/tests/run_runtime_regression.mjs",
+    "test:governance": "node --test reportforge/tests/governance_guardrails.test.mjs",
+    "test:arch": "npm run test:contracts && npm run test:governance && npm run test:runtime",
     "baselines:runtime": "node reportforge/tests/update_runtime_baselines.mjs"
   },
   "dependencies": {

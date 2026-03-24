@@ -204,7 +204,7 @@ hdr "Browser Runtime Regression"
 if [[ "$QUICK" != "--quick" ]]; then
   cd "$ROOT"
   if command -v node &>/dev/null; then
-    if node --test reportforge/tests/runtime_regression.test.mjs >/tmp/rf_runtime_regression.out 2>&1; then
+    if node reportforge/tests/run_runtime_regression.mjs >/tmp/rf_runtime_regression.out 2>&1; then
       ok "Browser runtime regression suite"
     else
       fail "Browser runtime regression suite" "see /tmp/rf_runtime_regression.out"
@@ -215,6 +215,25 @@ if [[ "$QUICK" != "--quick" ]]; then
   fi
 else
   skip "Browser runtime regression suite (--quick mode)"
+fi
+
+# ── 7b. Architecture governance guardrails ────────────────────────────────────
+hdr "Architecture Governance"
+
+if [[ "$QUICK" != "--quick" ]]; then
+  cd "$ROOT"
+  if command -v node &>/dev/null; then
+    if node --test reportforge/tests/governance_guardrails.test.mjs >/tmp/rf_governance_guardrails.out 2>&1; then
+      ok "Architecture governance guardrails"
+    else
+      fail "Architecture governance guardrails" "see /tmp/rf_governance_guardrails.out"
+      tail -40 /tmp/rf_governance_guardrails.out || true
+    fi
+  else
+    skip "node not installed — skipping architecture governance guardrails"
+  fi
+else
+  skip "Architecture governance guardrails (--quick mode)"
 fi
 
 # ── 8. Designer HTML checks ────────────────────────────────────────────────────

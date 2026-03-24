@@ -457,6 +457,95 @@ const EngineCore = (() => {
     }
   }
 
+  function _validateCanonicalRuntime(issues) {
+    if (typeof window !== 'undefined') {
+      if (window.__RF_CANONICAL_CANVAS_OWNER__ !== 'CanvasLayoutEngine') {
+        _pushIssue(issues, 'runtime.canvas.owner', 'Canonical canvas owner must be CanvasLayoutEngine', {
+          actual: window.__RF_CANONICAL_CANVAS_OWNER__ || null,
+        });
+      }
+      if (window.__RF_CANONICAL_SELECTION_OWNER__ !== 'SelectionEngine') {
+        _pushIssue(issues, 'runtime.selection.owner', 'Canonical selection owner must be SelectionEngine', {
+          actual: window.__RF_CANONICAL_SELECTION_OWNER__ || null,
+        });
+      }
+      if (window.__RF_CANONICAL_PREVIEW_OWNER__ !== 'PreviewEngineV19') {
+        _pushIssue(issues, 'runtime.preview.owner', 'Canonical preview owner must be PreviewEngineV19', {
+          actual: window.__RF_CANONICAL_PREVIEW_OWNER__ || null,
+        });
+      }
+    }
+
+    if (typeof CanvasEngine !== 'undefined' && CanvasEngine.__active !== false) {
+      _pushIssue(issues, 'runtime.canvas.legacy-active', 'CanvasEngine facade must remain inactive', {
+        active: CanvasEngine.__active,
+      });
+    }
+    if (typeof PreviewEngine !== 'undefined' && PreviewEngine.__active !== false) {
+      _pushIssue(issues, 'runtime.preview.legacy-active', 'PreviewEngine facade must remain inactive', {
+        active: PreviewEngine.__active,
+      });
+    }
+    if (typeof SelectionEngine !== 'undefined' && SelectionEngine.__active !== true) {
+      _pushIssue(issues, 'runtime.selection.inactive', 'SelectionEngine must remain active', {
+        active: SelectionEngine.__active,
+      });
+    }
+    if (typeof PreviewEngineV19 !== 'undefined' && PreviewEngineV19.__active !== true) {
+      _pushIssue(issues, 'runtime.preview.inactive', 'PreviewEngineV19 must remain active', {
+        active: PreviewEngineV19.__active,
+      });
+    }
+
+    const selBoxes = document.querySelectorAll('#handles-layer .sel-box').length;
+    if (selBoxes > 1) {
+      _pushIssue(issues, 'runtime.selection.duplicate-box', 'Selection overlay must have at most one sel-box', {
+        selBoxes,
+      });
+    }
+
+    if (typeof DS !== 'undefined' && DS.selection instanceof Set) {
+      const domSelectedIds = new Set(
+        [...document.querySelectorAll('.cr-element.selected[data-id]')].map(node => node.dataset.id).filter(Boolean)
+      );
+      const dsSelectedIds = new Set([...DS.selection]);
+      if (domSelectedIds.size !== dsSelectedIds.size ||
+          [...dsSelectedIds].some(id => !domSelectedIds.has(id))) {
+        _pushIssue(issues, 'runtime.selection.state-drift', 'DOM selected state must derive exactly from DS.selection', {
+          domSelectedIds: [...domSelectedIds],
+          dsSelectedIds: [...dsSelectedIds],
+        });
+      }
+
+      if (DS.selection.size === 1 && selBoxes === 1) {
+        const selectedId = [...DS.selection][0];
+        const selectedNode = document.querySelector(
+          DS.previewMode
+            ? `#preview-content .cr-element.selected[data-id="${selectedId}"]`
+            : `#canvas-layer .cr-element.selected[data-id="${selectedId}"]:not(.pv-el)`
+        );
+        const box = document.querySelector('#handles-layer .sel-box');
+        if (selectedNode && box) {
+          const sr = selectedNode.getBoundingClientRect();
+          const br = box.getBoundingClientRect();
+          const drift = Math.max(
+            Math.abs(sr.left - br.left),
+            Math.abs(sr.top - br.top),
+            Math.abs(sr.width - br.width),
+            Math.abs(sr.height - br.height)
+          );
+          if (drift > 0.75) {
+            _pushIssue(issues, 'runtime.selection.overlay-drift', 'Selection overlay must remain aligned to selected element', {
+              drift,
+              element: { left: sr.left, top: sr.top, width: sr.width, height: sr.height },
+              overlay: { left: br.left, top: br.top, width: br.width, height: br.height },
+            });
+          }
+        }
+      }
+    }
+  }
+
   function _buildRuntimeSnapshot(reason) {
     const snapshot = {
       version: 'phase3-runtime-v1',
@@ -782,13 +871,12 @@ const EngineCore = (() => {
     // POST tier — preview refresh
     RenderScheduler.post(() => {
       if (typeof DS !== 'undefined' && DS.previewMode) {
-        if (typeof PreviewEngineV19 !== 'undefined') {
-          PreviewEngineV19.refresh();
-        } else if (typeof PreviewEngine !== 'undefined') {
-          const message = 'PREVIEW BRIDGE SHOULD NOT BE ACTIVE IN CANONICAL RUNTIME (zoom_post.refresh)';
+        if (typeof PreviewEngineV19 === 'undefined') {
+          const message = 'PREVIEW OWNER MISSING IN CANONICAL RUNTIME (zoom_post.refresh)';
           console.error(message);
           throw new Error(message);
         }
+        PreviewEngineV19.refresh();
       }
       if (_E('WorkspaceScrollEngine')) _E('WorkspaceScrollEngine').updateSync();
     }, 'zoom_post');
@@ -955,6 +1043,7 @@ const EngineCore = (() => {
       _validateSectionContract(contracts, collectedIssues);
       _validateCanvasContract(contracts, collectedIssues);
       _validateScrollContract(contracts, collectedIssues);
+      _validateCanonicalRuntime(collectedIssues);
       const actualIssues = Array.isArray(collectedIssues)
         ? collectedIssues.filter(Boolean)
         : [];

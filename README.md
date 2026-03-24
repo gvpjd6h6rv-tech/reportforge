@@ -25,6 +25,27 @@ python3 reportforge_server.py
 
 All geometry through `RF.Geometry` — no raw `DS.zoom` in render paths.
 
+## Architectural Definition of Done
+
+Every structural PR must satisfy all of these:
+
+- [ ] no nuevos writers
+- [ ] no nuevos owners
+- [ ] no bypass del scheduler
+- [ ] no estado fuera de `DS`
+- [ ] no contratos ambiguos
+- [ ] tests pasan (runtime + contracts + governance)
+- [ ] no uso de APIs legacy
+
+Validation commands:
+
+```bash
+npm run test:contracts
+npm run test:governance
+npm run test:runtime
+./validate_repo.sh
+```
+
 ## Version history
 
 See [CHANGELOG.md](CHANGELOG.md) for full history from v18.0 → v19.0.

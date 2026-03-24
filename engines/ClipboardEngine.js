@@ -56,7 +56,7 @@ const ClipboardEngine = (() => {
     _clipboard.forEach(el => { el.x += PASTE_OFFSET; el.y += PASTE_OFFSET; });
 
     // Re-render and select new elements
-    if (typeof CanvasEngine !== 'undefined') CanvasEngine.update();
+    if (typeof CanvasLayoutEngine !== 'undefined') CanvasLayoutEngine.update();
     if (typeof SelectionEngine !== 'undefined') {
       SelectionEngine.clear();
       newIds.forEach(id => SelectionEngine.select(id));

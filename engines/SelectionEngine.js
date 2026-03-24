@@ -115,8 +115,10 @@ const SelectionEngineV19 = (() => {
   }
 
   function _CE() {
-    return (typeof CanvasLayoutEngine !== 'undefined' ? CanvasLayoutEngine : null)
-        || (typeof CanvasEngine !== 'undefined' ? CanvasEngine : null);
+    if (typeof CanvasLayoutEngine !== 'undefined') return CanvasLayoutEngine;
+    const message = 'NON-CANONICAL ENGINE WRITE BLOCKED (SelectionEngine -> CanvasEngine)';
+    if (typeof console !== 'undefined' && console.error) console.error(message);
+    throw new Error(message);
   }
 
   function _getCanvasPos(e) {

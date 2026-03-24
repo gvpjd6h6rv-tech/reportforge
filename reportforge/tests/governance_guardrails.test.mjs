@@ -1,0 +1,139 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+
+function countMatches(source, regex) {
+  return (source.match(regex) || []).length;
+}
+
+function normalizeForScan(source) {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:])\/\/.*$/gm, '$1')
+    .replace(/`(?:\\.|[^`])*`/g, '``')
+    .replace(/'(?:\\.|[^'])*'/g, "''")
+    .replace(/"(?:\\.|[^"])*"/g, '""');
+}
+
+function collectViolations(source) {
+  const normalized = normalizeForScan(source);
+  const rules = [
+    {
+      code: 'legacy-canvas-facade-call',
+      regex: /\bCanvasEngine\.(?:renderAll|renderElement|buildElementDiv|updateElement|updateElementPosition|update|updateSync)\s*\(/g,
+    },
+    {
+      code: 'legacy-preview-facade-call',
+      regex: /\bPreviewEngine\.(?:show|hide|toggle|refresh)\s*\(/g,
+    },
+    {
+      code: 'legacy-preview-render-mode-call',
+      regex: /\bPreviewEngine\.renderMode\b/g,
+    },
+    {
+      code: 'legacy-bridge-flag',
+      regex: /\b__bridgeDisabled\b/g,
+    },
+  ];
+  const violations = [];
+  for (const rule of rules) {
+    if (rule.regex.test(normalized)) violations.push(rule.code);
+    rule.regex.lastIndex = 0;
+  }
+  return violations;
+}
+
+test('guardrail detector catches synthetic architectural violations', () => {
+  const bad = `
+    CanvasEngine.renderAll();
+    PreviewEngine.toggle();
+    window.foo = PreviewEngine.renderMode;
+    SelectionEngineV19.__bridgeDisabled = true;
+  `;
+  const violations = collectViolations(bad);
+  assert.deepEqual(violations, [
+    'legacy-canvas-facade-call',
+    'legacy-preview-facade-call',
+    'legacy-preview-render-mode-call',
+    'legacy-bridge-flag',
+  ]);
+});
+
+test('canonical runtime files do not call legacy canvas or preview facades', () => {
+  const files = [
+    path.resolve('designer/crystal-reports-designer-v4.html'),
+    path.resolve('engines/EngineCore.js'),
+    path.resolve('engines/SelectionEngine.js'),
+    path.resolve('engines/HistoryEngine.js'),
+    path.resolve('engines/ClipboardEngine.js'),
+  ];
+
+  for (const file of files) {
+    const src = fs.readFileSync(file, 'utf8');
+    const violations = collectViolations(src);
+    assert.deepEqual(violations, [], `${path.basename(file)} has violations: ${violations.join(', ')}`);
+  }
+});
+
+test('canonical runtime files do not reference retired bridge implementations', () => {
+  const files = [
+    path.resolve('designer/crystal-reports-designer-v4.html'),
+    path.resolve('engines/EngineCore.js'),
+    path.resolve('engines/SelectionEngine.js'),
+    path.resolve('engines/HistoryEngine.js'),
+    path.resolve('engines/ClipboardEngine.js'),
+  ];
+  for (const file of files) {
+    const src = normalizeForScan(fs.readFileSync(file, 'utf8'));
+    assert.doesNotMatch(src, /\bCanvasEngineV19\b/, `${path.basename(file)} still references CanvasEngineV19`);
+    assert.doesNotMatch(src, /\bPreviewEngineV19Full\b/, `${path.basename(file)} still references PreviewEngineV19Full`);
+  }
+});
+
+test('critical engine style.cssText usage stays frozen at approved baseline', () => {
+  const expectations = new Map([
+    [path.resolve('engines/SelectionEngine.js'), 3],
+    [path.resolve('engines/CanvasLayoutEngine.js'), 1],
+    [path.resolve('engines/PreviewEngine.js'), 0],
+    [path.resolve('engines/EngineCore.js'), 0],
+  ]);
+
+  for (const [file, expectedCount] of expectations.entries()) {
+    const src = fs.readFileSync(file, 'utf8');
+    const actualCount = countMatches(src, /style\.cssText/g);
+    assert.equal(actualCount, expectedCount, `${path.basename(file)} style.cssText count changed`);
+  }
+});
+
+test('governance assets exist and include strict architectural checklist', () => {
+  const prTemplatePath = path.resolve('.github/PULL_REQUEST_TEMPLATE.md');
+  const workflowPath = path.resolve('.github/workflows/architecture-governance.yml');
+  const readmePath = path.resolve('README.md');
+
+  assert.ok(fs.existsSync(prTemplatePath), 'PR template missing');
+  assert.ok(fs.existsSync(workflowPath), 'CI workflow missing');
+  assert.ok(fs.existsSync(readmePath), 'README missing');
+
+  const prTemplate = fs.readFileSync(prTemplatePath, 'utf8');
+  const workflow = fs.readFileSync(workflowPath, 'utf8');
+  const readme = fs.readFileSync(readmePath, 'utf8');
+
+  for (const needle of [
+    'no nuevos writers',
+    'no nuevos owners',
+    'no bypass del scheduler',
+    'no estado fuera de DS',
+    'no contratos ambiguos',
+    'tests pasan (runtime + contracts + governance)',
+    'no uso de APIs legacy',
+  ]) {
+    assert.match(prTemplate, new RegExp(needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  }
+
+  assert.match(workflow, /test:contracts/);
+  assert.match(workflow, /test:runtime/);
+  assert.match(workflow, /test:governance/);
+
+  assert.match(readme, /Architectural Definition of Done/);
+});

@@ -11,6 +11,16 @@ npm run dev      # development server on http://localhost:5173
 npm run build    # build to docs/.vitepress/dist/
 ```
 
+## Architectural gate
+
+Canonical runtime changes must pass:
+
+```bash
+npm run test:contracts
+npm run test:governance
+npm run test:runtime
+```
+
 ## Structure
 
 ```
