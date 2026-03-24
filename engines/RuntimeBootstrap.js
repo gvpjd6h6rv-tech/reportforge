@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
   FieldExplorerEngine.setupCanvasDrop();
   MenuEngine.init();
   initToolbars();
-  initMouseEvents();
+  registerGlobalEventHandlers();
   initClock();
   ZoomEngine.set(1.0);
   if (!DS.formulas) DS.formulas = {};

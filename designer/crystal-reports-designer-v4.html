@@ -5051,70 +5051,6 @@ function initToolbars(){
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  MOUSE WIRING (document-level)
-// ═══════════════════════════════════════════════════════════════════
-function initMouseEvents(){
-  const canvasScroll=document.getElementById('workspace');
-  const canvasInner=document.getElementById('canvas-layer');
-  const useEngineCoreInteraction = window.RF_USE_ENGINECORE_INTERACTION !== false;
-
-  canvasScroll.addEventListener('contextmenu',e=>{
-    if(DS.previewMode)return;
-    e.preventDefault();
-    if(!e.target.closest('.cr-element')){
-      SelectionEngine.clearSelection();
-      ContextMenuEngine.show(e.clientX,e.clientY,'canvas');
-    }
-  });
-
-  if(!useEngineCoreInteraction){
-    canvasScroll.addEventListener('pointerdown',e=>{
-      if(e.button!==0)return;
-      if(e.target.closest('.cr-element')) return;
-      if(DS.previewMode)return;  // block canvas-level insert in preview, not element drag
-      InsertEngine.onCanvasMouseDown(e);
-    });
-
-    // Unified pointer move — batched with RAF
-    let _rafMove=null;
-    document.addEventListener('pointermove',e=>{
-      if(_rafMove) return; // already scheduled
-      _rafMove=requestAnimationFrame(()=>{
-        _rafMove=null;
-        if(SectionResizeEngine._drag) SectionResizeEngine.onMouseMove(e);
-        else SelectionEngine.onMouseMove(e);
-      });
-    });
-
-    document.addEventListener('pointerup',e=>{
-      if(e.button!==0)return;
-      SectionResizeEngine.onMouseUp(e);
-      SelectionEngine.onMouseUp(e);
-    });
-
-    document.addEventListener('pointerdown',e=>{
-      if(!e.target.closest('#ctx-menu')) ContextMenuEngine.hide();
-      if(!e.target.closest('.menu-item') && !e.target.closest('.dropdown')) MenuEngine.closeAll();
-    });
-  }
-
-  canvasScroll.addEventListener('scroll',()=>OverlayEngine.render());
-
-  // Ctrl+wheel zoom with anchor at mouse position (Rules CTRL+wheel, 10)
-  document.getElementById('workspace').addEventListener('wheel', e=>{
-    if(!e.ctrlKey) return;
-    e.preventDefault();
-    // Wheel uses smooth ~10% increments; buttons use full step (zoomIn/zoomOut)
-    const WHEEL_FACTOR = e.deltaY < 0 ? 1.10 : 1/1.10;
-    DesignZoomEngine.setFree(DS.zoom * WHEEL_FACTOR, e.clientX, e.clientY);
-  }, {passive:false});
-  ZoomWidget.init();
-  DesignZoomEngine.set(DS.zoom);
-  applyLayout(); // Phase 2: apply layout formula
-  window.addEventListener('resize',()=>OverlayEngine.render());
-}
-
-// ═══════════════════════════════════════════════════════════════════
 //  STATUS BAR CLOCK
 // ═══════════════════════════════════════════════════════════════════
 function initClock(){
@@ -6647,6 +6583,7 @@ window.__rfVerify = function(){
 <script src="/engines/GridEngine.js"></script>
 <script src="/engines/SnapEngine.js"></script>
 <script src="/engines/RulerEngine.js"></script>
+<script src="/engines/GlobalEventHandlers.js"></script>
 <script src="/engines/RuntimeBootstrap.js"></script>
 <script>
 </script>

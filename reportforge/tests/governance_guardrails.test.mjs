@@ -109,6 +109,17 @@ test('monolith only keeps the deferred DOMContentLoaded handlers inline', () => 
   assert.match(html, /<script src="\/engines\/RuntimeBootstrap\.js"><\/script>/);
 });
 
+test('monolith no longer registers extracted global root handlers inline', () => {
+  const html = fs.readFileSync(path.resolve('designer/crystal-reports-designer-v4.html'), 'utf8');
+  assert.doesNotMatch(html, /\bfunction\s+initMouseEvents\s*\(/);
+  assert.doesNotMatch(html, /document\.addEventListener\('pointermove'/);
+  assert.doesNotMatch(html, /document\.addEventListener\('pointerup'/);
+  assert.doesNotMatch(html, /window\.addEventListener\('resize',\(\)=>OverlayEngine\.render\(\)\)/);
+  assert.doesNotMatch(html, /document\.getElementById\('workspace'\)\.addEventListener\('wheel'/);
+  assert.doesNotMatch(html, /DesignZoomEngine\.setFree\(DS\.zoom \* WHEEL_FACTOR, e\.clientX, e\.clientY\)/);
+  assert.match(html, /<script src="\/engines\/GlobalEventHandlers\.js"><\/script>/);
+});
+
 test('canonical runtime files do not reference retired bridge implementations', () => {
   const files = [
     path.resolve('designer/crystal-reports-designer-v4.html'),
