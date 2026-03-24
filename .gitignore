@@ -21,3 +21,7 @@ __pycache__/
 .venv/
 .debug-archive/
 reportforge/tests/artifacts/
+node
+
+# local binaries
+node
