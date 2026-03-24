@@ -26,6 +26,10 @@
  */
 'use strict';
 
+const RuntimeServicesCore = typeof window !== 'undefined'
+  ? (window.RF?.RuntimeServices || null)
+  : null;
+
 // ── EngineRegistry ───────────────────────────────────────────────────
 const EngineRegistry = (() => {
   const _engines = new Map();
@@ -37,7 +41,9 @@ const EngineRegistry = (() => {
      */
     register(name, instance) {
       _engines.set(name, instance);
-      if (typeof window !== 'undefined' && !window[name]) {
+      if (RuntimeServicesCore && !RuntimeServicesCore.getExport(name)) {
+        RuntimeServicesCore.expose(name, instance);
+      } else if (typeof window !== 'undefined' && !window[name]) {
         window[name] = instance;
       }
     },
@@ -92,16 +98,14 @@ const EngineCore = (() => {
   function _E(name) { return EngineRegistry.get(name) || null; }
 
   function _useInteractionRouter() {
-    return typeof window === 'undefined' || window.RF_USE_ENGINECORE_INTERACTION !== false;
+    return RuntimeServicesCore ? RuntimeServicesCore.isEngineCoreInteractionEnabled() : true;
   }
 
   function _trace(source, event, payload, phase, frame) {
-    if (typeof window === 'undefined' || typeof window.rfTrace !== 'function') return;
     const channel = (typeof event === 'string' && (event.includes('verify') || event.includes('invariant')))
       ? 'invariants'
       : 'runtime';
-    if (!window.DebugTrace?.isEnabled(channel)) return;
-    window.rfTrace(channel, event, {
+    RuntimeServicesCore?.trace(channel, event, {
       frame: typeof frame === 'number' ? frame : (_E('RenderScheduler') ? _E('RenderScheduler').frame : null),
       source,
       phase: phase || null,
@@ -110,10 +114,8 @@ const EngineCore = (() => {
   }
 
   function _traceElement(source, event, state) {
-    if (typeof window === 'undefined' || typeof window.rfTrace !== 'function') return;
     if (typeof event === 'string' && event.toLowerCase().includes('move') && !window.DebugTrace?.isEnabled('move')) return;
-    if (!window.DebugTrace?.isEnabled('elements')) return;
-    window.rfTrace('elements', event, {
+    RuntimeServicesCore?.trace('elements', event, {
       source,
       id: state && typeof state.id !== 'undefined' ? state.id : null,
       handle: state && typeof state.handle !== 'undefined' ? state.handle : null,
@@ -137,10 +139,7 @@ const EngineCore = (() => {
   }
 
   function _resolveDebugFlags() {
-    const globalFlags = (typeof window !== 'undefined' && window.RF_DEBUG_FLAGS &&
-      typeof window.RF_DEBUG_FLAGS === 'object')
-      ? window.RF_DEBUG_FLAGS
-      : {};
+    const globalFlags = RuntimeServicesCore ? RuntimeServicesCore.getDebugFlags() : {};
     return {
       invariants: globalFlags.invariants !== false,
       asserts: globalFlags.asserts !== false,
@@ -234,9 +233,7 @@ const EngineCore = (() => {
     assertLayoutContract: _assertLayoutContract,
     assertZoomContract: _assertZoomContract,
   };
-  if (typeof window !== 'undefined') {
-    window.RFContractGuards = ContractGuards;
-  }
+  RuntimeServicesCore?.setContractGuards(ContractGuards);
 
   function _snapshotSections() {
     if (typeof DS === 'undefined' || !Array.isArray(DS.sections)) return [];
@@ -459,19 +456,22 @@ const EngineCore = (() => {
 
   function _validateCanonicalRuntime(issues) {
     if (typeof window !== 'undefined') {
-      if (window.__RF_CANONICAL_CANVAS_OWNER__ !== 'CanvasLayoutEngine') {
+      const canvasOwner = RuntimeServicesCore?.getOwner('canvas') || null;
+      if (canvasOwner !== 'CanvasLayoutEngine') {
         _pushIssue(issues, 'runtime.canvas.owner', 'Canonical canvas owner must be CanvasLayoutEngine', {
-          actual: window.__RF_CANONICAL_CANVAS_OWNER__ || null,
+          actual: canvasOwner || null,
         });
       }
-      if (window.__RF_CANONICAL_SELECTION_OWNER__ !== 'SelectionEngine') {
+      const selectionOwner = RuntimeServicesCore?.getOwner('selection') || null;
+      if (selectionOwner !== 'SelectionEngine') {
         _pushIssue(issues, 'runtime.selection.owner', 'Canonical selection owner must be SelectionEngine', {
-          actual: window.__RF_CANONICAL_SELECTION_OWNER__ || null,
+          actual: selectionOwner || null,
         });
       }
-      if (window.__RF_CANONICAL_PREVIEW_OWNER__ !== 'PreviewEngineV19') {
+      const previewOwner = RuntimeServicesCore?.getOwner('preview') || null;
+      if (previewOwner !== 'PreviewEngineV19') {
         _pushIssue(issues, 'runtime.preview.owner', 'Canonical preview owner must be PreviewEngineV19', {
-          actual: window.__RF_CANONICAL_PREVIEW_OWNER__ || null,
+          actual: previewOwner || null,
         });
       }
     }
@@ -956,9 +956,7 @@ const EngineCore = (() => {
     if (!_useInteractionRouter()) return;
     const ws = document.getElementById('workspace');
     if (!ws) return;
-    if (typeof window !== 'undefined' && typeof window.RF_USE_ENGINECORE_INTERACTION === 'undefined') {
-      window.RF_USE_ENGINECORE_INTERACTION = true;
-    }
+    RuntimeServicesCore?.setFlag('engineCoreInteraction', true);
 
     ws.addEventListener('pointerdown', e => {
       _ptr.clientX = e.clientX; _ptr.clientY = e.clientY; _ptr.buttons = e.buttons;
@@ -1071,7 +1069,7 @@ const EngineCore = (() => {
 
     setDebugFlags(nextFlags = {}) {
       _runtime.debugFlags = { ..._runtime.debugFlags, ...nextFlags };
-      if (typeof window !== 'undefined') window.RF_DEBUG_FLAGS = _cloneSerializable(_runtime.debugFlags);
+      RuntimeServicesCore?.setDebugFlags(_cloneSerializable(_runtime.debugFlags));
       return this.getDebugFlags();
     },
 

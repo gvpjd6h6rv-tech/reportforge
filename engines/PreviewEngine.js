@@ -21,7 +21,7 @@ const PreviewEngineV19 = (() => {
 
   function _contracts() {
     return (typeof ContractGuards !== 'undefined' && ContractGuards)
-      || (typeof window !== 'undefined' ? window.RFContractGuards : null)
+      || (window.RF?.RuntimeServices?.getContractGuards?.() || null)
       || null;
   }
 

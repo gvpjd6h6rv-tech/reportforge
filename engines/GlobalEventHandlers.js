@@ -1,9 +1,13 @@
 'use strict';
 
 (function initGlobalEventHandlers(global) {
+  const RuntimeServices = global.RF?.RuntimeServices || null;
+
   function registerGlobalEventHandlers() {
     const canvasScroll = document.getElementById('workspace');
-    const useEngineCoreInteraction = window.RF_USE_ENGINECORE_INTERACTION !== false;
+    const useEngineCoreInteraction = RuntimeServices
+      ? RuntimeServices.isEngineCoreInteractionEnabled()
+      : true;
 
     canvasScroll.addEventListener('contextmenu', (e) => {
       if (DS.previewMode) return;
