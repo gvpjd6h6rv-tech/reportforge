@@ -102,11 +102,12 @@ test('monolith no longer defines the document store inline', () => {
   assert.match(html, /<script src="\/engines\/DocumentStore\.js"><\/script>/);
 });
 
-test('monolith only keeps the deferred DOMContentLoaded handlers inline', () => {
+test('monolith no longer keeps deferred boot handlers inline', () => {
   const html = fs.readFileSync(path.resolve('designer/crystal-reports-designer-v4.html'), 'utf8');
   const matches = html.match(/document\.addEventListener\('DOMContentLoaded'/g) || [];
-  assert.equal(matches.length, 2, 'monolith should keep only the two deferred DOMContentLoaded handlers inline');
+  assert.equal(matches.length, 0, 'monolith should not keep DOMContentLoaded boot handlers inline');
   assert.match(html, /<script src="\/engines\/RuntimeBootstrap\.js"><\/script>/);
+  assert.match(html, /<script src="\/engines\/DeferredBootstrap\.js"><\/script>/);
 });
 
 test('monolith no longer registers extracted global root handlers inline', () => {
@@ -163,6 +164,24 @@ test('monolith no longer defines critical interaction engines inline', () => {
   assert.match(html, /<script src="\/engines\/InsertEngine\.js"><\/script>/);
   assert.match(html, /<script src="\/engines\/SelectionEngine\.js"><\/script>/);
   assert.match(html, /<script src="\/engines\/OverlayEngine\.js"><\/script>/);
+});
+
+test('monolith no longer defines properties, explorer, or zoom engines inline', () => {
+  const html = fs.readFileSync(path.resolve('designer/crystal-reports-designer-v4.html'), 'utf8');
+  assert.doesNotMatch(html, /\bconst\s+PropertiesEngine\s*=\s*\{/);
+  assert.doesNotMatch(html, /\bconst\s+FormatEngine\s*=\s*\{/);
+  assert.doesNotMatch(html, /\bconst\s+FieldExplorerEngine\s*=\s*\{/);
+  assert.doesNotMatch(html, /\bconst\s+DesignZoomEngine\s*=\s*\{/);
+  assert.doesNotMatch(html, /\bconst\s+PreviewZoomEngine\s*=\s*\{/);
+  assert.doesNotMatch(html, /\bconst\s+ZoomWidget\s*=\s*\{/);
+  assert.doesNotMatch(html, /\bconst\s+ZoomEngine\s*=\s*\{/);
+  assert.doesNotMatch(html, /\bfunction\s+computeLayout\s*\(/);
+  assert.doesNotMatch(html, /\bfunction\s+applyLayout\s*\(/);
+  assert.doesNotMatch(html, /\bfunction\s+_canonicalPreviewWriter\s*\(/);
+  assert.match(html, /<script src="\/engines\/PropertiesEngine\.js"><\/script>/);
+  assert.match(html, /<script src="\/engines\/FormatEngine\.js"><\/script>/);
+  assert.match(html, /<script src="\/engines\/FieldExplorerEngine\.js"><\/script>/);
+  assert.match(html, /<script src="\/engines\/ZoomEngine\.js"><\/script>/);
 });
 
 test('canonical runtime files do not reference retired bridge implementations', () => {
