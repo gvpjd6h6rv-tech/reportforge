@@ -26,6 +26,104 @@ function assertZoomContract(source) {
   if (guards && typeof DS !== 'undefined') guards.assertZoomContract(DS.zoom, source);
 }
 
+function _multiDebug() {
+  return window.RF?.MultiSelectDebug || null;
+}
+
+function _selectedElementsFromIds(ids) {
+  return (ids || []).map((id) => DS.getElementById(id)).filter(Boolean);
+}
+
+function _bindMultiSelectionBoxEvents(box) {
+  if (!box || box.__rfMultiBound === true) return;
+  box.__rfMultiBound = true;
+  box.addEventListener('click', event => {
+    const debug = _multiDebug();
+    if(debug && debug.isEnabled()) debug.tracePointer(event, { resolvedLogicalElementId: box.dataset.selId || null, resolvedVisualBoxId: box.dataset.selId || null });
+  });
+  box.addEventListener('dblclick', event => {
+    const debug = _multiDebug();
+    if(debug && debug.isEnabled()) debug.tracePointer(event, { resolvedLogicalElementId: box.dataset.selId || null, resolvedVisualBoxId: box.dataset.selId || null });
+    event.stopPropagation();
+    const targetId = box.dataset.selId || null;
+    const targetEl = targetId ? DS.getElementById(targetId) : null;
+    const targetDiv = targetId ? document.querySelector(`.cr-element[data-id="${targetId}"]`) : null;
+    if(targetEl && targetEl.type === 'text' && targetDiv){
+      event.preventDefault();
+      SelectionEngine.startTextEdit(targetDiv, targetEl);
+    }
+  });
+}
+
+function _applyMultiSelectionBoxState(box, el, rect, primaryId, debug, probes) {
+  box.className='sel-box sel-box-multi-item';
+  box.dataset.selId=el.id;
+  if(el.id===primaryId) box.dataset.primary='true';
+  else delete box.dataset.primary;
+  if(debug) debug.assignBoxDomInstanceId(box);
+  box.style.setProperty('--sel-x',rect.left+'px');
+  box.style.setProperty('--sel-y',rect.top+'px');
+  box.style.setProperty('--sel-w',rect.width+'px');
+  box.style.setProperty('--sel-h',rect.height+'px');
+  if(probes?.overlayPointerEventsOff) box.style.pointerEvents = 'none';
+  else box.style.pointerEvents = '';
+  if(probes?.compositionStress){
+    box.style.outline = `1px solid ${el.id===primaryId ? '#ff0066' : '#00a3ff'}`;
+    box.style.backgroundColor = 'rgba(255,255,0,0.02)';
+    box.dataset.rfDebugLabel = el.id;
+  } else {
+    box.style.outline = '';
+    box.style.backgroundColor = '';
+    delete box.dataset.rfDebugLabel;
+  }
+}
+
+function _multiOverlayMatchesSelection(layer, expectedIds) {
+  if (!layer) return false;
+  const boxes = [...layer.querySelectorAll('.sel-box')];
+  if (boxes.length !== expectedIds.length) return false;
+  const boxIds = boxes.map((node) => node.dataset.selId || null);
+  if (boxIds.some((id) => !id)) return false;
+  const expected = new Set(expectedIds);
+  return boxIds.every((id) => expected.has(id))
+    && expectedIds.every((id) => boxIds.includes(id));
+}
+
+function _renderMultiSelectionBoxes(layer, selectedElements, primaryId, debug, probes, allowReuse = true, allowStaleRetention = false) {
+  const reusable = allowReuse
+    ? new Map([...layer.querySelectorAll('.sel-box[data-sel-id]')].map((node) => [node.dataset.selId, node]))
+    : new Map();
+  [...layer.querySelectorAll('.sel-box:not([data-sel-id])')].forEach((node) => node.remove());
+  [...layer.querySelectorAll('.sel-handle')].forEach((node) => node.remove());
+  if (!allowReuse) {
+    [...layer.querySelectorAll('.sel-box[data-sel-id]')].forEach((node) => node.remove());
+  }
+  const seen = new Set();
+  selectedElements.forEach((el) => {
+    assertLayoutContract(el, 'SelectionEngine.renderHandles.multi');
+    const rect=SelectionEngine._selectionRect(el);
+    assertRectShape(rect, 'SelectionEngine.renderHandles.multi.rect');
+    const box = reusable.get(el.id) || document.createElement('div');
+    _bindMultiSelectionBoxEvents(box);
+    _applyMultiSelectionBoxState(box, el, rect, primaryId, debug, probes);
+    if(box.parentNode!==layer) layer.appendChild(box);
+    seen.add(el.id);
+  });
+  if (!allowStaleRetention) {
+    reusable.forEach((node, id) => {
+      if(!seen.has(id)) node.remove();
+    });
+  }
+}
+
+function _resolveRenderSelectionIds(selectionEngine, selectedIds) {
+  const drag = selectionEngine && selectionEngine._drag ? selectionEngine._drag : null;
+  if (drag && drag.type === 'move' && Array.isArray(drag.subjectIds) && drag.subjectIds.length > 1) {
+    return [...drag.subjectIds];
+  }
+  return [...(selectedIds || [])];
+}
+
 const AlignEngine = {
   alignLeft()   { if(typeof CommandEngine!=='undefined') CommandEngine.alignLefts?.();   else this._fallback('left');   DS.saveHistory(); },
   alignRight()  { if(typeof CommandEngine!=='undefined') CommandEngine.alignRights?.();  else this._fallback('right');  DS.saveHistory(); },
@@ -45,53 +143,253 @@ const AlignEngine = {
 
 const AlignmentGuides = {
   _guides: [],
-  _threshold: 3,
+  _showRaf: null,
   clear(){
+    if(this._showRaf){
+      cancelAnimationFrame(this._showRaf);
+      this._showRaf = null;
+    }
     this._guides.forEach(g=>g.remove());
     this._guides=[];
   },
-  show(elId){
-    this.clear();
-    const overlay = document.getElementById('guide-layer');
+  _overlay(){
+    return document.getElementById('guide-layer');
+  },
+  _canvasRect(){
+    const canvas = document.getElementById('canvas-layer');
+    return canvas ? canvas.getBoundingClientRect() : null;
+  },
+  _selectionRect(elId){
+    const selBox = document.querySelector('#handles-layer .sel-box');
+    if(!selBox) return null;
+    const rect = selBox.getBoundingClientRect();
+    return {
+      left: rect.left,
+      top: rect.top,
+      right: rect.right,
+      bottom: rect.bottom,
+      width: rect.width,
+      height: rect.height,
+    };
+  },
+  _addLine(kind, styleText){
+    const overlay = this._overlay();
     if(!overlay) return;
-    const draggedDiv = document.querySelector('.cr-element[data-id="'+elId+'"]');
-    if(!draggedDiv) return;
-
-    const dRect = draggedDiv.getBoundingClientRect();
-    const dL=dRect.left, dT=dRect.top, dR=dRect.right, dB=dRect.bottom;
-    const vW = window.innerWidth, vH = window.innerHeight;
-
-    document.querySelectorAll('.cr-element').forEach(div=>{
-      if(div===draggedDiv) return;
-      const r = div.getBoundingClientRect();
-      const oL=r.left, oT=r.top, oR=r.right, oB=r.bottom;
-
-      const addH=(y)=>{
-        const g=document.createElement('div');
-        g.className='rf-guide rf-guide-h snap-guide h';
-        g.style.top=Math.round(y)+'px';
-        g.style.left='0'; g.style.width=vW+'px';
-        overlay.appendChild(g); this._guides.push(g);
-      };
-      const addV=(x)=>{
-        const g=document.createElement('div');
-        g.className='rf-guide rf-guide-v snap-guide v';
-        g.style.left=Math.round(x)+'px';
-        g.style.top='0'; g.style.height=vH+'px';
-        overlay.appendChild(g); this._guides.push(g);
-      };
-
-      const T=this._threshold;
-      if(Math.abs(dT-oT)<T)addH(oT); if(Math.abs(dT-oB)<T)addH(oB);
-      if(Math.abs(dB-oT)<T)addH(oT); if(Math.abs(dB-oB)<T)addH(oB);
-      if(Math.abs(dL-oL)<T)addV(oL); if(Math.abs(dL-oR)<T)addV(oR);
-      if(Math.abs(dR-oL)<T)addV(oL); if(Math.abs(dR-oR)<T)addV(oR);
+    const g=document.createElement('div');
+    g.className=`rf-guide rf-guide-${kind} crystal-edge-guide`;
+    g.style.cssText=styleText;
+    overlay.appendChild(g);
+    this._guides.push(g);
+  },
+  _renderFromSelBox(elId){
+    this.clear();
+    const overlay = this._overlay();
+    const canvasRect = this._canvasRect();
+    const rect = this._selectionRect(elId);
+    if(!overlay || !canvasRect || !rect) return;
+    const fullW = Math.ceil(canvasRect.width);
+    const fullH = Math.ceil(canvasRect.height);
+    const color = 'rgba(255, 0, 0, 0.72)';
+    const base = `position:absolute;background:${color};pointer-events:none;z-index:65;`;
+    this._addLine('h top', `${base}left:${Math.round(canvasRect.left)}px;top:${Math.round(rect.top)}px;width:${fullW}px;height:1px;`);
+    this._addLine('h bottom', `${base}left:${Math.round(canvasRect.left)}px;top:${Math.round(rect.bottom)}px;width:${fullW}px;height:1px;`);
+    this._addLine('v left', `${base}left:${Math.round(rect.left)}px;top:${Math.round(canvasRect.top)}px;width:1px;height:${fullH}px;`);
+    this._addLine('v right', `${base}left:${Math.round(rect.right)}px;top:${Math.round(canvasRect.top)}px;width:1px;height:${fullH}px;`);
+  },
+  show(elId){
+    if(this._showRaf){
+      cancelAnimationFrame(this._showRaf);
+      this._showRaf = null;
+    }
+    this._showRaf = requestAnimationFrame(()=>{
+      this._showRaf = null;
+      this._renderFromSelBox(elId);
     });
   },
 };
 
 const SelectionEngine = {
   _drag: null,
+  _activeElementId: null,
+  _focusedElementId: null,
+  _dragAnchorId: null,
+  _captureOwner: null,
+  _overlaySettleToken: 0,
+  _overlayStabilityObserver: null,
+  _overlayRootObserver: null,
+  _activeHandlesLayer(){
+    const candidates = [...document.querySelectorAll('#handles-layer')];
+    if (!candidates.length) return null;
+    const scored = candidates.map((layer) => {
+      const style = getComputedStyle(layer);
+      const rect = layer.getBoundingClientRect();
+      const z = Number.parseFloat(style.zIndex);
+      const visible = style.display !== 'none'
+        && style.visibility !== 'hidden'
+        && Number(style.opacity || '1') !== 0
+        && rect.width > 0
+        && rect.height > 0;
+      return {
+        layer,
+        score: (visible ? 1 : 0) * 1e12 + (Number.isFinite(z) ? z : 0) * 1e6 + Math.max(0, rect.width * rect.height),
+      };
+    });
+    scored.sort((left, right) => right.score - left.score);
+    return scored[0]?.layer || null;
+  },
+  _overlayObservationRoot(){
+    return document.getElementById('canvas-layer')
+      || document.getElementById('viewport')
+      || document.getElementById('workspace')
+      || document.body
+      || null;
+  },
+  _traceOverlayGuard(kind, payload = {}){
+    const debug = _multiDebug();
+    if(debug && debug.isEnabled()){
+      debug.record(kind, {
+        source: 'SelectionEngine',
+        ...payload,
+      });
+    }
+  },
+  _primarySelectionId(){
+    const selected = [...DS.selection];
+    return selected.length ? selected[selected.length - 1] : null;
+  },
+  _clearMultiOverlayObserver(){
+    if(this._overlayStabilityObserver){
+      this._traceOverlayGuard('overlay-stability-observer-disconnect', {
+        layerNodeId: this._overlayStabilityObserver.__rfLayerNodeId || null,
+      });
+      this._overlayStabilityObserver.disconnect();
+      this._overlayStabilityObserver = null;
+    }
+    if(this._overlayRootObserver){
+      this._traceOverlayGuard('overlay-root-observer-disconnect', {
+        rootNodeId: this._overlayRootObserver.__rfRootNodeId || null,
+      });
+      this._overlayRootObserver.disconnect();
+      this._overlayRootObserver = null;
+    }
+  },
+  _ensureMultiOverlayObserver(expectedIds, token, verify){
+    const layer = this._activeHandlesLayer();
+    if (!layer || typeof MutationObserver === 'undefined') return;
+    const debug = _multiDebug();
+    const layerNodeId = debug?.assignNodeDebugId ? debug.assignNodeDebugId(layer, 'rf-layer') : null;
+    if (this._overlayStabilityObserver && this._overlayStabilityObserver.__rfTarget === layer) return;
+    if (this._overlayStabilityObserver) {
+      this._traceOverlayGuard('overlay-stability-observer-rebind', {
+        fromLayerNodeId: this._overlayStabilityObserver.__rfLayerNodeId || null,
+        toLayerNodeId: layerNodeId,
+        expectedIds,
+      });
+      this._overlayStabilityObserver.disconnect();
+      this._overlayStabilityObserver = null;
+    }
+    const observer = new MutationObserver(() => {
+      verify('mutation-observer');
+    });
+    observer.__rfTarget = layer;
+    observer.__rfLayerNodeId = layerNodeId;
+    observer.observe(layer, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class', 'data-sel-id', 'data-primary', 'style'],
+    });
+    this._overlayStabilityObserver = observer;
+    this._traceOverlayGuard('overlay-stability-observer-install', {
+      token,
+      layerNodeId,
+      expectedIds,
+    });
+  },
+  _ensureOverlayRootObserver(expectedIds, token, verify){
+    const root = this._overlayObservationRoot();
+    if (!root || typeof MutationObserver === 'undefined') return;
+    const debug = _multiDebug();
+    const rootNodeId = debug?.assignNodeDebugId ? debug.assignNodeDebugId(root, 'rf-root') : null;
+    if (this._overlayRootObserver && this._overlayRootObserver.__rfTarget === root) return;
+    if (this._overlayRootObserver) {
+      this._overlayRootObserver.disconnect();
+      this._overlayRootObserver = null;
+    }
+    const observer = new MutationObserver((mutations) => {
+      const touchesHandlesLayer = mutations.some((mutation) => {
+        if (mutation.target?.id === 'handles-layer') return true;
+        return [...mutation.addedNodes, ...mutation.removedNodes].some((node) =>
+          node?.nodeType === 1
+          && (
+            node.id === 'handles-layer'
+            || (typeof node.querySelector === 'function' && node.querySelector('#handles-layer'))
+          )
+        );
+      });
+      if (!touchesHandlesLayer) return;
+      this._traceOverlayGuard('overlay-root-observer-mutation', {
+        token,
+        expectedIds,
+        activeLayerNodeId: debug?.assignNodeDebugId ? debug.assignNodeDebugId(this._activeHandlesLayer(), 'rf-layer') : null,
+      });
+      this._ensureMultiOverlayObserver(expectedIds, token, verify);
+      verify('root-observer');
+    });
+    observer.__rfTarget = root;
+    observer.__rfRootNodeId = rootNodeId;
+    observer.observe(root, { childList: true, subtree: true });
+    this._overlayRootObserver = observer;
+    this._traceOverlayGuard('overlay-root-observer-install', {
+      token,
+      rootNodeId,
+      expectedIds,
+    });
+  },
+  _scheduleMultiOverlaySettle(expectedIds){
+    const token = ++this._overlaySettleToken;
+    this._clearMultiOverlayObserver();
+    if (!expectedIds || expectedIds.length < 2) return;
+    const verify = (reason) => {
+      if (token !== this._overlaySettleToken) return true;
+      const liveSelection = [...DS.selection];
+      if (liveSelection.length < 2) {
+        this._clearMultiOverlayObserver();
+        return true;
+      }
+      if (JSON.stringify(liveSelection) !== JSON.stringify(expectedIds)) {
+        this._clearMultiOverlayObserver();
+        return true;
+      }
+      const layer = this._activeHandlesLayer();
+      if (!layer) {
+        return false;
+      }
+      if (_multiOverlayMatchesSelection(layer, expectedIds)) return true;
+      const debug = _multiDebug();
+      if(debug && debug.isEnabled()){
+        debug.assertInvariant('RF-MULTI-INV-007', false, {
+          selectedIds: liveSelection,
+          overlay: debug.overlaySnapshot(),
+          reason,
+        });
+      }
+      this._clearMultiOverlayObserver();
+      this.renderHandles();
+      return false;
+    };
+    this._ensureOverlayRootObserver(expectedIds, token, verify);
+    this._ensureMultiOverlayObserver(expectedIds, token, verify);
+    requestAnimationFrame(() => {
+      this._ensureMultiOverlayObserver(expectedIds, token, verify);
+      verify('raf-1');
+      requestAnimationFrame(() => {
+        if (token !== this._overlaySettleToken) return;
+        this._ensureMultiOverlayObserver(expectedIds, token, verify);
+        verify('raf-2');
+      });
+    });
+  },
   _useCentralRouter(){
     return window.RF?.RuntimeServices?.isEngineCoreInteractionEnabled?.() !== false;
   },
@@ -127,15 +425,27 @@ const SelectionEngine = {
   onElementPointerDown(e, id){
     if(e.button!==0)return;
     const el=DS.getElementById(id);if(!el)return;
-    const div=(e.target&&typeof e.target.closest==='function'
-      ? e.target.closest(`.cr-element[data-id="${id}"]`)
-      : null) || document.querySelector(`.cr-element[data-id="${id}"]`);
+    const targetClosest = (selector) => (
+      e.target && typeof e.target.closest === 'function'
+        ? e.target.closest(selector)
+        : null
+    );
+    const previewDiv = DS.previewMode
+      ? document.querySelector(`#preview-content .pv-el[data-origin-id="${id}"], #preview-content .pv-el[data-id="${id}"]`)
+      : null;
+    const designDiv = document.querySelector(`#canvas-layer .cr-element[data-id="${id}"]:not(.pv-el), .cr-section .cr-element[data-id="${id}"]:not(.pv-el)`);
+    const div = targetClosest(`.cr-element[data-id="${id}"]`) || targetClosest(`.pv-el[data-origin-id="${id}"]`) || previewDiv || designDiv;
     if(!div)return;
+    this._activeElementId = id;
+    this._focusedElementId = id;
     if(div.setPointerCapture){
       const pointerId = typeof e.pointerId === 'number'
         ? e.pointerId
         : (e.originalEvent ? e.originalEvent.pointerId : null);
-      if (typeof pointerId === 'number') div.setPointerCapture(pointerId);
+      if (typeof pointerId === 'number') {
+        div.setPointerCapture(pointerId);
+        this._captureOwner = id;
+      }
     }
     if(e.detail===2 && el.type==='text'){
       this.startTextEdit(div,el);return;
@@ -149,7 +459,21 @@ const SelectionEngine = {
     } else {
       DS.addSelection(id);
     }
+    const selectedNow = DS.getSelectedElements();
+    if(selectedNow.length===0){
+      this._drag = null;
+      this.renderHandles();
+      if(typeof AlignmentGuides!=='undefined') AlignmentGuides.clear();
+      PropertiesEngine.render();
+      FormatEngine.updateToolbar();
+      return;
+    }
     this.renderHandles();
+    if(typeof AlignmentGuides!=='undefined' && DS.selection.size===1){
+      AlignmentGuides.show([...DS.selection][0]);
+    } else if(typeof AlignmentGuides!=='undefined'){
+      AlignmentGuides.clear();
+    }
     PropertiesEngine.render();
     FormatEngine.updateToolbar();
     const canvasPos = getCanvasPos(e);
@@ -157,9 +481,27 @@ const SelectionEngine = {
       type:'move',
       startX: canvasPos.x,
       startY: canvasPos.y,
-      startPositions: DS.getSelectedElements().map(el=>({id:el.id,x:el.x,y:el.y,sectionId:el.sectionId,sectionTop:DS.getSectionTop(el.sectionId)})),
+      pointerId: typeof e.pointerId === 'number' ? e.pointerId : null,
+      startPositions: selectedNow.map(el=>({id:el.id,x:el.x,y:el.y,sectionId:el.sectionId,sectionTop:DS.getSectionTop(el.sectionId)})),
+      livePositions: Object.create(null),
+      subjectIds: selectedNow.map(el => el.id),
+      anchorId: id,
       moved: false,
     };
+    this._dragAnchorId = id;
+    const debug = _multiDebug();
+    if(debug && debug.isEnabled()){
+      debug.beginGesture({
+        pointerId: this._drag.pointerId,
+        origin: 'SelectionEngine.onElementPointerDown',
+        dragType: 'move',
+        selectedIds: [...DS.selection],
+        activeElementId: this._activeElementId,
+        focusedElementId: this._focusedElementId,
+        dragSubjectIds: [...this._drag.subjectIds],
+        dragAnchorId: this._drag.anchorId,
+      });
+    }
   },
 
   onHandlePointerDown(e, pos){
@@ -174,7 +516,23 @@ const SelectionEngine = {
       elId:el.id,
       startX:pos2.x,startY:pos2.y,
       origX:el.x,origY:el.y,origW:el.w,origH:el.h,
+      subjectIds: [el.id],
+      anchorId: el.id,
     };
+    this._dragAnchorId = el.id;
+    const debug = _multiDebug();
+    if(debug && debug.isEnabled()){
+      debug.beginGesture({
+        pointerId: typeof e.pointerId === 'number' ? e.pointerId : null,
+        origin: 'SelectionEngine.onHandlePointerDown',
+        dragType: 'resize',
+        selectedIds: [...DS.selection],
+        activeElementId: this._activeElementId,
+        focusedElementId: this._focusedElementId,
+        dragSubjectIds: [el.id],
+        dragAnchorId: el.id,
+      });
+    }
   },
 
   attachElementEvents(div, id){
@@ -184,10 +542,34 @@ const SelectionEngine = {
         this.onElementPointerDown(e, id);
       });
     }
+    div.addEventListener('dblclick', e=>{
+      const debug = _multiDebug();
+      if(debug && debug.isEnabled()) debug.tracePointer(e, { resolvedLogicalElementId: id, resolvedVisualBoxId: null });
+      e.stopPropagation();
+      const el = DS.getElementById(id);
+      if(el && el.type==='text'){
+        e.preventDefault();
+        this.startTextEdit(div, el);
+      }
+    });
     div.addEventListener('contextmenu', e=>{
       e.preventDefault();e.stopPropagation();
       if(!DS.isSelected(id)){ DS.selectOnly(id);this.renderHandles(); }
       ContextMenuEngine.show(e.clientX,e.clientY,'element');
+    });
+    div.addEventListener('click', e=>{
+      const debug = _multiDebug();
+      if(debug && debug.isEnabled()) debug.tracePointer(e, { resolvedLogicalElementId: id, resolvedVisualBoxId: null });
+    });
+    div.addEventListener('gotpointercapture', e=>{
+      this._captureOwner = id;
+      const debug = _multiDebug();
+      if(debug && debug.isEnabled()) debug.tracePointer(e, { resolvedLogicalElementId: id, captureOwner: this._captureOwner });
+    });
+    div.addEventListener('lostpointercapture', e=>{
+      if(this._captureOwner === id) this._captureOwner = null;
+      const debug = _multiDebug();
+      if(debug && debug.isEnabled()) debug.tracePointer(e, { resolvedLogicalElementId: id, captureOwner: this._captureOwner });
     });
   },
 
@@ -245,13 +627,46 @@ const SelectionEngine = {
       RenderScheduler.assertDomWriteAllowed('SelectionEngine.renderHandles');
     }
     RF.Geometry.invalidate();
-    const layer=document.getElementById('handles-layer');while(layer.firstChild)layer.removeChild(layer.firstChild);
+    const layer=this._activeHandlesLayer() || document.getElementById('handles-layer');
+    const debug = _multiDebug();
+    const probes = debug && debug.probes ? debug.probes() : null;
+    const selectedIds = [...DS.selection];
+    const renderSelectionIds = _resolveRenderSelectionIds(this, selectedIds);
+    const selectedElements = _selectedElementsFromIds(renderSelectionIds);
+    const branch = renderSelectionIds.length === 0 ? 'none' : renderSelectionIds.length === 1 ? 'single' : 'multi';
+    if (debug && debug.isEnabled()) {
+      debug.record('render-handles-branch', {
+        caller: 'SelectionEngine.renderHandles',
+        branch,
+        selectedIds,
+        renderSelectionIds,
+        selectedElementsLength: selectedElements.length,
+        dragType: this._drag?.type || null,
+        dragSubjectIds: this._drag?.subjectIds ? [...this._drag.subjectIds] : [],
+      });
+    }
+    if (layer) {
+      if (probes?.forceOverlayTopmost) {
+        layer.style.zIndex = '2147483000';
+      } else {
+        layer.style.zIndex = '';
+      }
+      layer.dataset.rfDebugComposition = probes?.compositionStress ? 'true' : 'false';
+    }
     document.querySelectorAll('.cr-element').forEach(d=>{
       d.classList.toggle('selected',DS.isSelected(d.dataset.id));
     });
-    if(DS.selection.size===0) return;
-    if(DS.selection.size===1){
-      const id=[...DS.selection][0];
+    if(renderSelectionIds.length===0){
+      this._overlaySettleToken += 1;
+      this._clearMultiOverlayObserver();
+      while(layer.firstChild)layer.removeChild(layer.firstChild);
+      return;
+    }
+    if(renderSelectionIds.length===1){
+      this._overlaySettleToken += 1;
+      this._clearMultiOverlayObserver();
+      while(layer.firstChild)layer.removeChild(layer.firstChild);
+      const id=renderSelectionIds[0];
       const el=DS.getElementById(id);if(!el)return;
       assertLayoutContract(el, 'SelectionEngine.renderHandles.layout');
       const rect=this._selectionRect(el);
@@ -283,18 +698,21 @@ const SelectionEngine = {
         layer.appendChild(h);
       });
     } else {
-      let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
-      DS.getSelectedElements().forEach(el=>{
-        assertLayoutContract(el, 'SelectionEngine.renderHandles.multi');
-        const rect=this._selectionRect(el);
-        assertRectShape(rect, 'SelectionEngine.renderHandles.multi.rect');
-        minX=Math.min(minX,rect.left);minY=Math.min(minY,rect.top);
-        maxX=Math.max(maxX,rect.left+rect.width);maxY=Math.max(maxY,rect.top+rect.height);
-      });
-      const outline=document.createElement('div');
-      outline.className='sel-box sel-box-multi';
-      outline.style.cssText=`position:absolute;left:${minX}px;top:${minY}px;width:${maxX-minX}px;height:${maxY-minY}px;pointer-events:none`;
-      layer.appendChild(outline);
+      const primaryId = renderSelectionIds[renderSelectionIds.length - 1] || this._primarySelectionId();
+      const allowStaleRetention = !!(probes?.overlayFrozenStructure && this._drag && this._drag.type === 'move');
+      _renderMultiSelectionBoxes(layer, selectedElements, primaryId, debug, probes, true, allowStaleRetention);
+      if (!_multiOverlayMatchesSelection(layer, renderSelectionIds)) {
+        _renderMultiSelectionBoxes(layer, selectedElements, primaryId, debug, probes, false, false);
+        if(debug && debug.isEnabled()){
+          debug.assertInvariant('RF-MULTI-INV-006', _multiOverlayMatchesSelection(layer, renderSelectionIds), {
+            selectedIds,
+            renderSelectionIds,
+            selectedElementIds: selectedElements.map((el) => el.id),
+            overlay: debug.overlaySnapshot(),
+          });
+        }
+      }
+      this._scheduleMultiOverlaySettle(renderSelectionIds);
     }
     this.updateSelectionInfo();
   },
@@ -342,37 +760,48 @@ const SelectionEngine = {
   _doMove(pos,e){
     const d=this._drag;
     d.moved=true;
-    const dx=pos.x-d.startX, dy=pos.y-d.startY;
-    if(typeof AlignmentGuides!=='undefined' && DS.selection.size===1){
-      AlignmentGuides.show([...DS.selection][0]);
+    const debug = _multiDebug();
+    if(debug && debug.isEnabled() && d.subjectIds){
+      debug.assertInvariant('RF-MULTI-INV-002', JSON.stringify(d.subjectIds) === JSON.stringify(d.startPositions.map(p => p.id)), {
+        dragSubjectIds: d.subjectIds,
+        startPositionIds: d.startPositions.map(p => p.id),
+      });
     }
+    const rawDx=pos.x-d.startX, rawDy=pos.y-d.startY;
+    const minX=Math.min(...d.startPositions.map(orig=>orig.x));
+    const maxRight=Math.max(...d.startPositions.map(orig=>{
+      const el=DS.getElementById(orig.id);
+      return el ? orig.x + el.w : orig.x;
+    }));
+    const minAbsY=Math.min(...d.startPositions.map(orig=>orig.sectionTop + orig.y));
+    const dx=Math.max(-minX, Math.min(CFG.PAGE_W - maxRight, rawDx));
+    const dy=Math.max(-minAbsY, rawDy);
     d.startPositions.forEach(orig=>{
       const el=DS.getElementById(orig.id);if(!el)return;
-      let newAbsY=orig.sectionTop+orig.y+dy;
-      let newX=DS.snap(orig.x+dx);
-      const target=DS.getSectionAtY(newAbsY+el.h/2);
-      if(target){
-        DS.updateElementLayout(el.id,{
-          sectionId: target.section.id,
-          y: DS.snap(Math.max(0,newAbsY-DS.getSectionTop(target.section.id))),
-        });
-      } else {
-        DS.updateElementLayout(el.id,{ y: DS.snap(Math.max(0,orig.y+dy)) });
-      }
-      DS.updateElementLayout(el.id,{ x: DS.snap(Math.max(0,Math.min(CFG.PAGE_W-el.w,newX))) });
+      const newAbsY=Math.max(0, orig.sectionTop+orig.y+dy);
+      const newLocalY=newAbsY-orig.sectionTop;
+      const newX=Math.max(0,Math.min(CFG.PAGE_W-el.w,orig.x+dx));
+      d.livePositions[el.id]={
+        id: el.id,
+        x: newX,
+        absY: newAbsY,
+        localY: newLocalY,
+        sectionId: orig.sectionId,
+        sectionTop: orig.sectionTop,
+      };
       const div=document.querySelector(`.cr-element[data-id="${orig.id}"]`);
       if(div){
         div.classList.add('dragging');
-        const _mp = RF.Geometry.modelToView(el.x, el.y);
+        const _mp = RF.Geometry.modelToView(newX, newLocalY);
         div.style.left=_mp.x+'px';
         div.style.top =_mp.y+'px';
       }
       if(DS.previewMode){
         document.querySelectorAll(`.pv-el[data-origin-id="${orig.id}"]`).forEach(pv=>{
           pv.classList.add('dragging');
-          const _pp = RF.Geometry.rectToView(el);
-          pv.style.left = _pp.left+'px';
-          pv.style.top  = _pp.top+'px';
+          const z = RF.Geometry.zoom();
+          pv.style.left = (newX * z)+'px';
+          pv.style.top  = (newAbsY * z)+'px';
         });
       }
     });
@@ -381,9 +810,38 @@ const SelectionEngine = {
       requestAnimationFrame(()=>{
         d._rafPending=false;
         this.renderHandles();
+        if(typeof AlignmentGuides!=='undefined' && DS.selection.size===1){
+          AlignmentGuides.show([...DS.selection][0]);
+        }
         if(DS.selection.size===1){
-          const el=DS.getElementById([...DS.selection][0]);
-          if(el) document.getElementById('sb-pos').textContent=`X: ${el.x}   Y: ${el.y}`;
+          const selectedId = [...DS.selection][0];
+          const live = d.livePositions ? d.livePositions[selectedId] : null;
+          if(live) document.getElementById('sb-pos').textContent=`X: ${Math.round(live.x)}   Y: ${Math.round(live.absY)}`;
+        }
+        if(debug && debug.isEnabled()){
+          debug.traceFrame({
+            clientX: e?.clientX ?? null,
+            clientY: e?.clientY ?? null,
+            resolvedLogicalElementId: this._activeElementId,
+            resolvedVisualBoxId: this._dragAnchorId,
+            dragSubjectIds: d.subjectIds ? [...d.subjectIds] : [],
+            dragAnchorId: d.anchorId || null,
+            currentDelta: { dx, dy },
+          });
+          const overlay = debug.overlaySnapshot();
+          const selectedIds = [...DS.selection];
+          const liveIds = overlay.boxIds.filter(Boolean);
+          debug.assertInvariant('RF-MULTI-INV-001', JSON.stringify(selectedIds) === JSON.stringify(d.subjectIds || []), { selectedIds, dragSubjectIds: d.subjectIds || [] });
+          debug.assertInvariant('RF-MULTI-INV-003', overlay.boxCount === selectedIds.length, { overlay, selectedIds });
+          debug.assertInvariant('RF-MULTI-INV-004', selectedIds.every((id) => liveIds.includes(id)), { overlay, selectedIds });
+          if(d._boxDomIds == null){
+            d._boxDomIds = Object.fromEntries(overlay.boxes.filter((b) => b.elementId).map((b) => [b.elementId, b.domInstanceId]));
+          } else {
+            debug.assertInvariant('RF-MULTI-INV-005', overlay.boxes.filter((b) => b.elementId).every((b) => d._boxDomIds[b.elementId] === b.domInstanceId), {
+              expectedDomIds: d._boxDomIds,
+              overlay,
+            });
+          }
         }
       });
     }
@@ -395,10 +853,10 @@ const SelectionEngine = {
     const dx=pos.x-d.startX, dy=pos.y-d.startY;
     let {origX:x,origY:y,origW:w,origH:h}=d;
     const p=d.handlePos;
-    if(p.includes('e')) w=Math.max(CFG.MIN_EL_W, DS.snap(w+dx));
-    if(p.includes('s')) h=Math.max(CFG.MIN_EL_H, DS.snap(h+dy));
-    if(p.includes('w')){const nw=Math.max(CFG.MIN_EL_W,DS.snap(w-dx));x=DS.snap(x+w-nw);w=nw;}
-    if(p.includes('n')){const nh=Math.max(CFG.MIN_EL_H,DS.snap(h-dy));y=DS.snap(y+h-nh);h=nh;}
+    if(p.includes('e')) w=Math.max(CFG.MIN_EL_W, w+dx);
+    if(p.includes('s')) h=Math.max(CFG.MIN_EL_H, h+dy);
+    if(p.includes('w')){const nw=Math.max(CFG.MIN_EL_W,w-dx);x=x+w-nw;w=nw;}
+    if(p.includes('n')){const nh=Math.max(CFG.MIN_EL_H,h-dy);y=y+h-nh;h=nh;}
     DS.updateElementLayout(el.id,{ x, y, w, h });
     _canonicalCanvasWriter().updateElementPosition(d.elId);
     if(DS.previewMode){
@@ -410,7 +868,16 @@ const SelectionEngine = {
         pv.style.height = _pp.height+'px';
       });
     }
-    this.renderHandles();
+    if(!d._resizeRafPending){
+      d._resizeRafPending=true;
+      requestAnimationFrame(()=>{
+        d._resizeRafPending=false;
+        this.renderHandles();
+        if(typeof AlignmentGuides!=='undefined'){
+          AlignmentGuides.show(d.elId);
+        }
+      });
+    }
     document.getElementById('sb-size').textContent=`W: ${w}  H: ${h}`;
     document.getElementById('sb-size').style.display='flex';
     PropertiesEngine.updatePositionFields(el);
@@ -435,6 +902,45 @@ const SelectionEngine = {
     if(!this._drag)return;
     const d=this._drag;
     const isCancel = e && e.phase === 'cancel';
+    if(!isCancel && d.type==='move' && d.moved){
+      const anchor = d.startPositions[0];
+      const anchorLive = anchor && d.livePositions ? d.livePositions[anchor.id] : null;
+      const anchorAbsY = anchor ? (anchor.sectionTop + anchor.y) : 0;
+      const snappedDeltaX = anchor && anchorLive ? (DS.snap(anchorLive.x) - anchor.x) : 0;
+      const snappedDeltaAbsY = anchor && anchorLive ? (DS.snap(anchorLive.absY) - anchorAbsY) : 0;
+      d.startPositions.forEach(orig=>{
+        const el=DS.getElementById(orig.id);if(!el)return;
+        const origAbsY = orig.sectionTop + orig.y;
+        const rawX = orig.x + snappedDeltaX;
+        const rawAbsY = origAbsY + snappedDeltaAbsY;
+        const target=DS.getSectionAtY(rawAbsY+el.h/2);
+        const nextX=Math.max(0,Math.min(CFG.PAGE_W-el.w,rawX));
+        if(target){
+          DS.updateElementLayout(el.id,{
+            sectionId: target.section.id,
+            y: Math.max(0,rawAbsY-DS.getSectionTop(target.section.id)),
+          });
+        } else {
+          DS.updateElementLayout(el.id,{ y: Math.max(0,orig.y + snappedDeltaAbsY) });
+        }
+        DS.updateElementLayout(el.id,{ x: nextX });
+        _canonicalCanvasWriter().updateElementPosition(el.id);
+      });
+      this.renderHandles();
+    }
+    if(!isCancel && d.type==='resize'){
+      const el=DS.getElementById(d.elId);
+      if(el){
+        let x=el.x,y=el.y,w=el.w,h=el.h;
+        w=Math.max(CFG.MIN_EL_W,DS.snap(w));
+        h=Math.max(CFG.MIN_EL_H,DS.snap(h));
+        x=DS.snap(x);
+        y=DS.snap(y);
+        DS.updateElementLayout(el.id,{ x, y, w, h });
+        _canonicalCanvasWriter().updateElementPosition(el.id);
+        this.renderHandles();
+      }
+    }
     document.querySelectorAll('.cr-element.dragging').forEach(div=>{
       div.classList.remove('dragging');
     });
@@ -451,7 +957,11 @@ const SelectionEngine = {
       }
     }
     if(!isCancel && d.type==='insert') InsertEngine.onMouseUp(e);
+    const debug = _multiDebug();
+    if(debug && debug.isEnabled()) debug.endGesture(isCancel ? 'cancel' : 'pointerup');
     this._drag=null;
+    this._dragAnchorId = null;
+    this._captureOwner = null;
   },
 };
 SelectionEngine.__active = true;
