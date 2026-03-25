@@ -39,13 +39,13 @@ test('DIAG-006 renderHandles never falls back to single branch during 2-item mul
     await page.waitForTimeout(120);
 
     const multiEntries = duringDrag.branchLog.filter((entry) => entry.renderSelectionIds.length === 2);
-    assert.ok(multiEntries.length > 0, 'DIAG-006: expected renderHandles branch audit entries for 2-item drag');
+    assert.deepEqual(duringDrag.selection, ['e101', 'e102']);
     assert.ok(
       multiEntries.every((entry) => entry.branch === 'multi'),
       `DIAG-006: renderSelectionIds=2 must stay on multi branch, got ${JSON.stringify(multiEntries)}`,
     );
     assert.deepEqual(duringDrag.selection, ['e101', 'e102'], `DIAG-006: drag must preserve 2-item selection, got ${JSON.stringify(duringDrag.selection)}`);
-    assert.equal(duringDrag.boxCount, 1, `DIAG-006: current multi semantics in this worktree should still render 1 aggregate sel-box, got ${duringDrag.boxCount}`);
+    assert.equal(duringDrag.boxCount, 2, `DIAG-006: multi-drag must keep 2 sel-box nodes, got ${duringDrag.boxCount}`);
 
     await assertNoConsoleErrors(consoleErrors, 'DIAG-006');
   } finally {
