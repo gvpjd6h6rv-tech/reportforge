@@ -733,8 +733,8 @@ export async function captureDenseAsyncPhases(page, collect, options = {}) {
   const {
     phasePrefix = 'dense',
     microtasks = 2,
-    timeouts = [0, 8, 16],
-    rafs = 4,
+    timeouts = [0, 4, 8, 16],
+    rafs = 6,
     fuzzMs = 6,
   } = options;
   const phases = [];
@@ -753,6 +753,110 @@ export async function captureDenseAsyncPhases(page, collect, options = {}) {
     phases.push({ phase: `${phasePrefix}:raf${i}`, state: await collect() });
   }
   return phases;
+}
+
+export async function captureTemporalFrames(page, selector, options = {}) {
+  const {
+    frames = 6,
+    phasePrefix = 'temporal',
+    microtasks = 1,
+    timeouts = [0, 4, 8, 16],
+  } = options;
+  const snapshots = [];
+  const collectFrame = async (phase) => {
+    const state = await page.evaluate((targetSelector) => {
+      const node = document.querySelector(targetSelector);
+      if (!node) return { exists: false, rect: null };
+      const rect = node.getBoundingClientRect();
+      return {
+        exists: true,
+        rect: {
+          left: rect.left,
+          top: rect.top,
+          width: rect.width,
+          height: rect.height,
+          right: rect.right,
+          bottom: rect.bottom,
+        },
+      };
+    }, selector);
+    snapshots.push({ phase, ...state });
+  };
+
+  await collectFrame(`${phasePrefix}:sync`);
+  for (let i = 1; i <= microtasks; i += 1) {
+    await page.evaluate(() => Promise.resolve());
+    await collectFrame(`${phasePrefix}:microtask${i}`);
+  }
+  for (const timeout of timeouts) {
+    await page.waitForTimeout(timeout);
+    await collectFrame(`${phasePrefix}:timeout${timeout}`);
+  }
+  for (let i = 1; i <= frames; i += 1) {
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => resolve())));
+    await collectFrame(`${phasePrefix}:raf${i}`);
+  }
+  return snapshots;
+}
+
+export function computeMicroJitterScore(frames = [], options = {}) {
+  const { driftThresholdPx = 1 } = options;
+  if (!Array.isArray(frames) || frames.length <= 1) {
+    return {
+      jitterScore: 0,
+      frameDropDetected: false,
+      diagnostics: [],
+    };
+  }
+  const diagnostics = [];
+  let driftEvents = 0;
+  let comparisons = 0;
+  let frameDropDetected = false;
+
+  for (let i = 1; i < frames.length; i += 1) {
+    const prev = frames[i - 1];
+    const curr = frames[i];
+    if (!prev.exists || !curr.exists) {
+      frameDropDetected = true;
+      diagnostics.push({
+        phase: curr.phase,
+        reason: 'missing frame node',
+        prevExists: prev.exists,
+        currExists: curr.exists,
+      });
+      continue;
+    }
+    const deltas = {
+      left: Math.abs((curr.rect?.left || 0) - (prev.rect?.left || 0)),
+      top: Math.abs((curr.rect?.top || 0) - (prev.rect?.top || 0)),
+      width: Math.abs((curr.rect?.width || 0) - (prev.rect?.width || 0)),
+      height: Math.abs((curr.rect?.height || 0) - (prev.rect?.height || 0)),
+    };
+    comparisons += 1;
+    const maxDelta = Math.max(deltas.left, deltas.top, deltas.width, deltas.height);
+    if (maxDelta > driftThresholdPx) {
+      driftEvents += 1;
+      diagnostics.push({
+        phase: curr.phase,
+        reason: 'micro-jitter',
+        deltas,
+      });
+    }
+    if ((curr.rect?.width || 0) <= 0 || (curr.rect?.height || 0) <= 0) {
+      frameDropDetected = true;
+      diagnostics.push({
+        phase: curr.phase,
+        reason: 'degenerate rect',
+        rect: curr.rect,
+      });
+    }
+  }
+
+  return {
+    jitterScore: comparisons > 0 ? driftEvents / comparisons : 0,
+    frameDropDetected,
+    diagnostics,
+  };
 }
 
 export async function captureFrameTimeline(page, collect, options = {}) {

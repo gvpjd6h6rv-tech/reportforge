@@ -23,6 +23,8 @@ import {
   temporalStabilitySignal,
   interactionUsabilitySignal,
   captureDenseAsyncPhases,
+  captureTemporalFrames,
+  computeMicroJitterScore,
   legibilitySignal,
   subtleOcclusionSignal,
   compositorDivergenceSignal,
@@ -68,8 +70,8 @@ test('USER-PARITY multiselect drag keeps visible overlay and selection stable', 
     const afterPhases = await captureDenseAsyncPhases(page, () => collectUserParityState(page), {
       phasePrefix: 'after-drag',
       microtasks: 2,
-      timeouts: [0, 8, 16],
-      rafs: 4,
+      timeouts: [0, 4, 8, 16],
+      rafs: 6,
       fuzzMs: 4,
     });
     afterPhases.forEach(({ phase, state }) => {
@@ -82,6 +84,23 @@ test('USER-PARITY multiselect drag keeps visible overlay and selection stable', 
     );
     const designHitMaps = await Promise.all(
       before.selection.map((id) => collectHitMap(page, { id, mode: 'design', grid: 3 })),
+    );
+    const overlayFrames = await captureTemporalFrames(page, '#handles-layer .sel-box', {
+      phasePrefix: 'overlay',
+      microtasks: 2,
+      timeouts: [0, 4, 8, 16],
+      frames: 6,
+    });
+    const microJitter = computeMicroJitterScore(overlayFrames, { driftThresholdPx: 1 });
+    t.diagnostic(`browser=${browserName} flow=multiselect-drag jitterScore=${microJitter.jitterScore} frameDropDetected=${microJitter.frameDropDetected}`);
+    assert.equal(
+      microJitter.frameDropDetected,
+      false,
+      `multiselect drag: overlay frame drop detected ${JSON.stringify(microJitter)}`,
+    );
+    assert.ok(
+      microJitter.jitterScore < 0.02,
+      `multiselect drag: jitterScore ${microJitter.jitterScore} >= 0.02 diagnostics=${JSON.stringify(microJitter.diagnostics)}`,
     );
 
           await enterPreview(page);

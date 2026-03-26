@@ -46,8 +46,17 @@ test('USER-PARITY visual goldens for critical visible flows', { timeout: 240000 
 
             const shot = await captureWorkspaceGolden(page);
             await compareOrUpdateGolden(`multiselect-overlay-stable.${browserName}.png`, shot, { rmseThreshold: 0.03, fuzzPercent: 3 });
-            const regionShot = await captureRegionGolden(page, { selector: '#handles-layer', padding: 20 });
-            await compareOrUpdateGolden(`multiselect-overlay-stable.${browserName}.region.png`, regionShot, { rmseThreshold: 0.025, fuzzPercent: 2 });
+            const regionShot = await captureRegionGolden(page, {
+              selector: '#handles-layer',
+              padding: 20,
+              browserName,
+              regionName: 'region',
+            });
+            await compareOrUpdateGolden(`multiselect-overlay-stable.region.${browserName}.png`, regionShot.buffer, {
+              rmseThreshold: 0.025,
+              fuzzPercent: 2,
+              metadata: regionShot.metadata,
+            });
           });
 
           await t.test('clipboard multiple clones golden', async () => {
@@ -74,8 +83,14 @@ test('USER-PARITY visual goldens for critical visible flows', { timeout: 240000 
             const regionShot = await captureRegionGolden(page, {
               selectors: designState.modelIds.map((id) => `.cr-element:not(.pv-el)[data-id="${id}"]`),
               padding: 18,
+              browserName,
+              regionName: 'region',
             });
-            await compareOrUpdateGolden(`clipboard-three-clones.${browserName}.region.png`, regionShot, { rmseThreshold: 0.025, fuzzPercent: 2 });
+            await compareOrUpdateGolden(`clipboard-three-clones.region.${browserName}.png`, regionShot.buffer, {
+              rmseThreshold: 0.025,
+              fuzzPercent: 2,
+              metadata: regionShot.metadata,
+            });
           });
 
           await t.test('undo redo visual consistent golden', async () => {
@@ -112,8 +127,14 @@ test('USER-PARITY visual goldens for critical visible flows', { timeout: 240000 
             const regionShot = await captureRegionGolden(page, {
               selectors: ids.map((id) => `.cr-element:not(.pv-el)[data-id="${id}"]`),
               padding: 18,
+              browserName,
+              regionName: 'region',
             });
-            await compareOrUpdateGolden(`undo-redo-consistent.${browserName}.region.png`, regionShot, { rmseThreshold: 0.025, fuzzPercent: 2 });
+            await compareOrUpdateGolden(`undo-redo-consistent.region.${browserName}.png`, regionShot.buffer, {
+              rmseThreshold: 0.025,
+              fuzzPercent: 2,
+              metadata: regionShot.metadata,
+            });
           });
 
           await assertNoConsoleErrors(consoleErrors, `USER-PARITY visual golden ${browserName}`);

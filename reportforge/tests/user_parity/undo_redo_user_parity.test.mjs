@@ -27,6 +27,8 @@ import {
   assertVisualConfidence,
   captureAsyncPhases,
   captureDenseAsyncPhases,
+  captureTemporalFrames,
+  computeMicroJitterScore,
   legibilitySignal,
   subtleOcclusionSignal,
   compositorDivergenceSignal,
@@ -68,10 +70,20 @@ test('USER-PARITY undo redo preserves visible parity after user-visible clipboar
     const undoPhases = await captureDenseAsyncPhases(page, () => collectUserParityState(page, { textIncludes: 'VALOR TOTAL' }), {
       phasePrefix: 'undo',
       microtasks: 2,
-      timeouts: [0, 8, 16],
-      rafs: 4,
+      timeouts: [0, 4, 8, 16],
+      rafs: 6,
       fuzzMs: 4,
     });
+    const undoFrames = await captureTemporalFrames(page, '.cr-element:not(.pv-el)[data-id]', {
+      phasePrefix: 'undo-frames',
+      microtasks: 2,
+      timeouts: [0, 4, 8, 16],
+      frames: 6,
+    });
+    const undoJitter = computeMicroJitterScore(undoFrames, { driftThresholdPx: 1 });
+    t.diagnostic(`browser=${browserName} flow=undo jitterScore=${undoJitter.jitterScore} frameDropDetected=${undoJitter.frameDropDetected}`);
+    assert.equal(undoJitter.frameDropDetected, false, `undo: frame drop detected ${JSON.stringify(undoJitter)}`);
+    assert.ok(undoJitter.jitterScore < 0.02, `undo: jitterScore ${undoJitter.jitterScore} >= 0.02 diagnostics=${JSON.stringify(undoJitter.diagnostics)}`);
 
     await page.keyboard.press('Control+y');
     await page.waitForTimeout(220);
@@ -81,10 +93,20 @@ test('USER-PARITY undo redo preserves visible parity after user-visible clipboar
     const redoPhases = await captureDenseAsyncPhases(page, () => collectUserParityState(page, { textIncludes: 'VALOR TOTAL' }), {
       phasePrefix: 'redo',
       microtasks: 2,
-      timeouts: [0, 8, 16],
-      rafs: 4,
+      timeouts: [0, 4, 8, 16],
+      rafs: 6,
       fuzzMs: 4,
     });
+    const redoFrames = await captureTemporalFrames(page, '.cr-element:not(.pv-el)[data-id]', {
+      phasePrefix: 'redo-frames',
+      microtasks: 2,
+      timeouts: [0, 4, 8, 16],
+      frames: 6,
+    });
+    const redoJitter = computeMicroJitterScore(redoFrames, { driftThresholdPx: 1 });
+    t.diagnostic(`browser=${browserName} flow=redo jitterScore=${redoJitter.jitterScore} frameDropDetected=${redoJitter.frameDropDetected}`);
+    assert.equal(redoJitter.frameDropDetected, false, `redo: frame drop detected ${JSON.stringify(redoJitter)}`);
+    assert.ok(redoJitter.jitterScore < 0.02, `redo: jitterScore ${redoJitter.jitterScore} >= 0.02 diagnostics=${JSON.stringify(redoJitter.diagnostics)}`);
 
     const designEntries = await Promise.all(
       afterRedo.modelIds.map((id) => collectElementVisibility(page, { id, mode: 'design' })),

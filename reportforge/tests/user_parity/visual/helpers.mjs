@@ -17,7 +17,7 @@ export async function captureWorkspaceGolden(page) {
 }
 
 export async function captureRegionGolden(page, options = {}) {
-  const { selector = null, selectors = null, rect = null, padding = 12 } = options;
+  const { selector = null, selectors = null, rect = null, padding = 12, browserName = null, regionName = null } = options;
   let clip = rect;
   if (!clip) {
     const selectorList = selectors || (selector ? [selector] : []);
@@ -46,13 +46,22 @@ export async function captureRegionGolden(page, options = {}) {
   };
   normalized.width = Math.min(normalized.width, Math.max(1, viewport.width - normalized.x));
   normalized.height = Math.min(normalized.height, Math.max(1, viewport.height - normalized.y));
-  return page.screenshot({ animations: 'disabled', clip: normalized });
+  const buffer = await page.screenshot({ animations: 'disabled', clip: normalized });
+  return {
+    buffer,
+    metadata: {
+      browserName,
+      regionName,
+      clip: normalized,
+    },
+  };
 }
 
 export async function compareOrUpdateGolden(name, buffer, options = {}) {
   const {
     rmseThreshold = 0.02,
     fuzzPercent = 2,
+    metadata = null,
   } = options;
 
   await fs.mkdir(VISUAL_BASELINES_DIR, { recursive: true });
@@ -65,7 +74,7 @@ export async function compareOrUpdateGolden(name, buffer, options = {}) {
   const update = process.env.RF_UPDATE_VISUAL_BASELINES === '1';
   if (update) {
     await fs.writeFile(baselinePath, buffer);
-    return { updated: true, baselinePath };
+    return { updated: true, baselinePath, metadata };
   }
 
   let baseline;
@@ -104,7 +113,7 @@ export async function compareOrUpdateGolden(name, buffer, options = {}) {
     fs.rm(diffPath, { force: true }),
   ]);
 
-  return { updated: false, baselinePath, actualPath, diffPath, rmse: normalized };
+  return { updated: false, baselinePath, actualPath, diffPath, rmse: normalized, metadata };
 }
 
 function parseRmse(stderr) {
