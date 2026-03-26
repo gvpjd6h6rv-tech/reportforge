@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "name": "drag-then-undo-rect-restore",
+    "source": "promoted-from-real-flow",
+    "bugRisk": "drag + undo leaves element at wrong position (ghost rect drift after undo)",
+    "covers": ["undo_redo", "drag_or_pointer_flow"]
+  },
+  "staticLabels": ["drag_or_pointer_flow", "undo_redo"],
+  "actions": [
+    { "type": "click", "target": { "kind": "design-text", "text": "VALOR TOTAL", "nth": 0 }, "afterWaitMs": 120 },
+    { "type": "key", "key": "Control+c", "afterWaitMs": 80 },
+    { "type": "key", "key": "Control+v", "afterWaitMs": 200 },
+    { "type": "drag", "target": { "kind": "design-text", "text": "VALOR TOTAL", "nth": 1 }, "anchorX": 20, "anchorY": 8, "dx": 24, "dy": 18, "steps": 8, "afterWaitMs": 150 },
+    { "type": "key", "key": "Control+z", "afterWaitMs": 220 },
+    { "type": "key", "key": "Control+y", "afterWaitMs": 220 }
+  ],
+  "checkpoints": [
+    {
+      "label": "after-redo-drag",
+      "expect": { "textIncludes": "VALOR TOTAL", "modelCount": 2 }
+    }
+  ]
+}

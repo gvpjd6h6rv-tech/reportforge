@@ -1,4 +1,5 @@
 import test from 'node:test';
+import assert from 'node:assert/strict';
 import {
   startRuntimeServer,
   launchRuntimePage,
@@ -23,6 +24,7 @@ import {
   captureWorkspaceGolden,
   captureRegionGolden,
   compareOrUpdateGolden,
+  computeGoldenSpreadDiagnostic,
 } from './visual/helpers.mjs';
 
 test('USER-PARITY visual goldens for critical visible flows', { timeout: 240000 }, async (t) => {
@@ -137,11 +139,111 @@ test('USER-PARITY visual goldens for critical visible flows', { timeout: 240000 
             });
           });
 
+          await t.test('handle se corner micro-crop golden', async () => {
+            await reloadRuntime(page, server.baseUrl);
+            await setZoom(page, 1.5);
+            await selectSingle(page, 0);
+
+            const handleInfo = await page.evaluate(() => {
+              const handle = document.querySelector('#handles-layer .sel-handle[data-pos="se"]');
+              if (!handle) return null;
+              const r = handle.getBoundingClientRect();
+              return { left: r.left, top: r.top, width: r.width, height: r.height };
+            });
+            assert.ok(handleInfo, 'se handle must be present after multiselect');
+            assert.ok(handleInfo.width > 0 && handleInfo.height > 0, `se handle must have non-zero size: ${JSON.stringify(handleInfo)}`);
+
+            // Tight crop: the handle itself + small margin to catch border rendering
+            const handleShot = await captureRegionGolden(page, {
+              selector: '#handles-layer .sel-handle[data-pos="se"]',
+              padding: 6,
+              browserName,
+              regionName: 'se-handle',
+            });
+            await compareOrUpdateGolden(`handle-se-corner.region.${browserName}.png`, handleShot.buffer, {
+              rmseThreshold: 0.02,
+              fuzzPercent: 2,
+              metadata: handleShot.metadata,
+            });
+          });
+
+          await t.test('clone intersection micro-crop golden', async () => {
+            await reloadRuntime(page, server.baseUrl);
+            await page.locator('.cr-element:not(.pv-el)').filter({ hasText: 'VALOR TOTAL' }).first().click();
+            await page.waitForTimeout(120);
+            await page.keyboard.press('Control+c');
+            await page.waitForTimeout(80);
+            await page.keyboard.press('Control+v');
+            await page.waitForTimeout(180);
+            await page.keyboard.press('Control+v');
+            await page.waitForTimeout(180);
+
+            const designState = await collectUserParityState(page, { textIncludes: 'VALOR TOTAL' });
+            assertDesignParity(designState, 'clone intersection golden design parity');
+            assert.ok(designState.modelIds.length >= 2, 'need at least 2 elements for intersection crop');
+
+            // Compute intersection rect of first two clone bboxes
+            const intersectionRect = await page.evaluate((ids) => {
+              const rects = ids.slice(0, 2).map((id) => {
+                const el = document.querySelector(`.cr-element:not(.pv-el)[data-id="${id}"]`);
+                if (!el) return null;
+                const r = el.getBoundingClientRect();
+                return { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+              }).filter(Boolean);
+              if (rects.length < 2) return null;
+              const left = Math.max(rects[0].left, rects[1].left);
+              const top = Math.max(rects[0].top, rects[1].top);
+              const right = Math.min(rects[0].right, rects[1].right);
+              const bottom = Math.min(rects[0].bottom, rects[1].bottom);
+              if (right <= left || bottom <= top) return null;
+              return { left, top, width: right - left, height: bottom - top };
+            }, designState.modelIds);
+
+            // If no actual pixel intersection fall back to the tight bounding box of both elements
+            const cropRect = intersectionRect || await page.evaluate((ids) => {
+              const rects = ids.slice(0, 2).map((id) => {
+                const el = document.querySelector(`.cr-element:not(.pv-el)[data-id="${id}"]`);
+                if (!el) return null;
+                const r = el.getBoundingClientRect();
+                return { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+              }).filter(Boolean);
+              if (!rects.length) return null;
+              return {
+                left: Math.min(...rects.map((r) => r.left)),
+                top: Math.min(...rects.map((r) => r.top)),
+                width: Math.max(...rects.map((r) => r.right)) - Math.min(...rects.map((r) => r.left)),
+                height: Math.max(...rects.map((r) => r.bottom)) - Math.min(...rects.map((r) => r.top)),
+              };
+            }, designState.modelIds);
+
+            assert.ok(cropRect, 'could not compute crop rect for clone intersection');
+            t.diagnostic(`clone-intersection crop: ${JSON.stringify(cropRect)} intersects=${!!intersectionRect}`);
+
+            const intersectionShot = await captureRegionGolden(page, {
+              rect: cropRect,
+              padding: 10,
+              browserName,
+              regionName: 'clone-intersection',
+            });
+            await compareOrUpdateGolden(`clone-intersection.region.${browserName}.png`, intersectionShot.buffer, {
+              rmseThreshold: 0.03,
+              fuzzPercent: 3,
+              metadata: intersectionShot.metadata,
+            });
+          });
+
           await assertNoConsoleErrors(consoleErrors, `USER-PARITY visual golden ${browserName}`);
         } finally {
           await browser.close();
         }
       });
+    }
+
+    // Cross-browser spread diagnostics — emitted after all browsers complete
+    // These are informational only: they surface how much golden regions vary across browsers.
+    for (const goldenBase of ['handle-se-corner.region', 'clone-intersection.region']) {
+      const spread = await computeGoldenSpreadDiagnostic(goldenBase, browserNames);
+      t.diagnostic(`cross-browser spread ${goldenBase}: maxSpread=${spread.maxSpread} pairs=${JSON.stringify(spread.pairs)}`);
     }
   } finally {
     await server.stop();

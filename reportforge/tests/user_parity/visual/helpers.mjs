@@ -122,3 +122,53 @@ function parseRmse(stderr) {
   const fallback = Number.parseFloat((stderr || '').trim());
   return Number.isFinite(fallback) ? fallback : Number.POSITIVE_INFINITY;
 }
+
+// ---------------------------------------------------------------------------
+// Cross-browser golden spread — diagnostic only, never fails
+// Compares baseline files for each browser pair to surface rendering divergence.
+// Call this after all per-browser subtests have run (baselines already exist).
+// ---------------------------------------------------------------------------
+
+export async function computeGoldenSpreadDiagnostic(baseName, browsers = [], options = {}) {
+  const { fuzzPercent = 2 } = options;
+  const pairs = [];
+  for (let i = 0; i < browsers.length; i += 1) {
+    for (let j = i + 1; j < browsers.length; j += 1) {
+      const a = browsers[i];
+      const b = browsers[j];
+      const pathA = path.join(VISUAL_BASELINES_DIR, `${baseName}.${a}.png`);
+      const pathB = path.join(VISUAL_BASELINES_DIR, `${baseName}.${b}.png`);
+      try {
+        await fs.access(pathA);
+        await fs.access(pathB);
+      } catch {
+        pairs.push({ a, b, rmse: null, reason: 'baseline missing' });
+        continue;
+      }
+      const diffPath = path.join(VISUAL_ARTIFACTS_DIR, `${baseName}.spread.${a}-${b}.diff.png`);
+      let rmse = null;
+      try {
+        const { stderr } = await execFileAsync('compare', [
+          '-metric', 'RMSE',
+          '-fuzz', `${fuzzPercent}%`,
+          pathA,
+          pathB,
+          diffPath,
+        ]);
+        rmse = parseRmse(stderr);
+      } catch (error) {
+        if (error.code === 1) {
+          rmse = parseRmse(error.stderr || '');
+        }
+      }
+      // Diff artifacts are diagnostic only; remove them after reading
+      if (rmse !== null) {
+        await fs.rm(diffPath, { force: true });
+      }
+      pairs.push({ a, b, rmse });
+    }
+  }
+  const measured = pairs.filter((p) => p.rmse !== null).map((p) => p.rmse);
+  const maxSpread = measured.length ? Math.max(...measured) : null;
+  return { baseName, pairs, maxSpread };
+}

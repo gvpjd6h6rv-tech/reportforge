@@ -122,20 +122,40 @@ export function assessScoreQuality(confidenceResult, options = {}) {
   // A score backed mostly by stableSignal (value=1, no real evidence) is not meaningful.
   // We detect this by counting dimensions at exactly 100 in the breakdown — these are
   // almost always stableSignals since real signals rarely land at a perfect 100.
+  //
+  // Additionally we distinguish heuristic-basis dims at 100% (always suspicious — these
+  // are designed assumptions that never discriminate) from evidence-basis dims at 100%
+  // (acceptable — strong real-signal result). If all heuristic dims saturate together
+  // with most evidence dims, the score is likely inflated rather than earned.
   const { saturatedWarnRatio = 0.7 } = options;
   if (!confidenceResult?.breakdown) return { quality: 'unknown', warning: null, saturatedRatio: null };
   const dims = Object.values(confidenceResult.breakdown);
   const saturated = dims.filter((d) => d.score >= 99.9).length;
   const total = dims.length;
   const saturatedRatio = total > 0 ? saturated / total : 0;
+
+  // Separate heuristic saturation from evidence saturation
+  const heuristicDims = dims.filter((d) => d.basis === 'heuristic');
+  const heuristicSaturated = heuristicDims.filter((d) => d.score >= 99.9).length;
+  const heuristicSaturatedRatio = heuristicDims.length > 0 ? heuristicSaturated / heuristicDims.length : 0;
+
   if (saturatedRatio >= saturatedWarnRatio) {
+    const heuristicNote = heuristicSaturatedRatio >= 1
+      ? `; all ${heuristicDims.length} heuristic dimensions also at 100% — score inflation likely`
+      : '';
     return {
       quality: 'warning',
-      warning: `${saturated}/${total} dimensions at 100% — score may be inflated by stableSignal usage`,
+      warning: `${saturated}/${total} dimensions at 100% — score may be inflated by stableSignal usage${heuristicNote}`,
       saturatedRatio: Math.round(saturatedRatio * 100),
+      heuristicSaturatedRatio: Math.round(heuristicSaturatedRatio * 100),
     };
   }
-  return { quality: 'ok', warning: null, saturatedRatio: Math.round(saturatedRatio * 100) };
+  return {
+    quality: 'ok',
+    warning: null,
+    saturatedRatio: Math.round(saturatedRatio * 100),
+    heuristicSaturatedRatio: Math.round(heuristicSaturatedRatio * 100),
+  };
 }
 
 export function buildCoverageMatrix(categoryRuns = {}, availability = {}, targetBrowsers = ['chromium', 'firefox', 'webkit']) {

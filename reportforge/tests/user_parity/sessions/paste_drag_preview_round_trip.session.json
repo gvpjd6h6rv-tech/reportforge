@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "name": "paste-drag-preview-round-trip",
+    "source": "promoted-from-real-flow",
+    "bugRisk": "drag after paste + preview round-trip corrupts element position or breaks design/preview parity",
+    "covers": ["drag_or_pointer_flow", "mode_switch"]
+  },
+  "staticLabels": ["clipboard_flow", "drag_or_pointer_flow", "mode_switch", "fine-composition"],
+  "actions": [
+    { "type": "click", "target": { "kind": "design-text", "text": "VALOR TOTAL", "nth": 0 }, "afterWaitMs": 120 },
+    { "type": "key", "key": "Control+c", "afterWaitMs": 80 },
+    { "type": "key", "key": "Control+v", "afterWaitMs": 200 },
+    { "type": "drag", "target": { "kind": "design-text", "text": "VALOR TOTAL", "nth": 1 }, "anchorX": 20, "anchorY": 8, "dx": 20, "dy": 16, "steps": 8, "afterWaitMs": 150 },
+    { "type": "mode", "mode": "preview", "afterWaitMs": 220 },
+    { "type": "mode", "mode": "design", "afterWaitMs": 220 }
+  ],
+  "checkpoints": [
+    {
+      "label": "after-preview-round-trip",
+      "expect": { "textIncludes": "VALOR TOTAL", "modelCount": 2 }
+    }
+  ]
+}

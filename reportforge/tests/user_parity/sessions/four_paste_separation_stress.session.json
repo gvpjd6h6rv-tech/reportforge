@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "name": "four-paste-separation-stress",
+    "source": "promoted-from-real-flow",
+    "bugRisk": "4 consecutive pastes without undo — clones visually collapse or become unreachable via hit-testing",
+    "covers": ["clipboard_flow", "separation-risk"]
+  },
+  "staticLabels": ["clipboard_flow", "separation-risk", "subtle-occlusion"],
+  "actions": [
+    { "type": "click", "target": { "kind": "design-text", "text": "VALOR TOTAL", "nth": 0 }, "afterWaitMs": 120 },
+    { "type": "key", "key": "Control+c", "afterWaitMs": 80 },
+    { "type": "key", "key": "Control+v", "afterWaitMs": 180 },
+    { "type": "key", "key": "Control+v", "afterWaitMs": 180 },
+    { "type": "key", "key": "Control+v", "afterWaitMs": 180 },
+    { "type": "key", "key": "Control+v", "afterWaitMs": 180 }
+  ],
+  "checkpoints": [
+    {
+      "label": "after-four-pastes",
+      "expect": { "textIncludes": "VALOR TOTAL", "modelCount": 5 }
+    }
+  ]
+}

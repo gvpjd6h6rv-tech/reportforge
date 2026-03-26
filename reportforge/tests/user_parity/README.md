@@ -34,19 +34,6 @@ Objetivo: reproducir síntomas visibles reales del usuario y comparar automátic
 | Session replay | corpus de sesiones promovidas → parity + composition | `session_replay_user_parity.test.mjs` |
 | Flaky detection | 2 iteraciones del mismo flow → variación de jitter | `flaky_detection_user_parity.test.mjs` |
 
-## Qué NO cubre
-
-- Oclusión por `clip-path` no ortogonal o `transform` 3D
-- Rendering diferencial real (pixel diff) — solo se miden posiciones y hit-testing
-- Separación semántica (mismo texto visual en IDs distintos)
-- Handles fuera del `se` en multi-selección simultánea
-- Multiselect con Shift+click (no soportado en formato de sesión actual)
-- Temporal drift intra-frame durante transiciones de zoom (solo estado final)
-- Sesiones con elementos en posición extrema del canvas (fuera de viewport visible)
-- Scores cross-browser para session replay (corre solo en chromium)
-
----
-
 ## Cómo añadir una sesión
 
 ### 1. Crear el JSON en `sessions/`
@@ -168,8 +155,10 @@ Si `flaky_detection_user_parity.test.mjs` emite `UNSTABLE`, significa que la mis
 | `multiselect_drag_user_parity.test.mjs` | multiselect drag | chromium, firefox, webkit | overlay stability, jitter, occlusion |
 | `multiselect_frame_glitch_user_parity.test.mjs` | multiselect glitch | chromium | overlay temporal (per-frame) |
 | `undo_redo_user_parity.test.mjs` | undo/redo clipboard | chromium, firefox, webkit | parity, jitter, occlusion |
+| `undo_redo_mixed_history_user_parity.test.mjs` | undo/redo mixed flows | chromium | rect restore, mode round-trip, multiselect undo |
 | `preview_clipping_user_parity.test.mjs` | preview at zoom 2.0 | chromium | clipping, visibility |
 | `selection_handle_stacking_user_parity.test.mjs` | handle hit-testing | chromium | stacking, handle occlusion |
+| `visual_golden_user_parity.test.mjs` | visual goldens (workspace + micro-crops) | chromium, firefox, webkit | pixel diff, handle SE corner, clone intersection, cross-browser spread |
 | `session_replay_user_parity.test.mjs` | corpus replay | chromium | parity + composition (all sessions) |
 | `flaky_detection_user_parity.test.mjs` | overlay flaky check | chromium | jitter stability (2 iterations) |
 
@@ -183,10 +172,28 @@ Si `flaky_detection_user_parity.test.mjs` emite `UNSTABLE`, significa que la mis
 | `preview_interaction_design_parity` | preview round-trip: ¿corrompe composición? | clipboard_flow, mode_switch, fine-composition |
 | `full_undo_redo_cycle` | ciclo completo undo/redo (3+3+3) | clipboard_flow, undo_redo, temporal-glitch |
 | `zoom_transition_paste_composition` | paste a zoom 1.5 + transición de zoom | clipboard_flow, zoom_composition, fine-composition |
+| `drag_then_undo_rect_restore` | paste + drag + undo drag + redo drag | drag_or_pointer_flow, undo_redo |
+| `multiselect_zoom_undo_overlay` | paste a zoom 1.5 + undo: sin ghost elements | clipboard_flow, zoom_composition, undo_redo, fine-composition |
+| `paste_drag_preview_round_trip` | paste + drag + round-trip preview/design | clipboard_flow, drag_or_pointer_flow, mode_switch, fine-composition |
+| `four_paste_separation_stress` | 4 pastes sin undo: stress de separación | clipboard_flow, separation-risk, subtle-occlusion |
+| `zoom_paste_undo_no_ghost` | paste a zoom + undo + zoom change: sin ghost | clipboard_flow, zoom_composition, undo_redo, fine-composition |
+
+## Qué NO cubre (actualizado)
+
+- Oclusión por `clip-path` no ortogonal o `transform` 3D
+- Rendering diferencial real (pixel diff) — solo se miden posiciones y hit-testing
+- Separación semántica (mismo texto visual en IDs distintos)
+- Handles fuera del `se` en multi-selección simultánea
+- Multiselect con Shift+click (no soportado en formato de sesión actual)
+- Temporal drift intra-frame durante transiciones de zoom (solo estado final)
+- Sesiones con elementos en posición extrema del canvas (fuera de viewport visible)
+- Scores cross-browser para session replay (corre solo en chromium)
+- Undo de múltiples operaciones encadenadas (paste+drag: la profundidad exacta del stack depende del runtime)
 
 ## Visual confidence score — pesos actuales
 
-Recalibrado 2026-03-26 con corpus de 4 flows medidos en 3 browsers.
+Recalibrado 2026-03-26 (final) con corpus de 11 sesiones, 3 browsers, 8 flows.
+Cambios: heurística reducida -6pts → evidencia aumentada +6pts (total sigue 128).
 
 | Dimensión | Peso | Tipo | Notas |
 |---|---|---|---|
@@ -195,15 +202,15 @@ Recalibrado 2026-03-26 con corpus de 4 flows medidos en 3 browsers.
 | geometry | 10 | evidence | |
 | visibility | 10 | evidence | |
 | hitTesting | 10 | evidence | |
-| temporalStability | 10 | evidence | |
-| subtleOcclusion | **10** | evidence | ↑ desde 7; ahora 9 puntos de muestreo |
+| temporalStability | **12** | evidence | ↑ desde 10; señal más discriminante para undo/redo |
+| subtleOcclusion | **12** | evidence | ↑ desde 10; señal principal de fine composition |
 | clipping | 8 | evidence | |
 | stacking | 8 | evidence | |
-| interactionUsability | 8 | heuristic | threshold 30% arbitrario |
-| legibility | **7** | evidence | ↓ desde 8; no discrimina en corpus actual |
-| compositorDivergence | **7** | **evidence** | ↑ desde 5 heurístico; spread <2pt en 3 browsers |
-| overlapCollision | **6** | heuristic | ↓ desde 8; overlap en paste flows es esperado |
-| crossBrowserStability | **6** | **evidence** | ↑ desde 4 heurístico; ID sets estables confirmados |
+| compositorDivergence | **8** | evidence | ↑ desde 7; base de evidencia cross-browser ampliada |
+| crossBrowserStability | **7** | evidence | ↑ desde 6; 11 sesiones confirman estabilidad |
+| interactionUsability | **6** | heuristic | ↓ desde 8; siempre verde en corpus, no discrimina |
+| legibility | **5** | evidence | ↓ desde 7; nunca discrimina en configuraciones medidas |
+| overlapCollision | **4** | heuristic | ↓ desde 6; overlap esperado en paste flows, ruido |
 
 ## Capas de código
 

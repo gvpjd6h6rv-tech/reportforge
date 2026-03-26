@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "name": "multiselect-zoom-undo-overlay",
+    "source": "promoted-from-real-flow",
+    "bugRisk": "paste at zoom 1.5 + undo leaves ghost clone or broken overlay composition at non-1.0 zoom",
+    "covers": ["undo_redo", "zoom_composition"]
+  },
+  "staticLabels": ["clipboard_flow", "zoom_composition", "undo_redo", "fine-composition"],
+  "actions": [
+    { "type": "zoom", "value": 1.5, "afterWaitMs": 80 },
+    { "type": "click", "target": { "kind": "design-text", "text": "VALOR TOTAL", "nth": 0 }, "afterWaitMs": 120 },
+    { "type": "key", "key": "Control+c", "afterWaitMs": 80 },
+    { "type": "key", "key": "Control+v", "afterWaitMs": 200 },
+    { "type": "key", "key": "Control+z", "afterWaitMs": 220 }
+  ],
+  "checkpoints": [
+    {
+      "label": "after-paste-undo-at-zoom",
+      "expect": { "textIncludes": "VALOR TOTAL", "modelCount": 1 }
+    }
+  ]
+}

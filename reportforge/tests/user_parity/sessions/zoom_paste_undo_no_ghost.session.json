@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "name": "zoom-paste-undo-no-ghost",
+    "source": "promoted-from-real-flow",
+    "bugRisk": "paste at zoom 1.5 + undo + zoom to 0.75 leaves ghost element at old zoom-relative position",
+    "covers": ["undo_redo", "zoom_composition"]
+  },
+  "staticLabels": ["clipboard_flow", "zoom_composition", "undo_redo", "fine-composition"],
+  "actions": [
+    { "type": "zoom", "value": 1.5, "afterWaitMs": 80 },
+    { "type": "click", "target": { "kind": "design-text", "text": "VALOR TOTAL", "nth": 0 }, "afterWaitMs": 120 },
+    { "type": "key", "key": "Control+c", "afterWaitMs": 80 },
+    { "type": "key", "key": "Control+v", "afterWaitMs": 200 },
+    { "type": "key", "key": "Control+z", "afterWaitMs": 220 },
+    { "type": "zoom", "value": 0.75, "afterWaitMs": 80 }
+  ],
+  "checkpoints": [
+    {
+      "label": "after-undo-zoom-change",
+      "expect": { "textIncludes": "VALOR TOTAL", "modelCount": 1 }
+    }
+  ]
+}
