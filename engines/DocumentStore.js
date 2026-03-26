@@ -139,6 +139,31 @@
     },
   });
 
+  function syncViewsAfterHistoryChange() {
+    if (typeof SectionEngine !== 'undefined' && typeof SectionEngine.render === 'function') {
+      SectionEngine.render();
+    }
+    if (typeof _canonicalCanvasWriter === 'function') {
+      _canonicalCanvasWriter().renderAll();
+    } else if (typeof CanvasLayoutEngine !== 'undefined' && typeof CanvasLayoutEngine.renderAll === 'function') {
+      CanvasLayoutEngine.renderAll();
+    }
+    if (state.previewMode && typeof _canonicalPreviewWriter === 'function') {
+      _canonicalPreviewWriter().refresh();
+    } else if (state.previewMode && typeof PreviewEngineV19 !== 'undefined' && typeof PreviewEngineV19.refresh === 'function') {
+      PreviewEngineV19.refresh();
+    }
+    if (typeof SelectionEngine !== 'undefined' && typeof SelectionEngine.renderHandles === 'function') {
+      SelectionEngine.renderHandles();
+    }
+    if (typeof PropertiesEngine !== 'undefined' && typeof PropertiesEngine.render === 'function') {
+      PropertiesEngine.render();
+    }
+    if (typeof FormatEngine !== 'undefined' && typeof FormatEngine.updateToolbar === 'function') {
+      FormatEngine.updateToolbar();
+    }
+  }
+
   const actions = {
     subscribe(fn) { state._subs.push(fn); },
     notify() { state._subs.forEach((fn) => fn(api)); },
@@ -161,6 +186,7 @@
       state.elements = snapshot.elements;
       state.selection.clear();
       actions.notify();
+      syncViewsAfterHistoryChange();
     },
     redo() {
       if (state.historyIndex >= state.history.length - 1) return;
@@ -170,6 +196,7 @@
       state.elements = snapshot.elements;
       state.selection.clear();
       actions.notify();
+      syncViewsAfterHistoryChange();
     },
     _updateUndoRedo() {
       const undoButton = global.document && global.document.getElementById('btn-undo');

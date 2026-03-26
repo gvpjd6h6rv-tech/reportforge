@@ -26,6 +26,18 @@ function assertZoomContract(source) {
   if (guards && typeof DS !== 'undefined') guards.assertZoomContract(DS.zoom, source);
 }
 
+function _selectedElementsFromIds(ids) {
+  return (ids || []).map(id => DS.getElementById(id)).filter(Boolean);
+}
+
+function _resolveRenderSelectionIds(engine, selectedIds) {
+  const drag = engine && engine._drag ? engine._drag : null;
+  if (drag && drag.type === 'move' && Array.isArray(drag.subjectIds) && drag.subjectIds.length > 1) {
+    return [...drag.subjectIds];
+  }
+  return [...(selectedIds || [])];
+}
+
 const AlignEngine = {
   alignLeft()   { if(typeof CommandEngine!=='undefined') CommandEngine.alignLefts?.();   else this._fallback('left');   DS.saveHistory(); },
   alignRight()  { if(typeof CommandEngine!=='undefined') CommandEngine.alignRights?.();  else this._fallback('right');  DS.saveHistory(); },
@@ -153,11 +165,13 @@ const SelectionEngine = {
     PropertiesEngine.render();
     FormatEngine.updateToolbar();
     const canvasPos = getCanvasPos(e);
+    const selectedElements = DS.getSelectedElements();
     this._drag = {
       type:'move',
       startX: canvasPos.x,
       startY: canvasPos.y,
-      startPositions: DS.getSelectedElements().map(el=>({id:el.id,x:el.x,y:el.y,sectionId:el.sectionId,sectionTop:DS.getSectionTop(el.sectionId)})),
+      subjectIds: selectedElements.map(el=>el.id),
+      startPositions: selectedElements.map(el=>({id:el.id,x:el.x,y:el.y,sectionId:el.sectionId,sectionTop:DS.getSectionTop(el.sectionId)})),
       moved: false,
     };
   },
@@ -249,9 +263,20 @@ const SelectionEngine = {
     document.querySelectorAll('.cr-element').forEach(d=>{
       d.classList.toggle('selected',DS.isSelected(d.dataset.id));
     });
-    if(DS.selection.size===0) return;
-    if(DS.selection.size===1){
-      const id=[...DS.selection][0];
+    const selectedIds=[...DS.selection];
+    const renderSelectionIds=_resolveRenderSelectionIds(this, selectedIds);
+    const selectedElements=_selectedElementsFromIds(renderSelectionIds);
+    const branch=renderSelectionIds.length===0 ? 'none' : (renderSelectionIds.length===1 ? 'single' : 'multi');
+    if (Array.isArray(window.__rfBranchAudit)) {
+      window.__rfBranchAudit.push({
+        branch,
+        selectedIds,
+        renderSelectionIds: [...renderSelectionIds],
+      });
+    }
+    if(branch==='none') return;
+    if(branch==='single'){
+      const id=renderSelectionIds[0];
       const el=DS.getElementById(id);if(!el)return;
       assertLayoutContract(el, 'SelectionEngine.renderHandles.layout');
       const rect=this._selectionRect(el);
@@ -284,7 +309,7 @@ const SelectionEngine = {
       });
     } else {
       let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
-      DS.getSelectedElements().forEach(el=>{
+      selectedElements.forEach(el=>{
         assertLayoutContract(el, 'SelectionEngine.renderHandles.multi');
         const rect=this._selectionRect(el);
         assertRectShape(rect, 'SelectionEngine.renderHandles.multi.rect');

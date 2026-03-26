@@ -49,6 +49,7 @@ const ClipboardEngine = (() => {
       el.x  = src.x + PASTE_OFFSET;
       el.y  = src.y + PASTE_OFFSET;
       DS.elements.push(el);
+      if (typeof _canonicalCanvasWriter === 'function') _canonicalCanvasWriter().renderElement(el);
       newIds.push(el.id);
     });
 
@@ -56,12 +57,13 @@ const ClipboardEngine = (() => {
     _clipboard.forEach(el => { el.x += PASTE_OFFSET; el.y += PASTE_OFFSET; });
 
     // Re-render and select new elements
-    if (typeof CanvasLayoutEngine !== 'undefined') CanvasLayoutEngine.update();
     if (typeof SelectionEngine !== 'undefined') {
       DS.clearSelectionState();
       newIds.forEach(id => DS.addSelection(id));
       SelectionEngine.renderHandles();
     }
+    if (typeof PropertiesEngine !== 'undefined') PropertiesEngine.render();
+    if (typeof FormatEngine !== 'undefined') FormatEngine.updateToolbar();
     if (typeof DS.saveHistory === 'function') DS.saveHistory();
     return newIds;
   }
