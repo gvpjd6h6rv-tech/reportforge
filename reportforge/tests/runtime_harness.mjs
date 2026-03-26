@@ -14,6 +14,7 @@ const ARTIFACTS_DIR = path.join(__dirname, 'artifacts');
 const DEFAULT_PORT = 19991;
 const BROWSER_TYPES = { chromium, firefox, webkit };
 let browserAvailabilityCache = null;
+const COMMON_BROWSER_ARGS = ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'];
 const BROWSER_EXECUTABLE_CANDIDATES = {
   chromium: ['/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable'],
   firefox: ['/usr/bin/firefox', '/usr/bin/firefox-esr'],
@@ -127,7 +128,7 @@ async function resolveBrowserLaunch(browserName) {
   const systemCandidates = await detectSystemCandidates(browserName);
   const managedProbe = await probeBrowserLaunch(browserType, {
     headless: true,
-    args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
+    args: browserLaunchArgs(browserName),
   });
   if (managedProbe.ok) {
     const result = {
@@ -142,7 +143,7 @@ async function resolveBrowserLaunch(browserName) {
       launchSource: 'playwright-managed',
       launchOptions: {
         headless: true,
-        args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
+        args: browserLaunchArgs(browserName),
       },
       executablePath: null,
       available: true,
@@ -157,7 +158,7 @@ async function resolveBrowserLaunch(browserName) {
     const probe = await probeBrowserLaunch(browserType, {
       headless: true,
       executablePath: candidate.path,
-      args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
+      args: browserLaunchArgs(browserName),
     });
     if (probe.ok) {
       fallbackResult = {
@@ -173,7 +174,7 @@ async function resolveBrowserLaunch(browserName) {
         launchOptions: {
           headless: true,
           executablePath: candidate.path,
-          args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
+          args: browserLaunchArgs(browserName),
         },
         executablePath: candidate.path,
         available: true,
@@ -250,6 +251,11 @@ async function probeBrowserLaunch(browserType, options) {
     }
   }
   return { ok: false, error: lastError ? lastError.message : 'unknown launch failure' };
+}
+
+function browserLaunchArgs(browserName) {
+  if (browserName === 'webkit') return [];
+  return [...COMMON_BROWSER_ARGS];
 }
 
 export async function clearSelectionByCanvasClick(page) {
