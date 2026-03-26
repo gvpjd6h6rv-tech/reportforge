@@ -178,6 +178,44 @@ export function suggestAssertionsFromSession(session) {
   return assertions;
 }
 
+// ---------------------------------------------------------------------------
+// Session quality gate: fingerprinting + duplicate detection
+// ---------------------------------------------------------------------------
+
+export function computeSessionFingerprint(session) {
+  const actions = session.actions || [];
+  // Action type sequence (e.g. "click,key,key,key,mode") is the main structural signal.
+  const typeSeq = actions.map((a) => a.type).join(',');
+  const pasteCount = actions.filter((a) => a.type === 'key' && String(a.key).toLowerCase() === 'control+v').length;
+  const undoRedoCount = actions.filter((a) => a.type === 'key' && ['control+z', 'control+y'].includes(String(a.key).toLowerCase())).length;
+  const zoomValues = actions.filter((a) => a.type === 'zoom').map((a) => a.value).sort().join(',');
+  const modeCount = actions.filter((a) => a.type === 'mode').length;
+  return { typeSeq, pasteCount, undoRedoCount, zoomValues, modeCount };
+}
+
+export function detectSessionDuplicates(sessions = []) {
+  // Two sessions are considered duplicates when they share the same action type sequence,
+  // paste count, undo/redo count, zoom values, and mode switch count. Different text
+  // targets or wait times do not differentiate sessions structurally.
+  const annotated = sessions.map((s) => ({
+    name: s.meta?.name || '(unnamed)',
+    fingerprint: computeSessionFingerprint(s),
+    labels: autoLabelSession(s),
+  }));
+  const duplicates = [];
+  for (let i = 0; i < annotated.length; i += 1) {
+    for (let j = i + 1; j < annotated.length; j += 1) {
+      const a = annotated[i];
+      const b = annotated[j];
+      const fp = (x) => JSON.stringify(x.fingerprint);
+      if (fp(a) === fp(b)) {
+        duplicates.push({ a: a.name, b: b.name, reason: 'identical action fingerprint' });
+      }
+    }
+  }
+  return { sessions: annotated, duplicates };
+}
+
 export async function saveRecordedSession(filePath, session) {
   await fs.mkdir(path.dirname(filePath), { recursive: true });
   await fs.writeFile(filePath, JSON.stringify(session, null, 2));

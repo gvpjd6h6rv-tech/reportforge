@@ -7,65 +7,173 @@ Objetivo: reproducir síntomas visibles reales del usuario y comparar automátic
 - render en Preview (`#preview-content .pv-el`)
 - síntoma visual observable (`sel-box`, clones visibles, overlay)
 
-Reglas:
+## Reglas
 
 1. Un bug de UI no queda cerrado sin regresión automática del síntoma visible.
 2. Pasar invariants internas no basta si el síntoma humano no queda cubierto.
 3. Si smoke manual falla, el bug sigue abierto aunque esta suite pase.
 4. La prioridad es paridad observable, no detalles internos aislados.
 
-Capas:
+---
 
-- `helpers.mjs`: helpers de user-flow + paridad + snapshots temporales
-- helpers de composición visible: bbox real, hit-testing, clipping, frame snapshots
-- `*_user_parity.test.mjs`: regresiones permanentes por flujo real
-- `reporting.mjs`: score de flujo, score de entorno y matriz de cobertura por navegador
-- `session_tools.mjs`: base de record/replay/promoción desde sesiones reales
+## Qué cubre el sistema hoy
 
-Browsers:
+| Capa | Qué mide | Dónde |
+|---|---|---|
+| Parity (model/design/preview) | IDs visibles == IDs en modelo | todos los tests |
+| Geometry | bounding rects no degenerados | `collectElementVisibility` |
+| Visibility | display, opacity, viewport | `visibilitySignal` |
+| Hit-testing | `elementFromPoint` alcanza el elemento | `hitTestingSignal` |
+| Oclusión sutil | 9 puntos (center+quadrants+edges) → occludedRatio | `measureOcclusionDetail` |
+| Separación visual | minGapPx, maxOverlapRatio, collapseRisk | `cloneSeparationQuality` |
+| Clipping | visibleRatio vs clip ancestors | `clippingSignal` |
+| Stacking | proxy via hit-testing | `hitTestingSignal` |
+| Temporal stability | frames consecutivos, jitterScore, frameDropDetected | `computeMicroJitterScore` |
+| Legibility | contrast ratio + font size | `legibilitySignal` |
+| Cross-browser | chromium + firefox + webkit | tests con `getBrowserAvailability` |
+| Session replay | corpus de sesiones promovidas → parity + composition | `session_replay_user_parity.test.mjs` |
+| Flaky detection | 2 iteraciones del mismo flow → variación de jitter | `flaky_detection_user_parity.test.mjs` |
 
-- distinguir siempre:
-  - browser detectado en sistema
-  - browser usable por Playwright
-  - browser realmente ejecutado en la suite
-  - browser bloqueado por config/binario
-- no reclamar cobertura cross-browser si el engine no fue ejercitado
+## Qué NO cubre
 
-Promotion policy:
+- Oclusión por `clip-path` no ortogonal o `transform` 3D
+- Rendering diferencial real (pixel diff) — solo se miden posiciones y hit-testing
+- Separación semántica (mismo texto visual en IDs distintos)
+- Handles fuera del `se` en multi-selección simultánea
+- Multiselect con Shift+click (no soportado en formato de sesión actual)
+- Temporal drift intra-frame durante transiciones de zoom (solo estado final)
+- Sesiones con elementos en posición extrema del canvas (fuera de viewport visible)
+- Scores cross-browser para session replay (corre solo en chromium)
 
-Cada test nuevo debe declarar o implicar:
+---
 
-- qué bug histórico o riesgo cubre
-- qué capa añade:
-  - parity
-  - geometry
-  - clipping
-  - stacking
-  - temporal
-  - visual diff
-- qué parte del smoke manual reemplaza
-- qué límites mantiene
+## Cómo añadir una sesión
 
-Session pipeline:
+### 1. Crear el JSON en `sessions/`
 
-1. `record`
-2. `auto-label`
-3. `minimize/promote`
-4. `replay`
-5. `assert parity + visual confidence`
+```json
+{
+  "schemaVersion": 1,
+  "meta": {
+    "name": "nombre-descriptivo-con-guiones",
+    "source": "promoted-from-real-flow",
+    "bugRisk": "qué bug o síntoma visual cubre",
+    "covers": ["label_principal", "fine-composition"]
+  },
+  "staticLabels": ["clipboard_flow", "fine-composition"],
+  "actions": [
+    { "type": "click", "target": { "kind": "design-text", "text": "VALOR TOTAL", "nth": 0 }, "afterWaitMs": 120 },
+    { "type": "key", "key": "Control+c", "afterWaitMs": 80 },
+    { "type": "key", "key": "Control+v", "afterWaitMs": 180 }
+  ],
+  "checkpoints": [
+    {
+      "label": "after-paste",
+      "expect": { "textIncludes": "VALOR TOTAL", "modelCount": 2 }
+    }
+  ]
+}
+```
 
-Tests actuales:
+### 2. Tipos de acción soportados
 
-- `clipboard_design_preview_parity.test.mjs`
-- `clipboard_visible_composition_user_parity.test.mjs`
-- `selection_handle_stacking_user_parity.test.mjs`
-- `preview_clipping_user_parity.test.mjs`
-- `multiselect_frame_glitch_user_parity.test.mjs`
-- `multiselect_drag_user_parity.test.mjs`
-- `undo_redo_user_parity.test.mjs`
-- `session_replay_user_parity.test.mjs` (loops all sessions en `sessions/`)
+| tipo | campos obligatorios | notas |
+|---|---|---|
+| `click` | `target` | `kind`: `design-text`, `design-element`, `preview-text`, `preview-element` |
+| `key` | `key` | p.ej. `"Control+c"`, `"Control+v"`, `"Control+z"` |
+| `drag` | `target`, `dx`, `dy` | `anchorX/Y` opcionales, `steps` default 8 |
+| `mode` | `mode` | `"preview"` o `"design"` |
+| `zoom` | `value` | número (p.ej. `1.5`, `0.75`, `1.0`) |
+| `wait` | `ms` | espera explícita |
 
-Sessions promovidas:
+### 3. Criterio de promoción
+
+Una sesión debe cumplir **al menos uno**:
+- Cubre un síntoma visual distinto a las sesiones existentes (ver tabla de sesiones)
+- Añade una combinación nueva (p.ej. zoom + undo, drag + clipboard)
+- Documenta un bug que no tiene regresión automatizada
+
+Una sesión NO debe promocionarse si:
+- Tiene fingerprint idéntico a otra sesión ya existente (el quality gate lo detecta)
+- Solo varía `afterWaitMs` o textos de `target` sin cambiar la secuencia de acciones
+
+### 4. Verificar antes de hacer merge
+
+```sh
+node --test tests/user_parity/session_replay_user_parity.test.mjs
+```
+
+Comprobar en el output:
+- `SESSION QUALITY GATE: N sessions, no structural duplicates`
+- `ok` en cada `session:tu-nueva-sesion`
+- No hay `SCORE QUALITY WARNING` severo (si aparece, revisar si la sesión mide algo real)
+
+---
+
+## Cómo interpretar fallos
+
+### Formato del error
+
+Los fallos incluyen siempre el patrón:
+```
+<label>: <qué falló> — <datos concretos>
+```
+
+Ejemplos:
+```
+clipboard clones occlusion: critical occlusion detected [{"id":"e142","occlusionLevel":"total","occludedRatio":1,"topOccludingNodes":[...]}]
+multiselect drag separation browser=chromium: visual collapse (>90% overlap) minGapPx=0 maxOverlapRatio=0.95 pairs=[...]
+undo redo: frame drop detected {"jitterScore":0.5,"frameDropDetected":true,...}
+session:full_undo_redo_cycle: design IDs must equal model IDs
+```
+
+### Por tipo de señal
+
+| Señal | Qué significa cuando falla |
+|---|---|
+| `modelParity` / `designParity` | IDs en modelo ≠ IDs en DOM — el render no refleja el estado |
+| `hitTesting` | `elementFromPoint` no alcanza el elemento — tapado por otra capa |
+| `subtleOcclusion` | occludedRatio alto — elemento visible pero funcionalmente tapado |
+| `cloneSeparation` | `collapseRisk=critical` — elementos casi totalmente superpuestos |
+| `temporalStability` | overlay o IDs desaparecen en algún frame intermedio |
+| `frameDropDetected` | el overlay se renderiza como nodo inexistente en algún frame |
+| `jitterScore >= 0.02` | movimiento inesperado del overlay entre frames consecutivos |
+| `visibleRatio < 0.35` | elemento recortado por clip ancestor > 65% de su área |
+
+### Línea `PARITY SUMMARY`
+
+Cada sesión emite al final:
+```
+PARITY SUMMARY: flow=X | browser=Y | minGapPx=Z | overlapRatio=W | confidence=N | labels=[...] | replaces="..."
+```
+
+El campo `replaces` dice qué check de QA manual cubre esa sesión.
+
+### `SCORE QUALITY WARNING`
+
+Aparece cuando la mayoría de dimensiones del confidence score son `stableSignal` (valor=1 sin medir nada real). No es un fallo — es un aviso de que el score puede ser artificialmente alto en ese test. Las sesiones de replay tienen esto esperado porque no miden todas las dimensiones.
+
+### `UNSTABLE` en flaky detection
+
+Si `flaky_detection_user_parity.test.mjs` emite `UNSTABLE`, significa que la misma operación produjo resultados distintos en dos iteraciones consecutivas. El test no falla por esto, pero es una señal de alerta para investigar timing.
+
+---
+
+## Tests actuales
+
+| Archivo | Flow | Browsers | Señales principales |
+|---|---|---|---|
+| `clipboard_design_preview_parity.test.mjs` | clipboard paste/preview | chromium, firefox, webkit | parity, visibility, hit-testing, occlusion |
+| `clipboard_visible_composition_user_parity.test.mjs` | clipboard visible | chromium, firefox, webkit | parity, occlusion, separation |
+| `multiselect_drag_user_parity.test.mjs` | multiselect drag | chromium, firefox, webkit | overlay stability, jitter, occlusion |
+| `multiselect_frame_glitch_user_parity.test.mjs` | multiselect glitch | chromium | overlay temporal (per-frame) |
+| `undo_redo_user_parity.test.mjs` | undo/redo clipboard | chromium, firefox, webkit | parity, jitter, occlusion |
+| `preview_clipping_user_parity.test.mjs` | preview at zoom 2.0 | chromium | clipping, visibility |
+| `selection_handle_stacking_user_parity.test.mjs` | handle hit-testing | chromium | stacking, handle occlusion |
+| `session_replay_user_parity.test.mjs` | corpus replay | chromium | parity + composition (all sessions) |
+| `flaky_detection_user_parity.test.mjs` | overlay flaky check | chromium | jitter stability (2 iterations) |
+
+## Sessions promovidas
 
 | Sesión | Cubre | Labels |
 |---|---|---|
@@ -76,21 +184,37 @@ Sessions promovidas:
 | `full_undo_redo_cycle` | ciclo completo undo/redo (3+3+3) | clipboard_flow, undo_redo, temporal-glitch |
 | `zoom_transition_paste_composition` | paste a zoom 1.5 + transición de zoom | clipboard_flow, zoom_composition, fine-composition |
 
-Visual confidence score — pesos actuales (recalibrado 2026-03-26):
+## Visual confidence score — pesos actuales
 
-| Dimensión | Peso | Tipo |
-|---|---|---|
-| modelParity | 14 | evidence |
-| designPreviewParity | 14 | evidence |
-| geometry | 10 | evidence |
-| visibility | 10 | evidence |
-| hitTesting | 10 | evidence |
-| temporalStability | 10 | evidence |
-| subtleOcclusion | **10** | evidence (↑ desde 7; ahora 9 puntos de muestreo) |
-| clipping | 8 | evidence |
-| stacking | 8 | evidence |
-| interactionUsability | 8 | heuristic |
-| legibility | **7** | evidence (↓ desde 8; no discrimina en corpus actual) |
-| compositorDivergence | **7** | **evidence** (↑ desde 5 heurístico; 3 browsers medidos) |
-| overlapCollision | **6** | heuristic (↓ desde 8; overlap esperado en paste flows) |
-| crossBrowserStability | **6** | **evidence** (↑ desde 4 heurístico; ID sets estables en 3 browsers) |
+Recalibrado 2026-03-26 con corpus de 4 flows medidos en 3 browsers.
+
+| Dimensión | Peso | Tipo | Notas |
+|---|---|---|---|
+| modelParity | 14 | evidence | |
+| designPreviewParity | 14 | evidence | |
+| geometry | 10 | evidence | |
+| visibility | 10 | evidence | |
+| hitTesting | 10 | evidence | |
+| temporalStability | 10 | evidence | |
+| subtleOcclusion | **10** | evidence | ↑ desde 7; ahora 9 puntos de muestreo |
+| clipping | 8 | evidence | |
+| stacking | 8 | evidence | |
+| interactionUsability | 8 | heuristic | threshold 30% arbitrario |
+| legibility | **7** | evidence | ↓ desde 8; no discrimina en corpus actual |
+| compositorDivergence | **7** | **evidence** | ↑ desde 5 heurístico; spread <2pt en 3 browsers |
+| overlapCollision | **6** | heuristic | ↓ desde 8; overlap en paste flows es esperado |
+| crossBrowserStability | **6** | **evidence** | ↑ desde 4 heurístico; ID sets estables confirmados |
+
+## Capas de código
+
+- `helpers.mjs`: collectors, signals, assertions de composición
+- `reporting.mjs`: `formatFlowSummary`, `computeFlakinessBand`, `assessScoreQuality`, coverage matrix
+- `session_tools.mjs`: record/replay/label/fingerprint/duplicate detection
+- `sessions/`: corpus de sesiones promovidas (`.session.json`)
+- `*_user_parity.test.mjs`: regresiones permanentes por flujo real
+
+## Session pipeline
+
+```
+record → auto-label → quality gate (fingerprint + duplicates) → replay → assert parity + composition → PARITY SUMMARY
+```

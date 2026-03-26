@@ -59,6 +59,85 @@ export function combineConfidenceScores(flowScore, environmentScore, options = {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Flow summary formatter — produces one readable diagnostic line per test run
+// ---------------------------------------------------------------------------
+
+export function formatFlowSummary(options = {}) {
+  const {
+    flow,
+    browser = null,
+    occludedRatio = null,
+    minGapPx = null,
+    maxOverlapRatio = null,
+    jitterScore = null,
+    collapseRisk = null,
+    labels = [],
+    replacesManualCheck = null,
+    confidenceScore = null,
+  } = options;
+  const parts = [`flow=${flow}`];
+  if (browser) parts.push(`browser=${browser}`);
+  if (occludedRatio !== null) parts.push(`occludedRatio=${Math.round(occludedRatio * 100)}%`);
+  if (minGapPx !== null) parts.push(`minGapPx=${minGapPx}`);
+  if (maxOverlapRatio !== null) parts.push(`overlapRatio=${maxOverlapRatio}`);
+  if (jitterScore !== null) parts.push(`jitter=${jitterScore}`);
+  if (collapseRisk) parts.push(`collapse=${collapseRisk}`);
+  if (confidenceScore !== null) parts.push(`confidence=${confidenceScore}`);
+  if (labels.length) parts.push(`labels=[${labels.join(',')}]`);
+  if (replacesManualCheck) parts.push(`replaces="${replacesManualCheck}"`);
+  return `PARITY SUMMARY: ${parts.join(' | ')}`;
+}
+
+// ---------------------------------------------------------------------------
+// Flakiness band: detects variation across repeated runs of the same signal
+// ---------------------------------------------------------------------------
+
+export function computeFlakinessBand(measurements = [], options = {}) {
+  const { warnThreshold = 0.05 } = options;
+  if (measurements.length < 2) {
+    return { stable: true, spread: 0, mean: measurements[0] ?? 0, min: measurements[0] ?? 0, max: measurements[0] ?? 0, warnLevel: 'none', values: measurements };
+  }
+  const min = Math.min(...measurements);
+  const max = Math.max(...measurements);
+  const spread = max - min;
+  const mean = measurements.reduce((s, v) => s + v, 0) / measurements.length;
+  const stable = spread <= warnThreshold;
+  return {
+    stable,
+    spread: Math.round(spread * 1000) / 1000,
+    mean: Math.round(mean * 1000) / 1000,
+    min,
+    max,
+    warnLevel: stable ? 'none' : (spread > warnThreshold * 3 ? 'high' : 'medium'),
+    values: measurements,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Score quality check: warns when score passes trivially (too many stableSignals)
+// ---------------------------------------------------------------------------
+
+export function assessScoreQuality(confidenceResult, options = {}) {
+  // A score backed mostly by stableSignal (value=1, no real evidence) is not meaningful.
+  // We detect this by counting dimensions at exactly 100 in the breakdown — these are
+  // almost always stableSignals since real signals rarely land at a perfect 100.
+  const { saturatedWarnRatio = 0.7 } = options;
+  if (!confidenceResult?.breakdown) return { quality: 'unknown', warning: null, saturatedRatio: null };
+  const dims = Object.values(confidenceResult.breakdown);
+  const saturated = dims.filter((d) => d.score >= 99.9).length;
+  const total = dims.length;
+  const saturatedRatio = total > 0 ? saturated / total : 0;
+  if (saturatedRatio >= saturatedWarnRatio) {
+    return {
+      quality: 'warning',
+      warning: `${saturated}/${total} dimensions at 100% — score may be inflated by stableSignal usage`,
+      saturatedRatio: Math.round(saturatedRatio * 100),
+    };
+  }
+  return { quality: 'ok', warning: null, saturatedRatio: Math.round(saturatedRatio * 100) };
+}
+
 export function buildCoverageMatrix(categoryRuns = {}, availability = {}, targetBrowsers = ['chromium', 'firefox', 'webkit']) {
   const matrix = {};
   for (const [category, exercisedBrowsers] of Object.entries(categoryRuns)) {

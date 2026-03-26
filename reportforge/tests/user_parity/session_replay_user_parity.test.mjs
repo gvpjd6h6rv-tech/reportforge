@@ -26,7 +26,12 @@ import {
   loadRecordedSession,
   autoLabelSession,
   replayRecordedSession,
+  detectSessionDuplicates,
 } from './session_tools.mjs';
+import {
+  formatFlowSummary,
+  assessScoreQuality,
+} from './reporting.mjs';
 
 const SESSIONS_DIR = path.join(path.dirname(new URL(import.meta.url).pathname), 'sessions');
 
@@ -39,6 +44,17 @@ test('USER-PARITY session corpus replay verifies fine composition across all pro
       .sort();
 
     assert.ok(files.length > 0, `no session files found in ${SESSIONS_DIR}`);
+
+    // Session quality gate: warn about structural duplicates before running anything
+    const allSessions = await Promise.all(
+      files.map((f) => loadRecordedSession(path.join(SESSIONS_DIR, f))),
+    );
+    const { duplicates } = detectSessionDuplicates(allSessions);
+    if (duplicates.length > 0) {
+      t.diagnostic(`SESSION QUALITY GATE: ${duplicates.length} duplicate(s) detected — ${JSON.stringify(duplicates)}`);
+    } else {
+      t.diagnostic(`SESSION QUALITY GATE: ${files.length} sessions, no structural duplicates`);
+    }
 
     for (const file of files) {
       const basename = file.replace('.session.json', '');
@@ -140,7 +156,23 @@ test('USER-PARITY session corpus replay verifies fine composition across all pro
           });
 
           assertVisualConfidence(confidence, { min: 90 });
-          t.diagnostic(`session=${basename} confidence=${confidence.score}`);
+
+          // Score quality: warn if score is backed mostly by stableSignals
+          const scoreQuality = assessScoreQuality(confidence);
+          if (scoreQuality.warning) {
+            t.diagnostic(`SCORE QUALITY WARNING: session=${basename} ${scoreQuality.warning}`);
+          }
+
+          t.diagnostic(formatFlowSummary({
+            flow: session.meta?.covers?.[0] || basename,
+            browser: 'chromium',
+            minGapPx: sepQuality.minGapPx,
+            maxOverlapRatio: sepQuality.maxOverlapRatio,
+            collapseRisk: sepQuality.collapseRisk,
+            labels: autoLabelSession(session),
+            confidenceScore: confidence.score,
+            replacesManualCheck: session.meta?.bugRisk || null,
+          }));
 
           await assertNoConsoleErrors(consoleErrors, `USER-PARITY session replay ${basename}`);
         } finally {
