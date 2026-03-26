@@ -243,6 +243,26 @@ export async function collectElementVisibility(page, options = {}) {
       };
     });
 
+    const quadrantPoints = rect.width > 4 && rect.height > 4 ? [
+      { quadrant: 'tl', x: rect.left + rect.width * 0.25, y: rect.top + rect.height * 0.25 },
+      { quadrant: 'tr', x: rect.left + rect.width * 0.75, y: rect.top + rect.height * 0.25 },
+      { quadrant: 'bl', x: rect.left + rect.width * 0.25, y: rect.top + rect.height * 0.75 },
+      { quadrant: 'br', x: rect.left + rect.width * 0.75, y: rect.top + rect.height * 0.75 },
+    ].filter((p) => p.x >= 0 && p.y >= 0 && p.x < window.innerWidth && p.y < window.innerHeight) : [];
+    const quadrantHits = inViewport ? quadrantPoints.map((p) => {
+      const hit = document.elementFromPoint(p.x, p.y);
+      return {
+        quadrant: p.quadrant,
+        hit: hit ? {
+          tag: hit.tagName || null,
+          id: hit.id || null,
+          className: typeof hit.className === 'string' ? hit.className : null,
+          datasetId: hit.dataset?.id || null,
+          datasetOriginId: hit.dataset?.originId || null,
+        } : null,
+      };
+    }) : [];
+
     const parentChain = [];
     let cur = node;
     while (cur && cur.nodeType === Node.ELEMENT_NODE && parentChain.length < 6) {
@@ -347,6 +367,7 @@ export async function collectElementVisibility(page, options = {}) {
       },
       centerHit: describePointHit(elementFromCenter),
       centerStack: elementsFromCenter.slice(0, 5).map(describePointHit),
+      quadrantHits,
       edgeHits,
       parentChain,
       clipAncestors,
@@ -1091,4 +1112,137 @@ export async function dragSelectedWithSnapshots(page, options = {}) {
   await page.mouse.up();
   await page.waitForTimeout(150);
   return snapshots;
+}
+
+// ---------------------------------------------------------------------------
+// Fine composition: detailed occlusion measurement
+// ---------------------------------------------------------------------------
+
+export function measureOcclusionDetail(entry) {
+  if (!entry || !entry.exists) {
+    return { selfHitRatio: 0, occludedRatio: 1, occlusionLevel: 'total', topOccludingNodes: [] };
+  }
+  const matchesSelf = (hit) => hit && (
+    (entry.mode === 'preview' && hit.datasetOriginId === entry.id)
+    || (entry.mode !== 'preview' && hit.datasetId === entry.id)
+  );
+  // center + quadrants (new) + edges = up to 9 points
+  const allPoints = [
+    { point: 'center', hit: entry.centerHit },
+    ...(entry.quadrantHits || []).map((qh) => ({ point: `q:${qh.quadrant}`, hit: qh.hit })),
+    ...(entry.edgeHits || []).map((eh) => ({ point: `edge:${eh.point}`, hit: eh.hit })),
+  ];
+  if (allPoints.length === 0) {
+    return { selfHitRatio: 1, occludedRatio: 0, occlusionLevel: 'none', topOccludingNodes: [] };
+  }
+  const selfCount = allPoints.filter((item) => matchesSelf(item.hit)).length;
+  const selfHitRatio = selfCount / allPoints.length;
+  const occludedRatio = 1 - selfHitRatio;
+  let occlusionLevel;
+  if (selfHitRatio >= 0.8) occlusionLevel = 'none';
+  else if (selfHitRatio >= 0.3) occlusionLevel = 'partial';
+  else if (selfHitRatio > 0) occlusionLevel = 'functional';
+  else occlusionLevel = 'total';
+  const seen = new Set();
+  const topOccludingNodes = allPoints
+    .filter((item) => item.hit && !matchesSelf(item.hit))
+    .map((item) => item.hit)
+    .filter((node) => {
+      const key = `${node.tag}#${node.id || ''}.${node.datasetId || ''}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, 3);
+  return { selfHitRatio, occludedRatio, occlusionLevel, topOccludingNodes };
+}
+
+// ---------------------------------------------------------------------------
+// Fine composition: visual separation quality between a set of elements
+// ---------------------------------------------------------------------------
+
+export function cloneSeparationQuality(entries = []) {
+  const valid = entries.filter((e) => e.exists && e.rect);
+  if (valid.length < 2) {
+    return { minGapPx: null, maxOverlapRatio: 0, separationScore: 1, collapseRisk: 'low', pairs: [] };
+  }
+  const sepPairs = computeSeparationPairs(valid);
+  const ovlPairs = computeOverlapPairs(valid);
+  const minGapPx = sepPairs.length ? Math.min(...sepPairs.map((p) => p.gap)) : null;
+  const maxOverlapRatio = ovlPairs.length ? Math.max(...ovlPairs.map((p) => p.overlapRatio)) : 0;
+  // normalize gap to 4px for score; collapse only when nearly fully stacked
+  const gapScore = minGapPx == null ? 1 : clamp01(minGapPx / 4);
+  const overlapScore = clamp01(1 - maxOverlapRatio);
+  const separationScore = Math.min(gapScore, overlapScore);
+  let collapseRisk;
+  if (maxOverlapRatio > 0.9) collapseRisk = 'critical';             // bboxes nearly identical → true collapse
+  else if ((minGapPx != null && minGapPx < 1) || maxOverlapRatio > 0.5) collapseRisk = 'high';  // touching/heavy overlap
+  else collapseRisk = 'low';
+  return {
+    minGapPx: minGapPx != null ? Math.round(minGapPx * 10) / 10 : null,
+    maxOverlapRatio: Math.round(maxOverlapRatio * 1000) / 1000,
+    separationScore,
+    collapseRisk,
+    pairs: sepPairs.slice(0, 10),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Fine composition: assertions
+// ---------------------------------------------------------------------------
+
+export function assertNoCriticalOcclusion(entries = [], label, options = {}) {
+  // maxOccludedRatio: fail if element has more than this fraction of its sampling points occluded
+  // (default 0.9 = 90% → only fully unreachable elements; use lower threshold for stricter flows)
+  const { maxOccludedRatio = 0.9 } = options;
+  const offenders = entries
+    .filter((e) => e.exists)
+    .map((e) => ({ id: e.id, detail: measureOcclusionDetail(e) }))
+    .filter(({ detail }) =>
+      detail.occlusionLevel === 'total'
+      || detail.occludedRatio > maxOccludedRatio,
+    );
+  assert.equal(
+    offenders.length,
+    0,
+    `${label}: critical occlusion detected ${JSON.stringify(offenders.map(({ id, detail }) => ({
+      id,
+      occlusionLevel: detail.occlusionLevel,
+      occludedRatio: Math.round(detail.occludedRatio * 100) / 100,
+      topOccludingNodes: detail.topOccludingNodes,
+    })))}`,
+  );
+}
+
+export function assertCloneSeparation(entries = [], label, options = {}) {
+  // minGapPx: when > 0, also enforces explicit gap threshold beyond collapse detection
+  const { minGapPx = 0 } = options;
+  const quality = cloneSeparationQuality(entries);
+  if (quality.collapseRisk === 'critical') {
+    assert.fail(
+      `${label}: visual collapse (>90% overlap) minGapPx=${quality.minGapPx} maxOverlapRatio=${quality.maxOverlapRatio} pairs=${JSON.stringify(quality.pairs)}`,
+    );
+  }
+  if (minGapPx > 0 && quality.minGapPx != null) {
+    assert.ok(
+      quality.minGapPx >= minGapPx,
+      `${label}: clone separation below threshold; minGapPx=${quality.minGapPx} required=${minGapPx} maxOverlapRatio=${quality.maxOverlapRatio}`,
+    );
+  }
+}
+
+export function assertHandleNotOccluded(info, label) {
+  assert.ok(info && info.exists, `${label}: handle element missing`);
+  const hit = info.centerHit;
+  const isInteractable = hit && (
+    hit.className?.includes('sel-handle')
+    || hit.className?.includes('sel-box')
+    || hit.datasetPos != null
+  );
+  if (!isInteractable) {
+    const occludingNode = info.centerStack?.[0];
+    assert.fail(
+      `${label}: handle functionally occluded by ${JSON.stringify(occludingNode)}; stack=${JSON.stringify(info.centerStack?.slice(0, 3))}`,
+    );
+  }
 }

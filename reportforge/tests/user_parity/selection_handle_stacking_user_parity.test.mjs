@@ -10,6 +10,7 @@ import {
 import {
   collectSelectorVisibility,
   assertSelectorHitTestable,
+  assertHandleNotOccluded,
 } from './helpers.mjs';
 
 test('USER-PARITY single-selection resize handle stays visible and not occluded by unexpected stacking', { timeout: 120000 }, async () => {
@@ -31,6 +32,7 @@ test('USER-PARITY single-selection resize handle stays visible and not occluded 
       'selection handle stacking',
       (hit) => hit.className?.includes('sel-handle') && hit.datasetPos === 'se',
     );
+    assertHandleNotOccluded(handleInfo, 'selection handle occlusion');
 
     await assertNoConsoleErrors(consoleErrors, 'USER-PARITY selection handle stacking');
   } finally {

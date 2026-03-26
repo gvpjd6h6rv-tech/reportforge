@@ -33,6 +33,10 @@ import {
   subtleOcclusionSignal,
   compositorDivergenceSignal,
   crossBrowserStabilitySignal,
+  measureOcclusionDetail,
+  cloneSeparationQuality,
+  assertNoCriticalOcclusion,
+  assertCloneSeparation,
 } from './helpers.mjs';
 
 test('USER-PARITY undo redo preserves visible parity after user-visible clipboard changes', { timeout: 180000 }, async (t) => {
@@ -114,6 +118,15 @@ test('USER-PARITY undo redo preserves visible parity after user-visible clipboar
     const designHitMaps = await Promise.all(
       afterRedo.modelIds.map((id) => collectHitMap(page, { id, mode: 'design', grid: 3 })),
     );
+
+    assertNoCriticalOcclusion(designEntries, `undo/redo occlusion browser=${browserName}`);
+    assertCloneSeparation(designEntries, `undo/redo separation browser=${browserName}`);
+    const sepQuality = cloneSeparationQuality(designEntries);
+    t.diagnostic(`browser=${browserName} flow=undo-redo minGapPx=${sepQuality.minGapPx} maxOverlapRatio=${sepQuality.maxOverlapRatio} collapseRisk=${sepQuality.collapseRisk}`);
+    for (const entry of designEntries) {
+      const occ = measureOcclusionDetail(entry);
+      t.diagnostic(`browser=${browserName} id=${entry.id}: occludedRatio=${Math.round(occ.occludedRatio * 100)}% level=${occ.occlusionLevel} topOccluding=${JSON.stringify(occ.topOccludingNodes)}`);
+    }
 
     await enterPreview(page);
     await page.waitForTimeout(220);

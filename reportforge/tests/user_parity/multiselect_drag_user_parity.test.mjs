@@ -31,6 +31,10 @@ import {
   crossBrowserStabilitySignal,
   computeVisualConfidenceScore,
   assertVisualConfidence,
+  measureOcclusionDetail,
+  cloneSeparationQuality,
+  assertNoCriticalOcclusion,
+  assertCloneSeparation,
 } from './helpers.mjs';
 
 test('USER-PARITY multiselect drag keeps visible overlay and selection stable', { timeout: 180000 }, async (t) => {
@@ -85,6 +89,16 @@ test('USER-PARITY multiselect drag keeps visible overlay and selection stable', 
     const designHitMaps = await Promise.all(
       before.selection.map((id) => collectHitMap(page, { id, mode: 'design', grid: 3 })),
     );
+
+    assertNoCriticalOcclusion(designEntries, `multiselect drag occlusion browser=${browserName}`);
+    assertCloneSeparation(designEntries, `multiselect drag separation browser=${browserName}`, { minGapPx: 4 });
+    const sepQuality = cloneSeparationQuality(designEntries);
+    t.diagnostic(`browser=${browserName} flow=multiselect-drag minGapPx=${sepQuality.minGapPx} maxOverlapRatio=${sepQuality.maxOverlapRatio} collapseRisk=${sepQuality.collapseRisk}`);
+    for (const entry of designEntries) {
+      const occ = measureOcclusionDetail(entry);
+      t.diagnostic(`browser=${browserName} id=${entry.id}: occludedRatio=${Math.round(occ.occludedRatio * 100)}% level=${occ.occlusionLevel} topOccluding=${JSON.stringify(occ.topOccludingNodes)}`);
+    }
+
     const overlayFrames = await captureTemporalFrames(page, '#handles-layer .sel-box', {
       phasePrefix: 'overlay',
       microtasks: 2,

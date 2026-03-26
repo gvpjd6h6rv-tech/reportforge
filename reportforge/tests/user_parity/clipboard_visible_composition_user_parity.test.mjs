@@ -14,9 +14,13 @@ import {
   assertPreviewParity,
   assertVisibleCompositionParity,
   assertElementActuallyVisible,
+  measureOcclusionDetail,
+  cloneSeparationQuality,
+  assertNoCriticalOcclusion,
+  assertCloneSeparation,
 } from './helpers.mjs';
 
-test('USER-PARITY clipboard clones are not just present, but actually visible and hit-testable', { timeout: 180000 }, async () => {
+test('USER-PARITY clipboard clones are not just present, but actually visible and hit-testable', { timeout: 180000 }, async (t) => {
   const server = await startRuntimeServer();
   const { browser, page, consoleErrors } = await launchRuntimePage(server.baseUrl);
 
@@ -44,6 +48,15 @@ test('USER-PARITY clipboard clones are not just present, but actually visible an
       designState.modelIds.map((id) => collectElementVisibility(page, { id, mode: 'design' })),
     );
     assertVisibleCompositionParity(designVisibility, 'clipboard clones design composition');
+    assertNoCriticalOcclusion(designVisibility, 'clipboard clones occlusion', { maxOccludedRatio: 0.7 });
+    assertCloneSeparation(designVisibility, 'clipboard clones separation');
+
+    const sepQuality = cloneSeparationQuality(designVisibility);
+    t.diagnostic(`clipboard clones: minGapPx=${sepQuality.minGapPx} maxOverlapRatio=${sepQuality.maxOverlapRatio} collapseRisk=${sepQuality.collapseRisk}`);
+    for (const entry of designVisibility) {
+      const occ = measureOcclusionDetail(entry);
+      t.diagnostic(`clone id=${entry.id}: occludedRatio=${Math.round(occ.occludedRatio * 100)}% level=${occ.occlusionLevel} topOccluding=${JSON.stringify(occ.topOccludingNodes)}`);
+    }
 
     await enterPreview(page);
     await page.waitForTimeout(220);
