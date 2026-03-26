@@ -116,26 +116,46 @@ export async function stopSessionRecording(page) {
 }
 
 export function autoLabelSession(session) {
-  const labels = new Set();
+  // Start from static labels declared in the session JSON, then add computed ones.
+  const labels = new Set(session.staticLabels || []);
   const events = session.events || [];
   const actions = session.actions || [];
-  if (
-    events.some((event) => event.type === 'keydown' && event.ctrlKey && String(event.key).toLowerCase() === 'v')
-    || actions.some((action) => action.type === 'key' && String(action.key).toLowerCase() === 'control+v')
-  ) labels.add('clipboard_flow');
+
+  const pasteCount = actions.filter((a) => a.type === 'key' && String(a.key).toLowerCase() === 'control+v').length
+    + events.filter((e) => e.type === 'keydown' && e.ctrlKey && String(e.key).toLowerCase() === 'v').length;
+
+  if (pasteCount > 0) labels.add('clipboard_flow');
+  if (pasteCount >= 3) labels.add('separation-risk');
+
   if (
     events.some((event) => event.type === 'keydown' && event.ctrlKey && String(event.key).toLowerCase() === 'z')
     || actions.some((action) => action.type === 'key' && ['control+z', 'control+y'].includes(String(action.key).toLowerCase()))
   ) labels.add('undo_redo');
+
   if (
     events.some((event) => event.type === 'click' && event.target?.kind === 'mode-tab')
     || actions.some((action) => action.type === 'mode')
   ) labels.add('mode_switch');
+
   if (
     (events.some((event) => event.type === 'pointerdown') && events.some((event) => event.type === 'pointerup'))
     || actions.some((action) => action.type === 'drag')
   ) labels.add('drag_or_pointer_flow');
-  if ((session.checkpoints || []).some((checkpoint) => checkpoint.overlayBoxCount === 0) && (session.checkpoints || []).some((checkpoint) => checkpoint.overlayBoxCount > 0)) labels.add('possible_glitch_temporal');
+
+  if (actions.some((action) => action.type === 'zoom' && action.value !== 1)) labels.add('zoom_composition');
+
+  if ((session.checkpoints || []).some((c) => c.overlayBoxCount === 0) && (session.checkpoints || []).some((c) => c.overlayBoxCount > 0)) {
+    labels.add('possible_glitch_temporal');
+    labels.add('temporal-glitch');
+  }
+
+  // Derived compound labels
+  if (labels.has('zoom_composition') && (labels.has('clipboard_flow') || labels.has('drag_or_pointer_flow'))) {
+    labels.add('fine-composition');
+  }
+  if (labels.has('drag_or_pointer_flow') && labels.has('zoom_composition')) labels.add('handle-occlusion');
+  if (labels.has('separation-risk') && pasteCount >= 3) labels.add('subtle-occlusion');
+
   return [...labels];
 }
 
@@ -146,12 +166,15 @@ export function suggestAssertionsFromSession(session) {
   if (labels.includes('clipboard_flow')) {
     const last = checkpoints.at(-1);
     if (last) {
-      assertions.push({ type: 'visible_clone_count', designCount: last.designIds.length, previewCount: last.previewIds.length });
+      assertions.push({ type: 'visible_clone_count', designCount: last.designIds?.length, previewCount: last.previewIds?.length });
       assertions.push({ type: 'design_preview_model_parity' });
     }
   }
   if (labels.includes('undo_redo')) assertions.push({ type: 'undo_restores_visible_set' });
-  if (labels.includes('possible_glitch_temporal')) assertions.push({ type: 'overlay_stays_visible_during_flow' });
+  if (labels.includes('possible_glitch_temporal') || labels.includes('temporal-glitch')) assertions.push({ type: 'overlay_stays_visible_during_flow' });
+  if (labels.includes('separation-risk') || labels.includes('subtle-occlusion')) assertions.push({ type: 'no_clone_visual_collapse' });
+  if (labels.includes('fine-composition')) assertions.push({ type: 'composition_parity_at_zoom' });
+  if (labels.includes('handle-occlusion')) assertions.push({ type: 'handle_remains_interactable' });
   return assertions;
 }
 

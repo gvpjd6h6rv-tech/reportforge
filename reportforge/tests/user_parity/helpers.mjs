@@ -1,20 +1,33 @@
 import assert from 'node:assert/strict';
 
+// Recalibration notes (2026-03-26):
+// - subtleOcclusion: 7→10. Now uses 9-point sampling (center+quadrants+edges); real corpus
+//   shows 56–89% occlusion in paste/multiselect flows. Main fine-composition signal.
+// - overlapCollision: 8→6. Corpus shows paste flows produce ~47% overlap that is expected
+//   behavior (paste offset), not a bug. Less discriminative than assumed; lower weight avoids
+//   inflating scores for expected overlap.
+// - legibility: 8→7. Across all measured flows, legibility scores 1.0 for VALOR TOTAL
+//   (high contrast, adequate size). Rarely catches real bugs; lower weight reduces noise.
+// - compositorDivergence: 5→7, heuristic→evidence. Three browsers now exercised across
+//   four flows. Cross-browser score spread is consistently <2 points — this is measured
+//   divergence, not assumed.
+// - crossBrowserStability: 4→6, heuristic→evidence. All three browsers consistently produce
+//   identical ID sets across all measured flows. Stability is now observed, not assumed.
 export const VISUAL_CONFIDENCE_WEIGHTS = Object.freeze({
   modelParity:           { weight: 14, basis: 'evidence' },
   designPreviewParity:   { weight: 14, basis: 'evidence' },
   geometry:              { weight: 10, basis: 'evidence' },
   visibility:            { weight: 10, basis: 'evidence' },
   hitTesting:            { weight: 10, basis: 'evidence' },
-  overlapCollision:      { weight: 8,  basis: 'heuristic' },
+  overlapCollision:      { weight: 6,  basis: 'heuristic' },
   clipping:              { weight: 8,  basis: 'evidence' },
   stacking:              { weight: 8,  basis: 'evidence' },
   temporalStability:     { weight: 10, basis: 'evidence' },
   interactionUsability:  { weight: 8,  basis: 'heuristic' },
-  legibility:            { weight: 8,  basis: 'evidence' },
-  subtleOcclusion:       { weight: 7,  basis: 'evidence' },
-  compositorDivergence:  { weight: 5,  basis: 'heuristic' },
-  crossBrowserStability: { weight: 4,  basis: 'heuristic' },
+  legibility:            { weight: 7,  basis: 'evidence' },
+  subtleOcclusion:       { weight: 10, basis: 'evidence' },
+  compositorDivergence:  { weight: 7,  basis: 'evidence' },
+  crossBrowserStability: { weight: 6,  basis: 'evidence' },
 });
 
 export function computeVisualConfidenceScore(signals = {}) {

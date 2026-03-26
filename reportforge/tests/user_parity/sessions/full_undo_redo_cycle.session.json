@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "name": "full-undo-redo-cycle",
+    "source": "promoted-from-real-flow",
+    "bugRisk": "full undo then redo cycle leaves composition in a different state than the original paste",
+    "covers": ["clipboard_flow", "undo_redo", "fine-composition", "temporal-glitch"]
+  },
+  "staticLabels": ["clipboard_flow", "undo_redo", "fine-composition", "temporal-glitch"],
+  "actions": [
+    { "type": "click", "target": { "kind": "design-text", "text": "VALOR TOTAL", "nth": 0 }, "afterWaitMs": 120 },
+    { "type": "key", "key": "Control+c", "afterWaitMs": 80 },
+    { "type": "key", "key": "Control+v", "afterWaitMs": 180 },
+    { "type": "key", "key": "Control+v", "afterWaitMs": 180 },
+    { "type": "key", "key": "Control+v", "afterWaitMs": 180 },
+    { "type": "key", "key": "Control+z", "afterWaitMs": 220 },
+    { "type": "key", "key": "Control+z", "afterWaitMs": 220 },
+    { "type": "key", "key": "Control+z", "afterWaitMs": 220 },
+    { "type": "key", "key": "Control+y", "afterWaitMs": 220 },
+    { "type": "key", "key": "Control+y", "afterWaitMs": 220 },
+    { "type": "key", "key": "Control+y", "afterWaitMs": 220 }
+  ],
+  "checkpoints": [
+    {
+      "label": "after-full-undo-redo-cycle",
+      "expect": { "textIncludes": "VALOR TOTAL", "modelCount": 4 }
+    }
+  ]
+}

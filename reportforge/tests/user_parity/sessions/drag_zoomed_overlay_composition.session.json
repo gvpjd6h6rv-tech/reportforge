@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "name": "drag-zoomed-overlay-composition",
+    "source": "promoted-from-real-flow",
+    "bugRisk": "overlay drift or compositional collapse when dragging at zoom != 1",
+    "covers": ["drag_flow", "zoom_composition", "overlay_stability", "fine-composition"]
+  },
+  "staticLabels": ["drag_or_pointer_flow", "zoom_composition", "fine-composition"],
+  "actions": [
+    { "type": "zoom", "value": 1.5, "afterWaitMs": 80 },
+    { "type": "click", "target": { "kind": "design-text", "text": "VALOR TOTAL", "nth": 0 }, "afterWaitMs": 120 },
+    { "type": "drag", "target": { "kind": "design-text", "text": "VALOR TOTAL", "nth": 0 }, "anchorX": 20, "anchorY": 8, "dx": 24, "dy": 18, "steps": 8, "afterWaitMs": 150 }
+  ],
+  "checkpoints": [
+    {
+      "label": "after-drag-at-zoom",
+      "expect": { "textIncludes": "VALOR TOTAL" }
+    }
+  ]
+}

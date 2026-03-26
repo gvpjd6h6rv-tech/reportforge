@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "name": "zoom-transition-paste-composition",
+    "source": "promoted-from-real-flow",
+    "bugRisk": "paste offset or composition rendering incorrect when zoom is not 1.0; zoom change after paste produces visual glitch",
+    "covers": ["clipboard_flow", "zoom_composition", "fine-composition"]
+  },
+  "staticLabels": ["clipboard_flow", "zoom_composition", "fine-composition"],
+  "actions": [
+    { "type": "zoom", "value": 1.5, "afterWaitMs": 80 },
+    { "type": "click", "target": { "kind": "design-text", "text": "VALOR TOTAL", "nth": 0 }, "afterWaitMs": 120 },
+    { "type": "key", "key": "Control+c", "afterWaitMs": 80 },
+    { "type": "key", "key": "Control+v", "afterWaitMs": 180 },
+    { "type": "key", "key": "Control+v", "afterWaitMs": 180 },
+    { "type": "zoom", "value": 0.75, "afterWaitMs": 100 },
+    { "type": "zoom", "value": 1.0, "afterWaitMs": 100 }
+  ],
+  "checkpoints": [
+    {
+      "label": "after-zoom-transition-post-paste",
+      "expect": { "textIncludes": "VALOR TOTAL", "modelCount": 3 }
+    }
+  ]
+}

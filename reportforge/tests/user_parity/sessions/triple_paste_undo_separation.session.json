@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "name": "triple-paste-undo-separation",
+    "source": "promoted-from-real-flow",
+    "bugRisk": "clone separation degrades after partial undo — ghost clone or visual collapse",
+    "covers": ["clipboard_flow", "undo_redo", "separation-risk", "fine-composition"]
+  },
+  "staticLabels": ["clipboard_flow", "undo_redo", "separation-risk", "fine-composition"],
+  "actions": [
+    { "type": "click", "target": { "kind": "design-text", "text": "VALOR TOTAL", "nth": 0 }, "afterWaitMs": 120 },
+    { "type": "key", "key": "Control+c", "afterWaitMs": 80 },
+    { "type": "key", "key": "Control+v", "afterWaitMs": 180 },
+    { "type": "key", "key": "Control+v", "afterWaitMs": 180 },
+    { "type": "key", "key": "Control+v", "afterWaitMs": 180 },
+    { "type": "key", "key": "Control+z", "afterWaitMs": 220 },
+    { "type": "key", "key": "Control+z", "afterWaitMs": 220 }
+  ],
+  "checkpoints": [
+    {
+      "label": "after-partial-undo",
+      "expect": { "textIncludes": "VALOR TOTAL" }
+    }
+  ]
+}

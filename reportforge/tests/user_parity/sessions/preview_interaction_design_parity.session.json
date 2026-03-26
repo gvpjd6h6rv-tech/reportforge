@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "name": "preview-interaction-design-parity",
+    "source": "promoted-from-real-flow",
+    "bugRisk": "clicking in preview corrupts or shifts design composition on return",
+    "covers": ["mode_switch", "clipboard_flow", "fine-composition", "design_preview_model_parity"]
+  },
+  "staticLabels": ["clipboard_flow", "mode_switch", "fine-composition"],
+  "actions": [
+    { "type": "click", "target": { "kind": "design-text", "text": "VALOR TOTAL", "nth": 0 }, "afterWaitMs": 120 },
+    { "type": "key", "key": "Control+c", "afterWaitMs": 80 },
+    { "type": "key", "key": "Control+v", "afterWaitMs": 180 },
+    { "type": "key", "key": "Control+v", "afterWaitMs": 180 },
+    { "type": "mode", "mode": "preview", "afterWaitMs": 280 },
+    { "type": "mode", "mode": "design", "afterWaitMs": 220 }
+  ],
+  "checkpoints": [
+    {
+      "label": "after-preview-roundtrip-back-in-design",
+      "expect": { "textIncludes": "VALOR TOTAL", "modelCount": 3 }
+    }
+  ]
+}
