@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "name": "clipboard-design-triple-paste",
+    "source": "promoted-from-real-flow",
+    "bugRisk": "clipboard design/preview divergence",
+    "covers": [
+      "clipboard_flow",
+      "design_preview_model_parity",
+      "visible_clone_materialization"
+    ]
+  },
+  "actions": [
+    {
+      "type": "click",
+      "target": { "kind": "design-text", "text": "VALOR TOTAL", "nth": 0 },
+      "afterWaitMs": 120
+    },
+    {
+      "type": "key",
+      "key": "Control+c",
+      "afterWaitMs": 80
+    },
+    {
+      "type": "key",
+      "key": "Control+v",
+      "afterWaitMs": 180
+    },
+    {
+      "type": "key",
+      "key": "Control+v",
+      "afterWaitMs": 180
+    },
+    {
+      "type": "key",
+      "key": "Control+v",
+      "afterWaitMs": 180
+    },
+    {
+      "type": "mode",
+      "mode": "preview",
+      "afterWaitMs": 220
+    }
+  ],
+  "checkpoints": [
+    {
+      "label": "after-design-paste",
+      "expect": {
+        "textIncludes": "VALOR TOTAL"
+      }
+    },
+    {
+      "label": "after-preview-switch",
+      "expect": {
+        "textIncludes": "VALOR TOTAL"
+      }
+    }
+  ]
+}

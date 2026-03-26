@@ -4,7 +4,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromium } from 'playwright';
+import { chromium, firefox, webkit } from 'playwright';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,6 +12,13 @@ const ROOT = path.resolve(__dirname, '..', '..');
 const BASELINES_DIR = path.join(__dirname, 'baselines');
 const ARTIFACTS_DIR = path.join(__dirname, 'artifacts');
 const DEFAULT_PORT = 19991;
+const BROWSER_TYPES = { chromium, firefox, webkit };
+let browserAvailabilityCache = null;
+const BROWSER_EXECUTABLE_CANDIDATES = {
+  chromium: ['/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable'],
+  firefox: ['/usr/bin/firefox', '/usr/bin/firefox-esr'],
+  webkit: [],
+};
 
 function randomPort() {
   return 20000 + Math.floor(Math.random() * 20000);
@@ -62,11 +69,13 @@ export async function startRuntimeServer(port = randomPort()) {
   };
 }
 
-export async function launchRuntimePage(baseUrl) {
-  const browser = await chromium.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
-  });
+export async function launchRuntimePage(baseUrl, options = {}) {
+  const { browserName = 'chromium' } = options;
+  const browserType = BROWSER_TYPES[browserName];
+  assert.ok(browserType, `unsupported browser: ${browserName}`);
+  const resolution = await resolveBrowserLaunch(browserName);
+  assert.ok(resolution.usable, `browser ${browserName} is not usable: ${JSON.stringify(resolution)}`);
+  const browser = await browserType.launch(resolution.launchOptions);
   const page = await browser.newPage({ viewport: { width: 1440, height: 980 } });
   const consoleErrors = [];
   page.on('console', msg => {
@@ -80,7 +89,167 @@ export async function launchRuntimePage(baseUrl) {
   await page.waitForFunction(() => typeof DS !== 'undefined' && Array.isArray(DS.elements) && DS.elements.length > 0);
   await page.waitForTimeout(800);
 
-  return { browser, page, consoleErrors };
+  return { browser, page, consoleErrors, launchInfo: resolution };
+}
+
+export async function getBrowserAvailability(browserNames = ['chromium', 'firefox', 'webkit']) {
+  const report = {};
+  for (const browserName of browserNames) {
+    report[browserName] = await resolveBrowserLaunch(browserName);
+  }
+  return report;
+}
+
+async function resolveBrowserLaunch(browserName) {
+  if (!browserAvailabilityCache) browserAvailabilityCache = {};
+  if (browserAvailabilityCache[browserName]) return browserAvailabilityCache[browserName];
+  const browserType = BROWSER_TYPES[browserName];
+  if (!browserType) {
+    const unsupported = {
+      browserName,
+      detectedInSystem: false,
+      systemCandidates: [],
+      playwrightManagedUsable: false,
+      playwrightManagedError: 'unsupported browser type',
+      fallbackUsable: false,
+      fallbackError: null,
+      usable: false,
+      launchSource: null,
+      launchOptions: null,
+      executablePath: null,
+      available: false,
+      reason: 'unsupported browser type',
+    };
+    browserAvailabilityCache[browserName] = unsupported;
+    return unsupported;
+  }
+
+  const systemCandidates = await detectSystemCandidates(browserName);
+  const managedProbe = await probeBrowserLaunch(browserType, {
+    headless: true,
+    args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
+  });
+  if (managedProbe.ok) {
+    const result = {
+      browserName,
+      detectedInSystem: systemCandidates.some((candidate) => candidate.exists),
+      systemCandidates,
+      playwrightManagedUsable: true,
+      playwrightManagedError: null,
+      fallbackUsable: false,
+      fallbackError: null,
+      usable: true,
+      launchSource: 'playwright-managed',
+      launchOptions: {
+        headless: true,
+        args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
+      },
+      executablePath: null,
+      available: true,
+      reason: null,
+    };
+    browserAvailabilityCache[browserName] = result;
+    return result;
+  }
+
+  let fallbackResult = null;
+  for (const candidate of systemCandidates.filter((item) => item.exists)) {
+    const probe = await probeBrowserLaunch(browserType, {
+      headless: true,
+      executablePath: candidate.path,
+      args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
+    });
+    if (probe.ok) {
+      fallbackResult = {
+        browserName,
+        detectedInSystem: true,
+        systemCandidates,
+        playwrightManagedUsable: false,
+        playwrightManagedError: managedProbe.error,
+        fallbackUsable: true,
+        fallbackError: null,
+        usable: true,
+        launchSource: 'system-fallback',
+        launchOptions: {
+          headless: true,
+          executablePath: candidate.path,
+          args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
+        },
+        executablePath: candidate.path,
+        available: true,
+        reason: null,
+      };
+      break;
+    }
+    fallbackResult = {
+      browserName,
+      detectedInSystem: true,
+      systemCandidates,
+      playwrightManagedUsable: false,
+      playwrightManagedError: managedProbe.error,
+      fallbackUsable: false,
+      fallbackError: probe.error,
+      usable: false,
+      launchSource: null,
+      launchOptions: null,
+      executablePath: candidate.path,
+      available: false,
+      reason: probe.error,
+    };
+  }
+
+  const result = fallbackResult || {
+    browserName,
+    detectedInSystem: systemCandidates.some((candidate) => candidate.exists),
+    systemCandidates,
+    playwrightManagedUsable: false,
+    playwrightManagedError: managedProbe.error,
+    fallbackUsable: false,
+    fallbackError: systemCandidates.some((candidate) => candidate.exists) ? 'no usable system fallback' : 'no system browser detected',
+    usable: false,
+    launchSource: null,
+    launchOptions: null,
+    executablePath: null,
+    available: false,
+    reason: systemCandidates.some((candidate) => candidate.exists) ? managedProbe.error : 'no system browser detected',
+  };
+  browserAvailabilityCache[browserName] = result;
+  return result;
+}
+
+async function detectSystemCandidates(browserName) {
+  const candidates = BROWSER_EXECUTABLE_CANDIDATES[browserName] || [];
+  const results = [];
+  for (const candidate of candidates) {
+    results.push({
+      path: candidate,
+      exists: await pathExists(candidate),
+    });
+  }
+  return results;
+}
+
+async function pathExists(filePath) {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function probeBrowserLaunch(browserType, options) {
+  let lastError = null;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      const browser = await browserType.launch(options);
+      await browser.close();
+      return { ok: true, error: null };
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  return { ok: false, error: lastError ? lastError.message : 'unknown launch failure' };
 }
 
 export async function clearSelectionByCanvasClick(page) {
