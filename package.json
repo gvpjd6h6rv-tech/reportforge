@@ -3,7 +3,7 @@
   "version": "14.0.0",
   "scripts": {
     "test:contracts": "node --test reportforge/tests/engine_contracts.test.mjs",
-    "test:runtime": "node reportforge/tests/run_runtime_regression.mjs && node --test reportforge/tests/format_controls_regression.test.mjs && node --test reportforge/tests/tanda1.test.mjs && node --test reportforge/tests/tanda2.test.mjs && node --test reportforge/tests/tanda3.test.mjs && node --test reportforge/tests/tanda4.test.mjs && node --test reportforge/tests/tanda5.test.mjs && node --test reportforge/tests/tanda6.test.mjs && node --test reportforge/tests/tanda7.test.mjs",
+    "test:runtime": "node reportforge/tests/run_runtime_regression.mjs && node --test reportforge/tests/format_controls_regression.test.mjs && node --test reportforge/tests/tanda1.test.mjs && node --test reportforge/tests/tanda2.test.mjs && node --test reportforge/tests/tanda3.test.mjs && node --test reportforge/tests/tanda4.test.mjs && node --test reportforge/tests/tanda5.test.mjs && node --test reportforge/tests/tanda6.test.mjs && node --test reportforge/tests/tanda7.test.mjs && node --test reportforge/tests/tanda8.test.mjs",
     "test:governance": "node --test reportforge/tests/governance_guardrails.test.mjs",
     "test:arch": "npm run test:contracts && npm run test:governance && npm run test:runtime",
     "baselines:runtime": "node reportforge/tests/update_runtime_baselines.mjs"
