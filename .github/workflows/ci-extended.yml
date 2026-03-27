@@ -1,0 +1,69 @@
+name: ci-extended
+
+on:
+  schedule:
+    - cron: '0 3 * * *'   # 03:00 UTC nightly, every day
+  workflow_dispatch:        # manual trigger from GitHub Actions UI
+
+# ── What runs here ─────────────────────────────────────────────────────────────
+# The 10 user_parity tests that are NOT in the blocking PR path.
+# Excluded from blocking because:
+#   - clipboard_*            : cross-browser (firefox adds time); correct but slower
+#   - multiselect_drag       : cross-browser; stable but longer (jitter measurement)
+#   - multiselect_frame_glitch : chromium-only; per-frame temporal check, not a smoke
+#   - preview_clipping       : chromium-only; clipping geometry, rarely regresses
+#   - selection_handle_stacking : chromium-only; stacking/hit-test detail
+#   - undo_redo_*            : cross-browser; important but covered partially by session_replay
+#   - visual_golden          : pixel goldens — environment-sensitive (font rendering)
+#   - flaky_detection        : runs 2 iterations; diagnostic, not a correctness gate
+#
+# Browsers:
+#   Chromium: always installed.
+#   Firefox:  installed — tests that call getBrowserAvailability() will use it.
+#   WebKit:   not installed — tests skip it automatically via getBrowserAvailability().
+# ───────────────────────────────────────────────────────────────────────────────
+
+jobs:
+
+  user-parity-extended:
+    name: user-parity extended (chromium + firefox)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install JS dependencies
+        run: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-chromium-firefox-${{ hashFiles('package-lock.json') }}
+          restore-keys: pw-chromium-firefox-
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium firefox
+
+      - name: User parity — extended suite
+        run: npm run test:parity:extended
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: parity-extended-artifacts-${{ github.run_id }}
+          path: |
+            reportforge/tests/artifacts/
+            reportforge/tests/user_parity/visual/
+          if-no-files-found: ignore
+          retention-days: 14

@@ -225,3 +225,28 @@ Cambios: heurística reducida -6pts → evidencia aumentada +6pts (total sigue 1
 ```
 record → auto-label → quality gate (fingerprint + duplicates) → replay → assert parity + composition → PARITY SUMMARY
 ```
+
+---
+
+## CI — qué tests bloquean PR y cuáles son nightly
+
+### Blocking (push/PR sobre `main`)
+
+Los siguientes 6 tests bloquean el merge via `npm run test:parity:blocking`:
+
+| Test | Razón |
+|---|---|
+| `fast_interaction_smoke` | smoke principal de interacción |
+| `resize_smoke` | handles + parity modelo/DOM |
+| `zoom_extremes_smoke` | bordes de zoom |
+| `content_edit_smoke` | edición + undo |
+| `template_smoke` | carga de template |
+| `session_replay` | corpus 11 sesiones — cubre clipboard, drag, undo/redo, mode switch |
+
+Browser: **Chromium únicamente**.
+
+### Extended (nightly, no bloquea PR)
+
+Los 10 tests restantes corren en `ci-extended` cada noche + dispatch manual (`npm run test:parity:extended`). Browsers: Chromium + Firefox. WebKit no está en CI.
+
+Ver `docs/ci.md` para el diseño completo de la pipeline, política de browsers, interpretación de fallos y comandos locales.

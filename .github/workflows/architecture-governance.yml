@@ -1,26 +1,36 @@
-name: architecture-governance
+name: ci
 
 on:
   push:
-    branches: ["**"]
+    branches: [main]
   pull_request:
+    branches: [main]
+
+# ── Browser policy ─────────────────────────────────────────────────────────────
+# Chromium: always blocking — installed via playwright managed bundle.
+# Firefox:  extended/nightly only — see ci-extended.yml.
+# WebKit:   not run in CI — unreliable system-lib requirements on ubuntu-latest.
+#           Tests that call getBrowserAvailability() skip it automatically.
+# ───────────────────────────────────────────────────────────────────────────────
 
 jobs:
-  governance:
+
+  # ── Job 1: fast-checks ────────────────────────────────────────────────────
+  # No browser, no server. Fails fast on contract/governance regressions.
+  fast-checks:
+    name: fast-checks (contracts + governance)
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+          node-version: '20'
+          cache: 'npm'
 
       - name: Install JS dependencies
-        run: npm install
+        run: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci
 
       - name: Contract tests
         run: npm run test:contracts
@@ -28,5 +38,102 @@ jobs:
       - name: Governance guardrails
         run: npm run test:governance
 
+  # ── Job 2: runtime-suite ──────────────────────────────────────────────────
+  # Architecture regression suite (265 tests). Needs Python server + chromium.
+  # Runs after fast-checks so we don't waste browser time on basic failures.
+  runtime-suite:
+    name: runtime-suite (arch regression, chromium)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [fast-checks]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install JS dependencies
+        run: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-chromium-${{ hashFiles('package-lock.json') }}
+          restore-keys: pw-chromium-
+
+      - name: Install Playwright chromium
+        run: npx playwright install --with-deps chromium
+
       - name: Runtime regression suite
         run: npm run test:runtime
+
+      - name: Upload artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-artifacts-${{ github.run_id }}
+          path: reportforge/tests/artifacts/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # ── Job 3: user-parity-blocking ───────────────────────────────────────────
+  # Blocking smoke gates that substitute manual QA on main flows.
+  # Runs after fast-checks (same reason as runtime-suite).
+  # What is blocking and why:
+  #   - fast_interaction_smoke  : interactions (click, hover, keyboard)
+  #   - resize_smoke            : element resize handles + parity
+  #   - zoom_extremes_smoke     : zoom 0.1 / 4.0 boundary behaviour
+  #   - content_edit_smoke      : text edit → model update → undo restore
+  #   - template_smoke          : template load and initial state parity
+  #   - session_replay          : full corpus (11 sessions) — covers clipboard,
+  #                               drag, undo/redo, mode switch, zoom composition
+  user-parity-blocking:
+    name: user-parity blocking (smoke gates + session corpus, chromium)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [fast-checks]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install JS dependencies
+        run: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-chromium-${{ hashFiles('package-lock.json') }}
+          restore-keys: pw-chromium-
+
+      - name: Install Playwright chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: User parity — blocking smoke gates
+        run: npm run test:parity:blocking
+
+      - name: Upload artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: parity-blocking-artifacts-${{ github.run_id }}
+          path: |
+            reportforge/tests/artifacts/
+            reportforge/tests/user_parity/visual/
+          if-no-files-found: ignore
+          retention-days: 7
