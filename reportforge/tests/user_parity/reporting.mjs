@@ -158,6 +158,45 @@ export function assessScoreQuality(confidenceResult, options = {}) {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Smoke layer coverage: honest per-category accounting for smoke test suites
+// ---------------------------------------------------------------------------
+
+/**
+ * Summarises which smoke categories were exercised and which were not.
+ * Each entry: { category, exercised, total, notCoveredNotes? }
+ * Returns: { pass, partial, notRun, total, categories }
+ */
+export function buildSmokeLayerCoverage(categories = []) {
+  let pass = 0;
+  let partial = 0;
+  let notRun = 0;
+  for (const cat of categories) {
+    if (cat.exercised >= cat.total && cat.total > 0) pass++;
+    else if (cat.exercised > 0) partial++;
+    else notRun++;
+  }
+  return { pass, partial, notRun, total: categories.length, categories };
+}
+
+/**
+ * Formats a multi-line diagnostic string from a buildSmokeLayerCoverage result.
+ * Intended for t.diagnostic() output — not a hard assertion.
+ */
+export function formatSmokeCoverageSummary(coverage) {
+  const lines = [
+    `SMOKE COVERAGE: pass=${coverage.pass}/${coverage.total} partial=${coverage.partial} notRun=${coverage.notRun}`,
+  ];
+  for (const cat of coverage.categories) {
+    const status = cat.exercised >= cat.total && cat.total > 0
+      ? 'PASS'
+      : (cat.exercised > 0 ? 'PARTIAL' : 'NOT_RUN');
+    const notes = cat.notCoveredNotes?.length ? ` [not covered: ${cat.notCoveredNotes.join('; ')}]` : '';
+    lines.push(`  ${cat.category}: ${status} ${cat.exercised}/${cat.total}${notes}`);
+  }
+  return lines.join('\n');
+}
+
 export function buildCoverageMatrix(categoryRuns = {}, availability = {}, targetBrowsers = ['chromium', 'firefox', 'webkit']) {
   const matrix = {};
   for (const [category, exercisedBrowsers] of Object.entries(categoryRuns)) {
