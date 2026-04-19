@@ -29,6 +29,10 @@ import {
   assertNoConsoleErrors,
 } from './runtime_harness.mjs';
 
+function assertApprox(actual, expected, tolerance, label) {
+  assert.ok(Math.abs(actual - expected) <= tolerance, `${label}: expected ${expected}±${tolerance}, got ${actual}`);
+}
+
 async function reloadRuntime(page, baseUrl) {
   await page.goto(baseUrl, { waitUntil: 'networkidle' });
   await page.waitForFunction(
@@ -176,7 +180,7 @@ test('TANDA 2 — interacción format + selección + zoom + overlay', { timeout:
       });
       assert.equal(before.bold, true, 'pre-drag: bold debe estar activo');
 
-      // dy=14: e102.y=22, 22+14=36 divisible por grid(4) → snap exacto
+      // dy=14: el movimiento debe conservar precisión fina
       await dragSelectedElement(page, 20, 14);
 
       const after = await page.evaluate(prev => {
@@ -186,8 +190,8 @@ test('TANDA 2 — interacción format + selección + zoom + overlay', { timeout:
 
       // DS/modelo: posición actualizada y formato conservado
       assert.equal(after.bold, true, 'modelo: bold debe conservarse tras drag');
-      assert.equal(after.dx, 20, `modelo: dx debe ser 20, obtenido ${after.dx}`);
-      assert.equal(after.dy, 14, `modelo: dy debe ser 14, obtenido ${after.dy}`);
+      assertApprox(after.dx, 20, 0.15, 'modelo dx');
+      assertApprox(after.dy, 14, 0.15, 'modelo dy');
 
       // overlay/geom: sel-box alineado con elemento
       const alignment = await getSingleAlignment(page);

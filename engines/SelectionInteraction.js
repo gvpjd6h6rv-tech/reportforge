@@ -144,18 +144,17 @@ const SelectionInteraction = (() => {
     d.moved = true;
     const dx = pos.x - d.startX;
     const dy = pos.y - d.startY;
-    if (typeof AlignmentGuides !== 'undefined' && DS.selection.size === 1) {
-      AlignmentGuides.show([...DS.selection][0]);
-    }
+    const zoom = RF.Geometry.zoom();
     d.startPositions.forEach(orig => {
       const el = SelectionState.getElementById(orig.id); if (!el) return;
-      let newAbsY = orig.sectionTop + orig.y + dy;
-      let newX = SelectionState.snap(orig.x + dx);
-      const target = SelectionState.getSectionAtY(newAbsY + el.h / 2);
+      const rawAbsX = orig.x + dx;
+      const rawAbsY = orig.sectionTop + orig.y + dy;
+      let newX = SelectionState.snap(rawAbsX);
+      const target = SelectionState.getSectionAtY(rawAbsY + el.h / 2);
       if (target) {
         DS.updateElementLayout(el.id, {
           sectionId: target.section.id,
-          y: SelectionState.snap(Math.max(0, newAbsY - SelectionState.getSectionTop(target.section.id))),
+          y: SelectionState.snap(Math.max(0, rawAbsY - SelectionState.getSectionTop(target.section.id))),
         });
       } else {
         DS.updateElementLayout(el.id, { y: SelectionState.snap(Math.max(0, orig.y + dy)) });
@@ -167,6 +166,8 @@ const SelectionInteraction = (() => {
         const _mp = RF.Geometry.modelToView(el.x, el.y);
         div.style.left = _mp.x + 'px';
         div.style.top = _mp.y + 'px';
+        const snappedAbsY = SelectionState.getSectionTop(el.sectionId) + el.y;
+        div.style.transform = `translate(${((rawAbsX - el.x) * zoom).toFixed(3)}px, ${((rawAbsY - snappedAbsY) * zoom).toFixed(3)}px)`;
       }
       if (DS.previewMode) {
         document.querySelectorAll(`.pv-el[data-origin-id="${orig.id}"]`).forEach(pv => {
@@ -174,6 +175,8 @@ const SelectionInteraction = (() => {
           const _pp = RF.Geometry.rectToView(el);
           pv.style.left = _pp.left + 'px';
           pv.style.top = _pp.top + 'px';
+          const snappedAbsY = SelectionState.getSectionTop(el.sectionId) + el.y;
+          pv.style.transform = `translate(${((rawAbsX - el.x) * zoom).toFixed(3)}px, ${((rawAbsY - snappedAbsY) * zoom).toFixed(3)}px)`;
         });
       }
     });
@@ -243,11 +246,12 @@ const SelectionInteraction = (() => {
     const isCancel = e && e.phase === 'cancel';
     document.querySelectorAll('.cr-element.dragging').forEach(div => {
       div.classList.remove('dragging');
+      div.style.transform = '';
     });
     document.querySelectorAll('.pv-el.dragging').forEach(div => {
       div.classList.remove('dragging');
+      div.style.transform = '';
     });
-    if (typeof AlignmentGuides !== 'undefined') AlignmentGuides.clear();
     if (!isCancel && d.type === 'move' && d.moved) SelectionState.saveHistory();
     if (!isCancel && d.type === 'resize') SelectionState.saveHistory();
     if (d.type === 'rubber') {

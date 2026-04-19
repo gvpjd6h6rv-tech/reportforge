@@ -12,7 +12,7 @@
 | History | Híbrido `DS.history` + `HistoryEngine` | `DS.saveHistory/undo/redo`, `HistoryEngine.push/undo/redo` | actions, keyboard, menus | `DS.saveHistory` patched to “stay in sync” | `DS.history` plus private engine stacks | roto |
 | Geometry | `RF.Geometry` nominally + domain split | `RF.Geometry`, `GeometryCore`, `CanvasGeometry`, `SelectionGeometry`, `HitTestGeometry`, DOMRect reads, geometry fallbacks in engines | almost every subsystem | contract variants still active | `RF.Geometry` + domain geometry + DOM measurement + inline style positions | híbrido |
 | Scheduler | `RenderScheduler` nominally | `RenderScheduler.*`, but direct `updateSync` and direct writes still occur | all engines | direct sync hooks from monolith | scheduler queues + direct side effects | híbrido |
-| Debug overlay | `DebugTrace` / `DebugOverlay` | monolith runtime | all trace-enabled engines | none critical | localStorage + runtime trace events | limpio |
+| Formula / debug | `FormulaEngine` + split debug owners | `FormulaEngine`, `FormulaEditorDialog`, `DesignerUI`, `DebugTrace`, `DebugChannelsPanel`, `DebugTraceToggle`, `DebugOverlay` | formula editor, runtime boot, trace-enabled engines | `FormulaAndDebug.js` facade only | formula runtime + debug state + overlay DOM | limpio |
 | Server entrypoint | `reportforge_server.py` | HTTP routing | `run.sh`, browser, tests | v4/v3 fallback | server routing table | limpio |
 
 ## Notes

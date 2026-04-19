@@ -12,6 +12,10 @@ const CATEGORIES = [
     files: [
       'docs/governance.md',
       'docs/architecture/invariants.md',
+      'docs/architecture/reportforge-api-contract.md',
+      'docs/architecture/datasource-package-contract.md',
+      'docs/architecture/document-store-contract.md',
+      'docs/architecture/engine-core-routing-contract.md',
       'reportforge/tests/governance_guardrails.test.mjs',
       'validate_repo.sh',
     ],
@@ -42,7 +46,22 @@ const CATEGORIES = [
     files: [
       'reportforge/tests/test_render_engine.py',
       'reportforge/tests/test_advanced_engine.py',
+      'reportforge/tests/test_enterprise.py',
       'reportforge/tests/test_server.py',
+    ],
+  },
+  {
+    key: 'cr_functions',
+    files: [
+      'reportforge/tests/test_cr_functions.py',
+      'docs/architecture/cr-functions-contract.md',
+    ],
+  },
+  {
+    key: 'datasource',
+    files: [
+      'reportforge/tests/test_phases_3_5.py',
+      'docs/architecture/db-source-contract.md',
     ],
   },
   {
@@ -56,6 +75,7 @@ const CATEGORIES = [
       'docs/architecture/render-scheduler-contract.md',
       'docs/architecture/canvas-layout-contract.md',
       'docs/architecture/preview-engine-contract.md',
+      'docs/architecture/enterprise-engine-contract.md',
       'docs/architecture/selection-engine-contract.md',
       'docs/architecture/geometry-core-contract.md',
     ],
@@ -133,6 +153,8 @@ test('architecture matrix covers all required categories', () => {
     'causal',
     'conductual',
     'functional',
+    'cr_functions',
+    'datasource',
     'all_gaps',
     'geometric',
     'reparability',
@@ -161,6 +183,8 @@ test('testing canon documents the category canon', () => {
     'Causal',
     'Conductual',
     'Functional',
+    'CR Functions',
+    'Datasource',
     'All Gaps',
     'Geometric',
     'Reparability',
@@ -182,6 +206,8 @@ test('runtime invariants are persisted as architecture docs', () => {
     'No inline runtime scripts or styles',
     'Scheduler-driven DOM writes only',
     'Safe mode and recovery must remain explicit and observable',
+    'CR function families are separate owners',
+    'Db datasource access is split by concern',
   ]) {
     assert.match(invariants, new RegExp(needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'));
   }

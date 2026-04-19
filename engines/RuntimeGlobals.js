@@ -31,13 +31,13 @@ class AABB{
   static fromRect(r){return new AABB(r.left,r.top,r.width,r.height);}
 }
 const MagneticSnap={
-  GRID:8, TOLERANCE:4, PRECISION:1e-3,
-  snap(v,grid=this.GRID){const s=Math.round(v/grid)*grid;return Math.abs(v-s)<=this.TOLERANCE?+s.toFixed(3):+v.toFixed(3);},
-  snapPoint(x,y,grid=this.GRID){return{x:this.snap(x,grid),y:this.snap(y,grid)};},
+  GRID:8, TOLERANCE:4, PRECISION:1e-3, MODEL_GRID:0.01 * 96 / 25.4,
+  snap(v,grid=this.MODEL_GRID || this.GRID){const s=Math.round(v/grid)*grid;return Math.abs(v-s)<=this.TOLERANCE?+s.toFixed(3):+v.toFixed(3);},
+  snapPoint(x,y,grid=this.MODEL_GRID || this.GRID){return{x:this.snap(x,grid),y:this.snap(y,grid)};},
   snapWithGuides(x,y,guides=[]){let sx=this.snap(x),sy=this.snap(y);
     for(const g of guides){if(Math.abs(x-g.x)<this.TOLERANCE)sx=+g.x.toFixed(3);
       if(Math.abs(y-g.y)<this.TOLERANCE)sy=+g.y.toFixed(3);}return{x:sx,y:sy};},
-  isOnGrid(v,grid=this.GRID){const n=Math.round(v/grid)*grid;return Math.abs(v-n)<this.PRECISION+Number.EPSILON*grid;},
+  isOnGrid(v,grid=this.MODEL_GRID || this.GRID){const n=Math.round(v/grid)*grid;return Math.abs(v-n)<this.PRECISION+Number.EPSILON*grid;},
 };
 const PointerNorm={
   clientPos(e){if(e.touches&&e.touches.length)return{x:e.touches[0].clientX,y:e.touches[0].clientY};
@@ -164,17 +164,20 @@ RF.Geometry = {
 
 window.CFG = {
   GRID: 4, PAGE_W: 754,
+  MODEL_GRID: 0.01 * 96 / 25.4,
   PAGE_MARGIN_LEFT: 0,
   PAGE_MARGIN_TOP: 0,
   RULER_W: 22,
   RULER_H: 16,
   MIN_EL_W: 8, MIN_EL_H: 6,
   HANDLE_HIT: 4,
-  SECTION_MIN_H: 12, SECTION_MAX_H: 800,
   ZOOM_LEVELS: [0.25,0.5,0.75,1.0,1.25,1.5,2.0,4.0],
   FONTS: ['Arial','Tahoma','Courier New','Times New Roman','Calibri','Verdana','Georgia'],
   FONT_SIZES: [6,7,8,9,10,11,12,14,16,18,20,24,28,36],
 };
+
+window.CFG.SECTION_MIN_H = 12;
+window.CFG.SECTION_MAX_H = 800;
 
 window.FIELD_TREE = {
   database:{label:'Campos de base de datos',icon:'🗄️',children:{

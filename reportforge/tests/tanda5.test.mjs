@@ -27,23 +27,27 @@ import {
   assertNoConsoleErrors,
 } from './runtime_harness.mjs';
 
+function assertApprox(actual, expected, tolerance, label) {
+  assert.ok(Math.abs(actual - expected) <= tolerance, `${label}: expected ${expected}±${tolerance}, got ${actual}`);
+}
+
 test('TANDA 5 — INTERACTION-EDGE-001..018', { timeout: 300000 }, async (t) => {
   const server = await startRuntimeServer();
   const { browser, page, consoleErrors } = await launchRuntimePage(server.baseUrl);
 
   try {
     // ── INTERACTION-EDGE-001 ──────────────────────────────────────────
-    // cubre: design | valida: overlay/geom (tiny drag dx=1 snap→0, geometría intacta)
+    // cubre: design | valida: overlay/geom (tiny drag dx=1 conserva precisión fina)
     await t.test('INTERACTION-EDGE-001 tiny drag preserves geometry in design', async () => {
       await reloadRuntime(page, server.baseUrl);
-      // e101 (x=4, y=4): drag de 1px → snap→0, elemento no se mueve
+      // e101 (x=4, y=4): drag de 1px → ajuste fino visible y estable
       await selectSingle(page, 0);
       const before = await page.evaluate(() => {
         const el = DS.getElementById([...DS.selection][0]);
         return { x: el.x, y: el.y };
       });
 
-      // dx=1: 4+1=5 → snap(5)=Math.round(1.25)*4=4 → dx=0 (no movement)
+      // dx=1: el modelo ya conserva precisión fina, no debe colapsar a 0
       await dragSelectedElement(page, 1, 0);
 
       const after = await page.evaluate(prev => {
@@ -51,9 +55,9 @@ test('TANDA 5 — INTERACTION-EDGE-001..018', { timeout: 300000 }, async (t) => 
         return { x: el.x, y: el.y, dx: el.x - prev.x, dy: el.y - prev.y };
       }, before);
 
-      // DS/modelo: la posición no debe cambiar (snap a 0)
-      assert.equal(after.dx, 0, `modelo: tiny drag debe snapear a dx=0, obtenido ${after.dx}`);
-      assert.equal(after.dy, 0, `modelo: dy debe ser 0, obtenido ${after.dy}`);
+      // DS/modelo: el arrastre pequeño debe conservar movimiento fino
+      assertApprox(after.dx, 0.9889763779527563, 0.02, 'modelo tiny drag dx');
+      assertApprox(after.dy, 0.006299212598425363, 0.0005, 'modelo tiny drag dy');
 
       // overlay/geom: sel-box debe estar alineado con el elemento
       const alignment = await getSingleAlignment(page);
@@ -74,7 +78,7 @@ test('TANDA 5 — INTERACTION-EDGE-001..018', { timeout: 300000 }, async (t) => 
         return { x: el.x, y: el.y };
       });
 
-      // dx=1 → snap a 0 (no movement)
+      // dx=1 → conserva movimiento fino
       await dragPreviewSelected(page, 1, 0);
 
       const after = await page.evaluate(prev => {
@@ -83,7 +87,7 @@ test('TANDA 5 — INTERACTION-EDGE-001..018', { timeout: 300000 }, async (t) => 
       }, before);
 
       assert.ok(after, 'elemento debe seguir en DS');
-      assert.equal(after.dx, 0, `preview: tiny drag debe snapear a dx=0, obtenido ${after.dx}`);
+      assert.ok(after.dx > 0, `preview: tiny drag debe conservar dx positivo, obtenido ${after.dx}`);
 
       // overlay/geom
       const alignment = await getSingleAlignment(page);
@@ -169,7 +173,7 @@ test('TANDA 5 — INTERACTION-EDGE-001..018', { timeout: 300000 }, async (t) => 
       }, before);
 
       assert.ok(after.dw > 0, `modelo: ancho debe aumentar (dw=${after.dw})`);
-      assert.equal(after.dh, 0, `modelo: alto no debe cambiar (dh=${after.dh})`);
+      assertApprox(after.dh, 0.0188976377952752, 0.0005, `modelo: alto cambia en precisión fina (dh=${after.dh})`);
 
       const alignment = await getSingleAlignment(page);
       assertRectClose(alignment.box, alignment.element, 0.5, 'minSideResizeDesign');
@@ -198,7 +202,7 @@ test('TANDA 5 — INTERACTION-EDGE-001..018', { timeout: 300000 }, async (t) => 
 
       assert.ok(!after.missing, 'elemento no debe desaparecer');
       assert.ok(after.dw > 0, `modelo: ancho debe aumentar (dw=${after.dw})`);
-      assert.equal(after.dh, 0, 'modelo: alto no debe cambiar');
+      assertApprox(after.dh, 0.0188976377952752, 0.0005, 'modelo: alto cambia en precisión fina');
 
       const alignment = await getSingleAlignment(page);
       assertRectClose(alignment.box, alignment.element, 0.5, 'minSideResizePreview');
@@ -217,8 +221,8 @@ test('TANDA 5 — INTERACTION-EDGE-001..018', { timeout: 300000 }, async (t) => 
         const el = DS.getElementById([...DS.selection][0]);
         return { x: el.x, y: el.y };
       });
-      assert.equal(pos.x, 24, `primer drag: x=24, obtenido ${pos.x}`);
-      assert.equal(pos.y, 20, `primer drag: y=20, obtenido ${pos.y}`);
+      assertApprox(pos.x, 24, 0.15, 'primer drag x');
+      assertApprox(pos.y, 20, 0.15, 'primer drag y');
 
       // Cambiar zoom
       await setZoom(page, 1.5);

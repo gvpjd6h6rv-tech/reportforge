@@ -11,7 +11,7 @@
 | Config / constantes | `engines/RuntimeGlobals.js` | limpio |
 | Estado canónico | `engines/DocumentStore.js` (DS) | limpio |
 | Doc types + field trees + sample data | `engines/DocTypeAndProbes.js` | limpio |
-| Fórmulas + debug | `engines/FormulaAndDebug.js` | limpio |
+| Fórmulas + debug | `FormulaEngine.js`, `FormulaEditorDialog.js`, `DesignerUI.js`, `DebugTrace.js`, `DebugPanelUtils.js`, `DebugChannelsPanel.js`, `DebugTraceToggle.js`, `DebugOverlay.js`, `FormulaAndDebug.js` | limpio |
 | Globals de geometría | `engines/RuntimeGlobals.js` | limpio |
 | Engines de render/interacción | `engines/*.js` (40 archivos) | limpio |
 | Boot principal | `engines/RuntimeBootstrap.js` | limpio |
@@ -30,7 +30,7 @@
 | Preview | `PreviewEngine.js` | `DS.previewMode` | `PreviewEngine.show/hide` | bajo |
 | Scheduler | `RenderScheduler.js` | colas internas | scheduler + writes directos residuales | medio — ver RF-ARCH-005 |
 | Geometría | `RF.Geometry` + domain geometry split | BoundingRect + viewport + pure helpers | `RF.Geometry.*`, `GeometryCore`, `CanvasGeometry`, `SelectionGeometry`, `HitTestGeometry` | bajo |
-| Formula | `FormulaAndDebug.js` | - | `FormulaEngine` | bajo |
+| Formula | `FormulaEngine.js` + `FormulaAndDebug.js` facade | - | `FormulaEngine` | bajo |
 | Doc types | `DocTypeAndProbes.js` | `DOC_TYPES` | global write única | bajo |
 | Boot | `RuntimeBootstrap.js` + `DeferredBootstrap.js` | secuencia DOMContentLoaded | dos fases explícitas | bajo |
 | Commands | `CommandRuntime.js` | - | `handleAction` | bajo |

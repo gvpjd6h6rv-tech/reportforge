@@ -6,12 +6,12 @@
  * Sub-pixel precision rule:
  *   - Model coordinates are floating-point (e.g. x = 142.37)
  *   - Scaling via RF.Geometry.scale() preserves fractional precision
- *   - CSS values are rounded ONLY at the final style assignment
- *   - Example: cssLeft = Math.round(RF.Geometry.scale(el.x))
+ *   - CSS values preserve sub-pixel precision at the final style assignment
+ *   - Example: cssLeft = RF.Geometry.scale(el.x).toFixed(3)
  *
  * Architecture rule:
  *   NEVER do: div.style.left = el.x + 'px'   ← raw model
- *   ALWAYS:   div.style.left = Math.round(RF.Geometry.scale(el.x)) + 'px'
+ *   ALWAYS:   div.style.left = RF.Geometry.scale(el.x).toFixed(3) + 'px'
  */
 'use strict';
 
@@ -25,18 +25,18 @@ const ElementLayoutEngine = (() => {
     if (!div || !el) return;
 
     // Model → view, rounded only at CSS boundary
-    const x = Math.round(RF.Geometry.scale(el.x));
-    const y = Math.round(RF.Geometry.scale(el.y));
-    const w = Math.round(RF.Geometry.scale(el.w));
-    const h = Math.round(RF.Geometry.scale(el.h));
+    const x = RF.Geometry.scale(el.x);
+    const y = RF.Geometry.scale(el.y);
+    const w = RF.Geometry.scale(el.w);
+    const h = RF.Geometry.scale(el.h);
     // Font: pt → px at 96dpi, then scale
     const fs = RF.Geometry.scale(el.fontSize * 96 / 72);
 
-    div.style.left     = `${x}px`;
-    div.style.top      = `${y}px`;
-    div.style.width    = `${w}px`;
-    div.style.height   = `${h}px`;
-    div.style.fontSize = `${fs}px`;
+    div.style.left     = `${x.toFixed(3)}px`;
+    div.style.top      = `${y.toFixed(3)}px`;
+    div.style.width    = `${w.toFixed(3)}px`;
+    div.style.height   = `${h.toFixed(3)}px`;
+    div.style.fontSize = `${fs.toFixed(3)}px`;
   }
 
   /**

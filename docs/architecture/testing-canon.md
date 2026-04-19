@@ -16,10 +16,27 @@ Every bug fix should land with:
 - No inline runtime scripts or styles.
 - No legacy runtime bridges once a canonical owner exists.
 - No module may own more than one domain concern.
+- Formula parsing and evaluation must stay split into facade, tokenizer, AST, parser core, evaluator entrypoint, evaluation dispatcher, function-dispatch owner, resolution owner, aggregate owner, coercion owner, and compatibility wrapper.
+- Crystal Reports function catalog must stay split into facade, shared coercion helpers, family owners, and registry owner.
+- Db source loading must stay split into facade, cache, engine lifecycle, loader, queries, introspection, and registry owners.
+- Datasource package loading must stay split into a thin facade plus `DataSource` and `MultiDataset` owners.
+- Document store runtime must stay split into facade, state, selectors, actions, and history owners, with `DS.state` as the source of truth.
+- Engine core routing must stay split into facade, pointer routing, zoom hooks, registry wiring, and workspace wiring owners.
 - No bug fix may require touching more than two files unless the architecture itself is being cut.
 - No new monster files.
 - Every runtime concern must have a single source of truth.
 - Shadow DOM and enterprise CSS are the default for isolated UI surfaces.
+- Fine geometry and persistence precision must be asserted with tolerance-based tests; legacy integer-grid assumptions are not canonical.
+- FastAPI API tests must keep the facade thin: request models, helpers, and route groups must stay in dedicated owners with guardrails for size and import boundaries.
+- Formula and debug runtime tests must keep the owners split: formula parsing/evaluation, formula editor UI, debug state, debug panels, and debug overlay each have a dedicated owner module and a facade-only compatibility shell.
+
+## Designer Shell Canon
+
+- CSS bleed guard, host vs panel width contract, DOM ownership tags, layout drift assertion, and writer conflict log are canonical runtime invariants.
+- These invariants must be backed by guardrail tests and must fail fast on regression.
+- If a shell change touches width, ownership, or layout order, the associated guardrails must be updated in the same change.
+- Document store guardrails must stay aligned with the facade/state/actions/history split and the `DS.state` source-of-truth contract.
+- Engine core routing guardrails must stay aligned with the facade/pointer/zoom/registry/workspace split.
 
 ## Test Categories
 
@@ -31,7 +48,10 @@ The repo should keep explicit coverage for these categories:
 | Behavioral | user-visible runtime behavior | `runtime_regression`, `user_parity/*` |
 | Causal | event and state causality | `tanda*`, `engine_contracts` |
 | Conductual | interaction flow under user intent | `content_edit_smoke_user_parity`, `template_smoke_user_parity` |
-| Functional | core outputs and API contracts | `test_render_engine`, `test_advanced_engine`, `test_server` |
+| Functional | core outputs and API contracts | `test_render_engine`, `test_advanced_engine`, `test_enterprise`, `test_server` |
+| Formula | parser, tokenizer, AST, evaluator, and function catalog contracts | `test_formula_engine` |
+| CR Functions | family split, registry, and callable dispatch contracts | `test_cr_functions` |
+| Datasource | db source facade, cache, engine lifecycle, queries, introspection, and registry contracts | `test_phases_3_5` |
 | All Gaps | backlog and ownership gaps | `transformation-backlog`, `ownership-matrix` |
 | Geometric | rects, handles, overlay alignment | `multiselect_drag_user_parity`, `preview_clipping_user_parity`, `resize_smoke_user_parity` |
 | Reparability | safe mode, recovery, invariant repair | `runtime_regression`, `EngineCore` safe mode paths |

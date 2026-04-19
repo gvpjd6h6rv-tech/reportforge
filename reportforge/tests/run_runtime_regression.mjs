@@ -22,6 +22,10 @@ import {
   resizeFromHandle,
 } from './runtime_harness.mjs';
 
+function assertApprox(actual, expected, tolerance, label) {
+  assert.ok(Math.abs(actual - expected) <= tolerance, `${label}: expected ${expected}±${tolerance}, got ${actual}`);
+}
+
 async function run() {
   const server = await startRuntimeServer();
   const { browser, page, consoleErrors } = await launchRuntimePage(server.baseUrl);
@@ -76,8 +80,8 @@ async function run() {
         const el = DS.getElementById(prev.id);
         return { x: el.x, y: el.y, dx: el.x - prev.x, dy: el.y - prev.y };
       }, before);
-      assert.equal(after.dx, 20);
-      assert.equal(after.dy, 16);
+      assertApprox(after.dx, 20, 0.15, 'drag.dx');
+      assertApprox(after.dy, 16, 0.15, 'drag.dy');
       const alignment = await getSingleAlignment(page);
       assertRectClose(alignment.box, alignment.element, 0.5, 'drag');
     });
@@ -187,8 +191,8 @@ async function run() {
         const el = DS.getElementById(prev.id);
         return { x: el.x, y: el.y, dx: el.x - prev.x, dy: el.y - prev.y };
       }, beforeDrag);
-      assert.equal(after.dx, 16);
-      assert.equal(after.dy, 12);
+      assertApprox(after.dx, 16, 0.15, 'previewDrag.dx');
+      assertApprox(after.dy, 12, 0.15, 'previewDrag.dy');
       let alignment = await getSingleAlignment(page);
       assertRectClose(alignment.box, alignment.element, 0.5, 'previewDrag');
 

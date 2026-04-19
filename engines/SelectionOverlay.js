@@ -19,7 +19,50 @@ const SelectionOverlay = (() => {
       const pvRect = previewRect(el);
       if (pvRect) return pvRect;
     }
+    const draggingDiv = document.querySelector(`.cr-element[data-id="${el.id}"]`);
+    if (draggingDiv && draggingDiv.classList.contains('dragging')) {
+      const dR = draggingDiv.getBoundingClientRect();
+      const cR = RF.Geometry.canvasRect();
+      return {
+        left: dR.left - cR.left,
+        top: dR.top - cR.top,
+        width: dR.width,
+        height: dR.height,
+      };
+    }
     return CanvasGeometry.elementViewRect(el, SelectionState.getSectionTop(el.sectionId), RF.Geometry.zoom());
+  }
+
+  function appendSelectionGuide(layer, rect, axis, edge) {
+    const guide = document.createElement('div');
+    guide.className = `selection-guide selection-guide-${axis}`;
+    guide.dataset.edge = edge;
+    guide.style.position = 'absolute';
+    guide.style.pointerEvents = 'none';
+    guide.style.zIndex = '27';
+    guide.style.background = 'rgba(0, 0, 0, 0.55)';
+    if (axis === 'h') {
+      guide.style.left = '0px';
+      guide.style.width = '100%';
+      guide.style.top = `${Math.round(edge)}px`;
+      guide.style.height = '1px';
+    } else {
+      guide.style.top = '0px';
+      guide.style.height = '100%';
+      guide.style.left = `${Math.round(edge)}px`;
+      guide.style.width = '1px';
+    }
+    layer.appendChild(guide);
+  }
+
+  function renderSelectionGuides(layer, rects) {
+    rects.forEach(rect => {
+      if (!rect) return;
+      appendSelectionGuide(layer, rect, 'h', rect.top);
+      appendSelectionGuide(layer, rect, 'h', rect.top + rect.height);
+      appendSelectionGuide(layer, rect, 'v', rect.left);
+      appendSelectionGuide(layer, rect, 'v', rect.left + rect.width);
+    });
   }
 
   function renderHandles(engine) {
@@ -67,6 +110,7 @@ const SelectionOverlay = (() => {
       selBox.style.setProperty('--sel-w', absW + 'px');
       selBox.style.setProperty('--sel-h', absH + 'px');
       layer.appendChild(selBox);
+      renderSelectionGuides(layer, [rect]);
       positions.forEach(({ pos, cx, cy }) => {
         const h = document.createElement('div');
         h.className = 'sel-handle';
@@ -89,8 +133,28 @@ const SelectionOverlay = (() => {
       outline.style.top = bounds.top + 'px';
       outline.style.width = bounds.width + 'px';
       outline.style.height = bounds.height + 'px';
+      outline.style.background = 'none';
+      outline.style.backgroundImage = 'none';
+      outline.style.border = 'none';
+      outline.style.outline = 'none';
+      outline.style.boxShadow = 'none';
       outline.style.pointerEvents = 'none';
       layer.appendChild(outline);
+      renderSelectionGuides(layer, viewRects);
+      viewRects.forEach((rect) => {
+        const item = document.createElement('div');
+        item.className = 'sel-box-multi-item';
+        item.style.position = 'absolute';
+        item.style.left = (rect.left - bounds.left) + 'px';
+        item.style.top = (rect.top - bounds.top) + 'px';
+        item.style.width = rect.width + 'px';
+        item.style.height = rect.height + 'px';
+        item.style.boxSizing = 'border-box';
+        item.style.border = '1px solid #000';
+        item.style.background = 'transparent';
+        item.style.pointerEvents = 'none';
+        outline.appendChild(item);
+      });
     }
     engine.updateSelectionInfo();
   }

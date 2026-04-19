@@ -39,6 +39,7 @@ test('canonical engines reference contract guards explicitly', () => {
     hitTestGeometry: path.join(ROOT, 'engines/HitTestGeometry.js'),
     canvas: path.join(ROOT, 'engines/CanvasLayoutEngine.js'),
     preview: path.join(ROOT, 'engines/PreviewEngine.js'),
+    enterprise: path.join(ROOT, 'reportforge/core/render/engines/enterprise_engine.py'),
     core: path.join(ROOT, 'engines/EngineCore.js'),
     contracts: path.join(ROOT, 'engines/EngineCoreContracts.js'),
   };
@@ -54,6 +55,7 @@ test('canonical engines reference contract guards explicitly', () => {
   const hitTestGeometry = fs.readFileSync(files.hitTestGeometry, 'utf8');
   const canvas = fs.readFileSync(files.canvas, 'utf8');
   const preview = fs.readFileSync(files.preview, 'utf8');
+  const enterprise = fs.readFileSync(files.enterprise, 'utf8');
   const core = fs.readFileSync(files.core, 'utf8');
   const contracts = fs.readFileSync(files.contracts, 'utf8');
 
@@ -78,6 +80,18 @@ test('canonical engines reference contract guards explicitly', () => {
   assert.match(preview, /assertSelectionState/);
   assert.match(preview, /assertLayoutContract/);
   assert.match(preview, /assertZoomContract/);
+  assert.match(enterprise, /from \.enterprise_engine_data import/);
+  assert.match(enterprise, /from \.enterprise_engine_layout import/);
+  assert.match(enterprise, /from \.enterprise_engine_shared import/);
+  assert.match(enterprise, /EnterpriseHtmlEngine = EnterpriseEngine/);
+  assert.doesNotMatch(enterprise, /return render_enterprise\(/);
+  assert.doesNotMatch(enterprise, /return render_preview\(/);
+  assert.doesNotMatch(enterprise, /def build_css\(/);
+  assert.doesNotMatch(enterprise, /def build_pages\(/);
+  assert.doesNotMatch(enterprise, /def build_body_rows\(/);
+  assert.doesNotMatch(enterprise, /def build_page\(/);
+  assert.doesNotMatch(enterprise, /def build_row\(/);
+  assert.doesNotMatch(enterprise, /def build_section\(/);
 
   assert.match(contracts, /INVALID RECT SHAPE/);
   assert.match(contracts, /INVALID SELECTION STATE/);
@@ -156,6 +170,10 @@ test('canonical runtime engines consume selection, zoom and layout from DS', () 
     contracts: path.join(ROOT, 'engines/EngineCoreContracts.js'),
     runtime: path.join(ROOT, 'engines/EngineCoreRuntime.js'),
     routing: path.join(ROOT, 'engines/EngineCoreRouting.js'),
+    routingPointer: path.join(ROOT, 'engines/EngineCoreRoutingPointer.js'),
+    routingZoom: path.join(ROOT, 'engines/EngineCoreRoutingZoom.js'),
+    routingRegistry: path.join(ROOT, 'engines/EngineCoreRoutingRegistry.js'),
+    routingWorkspace: path.join(ROOT, 'engines/EngineCoreRoutingWorkspace.js'),
   };
 
   const selection = fs.readFileSync(files.selection, 'utf8');
@@ -165,6 +183,10 @@ test('canonical runtime engines consume selection, zoom and layout from DS', () 
   const contracts = fs.readFileSync(files.contracts, 'utf8');
   const runtime = fs.readFileSync(files.runtime, 'utf8');
   const routing = fs.readFileSync(files.routing, 'utf8');
+  const routingPointer = fs.readFileSync(files.routingPointer, 'utf8');
+  const routingZoom = fs.readFileSync(files.routingZoom, 'utf8');
+  const routingRegistry = fs.readFileSync(files.routingRegistry, 'utf8');
+  const routingWorkspace = fs.readFileSync(files.routingWorkspace, 'utf8');
 
   assert.match(selection, /\bDS\.selection\b/);
   assert.match(selection, /\bDS\.zoom\b/);
@@ -185,6 +207,14 @@ test('canonical runtime engines consume selection, zoom and layout from DS', () 
   assert.match(runtime, /\bDS\.elements\b/);
   assert.match(routing, /\bDS\.previewMode\b/);
   assert.match(routing, /\bDS\.getSelectedElements\b/);
+  assert.match(routing, /EngineCoreRoutingPointer/);
+  assert.match(routing, /EngineCoreRoutingZoom/);
+  assert.match(routing, /EngineCoreRoutingRegistry/);
+  assert.match(routing, /EngineCoreRoutingWorkspace/);
+  assert.match(routingPointer, /function routePointer\(/);
+  assert.match(routingZoom, /function onZoomDidChange\(/);
+  assert.match(routingRegistry, /function registerAllEngines\(/);
+  assert.match(routingWorkspace, /function wireWorkspaceEvents\(/);
   assert.doesNotMatch(core, /\bDS\.selection\b/);
   assert.doesNotMatch(core, /\bDS\.elements\b/);
 });

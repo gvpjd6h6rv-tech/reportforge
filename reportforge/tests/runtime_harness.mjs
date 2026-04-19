@@ -300,6 +300,8 @@ export async function getSelectionSnapshot(page) {
     previewElementCount: document.querySelectorAll('#preview-content .pv-el').length,
     boxCount: document.querySelectorAll('#handles-layer .sel-box').length,
     handleCount: document.querySelectorAll('#handles-layer .sel-handle').length,
+    selectionGuideCount: document.querySelectorAll('#handles-layer .selection-guide').length,
+    guideLineCount: document.querySelectorAll('#guide-layer .rf-guide-line').length,
   }));
 }
 

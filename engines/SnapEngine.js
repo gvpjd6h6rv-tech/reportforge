@@ -108,7 +108,9 @@ window.SnapEngine = (() => {
 
   return {
     init() {
-      _gridModel = (typeof CFG !== 'undefined' && CFG.GRID) ? CFG.GRID : 4;
+      _gridModel = (typeof CFG !== 'undefined' && Number.isFinite(CFG.MODEL_GRID))
+        ? CFG.MODEL_GRID
+        : ((typeof CFG !== 'undefined' && CFG.GRID) ? CFG.GRID : 4);
       _enabled   = (typeof DS !== 'undefined') ? (DS.snapToGrid !== false) : true;
     },
 
