@@ -285,6 +285,35 @@ test('shell HTML stays structurally pure and below strict size threshold', () =>
   assert.doesNotMatch(html, /\binit[A-Z]\w*\b/);
 });
 
+test('designer shell keeps DOM ownership tags and host-vs-panel width contract', () => {
+  const html = fs.readFileSync(SHELL_HTML_PATH, 'utf8');
+  const layoutCss = fs.readFileSync(path.join(ROOT, 'designer/styles/layout.css'), 'utf8');
+  const panelsCss = fs.readFileSync(path.join(ROOT, 'designer/styles/panels.css'), 'utf8');
+
+  const ownerTags = [...html.matchAll(/data-dom-owner="([^"]+)"/g)].map((match) => match[1]);
+  assert.deepEqual(ownerTags, [
+    'designer-shell',
+    'designer-layout',
+    'designer-left-panel',
+    'designer-canvas-area',
+    'designer-workspace',
+    'designer-right-panel',
+  ]);
+
+  assert.match(html, /<div id="app"[^>]*data-dom-owner="designer-shell"/);
+  assert.match(html, /<div id="main-area"[^>]*data-dom-owner="designer-layout"/);
+  assert.match(html, /<div id="panel-left"[^>]*data-dom-owner="designer-left-panel"/);
+  assert.match(html, /<div id="canvas-area"[^>]*data-dom-owner="designer-canvas-area"/);
+  assert.match(html, /<div id="workspace"[^>]*data-dom-owner="designer-workspace"/);
+  assert.match(html, /<div id="panel-right"[^>]*data-dom-owner="designer-right-panel"/);
+
+  assert.match(layoutCss, /#app\s*\{[\s\S]*inline-size:\s*100vi;/);
+  assert.match(layoutCss, /#main-area\s*\{[\s\S]*grid-template-columns:\s*var\(--rf-panel-l\)\s+1fr\s+var\(--rf-panel-r\);/);
+  assert.match(layoutCss, /#canvas-area\s*\{[\s\S]*min-inline-size:\s*0;/);
+  assert.match(panelsCss, /#panel-left\s*\{[\s\S]*inline-size:\s*var\(--rf-panel-l\);[\s\S]*min-inline-size:\s*var\(--rf-panel-l\);/);
+  assert.match(panelsCss, /#panel-right\s*\{[\s\S]*inline-size:\s*var\(--rf-panel-r\);[\s\S]*min-inline-size:\s*var\(--rf-panel-r\);/);
+});
+
 test('monolith shell keeps CSS externalized and below shell-size thresholds', () => {
   const html = fs.readFileSync(SHELL_HTML_PATH, 'utf8');
   const styleTagCount = countMatches(html, /<style\b/g);
@@ -316,6 +345,37 @@ test('monolith shell keeps CSS externalized and below shell-size thresholds', ()
   for (const relPath of cssFiles) {
     assert.ok(fs.existsSync(path.join(ROOT, relPath)), `${relPath} missing`);
   }
+});
+
+test('designer shell layout order is stable and guarded against drift', () => {
+  const html = fs.readFileSync(SHELL_HTML_PATH, 'utf8');
+  const mainAreaStart = html.indexOf('<div id="main-area"');
+  const mainAreaEnd = html.indexOf('</div><!-- /main-area -->');
+  assert.ok(mainAreaStart >= 0 && mainAreaEnd > mainAreaStart, 'main area block missing');
+
+  const mainArea = html.slice(mainAreaStart, mainAreaEnd);
+  const leftIndex = mainArea.indexOf('<div id="panel-left"');
+  const canvasIndex = mainArea.indexOf('<div id="canvas-area"');
+  const rightIndex = mainArea.indexOf('<div id="panel-right"');
+
+  assert.ok(leftIndex >= 0, 'panel-left missing from main area');
+  assert.ok(canvasIndex > leftIndex, 'canvas-area should follow panel-left');
+  assert.ok(rightIndex > canvasIndex, 'panel-right should follow canvas-area');
+  assert.match(mainArea, /<div id="canvas-area"[^>]*>\s*<div id="ruler-h-row">[\s\S]*<div id="workspace"[^>]*data-dom-owner="designer-workspace"/);
+});
+
+test('writer conflict log persists active owner boundaries', () => {
+  const logPath = path.join(ROOT, 'docs/architecture/writer-conflict-log.md');
+  assert.ok(fs.existsSync(logPath), 'writer conflict log missing');
+  const log = fs.readFileSync(logPath, 'utf8');
+  assert.match(log, /# Writer Conflict Log/);
+  assert.match(log, /CSS bleed/);
+  assert.match(log, /Host width/);
+  assert.match(log, /Left panel width/);
+  assert.match(log, /Canvas host width/);
+  assert.match(log, /Right panel width/);
+  assert.match(log, /DOM ownership/);
+  assert.match(log, /Command dispatch/);
 });
 
 test('runtime boundary modules use RuntimeServices instead of raw structural globals', () => {
@@ -432,12 +492,182 @@ test('layering rules: adapters stay thin and bootstrap stays orchestration-only'
   assert.match(globalHandlers, /\bDS\./, 'GlobalEventHandlers remains the root input adapter');
 });
 
+test('command runtime split stays modular, thin, and contract-stable', () => {
+  const files = {
+    'engines/CommandRuntime.js': 80,
+    'engines/CommandRuntimeShared.js': 80,
+    'engines/CommandRuntimeSelection.js': 420,
+    'engines/CommandRuntimeView.js': 140,
+    'engines/CommandRuntimeSections.js': 220,
+    'engines/CommandRuntimeFile.js': 220,
+    'engines/CommandRuntimeDocType.js': 260,
+    'engines/CommandRuntimeHandlers.js': 240,
+    'engines/CommandRuntimeInit.js': 80,
+  };
+
+  for (const [relPath, maxLines] of Object.entries(files)) {
+    const source = fs.readFileSync(path.join(ROOT, relPath), 'utf8');
+    assert.ok(source.split('\n').length <= maxLines, `${relPath} should stay <= ${maxLines} lines`);
+  }
+
+  const main = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntime.js'), 'utf8');
+  const shared = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeShared.js'), 'utf8');
+  const selection = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeSelection.js'), 'utf8');
+  const view = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeView.js'), 'utf8');
+  const sections = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeSections.js'), 'utf8');
+  const file = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeFile.js'), 'utf8');
+  const docType = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeDocType.js'), 'utf8');
+  const handlers = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeHandlers.js'), 'utf8');
+  const init = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeInit.js'), 'utf8');
+
+  assert.match(main, /Object\.assign\(/);
+  assert.doesNotMatch(main, /\bfunction\s+handleAction\s*\(/);
+  assert.doesNotMatch(main, /\bfunction\s+copy\s*\(/);
+  assert.match(shared, /function setStatus\(/);
+  assert.match(selection, /function copy\(/);
+  assert.match(selection, /function selectAll\(/);
+  assert.match(view, /function zoomFitPage\(/);
+  assert.match(sections, /function insertSection\(/);
+  assert.match(file, /function exportJSON\(/);
+  assert.match(docType, /function switchDocType\(/);
+  assert.match(handlers, /function handleAction\(/);
+  assert.match(init, /function initCommandRuntimeState\(/);
+});
+
+test('render scheduler split stays modular, thin, and contract-stable', () => {
+  const files = {
+    'engines/RenderScheduler.js': 40,
+    'engines/RenderSchedulerState.js': 140,
+    'engines/RenderSchedulerFrame.js': 260,
+    'engines/RenderSchedulerQueue.js': 120,
+    'engines/RenderSchedulerScope.js': 80,
+  };
+
+  for (const [relPath, maxLines] of Object.entries(files)) {
+    const source = fs.readFileSync(path.join(ROOT, relPath), 'utf8');
+    assert.ok(source.split('\n').length <= maxLines, `${relPath} should stay <= ${maxLines} lines`);
+  }
+
+  const main = fs.readFileSync(path.join(ROOT, 'engines/RenderScheduler.js'), 'utf8');
+  const state = fs.readFileSync(path.join(ROOT, 'engines/RenderSchedulerState.js'), 'utf8');
+  const frame = fs.readFileSync(path.join(ROOT, 'engines/RenderSchedulerFrame.js'), 'utf8');
+  const queue = fs.readFileSync(path.join(ROOT, 'engines/RenderSchedulerQueue.js'), 'utf8');
+  const scope = fs.readFileSync(path.join(ROOT, 'engines/RenderSchedulerScope.js'), 'utf8');
+
+  assert.match(main, /const RenderScheduler = \(\(\) => \{/);
+  assert.doesNotMatch(main, /\bfunction _flush\b/);
+  assert.doesNotMatch(main, /\bfunction schedule\b/);
+  assert.match(state, /const PRIORITY =/);
+  assert.match(state, /function _trace\(/);
+  assert.match(frame, /function _flush\(/);
+  assert.match(frame, /function _runStableFrameInvariants\(/);
+  assert.match(queue, /function schedule\(/);
+  assert.match(queue, /function invalidateLayer\(/);
+  assert.match(scope, /function flushSync\(/);
+  assert.match(scope, /function assertDomWriteAllowed\(/);
+});
+
+test('canvas layout split stays modular, thin, and contract-stable', () => {
+  const files = {
+    'engines/CanvasLayoutEngine.js': 40,
+    'engines/CanvasLayoutContracts.js': 60,
+    'engines/CanvasLayoutSize.js': 220,
+    'engines/CanvasLayoutElements.js': 260,
+  };
+
+  for (const [relPath, maxLines] of Object.entries(files)) {
+    const source = fs.readFileSync(path.join(ROOT, relPath), 'utf8');
+    assert.ok(source.split('\n').length <= maxLines, `${relPath} should stay <= ${maxLines} lines`);
+  }
+
+  const main = fs.readFileSync(path.join(ROOT, 'engines/CanvasLayoutEngine.js'), 'utf8');
+  const contracts = fs.readFileSync(path.join(ROOT, 'engines/CanvasLayoutContracts.js'), 'utf8');
+  const size = fs.readFileSync(path.join(ROOT, 'engines/CanvasLayoutSize.js'), 'utf8');
+  const elements = fs.readFileSync(path.join(ROOT, 'engines/CanvasLayoutElements.js'), 'utf8');
+
+  assert.match(main, /const CanvasLayoutEngine = \(\(\) => \{/);
+  assert.doesNotMatch(main, /\bfunction buildElementDiv\b/);
+  assert.doesNotMatch(main, /\bfunction renderAll\b/);
+  assert.match(contracts, /function _assertSelectionState\(/);
+  assert.match(size, /function updateSync\(/);
+  assert.match(size, /function getLayoutContract\(/);
+  assert.match(elements, /function buildElementDiv\(/);
+  assert.match(elements, /function renderAll\(/);
+});
+
+test('preview engine split stays modular, thin, and contract-stable', () => {
+  const files = {
+    'engines/PreviewEngine.js': 40,
+    'engines/PreviewEngineContracts.js': 80,
+    'engines/PreviewEngineData.js': 320,
+    'engines/PreviewEngineMode.js': 140,
+    'engines/PreviewEngineRenderer.js': 140,
+  };
+
+  for (const [relPath, maxLines] of Object.entries(files)) {
+    const source = fs.readFileSync(path.join(ROOT, relPath), 'utf8');
+    assert.ok(source.split('\n').length <= maxLines, `${relPath} should stay <= ${maxLines} lines`);
+  }
+
+  const main = fs.readFileSync(path.join(ROOT, 'engines/PreviewEngine.js'), 'utf8');
+  const contracts = fs.readFileSync(path.join(ROOT, 'engines/PreviewEngineContracts.js'), 'utf8');
+  const data = fs.readFileSync(path.join(ROOT, 'engines/PreviewEngineData.js'), 'utf8');
+  const mode = fs.readFileSync(path.join(ROOT, 'engines/PreviewEngineMode.js'), 'utf8');
+  const renderer = fs.readFileSync(path.join(ROOT, 'engines/PreviewEngineRenderer.js'), 'utf8');
+
+  assert.match(main, /const PreviewEngineV19 = \(\(\) => \(/);
+  assert.match(main, /_renderWithData/);
+  assert.doesNotMatch(main, /\bfunction show\(/);
+  assert.match(contracts, /function assertPreviewDomContract\(/);
+  assert.match(data, /function renderWithData\(/);
+  assert.match(data, /function renderInstanceElement\(/);
+  assert.match(mode, /function show\(/);
+  assert.match(mode, /function hide\(/);
+  assert.match(renderer, /function refresh\(/);
+  assert.match(renderer, /preview-content/);
+});
+
 test('critical boundary files stay below growth thresholds', () => {
   const thresholds = new Map([
     [path.join(ROOT, 'designer/crystal-reports-designer-v4.html'), SHELL_MAX_BYTES],
     [path.join(ROOT, 'engines/RuntimeBootstrap.js'), 12_000],
     [path.join(ROOT, 'engines/UIAdapters.js'), 3_000],
-    [path.join(ROOT, 'reportforge/tests/governance_guardrails.test.mjs'), 29_500],
+    [path.join(ROOT, 'engines/CommandRuntime.js'), 4_000],
+    [path.join(ROOT, 'engines/CommandRuntimeShared.js'), 3_000],
+    [path.join(ROOT, 'engines/CommandRuntimeSelection.js'), 14_000],
+    [path.join(ROOT, 'engines/CommandRuntimeView.js'), 3_000],
+    [path.join(ROOT, 'engines/CommandRuntimeSections.js'), 6_000],
+    [path.join(ROOT, 'engines/CommandRuntimeFile.js'), 4_000],
+    [path.join(ROOT, 'engines/CommandRuntimeDocType.js'), 6_000],
+    [path.join(ROOT, 'engines/CommandRuntimeHandlers.js'), 9_000],
+    [path.join(ROOT, 'engines/CommandRuntimeInit.js'), 2_000],
+    [path.join(ROOT, 'engines/RenderScheduler.js'), 2_000],
+    [path.join(ROOT, 'engines/RenderSchedulerState.js'), 5_000],
+    [path.join(ROOT, 'engines/RenderSchedulerFrame.js'), 10_000],
+    [path.join(ROOT, 'engines/RenderSchedulerQueue.js'), 4_000],
+    [path.join(ROOT, 'engines/RenderSchedulerScope.js'), 2_500],
+    [path.join(ROOT, 'engines/CanvasLayoutEngine.js'), 2_000],
+    [path.join(ROOT, 'engines/CanvasLayoutContracts.js'), 3_000],
+    [path.join(ROOT, 'engines/CanvasLayoutSize.js'), 8_000],
+    [path.join(ROOT, 'engines/CanvasLayoutElements.js'), 12_000],
+    [path.join(ROOT, 'engines/PreviewEngine.js'), 2_000],
+    [path.join(ROOT, 'engines/PreviewEngineContracts.js'), 3_500],
+    [path.join(ROOT, 'engines/PreviewEngineData.js'), 18_000],
+    [path.join(ROOT, 'engines/PreviewEngineMode.js'), 4_000],
+    [path.join(ROOT, 'engines/PreviewEngineRenderer.js'), 4_000],
+    [path.join(ROOT, 'engines/SelectionEngine.js'), 3_000],
+    [path.join(ROOT, 'engines/SelectionEngineContracts.js'), 3_500],
+    [path.join(ROOT, 'engines/SelectionState.js'), 4_000],
+    [path.join(ROOT, 'engines/SelectionHitTest.js'), 4_000],
+    [path.join(ROOT, 'engines/SelectionGeometry.js'), 5_000],
+    [path.join(ROOT, 'engines/SelectionOverlay.js'), 9_000],
+    [path.join(ROOT, 'engines/SelectionInteraction.js'), 12_000],
+    [path.join(ROOT, 'engines/AlignEngine.js'), 3_500],
+    [path.join(ROOT, 'engines/AlignmentGuides.js'), 6_000],
+    [path.join(ROOT, 'engines/GeometryCore.js'), 6_500],
+    [path.join(ROOT, 'engines/CanvasGeometry.js'), 4_500],
+    [path.join(ROOT, 'engines/HitTestGeometry.js'), 4_500],
+    [path.join(ROOT, 'reportforge/tests/governance_guardrails.test.mjs'), 45_000],
   ]);
 
   for (const [file, limit] of thresholds.entries()) {
@@ -468,7 +698,8 @@ test('canonical runtime files do not reference retired bridge implementations', 
 test('critical engine style.cssText usage stays frozen at approved baseline', () => {
   const expectations = new Map([
     [path.join(ROOT, 'engines/SelectionEngine.js'), 1],
-    [path.join(ROOT, 'engines/CanvasLayoutEngine.js'), 1],
+    [path.join(ROOT, 'engines/CanvasLayoutEngine.js'), 0],
+    [path.join(ROOT, 'engines/CanvasLayoutElements.js'), 1],
     [path.join(ROOT, 'engines/PreviewEngine.js'), 0],
     [path.join(ROOT, 'engines/EngineCore.js'), 0],
   ]);
@@ -478,6 +709,60 @@ test('critical engine style.cssText usage stays frozen at approved baseline', ()
     const actualCount = countMatches(src, /style\.cssText/g);
     assert.equal(actualCount, expectedCount, `${path.basename(file)} style.cssText count changed`);
   }
+});
+
+test('selection split stays modular, thin, and contract-stable', () => {
+  const files = [
+    'engines/SelectionEngine.js',
+    'engines/SelectionEngineContracts.js',
+    'engines/SelectionState.js',
+    'engines/SelectionHitTest.js',
+    'engines/SelectionGeometry.js',
+    'engines/SelectionOverlay.js',
+    'engines/SelectionInteraction.js',
+    'engines/AlignEngine.js',
+    'engines/AlignmentGuides.js',
+  ];
+  for (const rel of files) {
+    const src = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+    assert.ok(src.split('\n').length <= 300, `${rel} should stay <= 300 lines`);
+  }
+  const facade = fs.readFileSync(path.join(ROOT, 'engines/SelectionEngine.js'), 'utf8');
+  assert.match(facade, /assertSelectionState/);
+  assert.match(facade, /assertLayoutContract/);
+  assert.match(facade, /assertRectShape/);
+  assert.match(facade, /assertZoomContract/);
+  assert.match(facade, /DS\.selection/);
+  assert.match(facade, /DS\.zoom/);
+  assert.match(facade, /DS\.getElementById/);
+  assert.match(facade, /style\.cssText/);
+  assert.match(facade, /SelectionOverlay/);
+  assert.match(facade, /SelectionInteraction/);
+  assert.match(facade, /SelectionGeometry/);
+  assert.match(facade, /SelectionHitTest/);
+  assert.match(facade, /SelectionState/);
+});
+
+test('geometry split stays modular, thin, and contract-stable', () => {
+  const files = [
+    'engines/GeometryCore.js',
+    'engines/CanvasGeometry.js',
+    'engines/SelectionGeometry.js',
+    'engines/HitTestGeometry.js',
+  ];
+  for (const rel of files) {
+    const src = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+    assert.ok(src.split('\n').length <= 300, `${rel} should stay <= 300 lines`);
+    assert.doesNotMatch(src, /\bdocument\b/, `${rel} should not reference document`);
+    assert.doesNotMatch(src, /\bwindow\b/, `${rel} should not reference window`);
+  }
+  const core = fs.readFileSync(path.join(ROOT, 'engines/GeometryCore.js'), 'utf8');
+  assert.doesNotMatch(core, /\bDS\b/);
+  assert.doesNotMatch(core, /\bRenderScheduler\b/);
+  assert.doesNotMatch(core, /\bSelectionOverlay\b/);
+  assert.match(core, /function makeRect\(/);
+  assert.match(core, /function rectUnion\(/);
+  assert.match(core, /function resizeRectFromHandle\(/);
 });
 
 test('governance assets exist and include strict architectural checklist', () => {
@@ -575,6 +860,11 @@ test('reportforge_server stays facade-thin and delegates route logic', () => {
     'reportforge_server_designer.py',
     'reportforge_server_services.py',
     'reportforge_server_http_utils.py',
+    'reportforge_server_route_health.py',
+    'reportforge_server_route_favicon.py',
+    'reportforge_server_route_designer.py',
+    'reportforge_server_route_static.py',
+    'reportforge_server_route_barcode.py',
     'reportforge_server_routes_preview.py',
     'reportforge_server_routes_render.py',
     'reportforge_server_routes_validate.py',
@@ -591,6 +881,11 @@ test('reportforge_server stays facade-thin and delegates route logic', () => {
   const validate = fs.readFileSync(path.join(ROOT, 'reportforge_server_routes_validate.py'), 'utf8');
   const datasources = fs.readFileSync(path.join(ROOT, 'reportforge_server_datasources.py'), 'utf8');
   const httpUtils = fs.readFileSync(path.join(ROOT, 'reportforge_server_http_utils.py'), 'utf8');
+  const health = fs.readFileSync(path.join(ROOT, 'reportforge_server_route_health.py'), 'utf8');
+  const favicon = fs.readFileSync(path.join(ROOT, 'reportforge_server_route_favicon.py'), 'utf8');
+  const designer = fs.readFileSync(path.join(ROOT, 'reportforge_server_route_designer.py'), 'utf8');
+  const statics = fs.readFileSync(path.join(ROOT, 'reportforge_server_route_static.py'), 'utf8');
+  const barcode = fs.readFileSync(path.join(ROOT, 'reportforge_server_route_barcode.py'), 'utf8');
 
   assert.ok(main.split('\n').length <= 120, 'reportforge_server.py should remain a thin facade');
   assert.match(main, /from reportforge_server_services import handle_get, handle_options, handle_post/);
@@ -598,19 +893,22 @@ test('reportforge_server stays facade-thin and delegates route logic', () => {
   assert.doesNotMatch(main, /\bdef _post_preview\b/);
   assert.doesNotMatch(main, /\bdef _validate_layout\b/);
 
-  assert.ok(services.split('\n').length <= 400, 'reportforge_server_services.py should remain bounded');
+  assert.ok(services.split('\n').length <= 120, 'reportforge_server_services.py should remain thin');
   assert.match(services, /def handle_get\(/);
   assert.match(services, /def handle_post\(/);
-  assert.ok(services.split('\n').length <= 120, 'reportforge_server_services.py should remain thin');
 
-  assert.ok(preview.split('\n').length <= 220, 'reportforge_server_routes_preview.py should remain bounded');
+  assert.ok(preview.split('\n').length <= 60, 'reportforge_server_routes_preview.py should remain bounded');
   assert.ok(render.split('\n').length <= 180, 'reportforge_server_routes_render.py should remain bounded');
   assert.ok(validate.split('\n').length <= 220, 'reportforge_server_routes_validate.py should remain bounded');
   assert.ok(datasources.split('\n').length <= 80, 'reportforge_server_datasources.py should remain bounded');
   assert.ok(httpUtils.split('\n').length <= 80, 'reportforge_server_http_utils.py should remain bounded');
+  assert.ok(health.split('\n').length <= 40, 'reportforge_server_route_health.py should remain bounded');
+  assert.ok(favicon.split('\n').length <= 60, 'reportforge_server_route_favicon.py should remain bounded');
+  assert.ok(designer.split('\n').length <= 60, 'reportforge_server_route_designer.py should remain bounded');
+  assert.ok(statics.split('\n').length <= 60, 'reportforge_server_route_static.py should remain bounded');
+  assert.ok(barcode.split('\n').length <= 80, 'reportforge_server_route_barcode.py should remain bounded');
 
-  assert.match(preview, /def handle_get\(/);
-  assert.match(preview, /def handle_post\(/);
+  assert.match(preview, /def _post_preview\(/);
   assert.match(render, /def _post_render\(/);
   assert.match(validate, /def _post_validate_layout\(/);
   assert.match(validate, /def _post_validate_formula\(/);
@@ -618,6 +916,12 @@ test('reportforge_server stays facade-thin and delegates route logic', () => {
   assert.match(datasources, /def _post_ds_query\(/);
   assert.match(httpUtils, /def _respond\(/);
   assert.match(httpUtils, /def _json\(/);
+  assert.match(health, /def _get_health\(/);
+  assert.match(favicon, /def _serve_favicon\(/);
+  assert.match(designer, /def _serve_designer\(/);
+  assert.match(statics, /def _serve_static\(/);
+  assert.match(barcode, /def _get_barcode\(/);
+  assert.match(barcode, /def _post_barcode\(/);
 });
 
 test('active bridges must not regress into HTML host', () => {

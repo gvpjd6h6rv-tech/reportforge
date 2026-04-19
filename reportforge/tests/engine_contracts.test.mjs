@@ -29,6 +29,14 @@ test('ContractGuards fail fast on invalid contracts', () => {
 test('canonical engines reference contract guards explicitly', () => {
   const files = {
     selection: path.join(ROOT, 'engines/SelectionEngine.js'),
+    selectionState: path.join(ROOT, 'engines/SelectionState.js'),
+    selectionHitTest: path.join(ROOT, 'engines/SelectionHitTest.js'),
+    selectionGeometry: path.join(ROOT, 'engines/SelectionGeometry.js'),
+    selectionOverlay: path.join(ROOT, 'engines/SelectionOverlay.js'),
+    selectionInteraction: path.join(ROOT, 'engines/SelectionInteraction.js'),
+    geometryCore: path.join(ROOT, 'engines/GeometryCore.js'),
+    canvasGeometry: path.join(ROOT, 'engines/CanvasGeometry.js'),
+    hitTestGeometry: path.join(ROOT, 'engines/HitTestGeometry.js'),
     canvas: path.join(ROOT, 'engines/CanvasLayoutEngine.js'),
     preview: path.join(ROOT, 'engines/PreviewEngine.js'),
     core: path.join(ROOT, 'engines/EngineCore.js'),
@@ -36,6 +44,14 @@ test('canonical engines reference contract guards explicitly', () => {
   };
 
   const selection = fs.readFileSync(files.selection, 'utf8');
+  const selectionState = fs.readFileSync(files.selectionState, 'utf8');
+  const selectionHitTest = fs.readFileSync(files.selectionHitTest, 'utf8');
+  const selectionGeometry = fs.readFileSync(files.selectionGeometry, 'utf8');
+  const selectionOverlay = fs.readFileSync(files.selectionOverlay, 'utf8');
+  const selectionInteraction = fs.readFileSync(files.selectionInteraction, 'utf8');
+  const geometryCore = fs.readFileSync(files.geometryCore, 'utf8');
+  const canvasGeometry = fs.readFileSync(files.canvasGeometry, 'utf8');
+  const hitTestGeometry = fs.readFileSync(files.hitTestGeometry, 'utf8');
   const canvas = fs.readFileSync(files.canvas, 'utf8');
   const preview = fs.readFileSync(files.preview, 'utf8');
   const core = fs.readFileSync(files.core, 'utf8');
@@ -44,6 +60,16 @@ test('canonical engines reference contract guards explicitly', () => {
   assert.match(selection, /assertRectShape/);
   assert.match(selection, /assertSelectionState/);
   assert.match(selection, /assertZoomContract/);
+  assert.match(selectionState, /selectedElementsFromIds/);
+  assert.match(selectionHitTest, /resolveRenderSelectionIds/);
+  assert.match(selection, /CanvasGeometry/);
+  assert.match(selectionGeometry, /selectionBoundsFromRects/);
+  assert.match(selectionGeometry, /selectionHandles/);
+  assert.match(selectionOverlay, /renderHandles/);
+  assert.match(selectionInteraction, /onMouseMove/);
+  assert.match(geometryCore, /function makeRect\(/);
+  assert.match(canvasGeometry, /function elementViewRect\(/);
+  assert.match(hitTestGeometry, /function handleAt\(/);
 
   assert.match(canvas, /assertLayoutContract/);
   assert.match(canvas, /assertSelectionState/);
@@ -61,6 +87,28 @@ test('canonical engines reference contract guards explicitly', () => {
   assert.doesNotMatch(core, /INVALID SELECTION STATE/);
   assert.doesNotMatch(core, /INVALID LAYOUT CONTRACT/);
   assert.doesNotMatch(core, /INVALID ZOOM CONTRACT/);
+});
+
+test('geometry modules stay pure and split by concern', () => {
+  const geometryCore = fs.readFileSync(path.join(ROOT, 'engines/GeometryCore.js'), 'utf8');
+  const canvasGeometry = fs.readFileSync(path.join(ROOT, 'engines/CanvasGeometry.js'), 'utf8');
+  const selectionGeometry = fs.readFileSync(path.join(ROOT, 'engines/SelectionGeometry.js'), 'utf8');
+  const hitTestGeometry = fs.readFileSync(path.join(ROOT, 'engines/HitTestGeometry.js'), 'utf8');
+
+  for (const src of [geometryCore, canvasGeometry, selectionGeometry, hitTestGeometry]) {
+    assert.doesNotMatch(src, /\bdocument\b/);
+    assert.doesNotMatch(src, /\bwindow\b/);
+  }
+
+  assert.doesNotMatch(geometryCore, /\bDS\b/);
+  assert.doesNotMatch(geometryCore, /\bRenderScheduler\b/);
+  assert.doesNotMatch(geometryCore, /\bSelectionOverlay\b/);
+  assert.match(canvasGeometry, /function selectionViewRects\(/);
+  assert.match(selectionGeometry, /function selectionBoundsFromRects\(/);
+  assert.match(selectionGeometry, /function selectionHandles\(/);
+  assert.match(selectionGeometry, /function rubberBandRect\(/);
+  assert.match(hitTestGeometry, /function handleAt\(/);
+  assert.match(hitTestGeometry, /function edgeAt\(/);
 });
 
 test('runtime engines do not consume legacy rect keys x/y/w/h', () => {

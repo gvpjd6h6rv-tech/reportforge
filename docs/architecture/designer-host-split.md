@@ -23,13 +23,13 @@
 | Subsistema | Owner canónico | Fuente de verdad | Writers activos | Riesgo legacy |
 |---|---|---|---|---|
 | Estado del documento | `DocumentStore.js` (DS) | `DS.sections`, `DS.elements` | DS API | bajo |
-| Selección | `SelectionEngine.js` | `DS.selection` | `SelectionEngine.renderHandles()` | medio — ver RF-ARCH-002 |
+| Selección | `SelectionEngine.js` facade + split owners | `DS.selection` | `SelectionOverlay.renderHandles()` | medio — ver RF-ARCH-002 |
 | Canvas / layout | `CanvasLayoutEngine.js` | `DS.sections`, `DS.elements`, DOM `.cr-section/.cr-element` | `CanvasLayoutEngine` | medio — ver RF-ARCH-004 |
 | Zoom | `ZoomEngine.js` (`ZoomEngineV19`) | `DS.zoom` | `DesignZoomEngine._apply` (en DeferredBootstrap) | alto — ver RF-ARCH-008 |
 | History | `HistoryEngine.js` + `DS.saveHistory` | `DS.history` | ambos — ver RF-ARCH-006 | alto |
 | Preview | `PreviewEngine.js` | `DS.previewMode` | `PreviewEngine.show/hide` | bajo |
 | Scheduler | `RenderScheduler.js` | colas internas | scheduler + writes directos residuales | medio — ver RF-ARCH-005 |
-| Geometría | `RF.Geometry` (RuntimeGlobals) | BoundingRect + viewport | `RF.Geometry.*` | bajo |
+| Geometría | `RF.Geometry` + domain geometry split | BoundingRect + viewport + pure helpers | `RF.Geometry.*`, `GeometryCore`, `CanvasGeometry`, `SelectionGeometry`, `HitTestGeometry` | bajo |
 | Formula | `FormulaAndDebug.js` | - | `FormulaEngine` | bajo |
 | Doc types | `DocTypeAndProbes.js` | `DOC_TYPES` | global write única | bajo |
 | Boot | `RuntimeBootstrap.js` + `DeferredBootstrap.js` | secuencia DOMContentLoaded | dos fases explícitas | bajo |

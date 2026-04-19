@@ -108,14 +108,25 @@ Guides use `getBoundingClientRect()` in screen-space for pixel-perfect alignment
 ## SelectionEngine
 
 ```javascript
-SelectionEngine.renderHandles()    // draw L-shaped corner handles (4 corners only)
-SelectionEngine.onPointerDown(e, id)
-SelectionEngine.onMouseMove(e)     // RAF-throttled position update
-SelectionEngine._doMove(pos, e)    // real-time drag (updates div.style.left/top in RAF)
-SelectionEngine._doResize(pos, e)
+SelectionEngine.renderHandles()    // facade -> SelectionOverlay
+SelectionEngine.onPointerDown(e, id) // facade -> SelectionInteraction
+SelectionEngine.onMouseMove(e)     // facade -> SelectionInteraction
+SelectionEngine._doMove(pos, e)    // facade -> SelectionInteraction
+SelectionEngine._doResize(pos, e)  // facade -> SelectionInteraction
 ```
 
 Handles: 4 L-shaped black corner markers (`.sel-handle[data-pos="nw|ne|sw|se"]`), 1px border, 7×7px.
+
+Selection ownership is split across:
+- `GeometryCore.js`
+- `CanvasGeometry.js`
+- `SelectionState.js`
+- `SelectionHitTest.js`
+- `SelectionGeometry.js`
+- `SelectionOverlay.js`
+- `SelectionInteraction.js`
+- `AlignEngine.js`
+- `AlignmentGuides.js`
 
 ## PreviewEngine
 

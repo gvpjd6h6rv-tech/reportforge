@@ -9,11 +9,11 @@
   - [designer/crystal-reports-designer-v4.html](/home/mimi/Escritorio/RF/designer/crystal-reports-designer-v4.html#L2711)
 - Variant conflictiva:
   - DOMRect-like `{ left, top, width, height }`
-  - consumer logic still accepts this path in [engines/SelectionEngine.js](/home/mimi/Escritorio/RF/engines/SelectionEngine.js#L140)
+  - consumer logic now lives in [engines/CanvasGeometry.js](/home/mimi/Escritorio/RF/engines/CanvasGeometry.js#L1) and [engines/SelectionGeometry.js](/home/mimi/Escritorio/RF/engines/SelectionGeometry.js#L1)
 - Producers:
   - `RF.Geometry.elementRect`
 - Consumers:
-  - `SelectionEngine.renderHandles`
+  - `SelectionOverlay.renderHandles`
   - selection bbox calculations
 - Bug real causado:
   - selected overlay collapsed because consumer expected `left/top/width/height` while runtime provided `{x,y,w,h}`
@@ -45,14 +45,14 @@
 - Shape actual:
   - absolute overlay DOM in `#handles-layer`
   - box position from either measured rect or model fallback
-  - [engines/SelectionEngine.js](/home/mimi/Escritorio/RF/engines/SelectionEngine.js#L133)
+  - [engines/SelectionOverlay.js](/home/mimi/Escritorio/RF/engines/SelectionOverlay.js#L1)
 - Variantes conflictivas:
   - model-space fallback
   - DOMRect-like path
   - monolithic selection overlay path in HTML
 - Producers:
-  - `SelectionEngine.renderHandles`
-  - legacy monolithic selection engine code
+  - `SelectionOverlay.renderHandles`
+  - split selection owners
 - Consumers:
   - resize hit-targets
   - visual overlay CSS
@@ -117,7 +117,7 @@
   - `engines/SelectionEngine.js`
   - modular overlay contract
 - Producers:
-  - `SelectionEngine.renderHandles`
+  - `SelectionOverlay.renderHandles`
   - modular `core/selection.js`
 - Consumers:
   - resize interactions
