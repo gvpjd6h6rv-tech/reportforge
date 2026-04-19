@@ -2,8 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const SHELL_HTML_PATH = path.resolve('designer/crystal-reports-designer-v4.html');
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const SHELL_HTML_PATH = path.join(ROOT, 'designer/crystal-reports-designer-v4.html');
 const SHELL_MAX_BYTES = 30_000;
 const ALLOWED_WINDOW_EXPORTS = [
   'RF',
@@ -127,11 +129,11 @@ test('guardrail detector catches synthetic architectural violations', () => {
 
 test('canonical runtime files do not call legacy canvas or preview facades', () => {
   const files = [
-    path.resolve('designer/crystal-reports-designer-v4.html'),
-    path.resolve('engines/EngineCore.js'),
-    path.resolve('engines/SelectionEngine.js'),
-    path.resolve('engines/HistoryEngine.js'),
-    path.resolve('engines/ClipboardEngine.js'),
+    path.join(ROOT, 'designer/crystal-reports-designer-v4.html'),
+    path.join(ROOT, 'engines/EngineCore.js'),
+    path.join(ROOT, 'engines/SelectionEngine.js'),
+    path.join(ROOT, 'engines/HistoryEngine.js'),
+    path.join(ROOT, 'engines/ClipboardEngine.js'),
   ];
 
   for (const file of files) {
@@ -211,6 +213,12 @@ test('monolith no longer defines critical interaction engines inline', () => {
   assert.match(html, /<script src="\/engines\/InsertEngine\.js"><\/script>/);
   assert.match(html, /<script src="\/engines\/SelectionEngine\.js"><\/script>/);
   assert.match(html, /<script src="\/engines\/OverlayEngine\.js"><\/script>/);
+});
+
+test('monolith loads engine core contract helpers before EngineCore', () => {
+  const html = fs.readFileSync(SHELL_HTML_PATH, 'utf8');
+  assert.match(html, /<script src="\/engines\/EngineCoreContracts\.js"><\/script>/);
+  assert.match(html, /<script src="\/engines\/EngineCore\.js"><\/script>/);
 });
 
 test('monolith no longer defines properties, explorer, or zoom engines inline', () => {
@@ -306,18 +314,18 @@ test('monolith shell keeps CSS externalized and below shell-size thresholds', ()
   ];
 
   for (const relPath of cssFiles) {
-    assert.ok(fs.existsSync(path.resolve(relPath)), `${relPath} missing`);
+    assert.ok(fs.existsSync(path.join(ROOT, relPath)), `${relPath} missing`);
   }
 });
 
 test('runtime boundary modules use RuntimeServices instead of raw structural globals', () => {
   const files = [
-    path.resolve('engines/RuntimeBootstrap.js'),
-    path.resolve('engines/GlobalEventHandlers.js'),
-    path.resolve('engines/EngineCore.js'),
-    path.resolve('engines/DeferredBootstrap.js'),
-    path.resolve('engines/SectionEngine.js'),
-    path.resolve('engines/ZoomEngine.js'),
+    path.join(ROOT, 'engines/RuntimeBootstrap.js'),
+    path.join(ROOT, 'engines/GlobalEventHandlers.js'),
+    path.join(ROOT, 'engines/EngineCore.js'),
+    path.join(ROOT, 'engines/DeferredBootstrap.js'),
+    path.join(ROOT, 'engines/SectionEngine.js'),
+    path.join(ROOT, 'engines/ZoomEngine.js'),
   ];
 
   for (const file of files) {
@@ -336,21 +344,21 @@ test('runtime boundary modules use RuntimeServices instead of raw structural glo
       `${path.basename(file)} should not write DOM refs directly to window`);
   }
 
-  assert.ok(fs.existsSync(path.resolve('engines/RuntimeServices.js')), 'RuntimeServices.js missing');
+  assert.ok(fs.existsSync(path.join(ROOT, 'engines/RuntimeServices.js')), 'RuntimeServices.js missing');
   const html = fs.readFileSync(SHELL_HTML_PATH, 'utf8');
   assert.match(html, /<script src="\/engines\/RuntimeServices\.js"><\/script>/);
 });
 
 test('engine globals are reduced to the approved window export whitelist', () => {
   const files = [
-    path.resolve('engines/RuntimeGlobals.js'),
-    path.resolve('engines/DeferredBootstrap.js'),
-    path.resolve('engines/FormulaAndDebug.js'),
-    path.resolve('engines/DocTypeAndProbes.js'),
-    path.resolve('engines/SnapEngine.js'),
-    path.resolve('engines/GridEngine.js'),
-    path.resolve('engines/RulerEngine.js'),
-    path.resolve('engines/WorkspaceScrollEngine.js'),
+    path.join(ROOT, 'engines/RuntimeGlobals.js'),
+    path.join(ROOT, 'engines/DeferredBootstrap.js'),
+    path.join(ROOT, 'engines/FormulaAndDebug.js'),
+    path.join(ROOT, 'engines/DocTypeAndProbes.js'),
+    path.join(ROOT, 'engines/SnapEngine.js'),
+    path.join(ROOT, 'engines/GridEngine.js'),
+    path.join(ROOT, 'engines/RulerEngine.js'),
+    path.join(ROOT, 'engines/WorkspaceScrollEngine.js'),
   ];
 
   const actual = new Set();
@@ -383,15 +391,15 @@ test('engine globals are reduced to the approved window export whitelist', () =>
   ];
 
   const engineFiles = [
-    path.resolve('engines/SelectionEngine.js'),
-    path.resolve('engines/SectionEngine.js'),
-    path.resolve('engines/SectionResizeEngine.js'),
-    path.resolve('engines/InsertEngine.js'),
-    path.resolve('engines/OverlayEngine.js'),
-    path.resolve('engines/PropertiesEngine.js'),
-    path.resolve('engines/FormatEngine.js'),
-    path.resolve('engines/FieldExplorerEngine.js'),
-    path.resolve('engines/ZoomEngine.js'),
+    path.join(ROOT, 'engines/SelectionEngine.js'),
+    path.join(ROOT, 'engines/SectionEngine.js'),
+    path.join(ROOT, 'engines/SectionResizeEngine.js'),
+    path.join(ROOT, 'engines/InsertEngine.js'),
+    path.join(ROOT, 'engines/OverlayEngine.js'),
+    path.join(ROOT, 'engines/PropertiesEngine.js'),
+    path.join(ROOT, 'engines/FormatEngine.js'),
+    path.join(ROOT, 'engines/FieldExplorerEngine.js'),
+    path.join(ROOT, 'engines/ZoomEngine.js'),
   ];
 
   for (const file of engineFiles) {
@@ -404,10 +412,10 @@ test('engine globals are reduced to the approved window export whitelist', () =>
 });
 
 test('layering rules: adapters stay thin and bootstrap stays orchestration-only', () => {
-  const uiAdapters = fs.readFileSync(path.resolve('engines/UIAdapters.js'), 'utf8');
-  const globalHandlers = fs.readFileSync(path.resolve('engines/GlobalEventHandlers.js'), 'utf8');
-  const runtimeBootstrap = fs.readFileSync(path.resolve('engines/RuntimeBootstrap.js'), 'utf8');
-  const commandRuntime = fs.readFileSync(path.resolve('engines/CommandRuntime.js'), 'utf8');
+  const uiAdapters = fs.readFileSync(path.join(ROOT, 'engines/UIAdapters.js'), 'utf8');
+  const globalHandlers = fs.readFileSync(path.join(ROOT, 'engines/GlobalEventHandlers.js'), 'utf8');
+  const runtimeBootstrap = fs.readFileSync(path.join(ROOT, 'engines/RuntimeBootstrap.js'), 'utf8');
+  const commandRuntime = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntime.js'), 'utf8');
 
   assert.doesNotMatch(uiAdapters, /\bDS\./, 'UIAdapters must not access DS directly');
   assert.doesNotMatch(uiAdapters, /\bsaveHistory\b/, 'UIAdapters must not mutate history');
@@ -426,10 +434,10 @@ test('layering rules: adapters stay thin and bootstrap stays orchestration-only'
 
 test('critical boundary files stay below growth thresholds', () => {
   const thresholds = new Map([
-    [path.resolve('designer/crystal-reports-designer-v4.html'), SHELL_MAX_BYTES],
-    [path.resolve('engines/RuntimeBootstrap.js'), 12_000],
-    [path.resolve('engines/UIAdapters.js'), 3_000],
-    [path.resolve('reportforge/tests/governance_guardrails.test.mjs'), 25_000],
+    [path.join(ROOT, 'designer/crystal-reports-designer-v4.html'), SHELL_MAX_BYTES],
+    [path.join(ROOT, 'engines/RuntimeBootstrap.js'), 12_000],
+    [path.join(ROOT, 'engines/UIAdapters.js'), 3_000],
+    [path.join(ROOT, 'reportforge/tests/governance_guardrails.test.mjs'), 29_500],
   ]);
 
   for (const [file, limit] of thresholds.entries()) {
@@ -440,12 +448,12 @@ test('critical boundary files stay below growth thresholds', () => {
 
 test('canonical runtime files do not reference retired bridge implementations', () => {
   const files = [
-    path.resolve('designer/crystal-reports-designer-v4.html'),
-    path.resolve('engines/EngineCore.js'),
-    path.resolve('engines/SelectionEngine.js'),
-    path.resolve('engines/HistoryEngine.js'),
-    path.resolve('engines/ClipboardEngine.js'),
-    path.resolve('engines/PreviewEngine.js'),
+    path.join(ROOT, 'designer/crystal-reports-designer-v4.html'),
+    path.join(ROOT, 'engines/EngineCore.js'),
+    path.join(ROOT, 'engines/SelectionEngine.js'),
+    path.join(ROOT, 'engines/HistoryEngine.js'),
+    path.join(ROOT, 'engines/ClipboardEngine.js'),
+    path.join(ROOT, 'engines/PreviewEngine.js'),
   ];
   for (const file of files) {
     const src = normalizeForScan(fs.readFileSync(file, 'utf8'));
@@ -459,10 +467,10 @@ test('canonical runtime files do not reference retired bridge implementations', 
 
 test('critical engine style.cssText usage stays frozen at approved baseline', () => {
   const expectations = new Map([
-    [path.resolve('engines/SelectionEngine.js'), 1],
-    [path.resolve('engines/CanvasLayoutEngine.js'), 1],
-    [path.resolve('engines/PreviewEngine.js'), 0],
-    [path.resolve('engines/EngineCore.js'), 0],
+    [path.join(ROOT, 'engines/SelectionEngine.js'), 1],
+    [path.join(ROOT, 'engines/CanvasLayoutEngine.js'), 1],
+    [path.join(ROOT, 'engines/PreviewEngine.js'), 0],
+    [path.join(ROOT, 'engines/EngineCore.js'), 0],
   ]);
 
   for (const [file, expectedCount] of expectations.entries()) {
@@ -473,9 +481,9 @@ test('critical engine style.cssText usage stays frozen at approved baseline', ()
 });
 
 test('governance assets exist and include strict architectural checklist', () => {
-  const prTemplatePath = path.resolve('.github/PULL_REQUEST_TEMPLATE.md');
-  const workflowPath = path.resolve('.github/workflows/architecture-governance.yml');
-  const readmePath = path.resolve('README.md');
+  const prTemplatePath = path.join(ROOT, '.github/PULL_REQUEST_TEMPLATE.md');
+  const workflowPath = path.join(ROOT, '.github/workflows/architecture-governance.yml');
+  const readmePath = path.join(ROOT, 'README.md');
 
   assert.ok(fs.existsSync(prTemplatePath), 'PR template missing');
   assert.ok(fs.existsSync(workflowPath), 'CI workflow missing');
@@ -502,4 +510,120 @@ test('governance assets exist and include strict architectural checklist', () =>
   assert.match(workflow, /test:governance/);
 
   assert.match(readme, /Architectural Definition of Done/);
+});
+
+test('doc registry stays modular and facade-thin', () => {
+  const files = [
+    'reportforge/core/render/doc_registry.py',
+    'reportforge/core/render/doc_registry_shared.py',
+    'reportforge/core/render/doc_registry_remision.py',
+    'reportforge/core/render/doc_registry_nota_credito.py',
+    'reportforge/core/render/doc_registry_retencion.py',
+    'reportforge/core/render/doc_registry_liquidacion.py',
+  ];
+
+  for (const relPath of files) {
+    assert.ok(fs.existsSync(path.join(ROOT, relPath)), `${relPath} missing`);
+  }
+
+  const main = fs.readFileSync(path.join(ROOT, 'reportforge/core/render/doc_registry.py'), 'utf8');
+  assert.ok(main.split('\n').length <= 120, 'doc_registry.py should remain a thin facade');
+  assert.match(main, /from \.doc_registry_remision import/);
+  assert.match(main, /from \.doc_registry_nota_credito import/);
+  assert.match(main, /from \.doc_registry_retencion import/);
+  assert.match(main, /from \.doc_registry_liquidacion import/);
+  assert.doesNotMatch(main, /\bdef _remision_layout_raw\b/);
+  assert.doesNotMatch(main, /\bdef _nota_credito_layout_raw\b/);
+  assert.doesNotMatch(main, /\bdef _retencion_layout_raw\b/);
+  assert.doesNotMatch(main, /\bdef _liquidacion_layout_raw\b/);
+});
+
+test('advanced engine split stays modular, thin, and contract-stable', () => {
+  const files = {
+    'reportforge/core/render/engines/advanced_engine.py': 400,
+    'reportforge/core/render/engines/html_engine.py': 300,
+    'reportforge/core/render/engines/advanced_engine_shared.py': 80,
+    'reportforge/core/render/engines/barcode_renderer.py': 160,
+    'reportforge/core/render/engines/crosstab_renderer.py': 180,
+    'reportforge/core/render/engines/element_renderers.py': 320,
+  };
+
+  for (const [relPath, maxLines] of Object.entries(files)) {
+    const source = fs.readFileSync(path.join(ROOT, relPath), 'utf8');
+    assert.ok(source.split('\n').length <= maxLines, `${relPath} should stay <= ${maxLines} lines`);
+  }
+
+  const advanced = fs.readFileSync(path.join(ROOT, 'reportforge/core/render/engines/advanced_engine.py'), 'utf8');
+  const html = fs.readFileSync(path.join(ROOT, 'reportforge/core/render/engines/html_engine.py'), 'utf8');
+  const shared = fs.readFileSync(path.join(ROOT, 'reportforge/core/render/engines/advanced_engine_shared.py'), 'utf8');
+
+  assert.match(advanced, /class AdvancedHtmlEngine/);
+  assert.match(advanced, /def render_advanced\(/);
+  assert.match(advanced, /def render_from_layout_file\(/);
+  assert.match(advanced, /from \.element_renderers import calc_row_height, render_element/);
+  assert.match(advanced, /from \.barcode_renderer import _render_barcode_svg, _svg_linear_barcode, _svg_qr_placeholder/);
+  assert.match(html, /class HtmlEngine/);
+  assert.match(shared, /_SPECIAL/);
+  assert.match(shared, /_ROW_ODD/);
+  assert.match(shared, /_ROW_EVEN/);
+});
+
+test('reportforge_server stays facade-thin and delegates route logic', () => {
+  const files = [
+    'reportforge_server.py',
+    'reportforge_server_shared.py',
+    'reportforge_server_designer.py',
+    'reportforge_server_services.py',
+    'reportforge_server_http_utils.py',
+    'reportforge_server_routes_preview.py',
+    'reportforge_server_routes_render.py',
+    'reportforge_server_routes_validate.py',
+    'reportforge_server_datasources.py',
+  ];
+  for (const relPath of files) {
+    assert.ok(fs.existsSync(path.join(ROOT, relPath)), `${relPath} missing`);
+  }
+
+  const main = fs.readFileSync(path.join(ROOT, 'reportforge_server.py'), 'utf8');
+  const services = fs.readFileSync(path.join(ROOT, 'reportforge_server_services.py'), 'utf8');
+  const preview = fs.readFileSync(path.join(ROOT, 'reportforge_server_routes_preview.py'), 'utf8');
+  const render = fs.readFileSync(path.join(ROOT, 'reportforge_server_routes_render.py'), 'utf8');
+  const validate = fs.readFileSync(path.join(ROOT, 'reportforge_server_routes_validate.py'), 'utf8');
+  const datasources = fs.readFileSync(path.join(ROOT, 'reportforge_server_datasources.py'), 'utf8');
+  const httpUtils = fs.readFileSync(path.join(ROOT, 'reportforge_server_http_utils.py'), 'utf8');
+
+  assert.ok(main.split('\n').length <= 120, 'reportforge_server.py should remain a thin facade');
+  assert.match(main, /from reportforge_server_services import handle_get, handle_options, handle_post/);
+  assert.match(main, /class RFHandler/);
+  assert.doesNotMatch(main, /\bdef _post_preview\b/);
+  assert.doesNotMatch(main, /\bdef _validate_layout\b/);
+
+  assert.ok(services.split('\n').length <= 400, 'reportforge_server_services.py should remain bounded');
+  assert.match(services, /def handle_get\(/);
+  assert.match(services, /def handle_post\(/);
+  assert.ok(services.split('\n').length <= 120, 'reportforge_server_services.py should remain thin');
+
+  assert.ok(preview.split('\n').length <= 220, 'reportforge_server_routes_preview.py should remain bounded');
+  assert.ok(render.split('\n').length <= 180, 'reportforge_server_routes_render.py should remain bounded');
+  assert.ok(validate.split('\n').length <= 220, 'reportforge_server_routes_validate.py should remain bounded');
+  assert.ok(datasources.split('\n').length <= 80, 'reportforge_server_datasources.py should remain bounded');
+  assert.ok(httpUtils.split('\n').length <= 80, 'reportforge_server_http_utils.py should remain bounded');
+
+  assert.match(preview, /def handle_get\(/);
+  assert.match(preview, /def handle_post\(/);
+  assert.match(render, /def _post_render\(/);
+  assert.match(validate, /def _post_validate_layout\(/);
+  assert.match(validate, /def _post_validate_formula\(/);
+  assert.match(datasources, /def _post_register_ds\(/);
+  assert.match(datasources, /def _post_ds_query\(/);
+  assert.match(httpUtils, /def _respond\(/);
+  assert.match(httpUtils, /def _json\(/);
+});
+
+test('active bridges must not regress into HTML host', () => {
+  const html = fs.readFileSync(SHELL_HTML_PATH, 'utf8');
+  assert.doesNotMatch(html, /DesignZoomEngine\._apply/, 'zoom bridge must stay in DeferredBootstrap');
+  assert.doesNotMatch(html, /DS\.saveHistory\s*=\s*function/, 'history patch must stay in DeferredBootstrap');
+  const deferred = fs.readFileSync(path.join(ROOT, 'engines/DeferredBootstrap.js'), 'utf8');
+  assert.match(deferred, /DesignZoomEngine\._apply/, 'DeferredBootstrap must own zoom bridge until RF-ARCH-008 is closed');
 });

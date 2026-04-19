@@ -850,5 +850,35 @@ class TestRenderAdvanced(unittest.TestCase):
 
 
 # ═════════════════════════════════════════════════════════════════
+class TestModuleContracts(unittest.TestCase):
+
+    def test_advanced_engine_module_exports_are_stable(self):
+        from core.render.engines import advanced_engine as mod
+
+        for name in [
+            "AdvancedHtmlEngine",
+            "render_advanced",
+            "render_from_layout_file",
+            "_render_barcode_svg",
+            "_render_crosstab",
+            "_svg_linear_barcode",
+            "_svg_qr_placeholder",
+        ]:
+            self.assertTrue(hasattr(mod, name), name)
+
+    def test_split_helper_modules_exist_and_export(self):
+        from core.render.engines import advanced_engine_shared, barcode_renderer, crosstab_renderer, element_renderers
+
+        self.assertTrue(hasattr(advanced_engine_shared, "_SPECIAL"))
+        self.assertTrue(hasattr(advanced_engine_shared, "_esc"))
+        self.assertTrue(hasattr(barcode_renderer, "_render_barcode_svg"))
+        self.assertTrue(hasattr(barcode_renderer, "_svg_linear_barcode"))
+        self.assertTrue(hasattr(barcode_renderer, "_svg_qr_placeholder"))
+        self.assertTrue(hasattr(crosstab_renderer, "_render_crosstab"))
+        self.assertTrue(hasattr(element_renderers, "render_element"))
+        self.assertTrue(hasattr(element_renderers, "calc_row_height"))
+
+
+# ═════════════════════════════════════════════════════════════════
 if __name__ == "__main__":
     unittest.main(verbosity=2)

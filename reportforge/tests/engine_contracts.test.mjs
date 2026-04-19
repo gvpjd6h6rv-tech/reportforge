@@ -3,9 +3,11 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
 
 const require = createRequire(import.meta.url);
 const { ContractGuards } = require('../../engines/EngineCore.js');
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
 test('ContractGuards accepts canonical contracts', () => {
   const rect = { left: 1, top: 2, width: 3, height: 4 };
@@ -26,16 +28,18 @@ test('ContractGuards fail fast on invalid contracts', () => {
 
 test('canonical engines reference contract guards explicitly', () => {
   const files = {
-    selection: path.resolve('engines/SelectionEngine.js'),
-    canvas: path.resolve('engines/CanvasLayoutEngine.js'),
-    preview: path.resolve('engines/PreviewEngine.js'),
-    core: path.resolve('engines/EngineCore.js'),
+    selection: path.join(ROOT, 'engines/SelectionEngine.js'),
+    canvas: path.join(ROOT, 'engines/CanvasLayoutEngine.js'),
+    preview: path.join(ROOT, 'engines/PreviewEngine.js'),
+    core: path.join(ROOT, 'engines/EngineCore.js'),
+    contracts: path.join(ROOT, 'engines/EngineCoreContracts.js'),
   };
 
   const selection = fs.readFileSync(files.selection, 'utf8');
   const canvas = fs.readFileSync(files.canvas, 'utf8');
   const preview = fs.readFileSync(files.preview, 'utf8');
   const core = fs.readFileSync(files.core, 'utf8');
+  const contracts = fs.readFileSync(files.contracts, 'utf8');
 
   assert.match(selection, /assertRectShape/);
   assert.match(selection, /assertSelectionState/);
@@ -49,17 +53,21 @@ test('canonical engines reference contract guards explicitly', () => {
   assert.match(preview, /assertLayoutContract/);
   assert.match(preview, /assertZoomContract/);
 
-  assert.match(core, /INVALID RECT SHAPE/);
-  assert.match(core, /INVALID SELECTION STATE/);
-  assert.match(core, /INVALID LAYOUT CONTRACT/);
-  assert.match(core, /INVALID ZOOM CONTRACT/);
+  assert.match(contracts, /INVALID RECT SHAPE/);
+  assert.match(contracts, /INVALID SELECTION STATE/);
+  assert.match(contracts, /INVALID LAYOUT CONTRACT/);
+  assert.match(contracts, /INVALID ZOOM CONTRACT/);
+  assert.doesNotMatch(core, /INVALID RECT SHAPE/);
+  assert.doesNotMatch(core, /INVALID SELECTION STATE/);
+  assert.doesNotMatch(core, /INVALID LAYOUT CONTRACT/);
+  assert.doesNotMatch(core, /INVALID ZOOM CONTRACT/);
 });
 
 test('runtime engines do not consume legacy rect keys x/y/w/h', () => {
   const files = [
-    path.resolve('engines/SelectionEngine.js'),
-    path.resolve('engines/CanvasLayoutEngine.js'),
-    path.resolve('engines/PreviewEngine.js'),
+    path.join(ROOT, 'engines/SelectionEngine.js'),
+    path.join(ROOT, 'engines/CanvasLayoutEngine.js'),
+    path.join(ROOT, 'engines/PreviewEngine.js'),
   ];
 
   for (const file of files) {
@@ -71,18 +79,44 @@ test('runtime engines do not consume legacy rect keys x/y/w/h', () => {
   }
 });
 
+test('HTML host contains all canonical DOM contract IDs', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'designer/crystal-reports-designer-v4.html'), 'utf8');
+  const required = [
+    // canvas stack
+    'canvas-layer', 'viewport', 'workspace', 'sections-layer',
+    'handles-layer', 'selection-layer', 'guides-layer', 'guide-layer',
+    'labels-layer', 'rubber-band', 'insert-ghost', 'field-drop-indicator',
+    'preview-layer', 'preview-content',
+    // panels
+    'field-explorer', 'field-tree', 'properties-panel', 'props-body',
+    'sections-list',
+    // chrome
+    'menubar', 'statusbar', 'sb-msg', 'tabs-row', 'tab-design', 'tab-preview',
+    'doc-type-bar', 'ctx-menu',
+  ];
+  for (const id of required) {
+    assert.match(html, new RegExp(`id="${id}"`), `DOM contract missing: #${id}`);
+  }
+});
+
 test('canonical runtime engines consume selection, zoom and layout from DS', () => {
   const files = {
-    selection: path.resolve('engines/SelectionEngine.js'),
-    canvas: path.resolve('engines/CanvasLayoutEngine.js'),
-    preview: path.resolve('engines/PreviewEngine.js'),
-    core: path.resolve('engines/EngineCore.js'),
+    selection: path.join(ROOT, 'engines/SelectionEngine.js'),
+    canvas: path.join(ROOT, 'engines/CanvasLayoutEngine.js'),
+    preview: path.join(ROOT, 'engines/PreviewEngine.js'),
+    core: path.join(ROOT, 'engines/EngineCore.js'),
+    contracts: path.join(ROOT, 'engines/EngineCoreContracts.js'),
+    runtime: path.join(ROOT, 'engines/EngineCoreRuntime.js'),
+    routing: path.join(ROOT, 'engines/EngineCoreRouting.js'),
   };
 
   const selection = fs.readFileSync(files.selection, 'utf8');
   const canvas = fs.readFileSync(files.canvas, 'utf8');
   const preview = fs.readFileSync(files.preview, 'utf8');
   const core = fs.readFileSync(files.core, 'utf8');
+  const contracts = fs.readFileSync(files.contracts, 'utf8');
+  const runtime = fs.readFileSync(files.runtime, 'utf8');
+  const routing = fs.readFileSync(files.routing, 'utf8');
 
   assert.match(selection, /\bDS\.selection\b/);
   assert.match(selection, /\bDS\.zoom\b/);
@@ -95,7 +129,14 @@ test('canonical runtime engines consume selection, zoom and layout from DS', () 
   assert.match(preview, /\bDS\.selection\b/);
   assert.match(preview, /\bDS\.zoom\b/);
 
-  assert.match(core, /\bDS\.selection\b/);
-  assert.match(core, /\bDS\.zoom\b/);
-  assert.match(core, /\bDS\.elements\b/);
+  assert.match(contracts, /\bDS\.elements\b/);
+  assert.match(contracts, /\bDS\.selection\b/);
+  assert.match(contracts, /\bDS\.previewMode\b/);
+  assert.match(runtime, /\bDS\.selection\b/);
+  assert.match(runtime, /\bDS\.zoom\b/);
+  assert.match(runtime, /\bDS\.elements\b/);
+  assert.match(routing, /\bDS\.previewMode\b/);
+  assert.match(routing, /\bDS\.getSelectedElements\b/);
+  assert.doesNotMatch(core, /\bDS\.selection\b/);
+  assert.doesNotMatch(core, /\bDS\.elements\b/);
 });
