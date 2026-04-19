@@ -9,6 +9,7 @@ function createEngineCoreRouting(deps = {}) {
   const cloneSerializable = typeof deps.cloneSerializable === 'function'
     ? deps.cloneSerializable
     : (value) => JSON.parse(JSON.stringify(value));
+  const runtimeServices = deps.runtimeServices || null;
   const useInteractionRouter = typeof deps.useInteractionRouter === 'function'
     ? deps.useInteractionRouter
     : () => true;

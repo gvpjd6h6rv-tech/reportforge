@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="/designer/styles/index.css">
 </head>
 <body>
-<div id="app" data-ui="classic">
+<div id="app" data-ui="classic" data-dom-owner="designer-shell">
 
 <!-- ── Title bar ── -->
 <div id="titlebar">
@@ -223,10 +223,10 @@
   <button class="doc-type-btn"        data-doctype="liquidacion" class="doc-type-btn doc-type--liquidacion"><span class="doc-type-dot"></span>Liquidación de Compras</button>
 </div>
 <!-- ── Main area ── -->
-<div id="main-area">
+<div id="main-area" data-dom-owner="designer-layout">
 
   <!-- Left panel -->
-  <div id="panel-left">
+  <div id="panel-left" data-dom-owner="designer-left-panel">
     <div class="panel-title">
       Parámetros
       <div class="panel-btn-group">
@@ -250,7 +250,7 @@
   </div>
 
   <!-- Center canvas -->
-  <div id="canvas-area">
+  <div id="canvas-area" data-dom-owner="designer-canvas-area">
     <div id="ruler-h-row">
       <div id="ruler-corner"></div>
       <div id="ruler-h-canvas">
@@ -261,7 +261,7 @@
       <div id="ruler-v">
         <canvas id="ruler-v-inner" width="24"></canvas>
       </div>
-      <div id="workspace" class="workspace">
+      <div id="workspace" class="workspace" data-dom-owner="designer-workspace">
         <div id="viewport">
           <div id="canvas-layer">
             <div id="grid-overlay"></div>
@@ -288,7 +288,7 @@
   </div>
 
   <!-- Right panel -->
-  <div id="panel-right">
+  <div id="panel-right" data-dom-owner="designer-right-panel">
     <div id="field-explorer">
       <div class="panel-title">
         Explorador de campos
@@ -344,6 +344,9 @@
 <script src="/engines/RuntimeGlobals.js"></script>
 <script src="/engines/FormulaAndDebug.js"></script>
 <script src="/engines/DocTypeAndProbes.js"></script>
+<script src="/engines/GeometryCore.js"></script>
+<script src="/engines/CanvasGeometry.js"></script>
+<script src="/engines/HitTestGeometry.js"></script>
 
 <!-- ══ ReportForge v19 Engine Modules ══════════════════════════════ -->
 <script src="/engines/WorkspaceScrollEngine.js"></script>
@@ -351,6 +354,25 @@
 <script src="/engines/SnapEngine.js"></script>
 <script src="/engines/RulerEngine.js"></script>
 <script src="/engines/GlobalEventHandlers.js"></script>
+<script src="/engines/RenderSchedulerState.js"></script>
+<script src="/engines/RenderSchedulerFrame.js"></script>
+<script src="/engines/RenderSchedulerQueue.js"></script>
+<script src="/engines/RenderSchedulerScope.js"></script>
+<script src="/engines/CanvasLayoutContracts.js"></script>
+<script src="/engines/CanvasLayoutSize.js"></script>
+<script src="/engines/CanvasLayoutElements.js"></script>
+<script src="/engines/PreviewEngineContracts.js"></script>
+<script src="/engines/PreviewEngineData.js"></script>
+<script src="/engines/PreviewEngineMode.js"></script>
+<script src="/engines/PreviewEngineRenderer.js"></script>
+<script src="/engines/CommandRuntimeShared.js"></script>
+<script src="/engines/CommandRuntimeSelection.js"></script>
+<script src="/engines/CommandRuntimeView.js"></script>
+<script src="/engines/CommandRuntimeSections.js"></script>
+<script src="/engines/CommandRuntimeFile.js"></script>
+<script src="/engines/CommandRuntimeDocType.js"></script>
+<script src="/engines/CommandRuntimeHandlers.js"></script>
+<script src="/engines/CommandRuntimeInit.js"></script>
 <script src="/engines/CommandRuntime.js"></script>
 <script src="/engines/UIAdapters.js"></script>
 <script src="/engines/MenuAdapters.js"></script>
@@ -370,6 +392,14 @@
 <script src="/engines/HandlesEngine.js"></script>
 <script src="/engines/GuideEngine.js"></script>
 <script src="/engines/AlignmentEngine.js"></script>
+<script src="/engines/SelectionEngineContracts.js"></script>
+<script src="/engines/SelectionState.js"></script>
+<script src="/engines/SelectionHitTest.js"></script>
+<script src="/engines/SelectionGeometry.js"></script>
+<script src="/engines/SelectionOverlay.js"></script>
+<script src="/engines/SelectionInteraction.js"></script>
+<script src="/engines/AlignEngine.js"></script>
+<script src="/engines/AlignmentGuides.js"></script>
 <script src="/engines/SelectionEngine.js"></script>
 
 <!-- ══ ReportForge v19 Phase 3 — Core Layout, System & Precision Engines ═══ -->

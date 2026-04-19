@@ -28,11 +28,10 @@ const HitTestEngine = (() => {
   function _hitEl(el, modelX, modelY, padding = 0) {
     const secTop = (typeof DS !== 'undefined') ? DS.getSectionTop(el.sectionId) : 0;
     const elAbsY = secTop + el.y;
-    return (
-      modelX >= el.x - padding &&
-      modelX <= el.x + el.w + padding &&
-      modelY >= elAbsY - padding &&
-      modelY <= elAbsY + el.h + padding
+    return HitTestGeometry.pointInRect(
+      { x: modelX, y: modelY },
+      { x: el.x, y: elAbsY, w: el.w, h: el.h },
+      padding,
     );
   }
 
@@ -96,13 +95,14 @@ const HitTestEngine = (() => {
       if (typeof DS === 'undefined') return [];
       const rx = Math.min(x1, x2), ry = Math.min(y1, y2);
       const rw = Math.abs(x2 - x1), rh = Math.abs(y2 - y1);
+      const band = { x: rx, y: ry, w: rw, h: rh };
       return DS.elements
         .filter(el => {
           const secTop = DS.getSectionTop(el.sectionId);
           const ey = secTop + el.y;
-          return (
-            el.x < rx + rw && el.x + el.w > rx &&
-            ey    < ry + rh && ey + el.h  > ry
+          return HitTestGeometry.rectOverlapsRect(
+            { x: el.x, y: ey, w: el.w, h: el.h },
+            band,
           );
         })
         .map(el => el.id);
@@ -141,7 +141,6 @@ const HitTestEngine = (() => {
     handleAt(el, clientX, clientY, r = 5) {
       if (!el) return null;
       const secTop = (typeof DS !== 'undefined') ? DS.getSectionTop(el.sectionId) : 0;
-      // Convert handle corners to view space
       const vx = RF.Geometry.scale(el.x);
       const vy = RF.Geometry.scale(secTop + el.y);
       const vw = RF.Geometry.scale(el.w);
@@ -151,25 +150,11 @@ const HitTestEngine = (() => {
       const cR = RF.Geometry.canvasRect();
       const px  = clientX - cR.left;
       const py  = clientY - cR.top;
-
-      const handles = [
-        { pos: 'nw', x: vx,          y: vy          },
-        { pos: 'n',  x: vx + vw/2,   y: vy          },
-        { pos: 'ne', x: vx + vw,     y: vy          },
-        { pos: 'w',  x: vx,          y: vy + vh/2   },
-        { pos: 'e',  x: vx + vw,     y: vy + vh/2   },
-        { pos: 'sw', x: vx,          y: vy + vh      },
-        { pos: 's',  x: vx + vw/2,   y: vy + vh      },
-        { pos: 'se', x: vx + vw,     y: vy + vh      },
-      ];
-
-      for (const h of handles) {
-        if (Math.abs(px - h.x) <= r && Math.abs(py - h.y) <= r) return h.pos;
-      }
-
-      // Check move zone (interior)
-      if (px >= vx && px <= vx + vw && py >= vy && py <= vy + vh) return 'move';
-      return null;
+      return HitTestGeometry.handleAt(
+        { x: vx, y: vy, w: vw, h: vh },
+        { x: px, y: py },
+        r,
+      );
     },
   };
 })();
