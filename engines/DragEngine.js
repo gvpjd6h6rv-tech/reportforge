@@ -7,7 +7,7 @@
  *   mouseMove (screen/client)
  *       ↓ RF.Geometry.viewToModel
  *   model delta
- *       ↓ SnapEngine.snap
+ *       ↓ _snap
  *   snapped model position
  *       ↓ AlignmentEngine.compute  → guide candidates
  *       ↓ GuideEngine.show
@@ -20,8 +20,13 @@
 'use strict';
 
 const DragEngine = (() => {
-  let _active = false;
-  let _drag   = null;   // {elId, startModelX, startModelY, startPositions}
+  const S = typeof DragState !== 'undefined' ? DragState : (() => {
+    // Inline fallback when DragState is not loaded (test / legacy context).
+    let _a = false, _s = null;
+    return { begin: (s) => { _s = s; _a = true; }, end: () => { _a = false; _s = null; },
+      get isActive() { return _a; }, get session() { return _s; },
+      get dragType() { return _s ? _s.type : null; }, get elId() { return _s ? _s.elId : null; } };
+  })();
 
   /**
    * Begin a drag operation.
@@ -33,17 +38,21 @@ const DragEngine = (() => {
    * @param {Array}  params.startPositions — [{id, x, y, w, h, sectionTop}]
    * @param {string} [params.handlePos]   — resize handle name
    */
+
+  function _snap(v) {
+    return SnapCore.snapValue(v, SnapState.getGrid(), SnapState.isEnabled());
+  }
+
   function begin(params) {
     const model = RF.Geometry.viewToModel(params.startClientX, params.startClientY);
-    _drag = {
+    S.begin({
       type:           params.type || 'move',
       elId:           params.elId,
       startModelX:    model.x,
       startModelY:    model.y,
       startPositions: params.startPositions || [],
       handlePos:      params.handlePos || null,
-    };
-    _active = true;
+    });
   }
 
   /**
@@ -51,15 +60,15 @@ const DragEngine = (() => {
    * Returns { snapX, snapY, guides } in model space.
    */
   function update(clientX, clientY) {
-    if (!_active || !_drag) return null;
+    if (!S.isActive || !S.session) return null;
     if (typeof DS === 'undefined') return null;
 
-    // Screen → model delta
+    const drag = S.session;
     const model = RF.Geometry.viewToModel(clientX, clientY);
-    const rawDX = model.x - _drag.startModelX;
-    const rawDY = model.y - _drag.startModelY;
+    const rawDX = model.x - drag.startModelX;
+    const rawDY = model.y - drag.startModelY;
 
-    if (_drag.type === 'move') {
+    if (drag.type === 'move') {
       return _updateMove(rawDX, rawDY);
     } else {
       return _updateResize(rawDX, rawDY);
@@ -67,22 +76,23 @@ const DragEngine = (() => {
   }
 
   function _updateMove(rawDX, rawDY) {
+    const drag = S.session;
     // Snap the primary element's new position
-    const primary = _drag.startPositions[0];
+    const primary = drag.startPositions[0];
     if (!primary) return null;
 
     const rawX = primary.x + rawDX;
     const rawY = primary.y + rawDY;
 
     // Snap in model space
-    const snappedX = SnapEngine.snap(rawX);
-    const snappedY = SnapEngine.snap(rawY);
+    const snappedX = _snap(rawX);
+    const snappedY = _snap(rawY);
 
     // Alignment guides (only single-element drags)
     let guides = [];
     let alignSnapX = null, alignSnapY = null;
-    if (_drag.startPositions.length === 1) {
-      const movingEl = DS.getElementById(_drag.elId);
+    if (drag.startPositions.length === 1) {
+      const movingEl = DS.getElementById(drag.elId);
       if (movingEl && typeof AlignmentEngine !== 'undefined') {
         const result = AlignmentEngine.compute(movingEl);
         guides = result.guides;
@@ -97,18 +107,18 @@ const DragEngine = (() => {
     const finalDY = (alignSnapY !== null ? alignSnapY : snappedY) - primary.y;
 
     RenderScheduler.layout(() => {
-      _drag.startPositions.forEach(orig => {
+      drag.startPositions.forEach(orig => {
         const el = DS.getElementById(orig.id); if (!el) return;
         const newX = Math.max(0, Math.min(CFG.PAGE_W - el.w, orig.x + finalDX));
-        el.x = SnapEngine.snap(newX);
+        el.x = _snap(newX);
 
         const newAbsY = orig.sectionTop + orig.y + finalDY;
         const target  = DS.getSectionAtY(newAbsY + el.h / 2);
         if (target) {
           el.sectionId = target.section.id;
-          el.y = SnapEngine.snap(Math.max(0, newAbsY - DS.getSectionTop(target.section.id)));
+          el.y = _snap(Math.max(0, newAbsY - DS.getSectionTop(target.section.id)));
         } else {
-          el.y = SnapEngine.snap(Math.max(0, orig.y + finalDY));
+          el.y = _snap(Math.max(0, orig.y + finalDY));
         }
 
         // Update DOM via RF.Geometry
@@ -126,15 +136,16 @@ const DragEngine = (() => {
   }
 
   function _updateResize(rawDX, rawDY) {
-    const el = DS.getElementById(_drag.elId); if (!el) return null;
-    const orig = _drag.startPositions[0]; if (!orig) return null;
-    const p = _drag.handlePos || 'se';
+    const drag = S.session;
+    const el = DS.getElementById(drag.elId); if (!el) return null;
+    const orig = drag.startPositions[0]; if (!orig) return null;
+    const p = drag.handlePos || 'se';
 
     let { x, y, w, h } = orig;
-    if (p.includes('e')) w = Math.max(CFG.MIN_EL_W || 10, SnapEngine.snap(w + rawDX));
-    if (p.includes('s')) h = Math.max(CFG.MIN_EL_H || 4,  SnapEngine.snap(h + rawDY));
-    if (p.includes('w')) { const nw = Math.max(CFG.MIN_EL_W || 10, SnapEngine.snap(w - rawDX)); x = SnapEngine.snap(x + w - nw); w = nw; }
-    if (p.includes('n')) { const nh = Math.max(CFG.MIN_EL_H || 4,  SnapEngine.snap(h - rawDY)); y = SnapEngine.snap(y + h - nh); h = nh; }
+    if (p.includes('e')) w = Math.max(CFG.MIN_EL_W || 10, _snap(w + rawDX));
+    if (p.includes('s')) h = Math.max(CFG.MIN_EL_H || 4,  _snap(h + rawDY));
+    if (p.includes('w')) { const nw = Math.max(CFG.MIN_EL_W || 10, _snap(w - rawDX)); x = _snap(x + w - nw); w = nw; }
+    if (p.includes('n')) { const nh = Math.max(CFG.MIN_EL_H || 4,  _snap(h - rawDY)); y = _snap(y + h - nh); h = nh; }
 
     RenderScheduler.layout(() => {
       el.x = x; el.y = y; el.w = w; el.h = h;
@@ -156,29 +167,27 @@ const DragEngine = (() => {
    * Removes dragging class, clears guides, saves history.
    */
   function commit() {
-    if (!_active) return;
-    _active = false;
-
+    if (!S.isActive) return;
     document.querySelectorAll('.cr-element.dragging').forEach(div => {
       div.classList.remove('dragging');
     });
     if (typeof GuideEngine !== 'undefined') GuideEngine.clear();
     if (typeof DS !== 'undefined') DS.saveHistory();
-    _drag = null;
+    S.end();
   }
 
   /** Cancel drag without committing */
   function cancel() {
-    _active = false;
     document.querySelectorAll('.cr-element.dragging').forEach(div => div.classList.remove('dragging'));
     if (typeof GuideEngine !== 'undefined') GuideEngine.clear();
-    _drag = null;
+    S.end();
   }
 
   return {
     begin, update, commit, cancel,
-    get isActive() { return _active; },
-    get dragType()  { return _drag ? _drag.type : null; },
+    get isActive() { return S.isActive; },
+    get dragType()  { return S.dragType; },
+    state: S,
   };
 })();
 

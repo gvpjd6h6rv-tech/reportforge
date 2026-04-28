@@ -105,8 +105,13 @@ const DocumentState = (() => {
     },
     assertLayoutPatch(patch) {
       for (const key of ['x', 'y', 'w', 'h']) {
-        if (Object.prototype.hasOwnProperty.call(patch, key) && (typeof patch[key] !== 'number' || !Number.isFinite(patch[key]))) {
-          throw new Error('INVALID LAYOUT CONTRACT');
+        if (Object.prototype.hasOwnProperty.call(patch, key)) {
+          if (typeof patch[key] !== 'number' || !Number.isFinite(patch[key])) {
+            throw new Error('INVALID LAYOUT CONTRACT');
+          }
+          if ((key === 'w' || key === 'h') && patch[key] <= 0) {
+            throw new Error('INVALID LAYOUT CONTRACT: dimension must be positive');
+          }
         }
       }
       return patch;

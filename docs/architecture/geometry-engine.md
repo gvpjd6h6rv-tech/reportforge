@@ -33,7 +33,7 @@ DS.zoom is WRITTEN ONLY by DesignZoomEngine._apply()
 | v18.14 | Preview renderer: all 4 render functions migrated |
 | v18.15 | Preview max-inline-size constraint removed |
 | v18.16 | Preview refresh on zoom change via `_apply` hook |
-| v19.0  | Engine modules — `RulerEngine`, `GridEngine`, `SnapEngine`, `WorkspaceScrollEngine` |
+| v19.0  | Engine modules — `RulerEngine`, `GridEngine`, `SnapCore/SnapState`, `WorkspaceScrollEngine` |
 
 ## Remaining Legitimate `DS.zoom` Access (17 occurrences)
 

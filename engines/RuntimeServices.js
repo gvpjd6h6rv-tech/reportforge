@@ -16,6 +16,9 @@
     contractGuards: null,
   };
 
+  // Writer conflict log — append-only, capped at 50 entries.
+  const _writerConflicts = [];
+
   function expose(name, value) {
     state.exports[name] = value;
     global[name] = value;
@@ -37,12 +40,35 @@
   }
 
   function setOwner(kind, value) {
+    const prev = Object.prototype.hasOwnProperty.call(state.owners, kind) ? state.owners[kind] : null;
+    if (prev !== null && prev !== value) {
+      const conflict = { kind, prev, next: value, at: new Date().toISOString() };
+      if (_writerConflicts.length < 50) _writerConflicts.push(conflict);
+      console.error('[RuntimeServices] Writer conflict detected', conflict);
+      try {
+        const rt = global.RF?.EngineCore?.runtime;
+        if (rt && typeof rt.enterSafeMode === 'function') {
+          rt.enterSafeMode(
+            'writer_conflict',
+            new Error(`Writer conflict: ${kind} owned by ${prev}, contested by ${value}`),
+            conflict,
+          );
+        }
+      } catch (_) {}
+      try {
+        global.dispatchEvent(new CustomEvent('rf:writer-conflict', { detail: conflict }));
+      } catch (_) {}
+    }
     state.owners[kind] = value;
     return value;
   }
 
   function getOwner(kind) {
     return Object.prototype.hasOwnProperty.call(state.owners, kind) ? state.owners[kind] : null;
+  }
+
+  function getWriterConflicts() {
+    return _writerConflicts.slice();
   }
 
   function setDomRef(name, value) {
@@ -98,6 +124,7 @@
     getFlag,
     setOwner,
     getOwner,
+    getWriterConflicts,
     setDomRef,
     getDomRef,
     setMeta,

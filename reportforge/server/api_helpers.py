@@ -14,11 +14,14 @@ logger = logging.getLogger("reportforge.api")
 
 
 def load_data(payload: Any, *, allow_dict_spec: bool = False) -> dict:
-    if isinstance(payload, str) and payload:
-        return DataSource.load(payload)
-    if allow_dict_spec and isinstance(payload, dict) and payload:
-        return DataSource.load(payload)
-    return payload or {}
+    try:
+        if isinstance(payload, str) and payload:
+            return DataSource.load(payload)
+        if allow_dict_spec and isinstance(payload, dict) and payload:
+            return DataSource.load(payload)
+        return payload or {}
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=f"Data source error: {e}") from e
 
 
 def _resolve_layout(layout_spec: Any, tenant: str, cache: LayoutCache) -> dict:

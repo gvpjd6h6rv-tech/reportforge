@@ -18,6 +18,7 @@ const ALLOWED_WINDOW_EXPORTS = [
   'getCanvasPos',
   'initKeyboard_DISABLED_v19',
   'initClock',
+  '_clockInterval',
   '__rfTraceLegacy',
   'FormulaEngine',
   'FormulaEditorDialog',
@@ -38,7 +39,6 @@ const ALLOWED_WINDOW_EXPORTS = [
   'shadeColor',
   'canvas',
   '__rfVerify',
-  'SnapEngine',
   'GridEngine',
   'RulerEngine',
   'WorkspaceScrollEngine',
@@ -440,7 +440,6 @@ test('engine globals are reduced to the approved window export whitelist', () =>
     path.join(ROOT, 'engines/DebugOverlay.js'),
     path.join(ROOT, 'engines/FormulaAndDebug.js'),
     path.join(ROOT, 'engines/DocTypeAndProbes.js'),
-    path.join(ROOT, 'engines/SnapEngine.js'),
     path.join(ROOT, 'engines/GridEngine.js'),
     path.join(ROOT, 'engines/RulerEngine.js'),
     path.join(ROOT, 'engines/WorkspaceScrollEngine.js'),
@@ -1435,4 +1434,56 @@ test('active bridges must not regress into HTML host', () => {
   assert.doesNotMatch(html, /DS\.saveHistory\s*=\s*function/, 'history patch must stay in DeferredBootstrap');
   const deferred = fs.readFileSync(path.join(ROOT, 'engines/DeferredBootstrap.js'), 'utf8');
   assert.match(deferred, /DesignZoomEngine\._apply/, 'DeferredBootstrap must own zoom bridge until RF-ARCH-008 is closed');
+});
+
+// ── #19 Semáforos como owner real ────────────────────────────────────────────
+// RenderSchedulerFrame.js must be the SOLE file that writes S.locked.
+// Any other engine taking the lock directly is a semaphore ownership violation.
+
+test('render scheduler semaphore — only RenderSchedulerFrame sets S.locked', () => {
+  const allEngines = fs.readdirSync(path.join(ROOT, 'engines'))
+    .filter(f => f.endsWith('.js'))
+    .map(f => path.join(ROOT, 'engines', f));
+
+  const SOLE_OWNER = 'RenderSchedulerFrame.js';
+  const LOCK_WRITE = /\bS\.locked\s*=/;
+
+  const violations = [];
+  for (const absPath of allEngines) {
+    const name = path.basename(absPath);
+    if (name === SOLE_OWNER) continue;
+    const src = fs.readFileSync(absPath, 'utf8');
+    if (LOCK_WRITE.test(src)) {
+      violations.push(name);
+    }
+  }
+
+  assert.deepEqual(violations, [],
+    `S.locked written outside its sole owner RenderSchedulerFrame.js: ${violations.join(', ')}`);
+});
+
+// ── #25 Grid estable ──────────────────────────────────────────────────────────
+// GridEngine.js must be the SOLE engine that writes to #grid-overlay DOM.
+// Any other engine touching grid-overlay breaks the single-owner contract.
+
+test('grid stability — only GridEngine writes to #grid-overlay', () => {
+  const allEngines = fs.readdirSync(path.join(ROOT, 'engines'))
+    .filter(f => f.endsWith('.js'))
+    .map(f => path.join(ROOT, 'engines', f));
+
+  const SOLE_OWNER = 'GridEngine.js';
+  const GRID_WRITE = /getElementById\(['"`]grid-overlay['"`]\)|querySelector\(['"`]#grid-overlay['"`]\)/;
+
+  const violations = [];
+  for (const absPath of allEngines) {
+    const name = path.basename(absPath);
+    if (name === SOLE_OWNER) continue;
+    const src = fs.readFileSync(absPath, 'utf8');
+    if (GRID_WRITE.test(src)) {
+      violations.push(name);
+    }
+  }
+
+  assert.deepEqual(violations, [],
+    `#grid-overlay written outside its sole owner GridEngine.js: ${violations.join(', ')}`);
 });

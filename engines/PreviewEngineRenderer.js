@@ -36,5 +36,41 @@
     };
   }
 
-  global.PreviewEngineRenderer = { refresh, getMetrics };
+  function _pages() {
+    return [...document.querySelectorAll('#preview-content .pv-page')];
+  }
+
+  function goToPage(n) {
+    const pages = _pages();
+    if (!pages.length) return;
+    const idx = Math.max(0, Math.min(n - 1, pages.length - 1));
+    pages[idx].scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function pageFirst() { goToPage(1); }
+  function pageLast()  { goToPage(_pages().length); }
+
+  function pagePrev() {
+    const pages = _pages();
+    if (!pages.length) return;
+    const scroller = document.getElementById('preview-content')?.parentElement;
+    const scrollTop = scroller ? scroller.scrollTop : 0;
+    for (let i = pages.length - 1; i >= 0; i--) {
+      if (pages[i].offsetTop < scrollTop - 10) { goToPage(i + 1); return; }
+    }
+    goToPage(1);
+  }
+
+  function pageNext() {
+    const pages = _pages();
+    if (!pages.length) return;
+    const scroller = document.getElementById('preview-content')?.parentElement;
+    const scrollTop = scroller ? scroller.scrollTop : 0;
+    for (let i = 0; i < pages.length; i++) {
+      if (pages[i].offsetTop > scrollTop + 10) { goToPage(i + 1); return; }
+    }
+    goToPage(pages.length);
+  }
+
+  global.PreviewEngineRenderer = { refresh, getMetrics, pageFirst, pagePrev, pageNext, pageLast };
 })(window);

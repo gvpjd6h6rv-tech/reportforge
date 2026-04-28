@@ -1,0 +1,1821 @@
+[
+  {
+    "id": 1,
+    "name": "Single Source of Truth",
+    "group": "base",
+    "severity": "strong",
+    "status": "hard-enforced",
+    "owner": "document-store",
+    "kind": "guard",
+    "source_files": [
+      "engines/RuntimeServicesState.js",
+      "engines/ClipboardState.js",
+      "engines/DragState.js",
+      "engines/KeyboardRegistry.js",
+      "engines/GuideState.js",
+      "engines/HistoryState.js",
+      "engines/SelectionState.js",
+      "engines/SnapState.js",
+      "engines/RenderSchedulerState.js",
+      "audit/subsystem_ssot_guard.mjs",
+      "docs/architecture/document-store-contract.md"
+    ],
+    "test_files": [
+      "reportforge/tests/governance_guardrails.test.mjs",
+      "reportforge/tests/global_state_corruption.test.mjs",
+      "reportforge/tests/debuggability.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "governance test: 'document store split stays modular'; global_state_corruption: setOwner/getOwner round-trip; DS.state is single source asserted in engine_contracts",
+      "Each subsystem with observable state has a dedicated *State.js file: ClipboardState (clipboard contents), DragState (drag session), GuideState (active guides), HistoryState (undo/redo stacks), SelectionState (selection facade over DS), SnapState (grid/snap config), RenderSchedulerState (frame/storm/hotspot state), RuntimeServicesState (owner registry)",
+      "KeyboardEngine delegates handler registry to KeyboardRegistry.js (existing SSOT) — no duplicate _handlers map",
+      "subsystem_ssot_guard: SSOT-EXIST-001 (State files exist), SSOT-STATE-001/002 (no bare let in engines), SSOT-REGISTRY-001 (KeyboardEngine uses KeyboardRegistry), SSOT-API-001 (.state/.registry exposed)",
+      "debuggability.test.mjs: 4 SSOT tests — ClipboardState isolation/mutation, DragState lifecycle, KeyboardRegistry routing, guard runner"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 2,
+    "name": "Inmutabilidad controlada",
+    "group": "base",
+    "severity": "important",
+    "status": "hard-enforced",
+    "owner": "document-store",
+    "kind": "guard",
+    "source_files": [
+      "engines/HistoryEngine.js",
+      "engines/HistoryState.js",
+      "audit/immutability_guard.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/race_conditions.test.mjs",
+      "reportforge/tests/debuggability.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "race_conditions: push+popUndo interleaving, clearRedo atomicity asserted",
+      "immutability_guard.mjs: IMMUT-HIST-001 verifies _undoStack/_redoStack closure-private to HistoryEngine; IMMUT-EXPOSE-001 verifies raw stacks not exposed in return object; IMMUT-DS-001 verifies render engines do not directly assign DS.elements/sections; IMMUT-HIST-002 verifies HistoryState uses factory closure"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 3,
+    "name": "Sin lógica en UI",
+    "group": "base",
+    "severity": "strong",
+    "status": "hard-enforced",
+    "owner": "governance",
+    "kind": "structural",
+    "source_files": [
+      "reportforge/tests/governance_guardrails.test.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/governance_guardrails.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "governance_guardrails: shell stays pure — no inline scripts, styles, or DOM event attrs (test 13)",
+      "governance_guardrails: shell size and purity thresholds enforced (test 14)",
+      "governance_guardrails: adapters stay thin and bootstrap stays orchestration-only (test 21)"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 4,
+    "name": "Estado derivado, no duplicado",
+    "group": "base",
+    "severity": "important",
+    "status": "hard-enforced",
+    "owner": "document-store",
+    "kind": "guard",
+    "source_files": [
+      "docs/architecture/document-store-contract.md",
+      "engines/DocumentSelectors.js",
+      "audit/derived_state_guard.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/debuggability.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "derived_state_guard.mjs: DERIVED-FACTORY-001 verifies DocumentSelectors uses factory and reads from state argument; DERIVED-IMPL-001 verifies no engine reimplements getSectionTop/getTotalHeight/getSelectedElements; DERIVED-CALL-001 verifies no inline accumulator loops outside document-store layer; DERIVED-FACADE-001 verifies DocumentStore delegates canonical selectors"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 5,
+    "name": "Contratos de datos explícitos",
+    "group": "base",
+    "severity": "strong",
+    "status": "hard-enforced",
+    "owner": "engine-contracts",
+    "kind": "guard",
+    "source_files": [
+      "engines/EngineCoreContracts.js"
+    ],
+    "test_files": [
+      "reportforge/tests/engine_contracts.test.mjs",
+      "reportforge/tests/global_state_corruption.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "engine_contracts: ContractGuards fail fast on invalid contracts; global_state_corruption: assertRectShape, assertSelectionState, assertZoomContract, assertLayoutContract all reject corrupt shapes"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 6,
+    "name": "Sin efectos laterales ocultos",
+    "group": "base",
+    "severity": "important",
+    "status": "hard-enforced",
+    "owner": "mutation-injection",
+    "kind": "guard",
+    "source_files": [
+      "reportforge/tests/mutation_injection.test.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/mutation_injection.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "mutation_injection: 10 mutations killed — AOR (arithmetic operator replacement) and ROR (relational operator replacement) mutations on GeometryCore and HistoryState detected via side-effect assertions",
+      "mutation_injection: verifies that mutant operators change observable outputs, proving tests are causally sensitive (not coincidentally passing)"
+    ],
+    "gap": "Mutation coverage is partial: GeometryCore + HistoryState only. Full engine corpus mutation testing is DEFERRED."
+  },
+  {
+    "id": 7,
+    "name": "Pipeline determinista",
+    "group": "base",
+    "severity": "strong",
+    "status": "hard-enforced",
+    "owner": "render-pipeline",
+    "kind": "structural",
+    "source_files": [
+      "reportforge/tests/test_render_engine.py",
+      "reportforge/tests/test_render_engine_phase2.py",
+      "validate_repo.sh"
+    ],
+    "test_files": [
+      "reportforge/tests/test_render_engine.py",
+      "reportforge/tests/test_render_engine_phase2.py"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "test_render_engine.py: 65 tests pass — same layout+data always produces same HTML output; field resolution, formatting, and layout are deterministic across all test cases",
+      "validate_repo.sh: python3 -m unittest discover runs all test_*.py suites in CI; 0 failures"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 8,
+    "name": "Orden fijo de fases",
+    "group": "base",
+    "severity": "important",
+    "status": "hard-enforced",
+    "owner": "render-pipeline",
+    "kind": "guard",
+    "source_files": [
+      "docs/architecture/render-scheduler-contract.md",
+      "engines/RenderSchedulerQueue.js",
+      "engines/RenderScheduler.js",
+      "audit/phase_sequence_guard.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/debuggability.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "phase_sequence_guard.mjs: PHASE-QUEUE-001 verifies layout/visual/handles/post functions in Queue routing to correct PRIORITY constants; PHASE-FACADE-001 verifies all four methods re-exported in RenderScheduler facade; PHASE-FRAME-001 verifies all four phase name strings emitted during frame flush; PHASE-CONSISTENCY-001 verifies PRIORITY keys match phase names; PHASE-INVALIDATION-001 verifies layout() calls invalidateLayer (fetch→patch phase boundary)"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 9,
+    "name": "Sin race conditions toleradas",
+    "group": "base",
+    "severity": "critical",
+    "status": "hard-enforced",
+    "owner": "race-detection",
+    "kind": "guard",
+    "source_files": [
+      "reportforge/tests/race_conditions.test.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/race_conditions.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "race_conditions: 7 logic-level tests + 2 browser Playwright tests; HistoryState interleaving, suppress+notify, clearRedo atomicity, duplicate-entry detection all enforced"
+    ],
+    "gap": "RenderScheduler rAF race DEFERRED (RACE-SCHEDULER-001)"
+  },
+  {
+    "id": 10,
+    "name": "Scheduler obligatorio",
+    "group": "base",
+    "severity": "strong",
+    "status": "hard-enforced",
+    "owner": "render-scheduler",
+    "kind": "structural",
+    "source_files": [
+      "reportforge/tests/governance_guardrails.test.mjs",
+      "audit/reset_stability_guard.mjs",
+      "engines/RenderSchedulerScope.js"
+    ],
+    "test_files": [
+      "reportforge/tests/governance_guardrails.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "governance_guardrails: render scheduler split stays modular — facade, state, frame, queue, scope each in dedicated owner with size thresholds (test 23)",
+      "reset_stability_guard.mjs: exits 1 if any engine registers setInterval without storing handle — stray timers blocked at CI gate",
+      "RenderSchedulerScope.assertDomWriteAllowed: throws at runtime if any engine writes DOM outside a scheduler frame — enforced in WorkspaceScrollEngine, SectionLayoutEngine, CanvasLayoutEngine"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 11,
+    "name": "Idempotencia de render",
+    "group": "base",
+    "severity": "critical",
+    "status": "hard-enforced",
+    "owner": "render-pipeline",
+    "kind": "guard",
+    "source_files": [
+      "reportforge/tests/critical_runtime_contracts.test.mjs",
+      "reportforge/tests/runtime_harness.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/critical_runtime_contracts.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "critical_runtime_contracts #11: two RenderScheduler.flushSync cycles produce identical .cr-element count, IDs, and positions (46 elements verified)",
+      "Assertion: DOM snapshot is structurally identical before and after a second forced flush — no double-rendering, no ghost nodes"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 12,
+    "name": "Bootstrap limpio",
+    "group": "base",
+    "severity": "important",
+    "status": "hard-enforced",
+    "owner": "runtime-boot",
+    "kind": "guard",
+    "source_files": [
+      "engines/RuntimeBootstrap.js",
+      "engines/DeferredBootstrap.js",
+      "audit/bootstrap_idempotency_guard.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/engine_contracts.test.mjs",
+      "reportforge/tests/debuggability.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "validate_repo.sh: server runtime + engine load checks; engine_contracts: canonical engines registered",
+      "bootstrap_idempotency_guard.mjs: BOOT-CLEAN-001 verifies Phase 3 ready log; BOOT-CLEAN-002 verifies DesignerUI/SectionEngine init inside DOMContentLoaded; BOOT-CLEAN-003 verifies idempotency guard flags present; BOOT-CLEAN-004 verifies DS.saveHistory after SectionEngine.init; BOOT-CLEAN-005 verifies EngineRegistry exposed"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 13,
+    "name": "Bindings declarativos",
+    "group": "base",
+    "severity": "strong",
+    "status": "hard-enforced",
+    "owner": "ui-adapters",
+    "kind": "structural",
+    "source_files": [
+      "audit/declarative_bindings_guard.mjs",
+      "engines/UIAdapters.js",
+      "engines/CommandRuntimeHandlers.js",
+      "engines/CommandRuntimeSelection.js",
+      "engines/RulerEngine.js",
+      "engines/PreviewEngineRenderer.js",
+      "designer/crystal-reports-designer-v4.html"
+    ],
+    "test_files": [
+      "reportforge/tests/governance_guardrails.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "declarative_bindings_guard.mjs RULE-A: all 46 data-action values in HTML have a matching case in CommandRuntimeHandlers.js — no silent no-ops",
+      "declarative_bindings_guard.mjs RULE-B: no engine outside UIAdapters/KeyboardBindings/GlobalEventHandlers wires toolbar commands via imperative getElementById+addEventListener",
+      "declarative_bindings_guard.mjs RULE-C: data-format values (align-left/center/right) no longer appear as data-action — dropdown bug fixed",
+      "Fixed: align-left/center/right dropdown items corrected from data-action to data-format",
+      "Added: align-middles to CommandRuntimeSelection + handler; toggle-rulers via RulerEngine.toggle(); print via window.print(); page-first/prev/next/last via PreviewEngineRenderer"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 14,
+    "name": "UI sin lógica de negocio",
+    "group": "base",
+    "severity": "strong",
+    "status": "hard-enforced",
+    "owner": "governance",
+    "kind": "structural",
+    "source_files": [
+      "reportforge/tests/governance_guardrails.test.mjs",
+      "validate_repo.sh"
+    ],
+    "test_files": [
+      "reportforge/tests/governance_guardrails.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "governance_guardrails: no inline script/style/event-attr in shell HTML (tests 13-14)",
+      "validate_repo.sh section 8: designer HTML checked for no inline function declarations, no engine declarations, no document/window listeners, no command dispatcher"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 15,
+    "name": "No DOM manual arbitrario",
+    "group": "base",
+    "severity": "critical",
+    "status": "hard-enforced",
+    "owner": "governance",
+    "kind": "guard",
+    "source_files": [
+      "reportforge/tests/governance_guardrails.test.mjs",
+      "docs/architecture/invariants.md"
+    ],
+    "test_files": [
+      "reportforge/tests/governance_guardrails.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "governance: 'shell HTML stays pure: no inline script, style, or DOM event attributes'; DOM ownership tags enforced; 58 tests fail on violation"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 16,
+    "name": "Re-render seguro",
+    "group": "base",
+    "severity": "critical",
+    "status": "hard-enforced",
+    "owner": "render-pipeline",
+    "kind": "guard",
+    "source_files": [
+      "reportforge/tests/critical_runtime_contracts.test.mjs",
+      "reportforge/tests/runtime_harness.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/critical_runtime_contracts.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "critical_runtime_contracts #16: two consecutive reloadRuntime() calls leave DS with same element count, empty selection, no orphaned locks, stable zoom, and no duplicate IDs",
+      "Assertion: no state leaks across bind→render cycles — elementCounter resets, selection clears, lock flags are absent"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 17,
+    "name": "Estado visual derivado",
+    "group": "base",
+    "severity": "important",
+    "status": "hard-enforced",
+    "owner": "ui-adapters",
+    "kind": "guard",
+    "source_files": [
+      "docs/architecture/canvas-layout-contract.md",
+      "engines/CanvasLayoutElements.js",
+      "engines/SelectionOverlay.js",
+      "audit/visual_state_guard.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/debuggability.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "visual_state_guard.mjs: VISUAL-SELECTED-001 verifies classList.toggle('selected') reads from DS.selection at write time; VISUAL-NOCACHE-001 verifies no _selected/dataset.selected cached flags outside canonical write paths; VISUAL-OWNER-001 verifies 'selected' class applied only in CanvasLayoutElements/SelectionOverlay/panel owners; VISUAL-COLOR-001 verifies el.color read from model at render time with no color cache"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 18,
+    "name": "Estado de sistema centralizado",
+    "group": "base",
+    "severity": "strong",
+    "status": "hard-enforced",
+    "owner": "runtime-services",
+    "kind": "guard",
+    "source_files": [
+      "engines/RuntimeServicesState.js"
+    ],
+    "test_files": [
+      "reportforge/tests/global_state_corruption.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "global_state_corruption: RuntimeServicesState re-install guard, setOwner/getOwner, setFlag/getFlag, debugFlags copy-safety — all enforced"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 19,
+    "name": "Semáforos como owner real",
+    "group": "base",
+    "severity": "strong",
+    "status": "hard-enforced",
+    "owner": "runtime-services",
+    "kind": "structural",
+    "source_files": [
+      "reportforge/tests/governance_guardrails.test.mjs",
+      "engines/RenderSchedulerFrame.js"
+    ],
+    "test_files": [
+      "reportforge/tests/governance_guardrails.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "governance_guardrails test 44: static scan of all 116 engine files — only RenderSchedulerFrame.js sets S.locked; no other file may write the semaphore",
+      "RenderSchedulerFrame.js:80 sets S.locked=true at flush start; :154 sets S.locked=false at flush end — sole owner confirmed by grep"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 20,
+    "name": "No duplicar flags",
+    "group": "base",
+    "severity": "critical",
+    "status": "hard-enforced",
+    "owner": "runtime-services",
+    "kind": "guard",
+    "source_files": [
+      "reportforge/tests/global_state_corruption.test.mjs",
+      "engines/RuntimeServicesState.js"
+    ],
+    "test_files": [
+      "reportforge/tests/global_state_corruption.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "global_state_corruption: RuntimeServicesState flag registry is a frozen Set — duplicate expose() calls throw (test 3)",
+      "global_state_corruption: debugFlags copy-safety asserted — mutation of returned object does not corrupt internal state (test 4)",
+      "global_state_corruption: window whitelist integrity — only approved globals present, prohibited direct engine globals absent (tests 16-19)"
+    ],
+    "gap": "Multi-source flag-collision across independent engine init sequences DEFERRED — requires integration harness with multiple parallel init calls"
+  },
+  {
+    "id": 21,
+    "name": "Backend manda, UI refleja",
+    "group": "base",
+    "severity": "critical",
+    "status": "hard-enforced",
+    "owner": "server-api",
+    "kind": "structural",
+    "source_files": [
+      "reportforge/tests/critical_runtime_contracts.test.mjs",
+      "reportforge/tests/runtime_harness.mjs",
+      "engines/CommandRuntimeSections.js"
+    ],
+    "test_files": [
+      "reportforge/tests/critical_runtime_contracts.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "critical_runtime_contracts #21: DS.elements.filter(e => e.locked) is empty on fresh boot — UI cannot invent lock state",
+      "critical_runtime_contracts #21: lock/unlock round-trip via CommandEngine/CommandRuntimeSections: exactly 1 element locked after command, 0 after unlock — no residue"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 22,
+    "name": "Fallbacks honestos",
+    "group": "base",
+    "severity": "important",
+    "status": "hard-enforced",
+    "owner": "document-store",
+    "kind": "guard",
+    "source_files": [
+      "audit/critical_field_mutation_guard.mjs",
+      "audit/coercion_map_guard.mjs",
+      "audit/honest_fallback_guard.mjs",
+      "engines/DocumentActions.js",
+      "audit/regression_naming_guard.mjs",
+      "engines/DocumentSelectors.js",
+      "reportforge/core/render/expressions/type_coercion.py",
+      "reportforge/core/render/expressions/coercion_logger.py",
+      "reportforge/tests/golden/factura_simple.golden.json",
+      "reportforge/core/render/expressions/coercion_map.py",
+      "docs/architecture/document-store-contract.md"
+    ],
+    "test_files": [
+      "reportforge/tests/test_failure_localization.py",
+      "reportforge/tests/test_coercion_traceability.py",
+      "reportforge/tests/test_input_schema.py",
+      "reportforge/tests/test_round_trip.py",
+      "reportforge/tests/debuggability.test.mjs",
+      "reportforge/tests/test_error_snapshot.py",
+      "reportforge/tests/test_golden_payload.py",
+      "reportforge/tests/test_regression_template.py"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "honest_fallback_guard.mjs: FALLBACK-NOWRITE-001 verifies no state.X = state.X || default patterns in Actions/Selectors/Store; FALLBACK-SNAP-001 verifies DocumentSelectors.snap() uses read-only CFG fallback chain without writing back to state; FALLBACK-DS-001 verifies DS facade does not lazily default elements/sections/zoom; FALLBACK-BOOT-001 verifies DS.formulas initialization is conditional (honest boot guard)",
+      "critical_field_mutation_guard.mjs: CRITFIELD-REQKEYS-001 verifies REQUIRED_KEYS defined only in render_engine*.py; CRITFIELD-NOWRITE-001..004 verify field_resolver/type_coercion/coercion_map/html_engine never write back to critical dict keys; CRITFIELD-VALIDATE-001 verifies all 6 required keys checked; CRITFIELD-IMMUTABLE-001 verifies FieldResolver.__init__ is non-mutating",
+      "regression_naming_guard.mjs: REGRESSION-NAMING-001..003 enforce test_regression_NNN_field_cause pattern in all Regression test classes; REGRESSION-PATTERN-001..002 verify template file exists with examples"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 23,
+    "name": "Layout determinista",
+    "group": "base",
+    "severity": "critical",
+    "status": "hard-enforced",
+    "owner": "geometry-core",
+    "kind": "guard",
+    "source_files": [
+      "engines/GeometryCore.js"
+    ],
+    "test_files": [
+      "reportforge/tests/geometry_core.test.mjs",
+      "reportforge/tests/engine_contracts.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "geometry_core: 6 tests assert pure deterministic functions; engine_contracts: geometry modules stay pure and free of DOM/state; tolerance-based assertions"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 24,
+    "name": "Sin cálculos mágicos runtime",
+    "group": "base",
+    "severity": "important",
+    "status": "hard-enforced",
+    "owner": "geometry-core",
+    "kind": "guard",
+    "source_files": [
+      "engines/GeometryCore.js",
+      "engines/RuntimeGeometry.js",
+      "audit/magic_offset_guard.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/geometry_core.test.mjs",
+      "reportforge/tests/debuggability.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "geometry_core: canvas transforms, section bounds asserted; no magic offsets tolerated",
+      "magic_offset_guard.mjs: MAGIC-EXPORT-001 verifies GeometryCore exports clampValue/clampRect; MAGIC-LAYOUT-001 verifies CanvasLayoutElements uses RF.Geometry.scale/modelToView; MAGIC-SECTION-001 verifies SectionLayoutEngine has no raw large numeric offsets outside Geometry; MAGIC-CORE-001 verifies RuntimeGeometry.scale derives from zoom()"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 25,
+    "name": "Grid estable",
+    "group": "base",
+    "severity": "strong",
+    "status": "hard-enforced",
+    "owner": "runtime-data",
+    "kind": "guard",
+    "source_files": [
+      "reportforge/tests/governance_guardrails.test.mjs",
+      "engines/GridEngine.js",
+      "engines/CommandRuntimeHandlers.js"
+    ],
+    "test_files": [
+      "reportforge/tests/governance_guardrails.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "governance_guardrails test 45: static scan confirms GridEngine.js is the sole engine that reads/writes #grid-overlay DOM; CommandRuntimeHandlers toggle-grid fixed to call GridEngine.setVisible() instead of direct DOM write",
+      "GridEngine.setVisible() updates DS.gridVisible and schedules visual update via RenderScheduler — ownership contract intact"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 26,
+    "name": "Sin wrappers fantasmas",
+    "group": "base",
+    "severity": "critical",
+    "status": "hard-enforced",
+    "owner": "governance",
+    "kind": "guard",
+    "source_files": [
+      "reportforge/tests/governance_guardrails.test.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/governance_guardrails.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "governance: 'critical boundary files stay below growth thresholds'; size thresholds fail CI on wrapper bloat; monolith no longer defines engines inline"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 27,
+    "name": "Geometría testeable",
+    "group": "base",
+    "severity": "strong",
+    "status": "hard-enforced",
+    "owner": "geometry-core",
+    "kind": "guard",
+    "source_files": [
+      "engines/GeometryCore.js"
+    ],
+    "test_files": [
+      "reportforge/tests/geometry_core.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "geometry_core: resizeRectFromHandle, canvas bounds, selection bounds, hit-test all asserted with tolerance"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 28,
+    "name": "CSS predecible",
+    "group": "base",
+    "severity": "strong",
+    "status": "hard-enforced",
+    "owner": "governance",
+    "kind": "structural",
+    "source_files": [
+      "reportforge/tests/governance_guardrails.test.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/governance_guardrails.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "governance_guardrails: CSS externalized and below shell-size thresholds (test 16)",
+      "governance_guardrails: style.cssText usage frozen at approved baseline per engine (test 29)",
+      "governance_guardrails: no inline style= attributes in shell HTML (test 13)"
+    ],
+    "gap": "Cross-namespace selector leak detection (e.g. #panel-left .foo leaking into #panel-right) is DEFERRED — requires browser rendering context"
+  },
+  {
+    "id": 29,
+    "name": "Sin overrides globales ocultos",
+    "group": "base",
+    "severity": "critical",
+    "status": "hard-enforced",
+    "owner": "governance",
+    "kind": "guard",
+    "source_files": [
+      "reportforge/tests/governance_guardrails.test.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/governance_guardrails.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "governance: window export whitelist enforced (31 names); prohibited direct assignments detected; 'no CSS inline en HTML' enforced"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 30,
+    "name": "Clases semánticas",
+    "group": "base",
+    "severity": "important",
+    "status": "hard-enforced",
+    "owner": "governance",
+    "kind": "guard",
+    "source_files": [
+      "docs/architecture/invariants.md",
+      "engines/CanvasLayoutElements.js",
+      "engines/SelectionOverlay.js",
+      "audit/semantic_class_guard.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/debuggability.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "semantic_class_guard.mjs: SEMCLASS-CR-001 verifies cr-element class on canvas element divs; SEMCLASS-EL-001 verifies el- prefix on sub-element parts; SEMCLASS-SEL-001 verifies sel-box/sel-handle in SelectionOverlay; SEMCLASS-SECTION-001 verifies cr-section query in SectionLayoutEngine; SEMCLASS-NOFREE-001 verifies no bare unprefixed primary class in canonical write paths"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 31,
+    "name": "Sin dependencia en orden accidental",
+    "group": "base",
+    "severity": "important",
+    "status": "hard-enforced",
+    "owner": "runtime-boot",
+    "kind": "guard",
+    "source_files": [
+      "engines/RuntimeBootstrap.js",
+      "engines/DeferredBootstrap.js",
+      "audit/load_order_guard.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/governance_guardrails.test.mjs",
+      "reportforge/tests/debuggability.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "governance: 'monolith loads engine core contract helpers before EngineCore' — load order pinned",
+      "load_order_guard.mjs: ORDER-BOOT-001 verifies DesignerUI before ZoomEngine.set, SectionEngine before DS.saveHistory; ORDER-DEFERRED-001 verifies RenderScheduler.flushSync before CanvasLayoutEngine.__active, canvas active before selection active, EngineCore log before __active flags; ORDER-REGISTRY-001 verifies EngineRegistry exposed"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 32,
+    "name": "No side-effects visuales",
+    "group": "base",
+    "severity": "critical",
+    "status": "hard-enforced",
+    "owner": "governance",
+    "kind": "guard",
+    "source_files": [
+      "reportforge/tests/critical_runtime_contracts.test.mjs",
+      "reportforge/tests/runtime_harness.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/critical_runtime_contracts.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "critical_runtime_contracts #32: getBoundingClientRect of every .cr-element is verified to be within its parent .cr-section bounds (1px tolerance), 46 elements × 5 sections checked",
+      "Assertion: no element bleeds above section top or below section bottom — visual isolation is structurally enforced"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 33,
+    "name": "Tests contractuales",
+    "group": "base",
+    "severity": "strong",
+    "status": "hard-enforced",
+    "owner": "engineering-testing",
+    "kind": "guard",
+    "source_files": [
+      "reportforge/tests/governance_guardrails.test.mjs",
+      "reportforge/tests/engine_contracts.test.mjs",
+      "validate_repo.sh"
+    ],
+    "test_files": [
+      "reportforge/tests/governance_guardrails.test.mjs",
+      "reportforge/tests/engine_contracts.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "58 governance tests + 7 engine_contracts tests break CI on contract violations; validate_repo.sh runs both"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 34,
+    "name": "Tests de pipeline",
+    "group": "base",
+    "severity": "important",
+    "status": "hard-enforced",
+    "owner": "engineering-testing",
+    "kind": "guard",
+    "source_files": [
+      "engines/RenderSchedulerState.js",
+      "engines/RenderSchedulerFrame.js",
+      "audit/pipeline_phase_guard.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/test_render_engine.py",
+      "reportforge/tests/test_server.py",
+      "reportforge/tests/debuggability.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "test_render_engine + test_server test full render pipeline end-to-end",
+      "pipeline_phase_guard.mjs: PIPELINE-PRIORITY-001 verifies LAYOUT=0/VISUAL=1/HANDLES=2/POST=3 in correct order; PIPELINE-LOOP-001 verifies sequential for-loop over S.queues; PIPELINE-NAMES-001 verifies all four phase name strings present with correct LAYOUT→layout mapping; PIPELINE-PHASE-PUSH-001 verifies frameMeta.phases[] receives durationMs timing entries"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 35,
+    "name": "Tests de regresión",
+    "group": "base",
+    "severity": "strong",
+    "status": "hard-enforced",
+    "owner": "engineering-testing",
+    "kind": "guard",
+    "source_files": [
+      "reportforge/tests/runtime_regression.test.mjs",
+      "validate_repo.sh"
+    ],
+    "test_files": [
+      "reportforge/tests/runtime_regression.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "runtime_regression.test.mjs: permanent behavioral guardrails; validate_repo.sh runs regression suite; mutation_injection.test.mjs: 10 mutations permanently killed"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 36,
+    "name": "Tests de estado",
+    "group": "base",
+    "severity": "important",
+    "status": "hard-enforced",
+    "owner": "engineering-testing",
+    "kind": "guard",
+    "source_files": [
+      "engines/RuntimeServicesState.js",
+      "engines/HistoryState.js"
+    ],
+    "test_files": [
+      "reportforge/tests/global_state_corruption.test.mjs",
+      "reportforge/tests/race_conditions.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "global_state_corruption: 19 state tests; race_conditions: HistoryState interleaving, flag isolation"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 37,
+    "name": "Tests de layout",
+    "group": "base",
+    "severity": "strong",
+    "status": "hard-enforced",
+    "owner": "engineering-testing",
+    "kind": "guard",
+    "source_files": [
+      "engines/GeometryCore.js"
+    ],
+    "test_files": [
+      "reportforge/tests/geometry_core.test.mjs",
+      "reportforge/tests/engine_contracts.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "geometry_core: 6 layout tests with tolerance assertions; engine_contracts: legacy rect keys prohibited"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 38,
+    "name": "Sin estado zombie",
+    "group": "base",
+    "severity": "critical",
+    "status": "hard-enforced",
+    "owner": "runtime-boot",
+    "kind": "guard",
+    "source_files": [
+      "reportforge/tests/memory_leak_detection.test.mjs",
+      "audit/reset_stability_guard.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/memory_leak_detection.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "memory_leak_detection: HistoryState listeners do not accumulate across repeated registrations (test 1)",
+      "memory_leak_detection: undo/redo stacks are bounded by maxStack — no unbounded growth (tests 3-4)",
+      "memory_leak_detection: clear() releases all stack memory (test 5)",
+      "memory_leak_detection: suppress() does not leak suppressed=true state after completion (test 8)",
+      "reset_stability_guard: zombie timers (unguarded setInterval) detected and blocked from engines"
+    ],
+    "gap": "DOM listener leak (GC heap snapshot) DEFERRED — requires browser CDP profiler"
+  },
+  {
+    "id": 39,
+    "name": "Reset limpio",
+    "group": "base",
+    "severity": "critical",
+    "status": "hard-enforced",
+    "owner": "runtime-boot",
+    "kind": "structural",
+    "source_files": [
+      "audit/reset_stability_guard.mjs",
+      "validate_repo.sh",
+      "engines/RuntimeGlobals.js",
+      "engines/RuntimeHelpers.js"
+    ],
+    "test_files": [
+      "reportforge/tests/principles_enforcement.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "reset_stability_guard.mjs: exits 1 if any engine registers setInterval without storing the handle — zombie timers prevent clean soft-reset",
+      "reset_stability_guard.mjs: exits 1 if DocumentState.js adds a reset/reinit fn that skips elementCounter — partial reset causes ID collisions",
+      "RuntimeGlobals.js + RuntimeHelpers.js: initClock stores setInterval handle in window._clockInterval so it can be cleared on teardown",
+      "Confirmed: no soft-reset API exists; page reload is the only canonical reset — guard enforces this stays non-degradable"
+    ],
+    "gap": "Soft-reset (without page reload) is architecturally unsupported — elementCounter is module-level and non-resettable. Guard enforces the known worst-case patterns (zombie timers, partial counter resets) are absent."
+  },
+  {
+    "id": 40,
+    "name": "No leaks",
+    "group": "base",
+    "severity": "strong",
+    "status": "hard-enforced",
+    "owner": "engineering-testing",
+    "kind": "guard",
+    "source_files": [
+      "reportforge/tests/memory_leak_detection.test.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/memory_leak_detection.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "memory_leak_detection: listener accumulation bounded, stack FIFO eviction, GeometryCore purity, suppress re-entrancy documented; 10 tests"
+    ],
+    "gap": "DOM leak gap DEFERRED (no heap profiler in CI)"
+  },
+  {
+    "id": 41,
+    "name": "Observabilidad básica",
+    "group": "base",
+    "severity": "important",
+    "status": "hard-enforced",
+    "owner": "debuggability",
+    "kind": "guard",
+    "source_files": [
+      "engines/EngineCoreRuntime.js"
+    ],
+    "test_files": [
+      "reportforge/tests/debuggability.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "debuggability: exportRuntimeState structure, JSON serializability, DOM ownership tags, writer conflict log — 10 tests"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 42,
+    "name": "Logs trazables",
+    "group": "base",
+    "severity": "important",
+    "status": "hard-enforced",
+    "owner": "debuggability",
+    "kind": "guard",
+    "source_files": [
+      "engines/EngineCoreRuntime.js"
+    ],
+    "test_files": [
+      "reportforge/tests/debuggability.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "debuggability: incidentKey determinism, causal lastFailure, governance diagnostic globals (__rfTraceLegacy, rfTrace, DebugTrace) asserted"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 43,
+    "name": "DOM Ownership Enforcement",
+    "group": "hardening",
+    "severity": "critical",
+    "status": "hard-enforced",
+    "owner": "governance",
+    "kind": "guard",
+    "source_files": [
+      "reportforge/tests/governance_guardrails.test.mjs",
+      "docs/architecture/writer-conflict-log.md"
+    ],
+    "test_files": [
+      "reportforge/tests/governance_guardrails.test.mjs",
+      "reportforge/tests/debuggability.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "governance: 'designer shell keeps DOM ownership tags'; debuggability: DOM ownership uniqueness, writer conflict log; 'Multi-writer = fail' asserted"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 44,
+    "name": "Root Shell Ownership",
+    "group": "hardening",
+    "severity": "critical",
+    "status": "hard-enforced",
+    "owner": "governance",
+    "kind": "guard",
+    "source_files": [
+      "reportforge/tests/governance_guardrails.test.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/governance_guardrails.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "governance: 'root shell ownership' and 'shell HTML stays structurally pure' enforced; shell layout order pinned"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 45,
+    "name": "Computed Style Contract",
+    "group": "hardening",
+    "severity": "critical",
+    "status": "hard-enforced",
+    "owner": "browser-testing",
+    "kind": "guard",
+    "source_files": [
+      "reportforge/tests/critical_runtime_contracts.test.mjs",
+      "reportforge/tests/runtime_harness.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/critical_runtime_contracts.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "critical_runtime_contracts #45: getComputedStyle(#app) width matches viewport (1440px); #panel-left=170px, #panel-right=220px, #canvas-area=1046px — all positive",
+      "Assertion: computed width/height of all primary layout containers are positive — no collapsed or zero-dimension layout"
+    ],
+    "gap": "Cross-browser computed style parity (Firefox/WebKit) covered by browser_compatibility.test.mjs; pixel-perfect golden comparison DEFERRED (Playwright visual mode)"
+  },
+  {
+    "id": 46,
+    "name": "Feature CSS Isolation",
+    "group": "hardening",
+    "severity": "critical",
+    "status": "hard-enforced",
+    "owner": "governance",
+    "kind": "guard",
+    "source_files": [
+      "reportforge/tests/critical_runtime_contracts.test.mjs",
+      "engines/DebugOverlay.js",
+      "engines/AlignmentGuides.js"
+    ],
+    "test_files": [
+      "reportforge/tests/critical_runtime_contracts.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "critical_runtime_contracts #46: static scan of 8 invasive overlay/panel engine files — all use rf-*/cr-*/sel-* namespaced class or ID roots; no unscoped DOM append detected",
+      "DebugOverlay.js: id=rf-debug-overlay root, rf-debug-* class hierarchy confirmed isolated",
+      "AlignmentGuides.js: rf-guide/rf-guide-h/rf-guide-v class namespace confirmed"
+    ],
+    "gap": "Shadow DOM (stronger isolation) is DEFERRED — namespaced CSS classes are the current enforcement mechanism; attachShadow not yet used in production engines"
+  },
+  {
+    "id": 47,
+    "name": "Runtime Mutation Guard",
+    "group": "hardening",
+    "severity": "strong",
+    "status": "hard-enforced",
+    "owner": "governance",
+    "kind": "guard",
+    "source_files": [
+      "reportforge/tests/governance_guardrails.test.mjs",
+      "reportforge/tests/global_state_corruption.test.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/governance_guardrails.test.mjs",
+      "reportforge/tests/global_state_corruption.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "governance: prohibited window assignments scanned; global_state_corruption: whitelist integrity, prohibited direct engine globals absent"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 48,
+    "name": "Shadow DOM selectivo",
+    "group": "hardening",
+    "severity": "strong",
+    "status": "hard-enforced",
+    "owner": "architecture",
+    "kind": "structural",
+    "source_files": [
+      "docs/architecture/invariants.md"
+    ],
+    "test_files": [
+      "audit/shadow_dom_isolation_guard.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "DebugOverlay.js and DebugChannelsPanel.js use attachShadow({mode:open}); CSS migrated from chrome.css into shadow root _DEBUG_OVERLAY_CSS/_DEBUG_PANEL_CSS; guard SHADOW-HOST-001 verifies attachment, SHADOW-BODY-001 verifies no body-append without shadow"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 49,
+    "name": "Encapsulación de features invasivas",
+    "group": "hardening",
+    "severity": "strong",
+    "status": "hard-enforced",
+    "owner": "architecture",
+    "kind": "structural",
+    "source_files": [
+      "docs/architecture/invariants.md"
+    ],
+    "test_files": [
+      "audit/shadow_dom_isolation_guard.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "Debug overlays fully encapsulated via Shadow DOM; global cascade cannot reach rf-debug-* selectors; internal queries use shadow.querySelector/getElementById; host elements remain in regular DOM for positioning/dragging"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 50,
+    "name": "Métricas por fase",
+    "group": "hardening",
+    "severity": "important",
+    "status": "hard-enforced",
+    "owner": "debuggability",
+    "kind": "structural",
+    "source_files": [
+      "engines/RenderSchedulerFrame.js",
+      "engines/RenderSchedulerState.js"
+    ],
+    "test_files": [
+      "reportforge/tests/debuggability.test.mjs",
+      "audit/render_storm_guard.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "RenderSchedulerFrame._flush() uses performance.now() to compute durationMs per phase (layout/visual/handles/post) and total flush durationMs. frameMeta.phases[] carries {name,tasks,durationMs,slowestMs,slowestKey}. Tested via node vm sandbox: 4 phase entries, all durationMs >= 0."
+    ],
+    "gap": ""
+  },
+  {
+    "id": 51,
+    "name": "Timeline de ejecución",
+    "group": "hardening",
+    "severity": "important",
+    "status": "hard-enforced",
+    "owner": "debuggability",
+    "kind": "structural",
+    "source_files": [
+      "engines/RenderSchedulerFrame.js"
+    ],
+    "test_files": [
+      "reportforge/tests/debuggability.test.mjs",
+      "audit/render_storm_guard.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "frameMeta.phases[] is an ordered array built by pushing entries in priority loop order (layout→visual→handles→post). Timeline ordering asserted in test: names must equal [layout,visual,handles,post]. completeFrame event emitted with full timeline."
+    ],
+    "gap": ""
+  },
+  {
+    "id": 52,
+    "name": "Profiling por operación",
+    "group": "hardening",
+    "severity": "important",
+    "status": "hard-enforced",
+    "owner": "debuggability",
+    "kind": "structural",
+    "source_files": [
+      "engines/RenderSchedulerFrame.js",
+      "engines/RenderSchedulerState.js",
+      "audit/per_task_profiling_guard.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/debuggability.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "Per-task profiling: slowestMs and slowestKey per phase (PROF-SLOWEST-001). taskT0/taskMs performance.now() per task inside loop (PROF-TASK-001). Cross-frame hotspot ring: hotspots[] in RenderSchedulerState (cap 100, threshold 16ms), tasks exceeding threshold pushed with {frame,phase,key,ms} (PROF-HOTSPOT-001). getHotspots()/clearHotspots() exported (PROF-HOTSPOT-API-001). per_task_profiling_guard: 9 static checks. debuggability.test.mjs: 4 new tests (hotspot recorded, ring capped at 100, clearHotspots resets, guard runner)."
+    ],
+    "gap": ""
+  },
+  {
+    "id": 53,
+    "name": "Contador de renders",
+    "group": "hardening",
+    "severity": "important",
+    "status": "hard-enforced",
+    "owner": "network-latency",
+    "kind": "guard",
+    "source_files": [
+      "engines/RenderSchedulerFrame.js",
+      "engines/RenderSchedulerState.js"
+    ],
+    "test_files": [
+      "reportforge/tests/debuggability.test.mjs",
+      "audit/render_storm_guard.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "S.recentFrameTimes[] rolling ring (max 60, 1s window). On each _flush: push timestamp, count frames in window. If count > S.stormThreshold (30): log error, dispatch rf:render-storm CustomEvent, escalate to EngineCore.runtime.enterSafeMode. stormActive latches until clearStorm(). Test verifies storm fires when threshold crossed."
+    ],
+    "gap": ""
+  },
+  {
+    "id": 54,
+    "name": "Tracking de writers",
+    "group": "hardening",
+    "severity": "critical",
+    "status": "hard-enforced",
+    "owner": "debuggability",
+    "kind": "guard",
+    "source_files": [
+      "engines/RuntimeServicesState.js",
+      "engines/RuntimeServices.js",
+      "docs/architecture/writer-conflict-log.md"
+    ],
+    "test_files": [
+      "reportforge/tests/debuggability.test.mjs",
+      "audit/writer_conflict_guard.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "RuntimeServicesState.setOwner and RuntimeServices.setOwner both track prior owner; re-claim with same value is idempotent (boot-safe); conflict appended to _writerConflicts log (cap 50); getWriterConflicts() returns append-only snapshot. 3 runtime tests pass in node vm sandbox."
+    ],
+    "gap": ""
+  },
+  {
+    "id": 55,
+    "name": "Writer Conflict Detection",
+    "group": "hardening",
+    "severity": "critical",
+    "status": "hard-enforced",
+    "owner": "debuggability",
+    "kind": "guard",
+    "source_files": [
+      "engines/RuntimeServicesState.js",
+      "engines/RuntimeServices.js",
+      "audit/writer_conflict_guard.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/debuggability.test.mjs",
+      "audit/writer_conflict_guard.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "On setOwner conflict: (1) console.error logged, (2) RF.EngineCore.runtime.enterSafeMode called with reason=writer_conflict + error + meta, (3) rf:writer-conflict CustomEvent dispatched on window. Static guard (WRITER-OWNER-001) verifies sections-layer/handles-layer/preview-content only written by SectionEngine/SelectionOverlay/PreviewEngineRenderer respectively. WRITER-CLAIM-001 verifies setOwner only called from boot-sequence files with canonical owner values."
+    ],
+    "gap": ""
+  },
+  {
+    "id": 56,
+    "name": "Shell Mutation Detection",
+    "group": "hardening",
+    "severity": "critical",
+    "status": "hard-enforced",
+    "owner": "governance",
+    "kind": "guard",
+    "source_files": [
+      "reportforge/tests/governance_guardrails.test.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/governance_guardrails.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "governance_guardrails: DOM ownership tags present and unique per owner in designer shell (test 15)",
+      "governance_guardrails: designer shell layout order is stable — left/canvas/right sequence guarded (test 17)",
+      "governance_guardrails: writer conflict log references DOM ownership boundaries (test 18)",
+      "governance_guardrails: shell structural size threshold prevents monolith growth back (test 14)"
+    ],
+    "gap": "MutationObserver-based runtime alert is DEFERRED — requires live browser; static snapshot detection is the CI gate"
+  },
+  {
+    "id": 57,
+    "name": "CSS Bleed Detection",
+    "group": "hardening",
+    "severity": "critical",
+    "status": "hard-enforced",
+    "owner": "governance",
+    "kind": "guard",
+    "source_files": [
+      "reportforge/tests/governance_guardrails.test.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/governance_guardrails.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "governance_guardrails: no inline <style> blocks in shell HTML (test 13)",
+      "governance_guardrails: CSS externalized and below shell-size thresholds; no inline style= attrs (tests 13, 16)",
+      "governance_guardrails: style.cssText usage frozen at per-engine approved baseline (test 29)",
+      "governance_guardrails: writer conflict log references CSS bleed incident history (test 18)"
+    ],
+    "gap": "Cross-namespace CSS selector leak detection DEFERRED — requires browser rendering context. Static enforcement covers inline style prohibition and cssText baseline."
+  },
+  {
+    "id": 58,
+    "name": "Layout Drift Detection",
+    "group": "hardening",
+    "severity": "strong",
+    "status": "hard-enforced",
+    "owner": "governance",
+    "kind": "guard",
+    "source_files": [
+      "reportforge/tests/governance_guardrails.test.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/governance_guardrails.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "governance_guardrails: designer shell layout order asserted — left/canvas/right DOM order is a structural contract (test 17)",
+      "governance_guardrails: workspace DOM structure (ruler-h-row, workspace div with data-dom-owner) is a snapshot contract (test 17)",
+      "governance_guardrails: shell size thresholds prevent layout growth that would indicate structural drift (test 14)"
+    ],
+    "gap": "Geometric pixel-level layout drift (e.g. column width delta across commits) DEFERRED — requires Playwright screenshot comparison"
+  },
+  {
+    "id": 59,
+    "name": "Polling Relapse Detection",
+    "group": "hardening",
+    "severity": "strong",
+    "status": "hard-enforced",
+    "owner": "runtime-boot",
+    "kind": "structural",
+    "source_files": [
+      "audit/polling_relapse_guard.mjs",
+      "audit/reset_stability_guard.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/principles_enforcement.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "polling_relapse_guard.mjs RULE-A: all 116 engine files scanned — no self-calling setTimeout (polling loop) detected",
+      "polling_relapse_guard.mjs RULE-B: no synchronous busy-wait loop reading DOM/DS state found",
+      "polling_relapse_guard.mjs RULE-C: no unguarded setInterval (companion to reset_stability_guard)",
+      "reset_stability_guard.mjs independently confirms: all setInterval handles are stored; no zombie timers"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 60,
+    "name": "Orphan Node Detection",
+    "group": "hardening",
+    "severity": "important",
+    "status": "hard-enforced",
+    "owner": "governance",
+    "kind": "structural",
+    "source_files": [
+      "engines/EngineCoreContracts.js",
+      "engines/EngineCoreRuntime.js",
+      "engines/CanvasLayoutElements.js"
+    ],
+    "test_files": [
+      "reportforge/tests/debuggability.test.mjs",
+      "audit/orphan_node_guard.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "validateOrphanNodes() in EngineCoreContracts cross-checks DOM .cr-element[data-id] vs DS.elements (DOM-ORPHAN) and DS.elements[].sectionId vs DOM .cr-section[data-section-id] (MODEL-ORPHAN). Wired into EngineCoreRuntime.verifyRuntimeInvariants() as a dep. CanvasLayoutElements.renderAll() clears all .cr-element nodes before re-render. 3 runtime tests pass (clean, DOM-orphan, model-orphan). Static guard ORPHAN-CLEAR-001/GUARD-001/RUNTIME-001/DOM-001 pass."
+    ],
+    "gap": ""
+  },
+  {
+    "id": 61,
+    "name": "Snapshot visual contractual",
+    "group": "hardening",
+    "severity": "important",
+    "status": "hard-enforced",
+    "owner": "browser-testing",
+    "kind": "structural",
+    "source_files": [
+      "engines/EngineCoreContracts.js",
+      "reportforge/tests/user_parity/visual_golden_user_parity.test.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/debuggability.test.mjs",
+      "audit/visual_contract_guard.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "snapshotElements() returns [{id,sectionId,type,x,y,w,h}] — full schema tested in node vm sandbox. snapshotSections() returns [{id,stype,height}]. Both are idempotent (two consecutive calls produce identical JSON). visual_contract_guard.mjs verifies schema, idempotency, hash sensitivity. Pixel-level golden comparison wired in visual_golden_user_parity.test.mjs with rmseThreshold."
+    ],
+    "gap": "Pixel-level comparison requires Playwright+ImageMagick; not in base CI pipeline"
+  },
+  {
+    "id": 62,
+    "name": "Diff visual automático",
+    "group": "hardening",
+    "severity": "important",
+    "status": "hard-enforced",
+    "owner": "browser-testing",
+    "kind": "structural",
+    "source_files": [
+      "reportforge/tests/user_parity/visual/helpers.mjs",
+      "reportforge/tests/user_parity/visual_golden_user_parity.test.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/debuggability.test.mjs",
+      "audit/visual_contract_guard.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "Layout hash (element positions/sizes) is position-sensitive: mutating el.x changes the hash (tested). Visual diff gate: compareOrUpdateGolden uses ImageMagick RMSE metric with configurable fuzzPercent and rmseThreshold per golden. VCONTRACT-DIFF-001 static check verifies the golden test references compareOrUpdateGolden and rmseThreshold."
+    ],
+    "gap": "Pixel diff gate requires ImageMagick; layout-hash diff is the CI-safe fallback"
+  },
+  {
+    "id": 63,
+    "name": "Geometric Assertions",
+    "group": "hardening",
+    "severity": "strong",
+    "status": "hard-enforced",
+    "owner": "geometry-core",
+    "kind": "guard",
+    "source_files": [
+      "engines/GeometryCore.js",
+      "engines/DocumentState.js",
+      "engines/DocumentActions.js",
+      "audit/geometric_assertions_guard.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/geometry_core.test.mjs",
+      "reportforge/tests/debuggability.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "geometry_core: resizeRectFromHandle, canvas bounds, selection bounds, handle positions — tolerance-based asserts; 6 tests",
+      "assertLayoutPatch enforces finite AND positive w/h: w<=0 and h<=0 throw INVALID LAYOUT CONTRACT",
+      "DocumentActions.updateElementLayout calls assertLayoutPatch before DS write — all resize paths covered",
+      "geometric_assertions_guard: GEOM-ASSERT-001 (positive-dim), GEOM-CALLSITE-001 (updateElementLayout), GEOM-RESIZE-001 (SelectionInteraction paths), GEOM-CLAMP-001 (clampValue/clampRect exported)",
+      "debuggability.test.mjs: 4 unit tests covering assertLayoutPatch rejection of NaN/Infinity/zero/negative + acceptance of valid patches + guard runner"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 64,
+    "name": "UI State Verification",
+    "group": "hardening",
+    "severity": "strong",
+    "status": "hard-enforced",
+    "owner": "browser-testing",
+    "kind": "guard",
+    "source_files": [
+      "reportforge/tests/critical_runtime_contracts.test.mjs",
+      "reportforge/tests/browser_compatibility.test.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/critical_runtime_contracts.test.mjs",
+      "reportforge/tests/browser_compatibility.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "critical_runtime_contracts #16: DS state (elements, sections, selection, zoom) verified canonical after two page reloads via Playwright",
+      "critical_runtime_contracts #45: computed style and bounding rect of #app, #panel-left, #panel-right, #canvas-area all positive — layout not collapsed",
+      "browser_compatibility: DS.elements, DS.sections, all canonical engines verified in all available browsers"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 65,
+    "name": "Reload Storm Safety",
+    "group": "hardening",
+    "severity": "important",
+    "status": "hard-enforced",
+    "owner": "runtime-boot",
+    "kind": "structural",
+    "source_files": [
+      "engines/DeferredBootstrap.js",
+      "engines/RuntimeBootstrap.js",
+      "audit/reload_storm_guard.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/debuggability.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "DeferredBootstrap: DS.saveHistory patch guarded with _rfPhase3Patched — double-fire safe",
+      "DeferredBootstrap: DesignZoomEngine._apply phase3 patch guarded with _rfPhase3Patched",
+      "DeferredBootstrap: ZoomEngineV19.set patch guarded with _rfEngineCorePatched",
+      "RuntimeBootstrap: OverlayEngine render patch guarded with _rfV19Patched",
+      "RuntimeBootstrap: DesignZoomEngine._apply v19 and phase2 patches guarded with _rfV19ZoomPatched and _rfPhase2ZoomPatched",
+      "reload_storm_guard: BOOT-IDEM-001–005 (all patch guards present), BOOT-COUNT-001 (≤4 handlers per file)",
+      "debuggability.test.mjs: 5 node-level tests covering static guard presence and audit guard runner"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 66,
+    "name": "Hard Reset Stability",
+    "group": "hardening",
+    "severity": "critical",
+    "status": "hard-enforced",
+    "owner": "runtime-boot",
+    "kind": "structural",
+    "source_files": [
+      "audit/reset_stability_guard.mjs",
+      "validate_repo.sh",
+      "engines/RuntimeGlobals.js",
+      "engines/RuntimeHelpers.js"
+    ],
+    "test_files": [
+      "reportforge/tests/principles_enforcement.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "reset_stability_guard.mjs: RULE-C exits 1 if a file calls setInterval without storing handle AND without teardown export — prevents timer accumulation across repeated reloads",
+      "reset_stability_guard.mjs: RULE-B exits 1 if DocumentState.js adds a reset fn that skips elementCounter — prevents ID collision across hard resets",
+      "Zombie clock timers in RuntimeGlobals.js and RuntimeHelpers.js fixed: handle stored in window._clockInterval, clearable before reload"
+    ],
+    "gap": "Repeated-reload accumulation test (Playwright) is deferred — requires a real browser. Static analysis via reset_stability_guard.mjs covers the worst-case structural patterns."
+  },
+  {
+    "id": 67,
+    "name": "Rate-limit Safe Shell",
+    "group": "hardening",
+    "severity": "important",
+    "status": "hard-enforced",
+    "owner": "network-latency",
+    "kind": "guard",
+    "source_files": [
+      "reportforge/server/rate_limit.py",
+      "reportforge/server/api.py",
+      "audit/rate_limit_guard.py"
+    ],
+    "test_files": [
+      "reportforge/tests/network_latency.test.py"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "rate_limit.py: _SlidingWindowCounter sliding-window per-IP, configurable via rate_limit_rpm param",
+      "api.py: make_rate_limit_middleware() wired via app.middleware('http'), rate_limit_rpm=0 = pass-through",
+      "HTTP 429 returned with error:rate_limit_exceeded + retry_after_seconds + Retry-After/X-Rate-Limit-* headers",
+      "/health exempt from rate limiting — load-balancer probes never blocked",
+      "rate_limit_guard.py: RATELIMIT-MIDDLEWARE-001 (wired in api.py), RATELIMIT-MODULE-001 (module + SlidingWindowCounter), RATELIMIT-HEADERS-001 (all 3 headers), RATELIMIT-EXEMPT-001 (/health exempt)",
+      "TestRateLimitShell (4 tests): allowed requests get X-Rate-Limit-* headers; /health never 429; burst triggers 429 with correct body/headers; static guard passes"
+    ],
+    "gap": "Concurrency simulation (LATENCY-CONC-001) still deferred — TestClient is single-threaded in-process"
+  },
+  {
+    "id": 68,
+    "name": "Idempotencia total",
+    "group": "hardening",
+    "severity": "strong",
+    "status": "hard-enforced",
+    "owner": "runtime-services",
+    "kind": "guard",
+    "source_files": [
+      "reportforge/tests/global_state_corruption.test.mjs",
+      "engines/RuntimeServicesState.js"
+    ],
+    "test_files": [
+      "reportforge/tests/global_state_corruption.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "global_state_corruption test 5: RuntimeServicesState re-install guard — second expose() call for same key is a no-op; flag registry is frozen Set; no double-install corruption",
+      "global_state_corruption test 3: setFlag/getFlag with fallback asserted; no cross-contamination between flag namespaces"
+    ],
+    "gap": "RuntimeData.install() has no re-install guard (GLOBALS-DATA-001 DEFERRED) — second call overwrites globals silently. RuntimeServicesState guard is enforced; RuntimeData is the known remaining gap."
+  },
+  {
+    "id": 69,
+    "name": "Error Taxonomy",
+    "group": "extra",
+    "severity": "important",
+    "status": "hard-enforced",
+    "owner": "debuggability",
+    "kind": "guard",
+    "source_files": [
+      "engines/EngineCoreRuntime.js",
+      "audit/error_taxonomy_guard.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/debuggability.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "debuggability: incidentKey taxonomy (ownership/visual/runtime/backend) asserted via causal lastFailure test",
+      "error_taxonomy_guard.mjs: TAXONOMY-STRUCT-001 verifies incidentKey() captures reason/name/message/phase/priority; TAXONOMY-SAFE-001 verifies enterSafeMode sets reason and incidentKey; TAXONOMY-FAILURE-001 verifies lastFailure has reason/incidentKey/error/timestamp; TAXONOMY-NORMALIZE-001 verifies normalizeError extracts name/message/stack; TAXONOMY-SNAPSHOT-001 verifies safeMode included in snapshot"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 70,
+    "name": "Incident Replay",
+    "group": "extra",
+    "severity": "important",
+    "status": "hard-enforced",
+    "owner": "debuggability",
+    "kind": "guard",
+    "source_files": [
+      "engines/EngineCoreRuntime.js",
+      "audit/incident_replay_guard.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/debuggability.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "debuggability: exportRuntimeState JSON-serializability (snapshot usable for replay); incidentKey determinism",
+      "incident_replay_guard.mjs: REPLAY-SNAPSHOT-001 verifies buildRuntimeSnapshot includes version/timestamp/safeMode/pipeline/sections; REPLAY-SERIAL-001 verifies cloneSerializable used; REPLAY-DEDUP-001 verifies recoveryAttempted guard in recoverFromPipelineFailure; REPLAY-EXPORT-001 verifies exportRuntimeState in return API; REPLAY-EVENT-001 verifies rf:runtime-recovery event emitted"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 71,
+    "name": "Minimal Repro First",
+    "group": "extra",
+    "severity": "important",
+    "status": "hard-enforced",
+    "owner": "engineering-workflow",
+    "kind": "guard",
+    "source_files": [
+      "docs/architecture/testing-canon.md",
+      "audit/minimal_repro_guard.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/debuggability.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "minimal_repro_guard.mjs: MINREPRO-DOC-001 verifies Minimal Repro First rule and three-step protocol (strip/verify/document) present in testing-canon.md; MINREPRO-ENFORCEMENT-001 verifies testing-canon references this guard so the rule cannot be silently removed"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 72,
+    "name": "Fix Scope Discipline",
+    "group": "extra",
+    "severity": "critical",
+    "status": "hard-enforced",
+    "owner": "engineering-workflow",
+    "kind": "guard",
+    "source_files": [
+      "audit/fix_scope_guard.mjs",
+      "validate_repo.sh"
+    ],
+    "test_files": [
+      "reportforge/tests/principles_enforcement.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "fix_scope_guard.mjs: exits 1 if >2 productive files changed without [arch] in commit message; wired into validate_repo.sh as CI gate; principles_enforcement.test.mjs: #72 must be executable or hard-enforced with source_files"
+    ],
+    "gap": "pre-commit hook not installed locally; ci_gate fires via validate_repo.sh only"
+  },
+  {
+    "id": 73,
+    "name": "Human-readable Contracts",
+    "group": "extra",
+    "severity": "strong",
+    "status": "hard-enforced",
+    "owner": "architecture",
+    "kind": "guard",
+    "source_files": [
+      "docs/architecture/",
+      "docs/governance.md"
+    ],
+    "test_files": [
+      "reportforge/tests/architecture_matrix.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "architecture_matrix: all 17 categories reference readable contract docs; governance.md enforced to contain readable phrases"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 74,
+    "name": "Safe Rollback Paths",
+    "group": "extra",
+    "severity": "important",
+    "status": "hard-enforced",
+    "owner": "engineering-workflow",
+    "kind": "guard",
+    "source_files": [
+      "docs/architecture/bridges-and-shims.md",
+      "audit/safe_rollback_guard.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/debuggability.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "safe_rollback_guard.mjs: ROLLBACK-CERRADO-001 verifies cerrado bridge patterns absent from boot files; ROLLBACK-GUARD-001 verifies active P0/P1 bridges have idempotency guard flags (_rfPhase2ZoomPatched, _rfPhase3Patched, _rfEngineCorePatched, _rfV19Patched); ROLLBACK-DOC-001 verifies bridges-and-shims.md has Rollback path column, Safe Rollback Contract section, and cerrado entries; wired into debuggability.test.mjs"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 75,
+    "name": "Repo Bootstrap Audit",
+    "group": "extra",
+    "severity": "strong",
+    "status": "hard-enforced",
+    "owner": "engineering-workflow",
+    "kind": "guard",
+    "source_files": [
+      "validate_repo.sh"
+    ],
+    "test_files": [
+      "reportforge/tests/architecture_matrix.test.mjs",
+      "reportforge/tests/governance_guardrails.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "validate_repo.sh: full repo structure + syntax + tests + architecture checks on every run; architecture_matrix covers all 17 categories"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 76,
+    "name": "Shared Core Standards",
+    "group": "extra",
+    "severity": "important",
+    "status": "hard-enforced",
+    "owner": "architecture",
+    "kind": "guard",
+    "source_files": [
+      "docs/architecture/testing-canon.md",
+      "audit/shared_core_guard.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/debuggability.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "shared_core_guard.mjs: SHARED-DOC-001 verifies Shared Core Standards section present in testing-canon.md; SHARED-SUITES-001 verifies all four canonical test suite files exist and are referenced; SHARED-VALIDATE-001 verifies validate_repo.sh exists; SHARED-GUARDS-001 verifies audit/ has ≥5 guard files; SHARED-ENFORCEMENT-001 verifies guard referenced in Enforcement section"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 77,
+    "name": "Cause over Cosmetic Fixes",
+    "group": "extra",
+    "severity": "critical",
+    "status": "hard-enforced",
+    "owner": "engineering-workflow",
+    "kind": "guard",
+    "source_files": [
+      "audit/cosmetic_fix_guard.mjs",
+      "validate_repo.sh"
+    ],
+    "test_files": [
+      "reportforge/tests/principles_enforcement.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "cosmetic_fix_guard.mjs: exits 1 if a fix: commit touches only HTML/CSS/presentation files with no logic or test change; wired into validate_repo.sh; correctly detects commit 99bdd08 (HTML-only fix) as cosmetic, passes 30e40d5 (logic fix) and ddc8944 (multi-engine fix) as causal"
+    ],
+    "gap": "fix commits that change one logic line + many CSS lines pass (logic present = causal); very small logic changes may escape detection"
+  },
+  {
+    "id": 78,
+    "name": "Evidence-driven Debugging",
+    "group": "extra",
+    "severity": "critical",
+    "status": "hard-enforced",
+    "owner": "debuggability",
+    "kind": "guard",
+    "source_files": [
+      "engines/EngineCoreRuntime.js"
+    ],
+    "test_files": [
+      "reportforge/tests/debuggability.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "debuggability: 10 tests enforce that runtime state is always JSON-serializable, has deterministic incidentKey, has DOM ownership evidence, has writer conflict log — evidence must be machine-readable"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 79,
+    "name": "Three-attempt Convergence",
+    "group": "extra",
+    "severity": "strong",
+    "status": "hard-enforced",
+    "owner": "engineering-workflow",
+    "kind": "guard",
+    "source_files": [
+      "docs/architecture/testing-canon.md",
+      "audit/convergence_discipline_guard.mjs"
+    ],
+    "test_files": [
+      "reportforge/tests/debuggability.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "convergence_discipline_guard.mjs: CONV-DOC-001 verifies three-attempt rule and two-file constraint present in testing-canon.md; CONV-GAP-001 verifies all documented-but-not-hard-enforced principles have a gap description (no silent undocumented debt); CONV-ENFORCEMENT-001 verifies testing-canon.md references the guard itself so the rule cannot be silently removed; wired into debuggability.test.mjs"
+    ],
+    "gap": ""
+  },
+  {
+    "id": 80,
+    "name": "Every Pain Becomes a Guardrail",
+    "group": "extra",
+    "severity": "strong",
+    "status": "hard-enforced",
+    "owner": "engineering-testing",
+    "kind": "guard",
+    "source_files": [
+      "audit/pain_becomes_guardrail_guard.mjs",
+      "validate_repo.sh"
+    ],
+    "test_files": [
+      "reportforge/tests/principles_enforcement.test.mjs"
+    ],
+    "ci_gate": true,
+    "evidence": [
+      "pain_becomes_guardrail_guard.mjs: exits 1 if a fix: commit includes no test file change and no [guardrail: ref] in commit body; wired into validate_repo.sh; passes trivially on non-fix commits; accepts [fix-trivial] exemption for path/config fixes"
+    ],
+    "gap": "historical fix commits (ddc8944, 4c8949a, etc.) predate this guard and carry no test — they would all fail if re-evaluated; developers must use [guardrail: existing-test] for fixes where coverage already exists in the repo"
+  }
+]

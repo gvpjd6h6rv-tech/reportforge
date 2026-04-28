@@ -140,7 +140,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-  if (typeof RulerEngine !== 'undefined' && typeof OverlayEngine !== 'undefined') {
+  if (typeof RulerEngine !== 'undefined' && typeof OverlayEngine !== 'undefined' && !OverlayEngine._rfV19Patched) {
+    OverlayEngine._rfV19Patched = true;
     OverlayEngine.render = function() {
       RF.Geometry.invalidate();
       RulerEngine.render();
@@ -152,18 +153,19 @@ document.addEventListener('DOMContentLoaded', () => {
     OverlayEngine.updateCursor = (x, y) => RulerEngine.updateCursor(x, y);
   }
 
-  if (typeof DesignZoomEngine !== 'undefined') {
+  if (typeof DesignZoomEngine !== 'undefined' && !DesignZoomEngine._apply._rfV19ZoomPatched) {
     const _origApply19 = DesignZoomEngine._apply.bind(DesignZoomEngine);
     DesignZoomEngine._apply = function(z, ax, ay) {
       _origApply19(z, ax, ay);
       const ws = document.getElementById('workspace');
       if (ws) ws.dispatchEvent(new CustomEvent('rf:zoom-changed', { detail: { zoom: z } }));
     };
+    DesignZoomEngine._apply._rfV19ZoomPatched = true;
   }
 
-  if (typeof SnapEngine !== 'undefined') {
-    SnapEngine.init();
-    if (typeof DS !== 'undefined') DS.snap = (v) => SnapEngine.snap(v);
+  if (typeof SnapState !== 'undefined') SnapState.init();
+  if (typeof DS !== 'undefined' && typeof SnapCore !== 'undefined' && typeof SnapState !== 'undefined') {
+    DS.snap = (v) => SnapCore.snapValue(v, SnapState.getGrid(), SnapState.isEnabled());
   }
 
   if (typeof GridEngine !== 'undefined') GridEngine.init();
@@ -173,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
     DesignZoomEngine.set(DS.zoom || 1.0);
   }
 
-  console.log('[ReportForge v19] Boot complete — RulerEngine, GridEngine, SnapEngine, WorkspaceScrollEngine');
+  console.log('[ReportForge v19] Boot complete — RulerEngine, GridEngine, SnapCore/SnapState, WorkspaceScrollEngine');
 });
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -215,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (typeof HandlesEngine !== 'undefined' && HandlesEngine.init) HandlesEngine.init();
 
-  if (typeof DesignZoomEngine !== 'undefined') {
+  if (typeof DesignZoomEngine !== 'undefined' && !DesignZoomEngine._apply._rfPhase2ZoomPatched) {
     const _prevApply = DesignZoomEngine._apply.bind(DesignZoomEngine);
     DesignZoomEngine._apply = function(z, ax, ay) {
       _prevApply(z, ax, ay);
@@ -223,6 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof HandlesEngine !== 'undefined') HandlesEngine.render();
       });
     };
+    DesignZoomEngine._apply._rfPhase2ZoomPatched = true;
   }
 
   console.log('[ReportForge v19.2] Phase 2 engines active: RenderScheduler, ZoomEngine, HitTestEngine, DragEngine, HandlesEngine, GuideEngine, AlignmentEngine, SelectionEngine');

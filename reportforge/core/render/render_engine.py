@@ -102,7 +102,9 @@ class RenderEngine:
         No requiere WeasyPrint.
         """
         self._validate(data)
-        return self._build_html(data)
+        html = self._build_html(data)
+        self._assert_items_unchanged(data)
+        return html
 
     def render_bytes(self, data: dict) -> bytes:
         """
@@ -110,6 +112,7 @@ class RenderEngine:
         """
         self._validate(data)
         html = self._build_html(data)
+        self._assert_items_unchanged(data)
         return self._pdf.from_html(html)
 
     def with_layout(self, layout_path: str | Path) -> "RenderEngine":
@@ -150,7 +153,7 @@ class RenderEngine:
     # ── Internal ──────────────────────────────────────────────────
 
     def _build_html(self, data: dict) -> str:
-        resolver = FieldResolver(data)
+        resolver = FieldResolver(data, debug=self._debug)
         engine   = HtmlEngine(self._layout, resolver, debug=self._debug)
         return engine.render()
 
@@ -186,6 +189,33 @@ class RenderEngine:
             raise RenderEngineError(f"Faltan claves en data: {missing}")
         if not isinstance(data.get("items"), list):
             raise RenderEngineError("data['items'] debe ser una lista")
+        if self._debug:
+            # Snapshot item dicts so we can detect mutations after render
+            self._items_snapshot = {
+                i: hash(frozenset(
+                    (k, str(v)) for k, v in item.items()
+                    if isinstance(v, (str, int, float, bool, type(None)))
+                ))
+                for i, item in enumerate(data.get("items", []))
+                if isinstance(item, dict)
+            }
+
+    def _assert_items_unchanged(self, data: dict) -> None:
+        """In debug mode: raise if any item dict was mutated during render."""
+        if not self._debug or not hasattr(self, "_items_snapshot"):
+            return
+        for i, item in enumerate(data.get("items", [])):
+            if not isinstance(item, dict):
+                continue
+            current_hash = hash(frozenset(
+                (k, str(v)) for k, v in item.items()
+                if isinstance(v, (str, int, float, bool, type(None)))
+            ))
+            if self._items_snapshot.get(i) != current_hash:
+                raise RenderEngineError(
+                    f"data['items'][{i}] fue mutado durante el render. "
+                    f"Los renderers no deben modificar el dict de entrada."
+                )
 
 
 # ── Convenience functions ─────────────────────────────────────────

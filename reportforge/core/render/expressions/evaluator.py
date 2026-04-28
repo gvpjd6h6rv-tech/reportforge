@@ -9,6 +9,12 @@ from typing import Any, Optional, TYPE_CHECKING
 if TYPE_CHECKING:
     from ..resolvers.field_resolver import FieldResolver
 
+# Lazy import — logger is optional; never crashes if absent.
+try:
+    from .coercion_logger import coercion_logger as _logger
+except Exception:  # pragma: no cover
+    _logger = None  # type: ignore[assignment]
+
 _EXPR_PAT   = re.compile(r'\{([^{}]+)\}')
 _AGG_PAT    = re.compile(r'\b(sum|count|avg|min|max|first|last)\s*\(\s*([\w.]+)\s*\)')
 _RUNSUM_PAT = re.compile(r'\brunningSum\s*\(\s*([\w.]+)\s*\)')
@@ -85,6 +91,13 @@ class ExpressionEvaluator:
             try:
                 return _coerce_str(self._eval(m.group(1).strip(), resolver, group_items))
             except Exception:
+                if _logger is not None:
+                    _logger.record_mismatch(
+                        value=m.group(1)[:200],
+                        expected_type="template_expr",
+                        result=m.group(0),
+                        field=m.group(1)[:80],
+                    )
                 return m.group(0)
         return _EXPR_PAT.sub(_rep, template)
 
@@ -180,6 +193,12 @@ class ExpressionEvaluator:
                 try:
                     return _cr.call(fn_name, evaled)
                 except Exception:
+                    if _logger is not None:
+                        _logger.record_mismatch(
+                            value=repr(evaled)[:200],
+                            expected_type=f"cr_function:{fn_name}",
+                            result="", field=fn_name,
+                        )
                     return ""
 
         # 8) env / param
@@ -232,6 +251,12 @@ class ExpressionEvaluator:
                     r = _cr.call(fn_n, args)
                     return str(r) if isinstance(r, (int, float, bool)) else repr(str(r))
                 except Exception:
+                    if _logger is not None:
+                        _logger.record_mismatch(
+                            value=repr(arg)[:200],
+                            expected_type=f"cr_function:{fn_n}",
+                            result="", field=fn_n,
+                        )
                     pass
             return repr("")
         def _env(m): return repr(os.environ.get(m.group(1), ""))

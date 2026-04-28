@@ -317,5 +317,5 @@ window.initClock = function(){
     document.getElementById('sb-time').textContent=d.toLocaleTimeString('es-EC',{hour:'2-digit',minute:'2-digit'});
   }
   update();
-  setInterval(update,30000);
+  window._clockInterval = setInterval(update,30000);
 };

@@ -17,6 +17,9 @@ const CATEGORIES = [
       'docs/architecture/document-store-contract.md',
       'docs/architecture/engine-core-routing-contract.md',
       'reportforge/tests/governance_guardrails.test.mjs',
+      'reportforge/tests/principles_enforcement.test.mjs',
+      'audit/principles_matrix.json',
+      'audit/principles_audit.mjs',
       'validate_repo.sh',
     ],
   },
@@ -48,6 +51,13 @@ const CATEGORIES = [
       'reportforge/tests/test_advanced_engine.py',
       'reportforge/tests/test_enterprise.py',
       'reportforge/tests/test_server.py',
+    ],
+  },
+  {
+    key: 'formula',
+    files: [
+      'reportforge/tests/test_formula_engine.py',
+      'reportforge/tests/type_coercion_js.test.mjs',
     ],
   },
   {
@@ -99,6 +109,7 @@ const CATEGORIES = [
   {
     key: 'race_conditions',
     files: [
+      'reportforge/tests/race_conditions.test.mjs',
       'reportforge/tests/user_parity/fast_interaction_smoke_user_parity.test.mjs',
       'reportforge/tests/user_parity/flaky_detection_user_parity.test.mjs',
     ],
@@ -106,6 +117,7 @@ const CATEGORIES = [
   {
     key: 'network_latency',
     files: [
+      'reportforge/tests/network_latency.test.py',
       'reportforge/tests/test_server.py',
       'reportforge/tests/runtime_harness.mjs',
     ],
@@ -113,6 +125,7 @@ const CATEGORIES = [
   {
     key: 'browser_specific',
     files: [
+      'reportforge/tests/browser_compatibility.test.mjs',
       'reportforge/tests/user_parity/visual_golden_user_parity.test.mjs',
       'reportforge/tests/user_parity/selection_handle_stacking_user_parity.test.mjs',
     ],
@@ -120,6 +133,7 @@ const CATEGORIES = [
   {
     key: 'global_state_corruption',
     files: [
+      'reportforge/tests/global_state_corruption.test.mjs',
       'engines/RuntimeGlobals.js',
       'engines/RuntimeServices.js',
       'engines/EngineCore.js',
@@ -128,6 +142,7 @@ const CATEGORIES = [
   {
     key: 'memory_leaks',
     files: [
+      'reportforge/tests/memory_leak_detection.test.mjs',
       'reportforge/tests/user_parity/session_replay_user_parity.test.mjs',
       'reportforge/tests/user_parity/flaky_detection_user_parity.test.mjs',
     ],
@@ -153,6 +168,7 @@ test('architecture matrix covers all required categories', () => {
     'causal',
     'conductual',
     'functional',
+    'formula',
     'cr_functions',
     'datasource',
     'all_gaps',

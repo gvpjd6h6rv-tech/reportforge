@@ -24,7 +24,12 @@
 
 const KeyboardEngine = (() => {
   let _enabled  = true;
-  let _handlers = {};   // 'key:mods' → fn
+  // Handler registry delegated to KeyboardRegistry (SSOT for key bindings).
+  const R = typeof KeyboardRegistry !== 'undefined' ? KeyboardRegistry : (() => {
+    const _h = Object.create(null);
+    return { register: (c, f) => { _h[c] = f; }, off: (c) => { delete _h[c]; },
+             get: (c) => _h[c] || null, trigger: (c, e) => { const f = _h[c]; if (f) f(e); return !!f; }, clear: () => { Object.keys(_h).forEach(k => delete _h[k]); } };
+  })();
 
   /** Encode a key combination into a lookup string */
   function _encode(e) {
@@ -44,14 +49,14 @@ const KeyboardEngine = (() => {
     if (document.activeElement && document.activeElement.isContentEditable) return;
 
     const key = _encode(e);
-    const fn  = _handlers[key];
+    const fn  = R.get(key);
     if (fn) {
       e.preventDefault();
       fn(e);
     }
   }
 
-  function _register(combo, fn) { _handlers[combo] = fn; }
+  function _register(combo, fn) { R.register(combo, fn); }
 
   function _init() {
     // ── Undo / Redo ──────────────────────────────────────────────
@@ -135,7 +140,7 @@ const KeyboardEngine = (() => {
 
     // ── Grid / Snap toggles ───────────────────────────────────────
     _register('ctrl+g', () => { if (typeof GridEngine !== 'undefined') GridEngine.toggle(); });
-    _register('ctrl+;', () => { if (typeof SnapEngine !== 'undefined') SnapEngine.toggle(); });
+    _register('ctrl+;', () => { if (typeof SnapState !== 'undefined') SnapState.toggle(); });
 
     document.addEventListener('keydown', _onKeyDown);
   }
@@ -152,16 +157,15 @@ const KeyboardEngine = (() => {
     on(combo, fn) { _register(combo.toLowerCase(), fn); },
 
     /** Remove a shortcut */
-    off(combo) { delete _handlers[combo.toLowerCase()]; },
+    off(combo) { R.off(combo.toLowerCase()); },
 
     /** Enable / disable all shortcuts */
     setEnabled(v) { _enabled = !!v; },
 
     /** Programmatically fire a combo */
-    trigger(combo) {
-      const fn = _handlers[combo.toLowerCase()];
-      if (fn) fn(new KeyboardEvent('keydown'));
-    },
+    trigger(combo) { R.trigger(combo.toLowerCase(), new KeyboardEvent('keydown')); },
+
+    registry: R,
   };
 })();
 

@@ -49,7 +49,7 @@ The repo should keep explicit coverage for these categories:
 | Causal | event and state causality | `tanda*`, `engine_contracts` |
 | Conductual | interaction flow under user intent | `content_edit_smoke_user_parity`, `template_smoke_user_parity` |
 | Functional | core outputs and API contracts | `test_render_engine`, `test_advanced_engine`, `test_enterprise`, `test_server` |
-| Formula | parser, tokenizer, AST, evaluator, and function catalog contracts | `test_formula_engine` |
+| Formula | parser, tokenizer, AST, evaluator, function catalog, and JS/Python coercion parity | `test_formula_engine`, `type_coercion_js` |
 | CR Functions | family split, registry, and callable dispatch contracts | `test_cr_functions` |
 | Datasource | db source facade, cache, engine lifecycle, queries, introspection, and registry contracts | `test_phases_3_5` |
 | All Gaps | backlog and ownership gaps | `transformation-backlog`, `ownership-matrix` |
@@ -62,9 +62,58 @@ The repo should keep explicit coverage for these categories:
 | Memory leaks | repeated flows and cleanup safety | `session_replay_user_parity`, repeated-init smoke tests |
 | Human unpredictability | random or mixed user actions | `undo_redo_mixed_history_user_parity`, `session_replay_user_parity` |
 
+## Three-Attempt Convergence Rule
+
+If fixing a bug requires more than three attempts, the bug is a symptom of an architectural gap, not an isolated defect. The rule:
+
+1. **First attempt** — targeted fix in the owning module + one focused test.
+2. **Second attempt** — if the fix fails, identify the real owner (check SSOT, contracts, guard failures) and fix there. The second fix must still touch at most two files.
+3. **Third attempt** — if still failing, stop fixing and open a gap entry in `audit/principles_matrix.json`. The architecture needs a new invariant, not another patch.
+
+**Machine-enforceable proxies:**
+- Every bug fix must land with a paired test (verified by code review and governance tests).
+- No fix may touch more than two files unless the architecture itself is being cut (already a Canonical Rule above).
+- If three attempts are consumed, the resulting gap must be documented with `ci_gate: false` and a specific `gap` description — this surfaces the architectural debt for the next hardening cycle.
+
+**What this rule prevents:**
+- Patch-on-patch accumulation that hides the real invariant gap.
+- Fixes that pass locally but fail in CI because the wrong layer was patched.
+- Silent regressions when the patched callsite is bypassed by a new code path.
+
+## Minimal Repro First (#71)
+
+Before opening a bug or starting a fix, produce the smallest possible reproduction:
+
+1. Strip the report to one section and one element.
+2. Verify the defect reproduces with that minimal document.
+3. If it does not reproduce minimally, the bug is context-dependent — document the context before patching.
+
+**What this rule prevents:**
+- Fixes that target the symptom (complex document state) instead of the root cause.
+- Wasted investigation in reports that are not relevant to the defect.
+- Regressions introduced by fixing for a specific document shape.
+
+`audit/minimal_repro_guard.mjs` verifies this rule is documented here.
+
+## Shared Core Standards (#76)
+
+Every RF deployment must satisfy the following minimum test surface. These are the shared core standards that any fork or derivative must keep:
+
+- `validate_repo.sh` must pass with 0 failures.
+- `reportforge/tests/debuggability.test.mjs` must pass.
+- `reportforge/tests/governance_guardrails.test.mjs` must pass.
+- `reportforge/tests/engine_contracts.test.mjs` must pass.
+- `reportforge/tests/race_conditions.test.mjs` must pass.
+- All `audit/*.mjs` guards must exit 0.
+
+`audit/shared_core_guard.mjs` verifies this list is documented and the key suites are referenced.
+
 ## Enforcement
 
 - Governance tests must fail on inline runtime, duplicate owners, or forbidden shims.
 - Architecture tests must fail if a boundary file grows back into a monolith.
 - Behavioral suites must stay browser-based for the canonical runtime.
 - Any new category must be added to this canon and linked to a real suite.
+- The three-attempt convergence rule must remain in this document; `audit/convergence_discipline_guard.mjs` verifies it has not been removed.
+- The Minimal Repro First rule must remain in this document; `audit/minimal_repro_guard.mjs` verifies it has not been removed.
+- The Shared Core Standards must remain in this document; `audit/shared_core_guard.mjs` verifies it has not been removed.

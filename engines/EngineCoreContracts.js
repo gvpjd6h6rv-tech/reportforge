@@ -285,6 +285,47 @@ function createEngineCoreContracts(deps = {}) {
     }
   }
 
+  /**
+   * validateOrphanNodes — #60 Orphan Node Detection
+   *
+   * Cross-checks DOM ↔ DS model for two orphan classes:
+   *   DOM-ORPHAN: a .cr-element[data-id] in the DOM whose id is absent from DS.elements
+   *   MODEL-ORPHAN: a DS.elements[] entry whose sectionId has no .cr-section[data-section-id] in the DOM
+   *
+   * Only runs when both DS and the document are available.
+   */
+  function validateOrphanNodes(issues) {
+    if (typeof DS === 'undefined' || !Array.isArray(DS.elements)) return;
+    if (!doc) return;
+
+    // Build model id set.
+    const modelIds = new Set(DS.elements.map((el) => String(el.id)));
+
+    // DOM orphans: cr-elements whose data-id is not in DS.elements.
+    const domElements = [...doc.querySelectorAll('.cr-element[data-id]')];
+    for (const node of domElements) {
+      const id = node.dataset.id;
+      if (!modelIds.has(id)) {
+        pushIssue(issues, 'orphan.dom-element', 'DOM .cr-element has no matching DS.elements entry', { id });
+      }
+    }
+
+    // Model orphans: DS.elements whose sectionId has no DOM section node.
+    // Also detect elements with no sectionId at all.
+    const domSectionIds = new Set(
+      [...doc.querySelectorAll('.cr-section[data-section-id]')].map((n) => String(n.dataset.sectionId))
+    );
+    for (const el of DS.elements) {
+      if (!el.sectionId) {
+        pushIssue(issues, 'orphan.model-element.no-section-id', 'DS.elements entry has no sectionId', { id: el.id, type: el.type });
+      } else if (!domSectionIds.has(String(el.sectionId))) {
+        pushIssue(issues, 'orphan.model-element.missing-section', 'DS.elements entry references a sectionId with no DOM .cr-section', {
+          id: el.id, sectionId: el.sectionId,
+        });
+      }
+    }
+  }
+
   function validateCanonicalRuntime(issues) {
     if (typeof window !== 'undefined') {
       const canvasOwner = runtimeServices?.getOwner('canvas') || null;
@@ -387,6 +428,7 @@ function createEngineCoreContracts(deps = {}) {
     validateCanvasContract,
     validateScrollContract,
     validateCanonicalRuntime,
+    validateOrphanNodes,
   };
 }
 

@@ -293,6 +293,15 @@ window.RulerEngine = (() => {
       scheduleRender();
     },
 
+    /** Toggle ruler visibility */
+    toggle() {
+      const row = document.getElementById('ruler-h-row');
+      const vr  = document.getElementById('ruler-v');
+      if (!row) return;
+      const hidden = row.classList.toggle('hidden');
+      if (vr) vr.classList.toggle('hidden', hidden);
+    },
+
     /**
      * Constants exposed for external layout code.
      */

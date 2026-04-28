@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import urllib.parse
 
-from reportforge.core.render.engines.advanced_engine import _render_barcode_svg
+from reportforge.core.render.engines.barcode_renderer import _render_barcode_svg
 
 from reportforge_server_http_utils import _respond, _error
 

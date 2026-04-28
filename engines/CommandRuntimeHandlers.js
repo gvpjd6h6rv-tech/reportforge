@@ -33,6 +33,7 @@
       case 'align-centers': CommandEngine.alignCenters(); break;
       case 'align-rights': CommandEngine.alignRights(); break;
       case 'align-tops': CommandEngine.alignTops(); break;
+      case 'align-middles': CommandEngine.alignMiddles(); break;
       case 'align-bottoms': CommandEngine.alignBottoms(); break;
       case 'same-width': CommandEngine.sameWidth(); break;
       case 'same-height': CommandEngine.sameHeight(); break;
@@ -76,14 +77,19 @@
       case 'hide-object': CommandEngine.hideObject && CommandEngine.hideObject(); break;
       case 'show-object': CommandEngine.showObject && CommandEngine.showObject(); break;
       case 'toggle-grid':
-        DS.gridVisible = !DS.gridVisible;
-        document.getElementById('grid-overlay').classList.toggle('hidden', !DS.gridVisible);
+        GridEngine.setVisible(!DS.gridVisible);
         document.getElementById('btn-grid').classList.toggle('active', DS.gridVisible);
         break;
       case 'toggle-snap':
         DS.snapToGrid = !DS.snapToGrid;
         document.getElementById('btn-snap').classList.toggle('active', DS.snapToGrid);
         break;
+      case 'toggle-rulers': RulerEngine.toggle(); break;
+      case 'print': window.print(); break;
+      case 'page-first': PreviewEngineRenderer.pageFirst(); break;
+      case 'page-prev':  PreviewEngineRenderer.pagePrev();  break;
+      case 'page-next':  PreviewEngineRenderer.pageNext();  break;
+      case 'page-last':  PreviewEngineRenderer.pageLast();  break;
       case 'insert-text': InsertEngine.setTool('text'); break;
       case 'insert-field': InsertEngine.setTool('field'); break;
       case 'insert-line': InsertEngine.setTool('line'); break;
@@ -171,3 +177,25 @@
     handleFontSizeChange,
   };
 })(window);
+  async function runRepoTests(kind) {
+    const btn = document.getElementById(kind === 'quick' ? 'rf-test-quick' : 'rf-test-full');
+    btn?.classList.remove('is-pass', 'is-fail');
+    btn?.classList.add('is-running');
+    setStatus(`Running ${kind} tests...`);
+    try {
+      const res = await fetch(`/tests/${kind}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      const data = await res.json();
+      console.log(`[RF tests:${kind}]`, data);
+      btn?.classList.remove('is-running');
+      btn?.classList.add(data.ok ? 'is-pass' : 'is-fail');
+      setStatus(`${kind} tests ${data.ok ? 'PASSED' : 'FAILED'} (${data.durationMs}ms)`);
+      alert(`${kind.toUpperCase()} TESTS ${data.ok ? 'PASSED' : 'FAILED'}\n\n${data.cmd}\n\n${(data.stdout || data.stderr || '').slice(-3000)}`);
+    } catch (err) {
+      btn?.classList.remove('is-running');
+      btn?.classList.add('is-fail');
+      setStatus(`${kind} tests crashed`);
+      alert(`Tests crashed: ${err}`);
+    }
+  }
+
+

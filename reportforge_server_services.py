@@ -12,6 +12,7 @@ from reportforge_server_route_static import _serve_static
 from reportforge_server_routes_preview import _post_preview
 from reportforge_server_routes_render import _post_render
 from reportforge_server_routes_validate import _post_validate_formula, _post_validate_layout
+from reportforge_server_route_tests import _post_tests_full, _post_tests_quick, _get_tests_stream
 
 
 def handle_get(handler):
@@ -22,6 +23,10 @@ def handle_get(handler):
         return _serve_designer(handler)
     if path == "/modern":
         return _serve_designer(handler, force_mode="modern")
+    if path == "/tests/stream":
+        import urllib.parse
+        qs = urllib.parse.parse_qs(urllib.parse.urlparse(handler.path).query)
+        return _get_tests_stream(handler, (qs.get("kind") or ["quick"])[0])
     if path == "/health":
         return _get_health(handler)
     if path.startswith("/preview-barcode"):
@@ -44,6 +49,10 @@ def handle_post(handler):
         return _post_validate_layout(handler, body)
     if path == "/validate-formula":
         return _post_validate_formula(handler, body)
+    if path == "/tests/quick":
+        return _post_tests_quick(handler, body)
+    if path == "/tests/full":
+        return _post_tests_full(handler, body)
     if path == "/datasources":
         return _post_register_ds(handler, body)
     if path.startswith("/datasources/") and path.endswith("/query"):

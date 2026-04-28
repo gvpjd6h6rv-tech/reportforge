@@ -3,25 +3,34 @@
 from __future__ import annotations
 from typing import Any, Optional
 
+# Lazy import — logger is optional; never crashes if absent.
+try:
+    from ..expressions.coercion_logger import coercion_logger as _logger
+except Exception:  # pragma: no cover
+    _logger = None  # type: ignore[assignment]
+
 
 class FieldResolver:
     """
     Resolves paths like "cliente.nombre", "item.precio",
     "totales.iva_12" against the report data dict.
     Thread-safe; creates child resolvers for item context.
+    debug=True: logs every path that resolves to the default value.
     """
     def __init__(self, data: dict, item: Optional[dict] = None,
-                 group_context: Optional[dict] = None):
+                 group_context: Optional[dict] = None,
+                 debug: bool = False):
         self._data          = data
         self._item          = item
         self._group_context = group_context or {}
+        self._debug         = debug
 
     # ── Context builders ──────────────────────────────────────────
     def with_item(self, item: dict) -> "FieldResolver":
-        return FieldResolver(self._data, item, self._group_context)
+        return FieldResolver(self._data, item, self._group_context, self._debug)
 
     def with_group(self, ctx: dict) -> "FieldResolver":
-        return FieldResolver(self._data, self._item, {**self._group_context, **ctx})
+        return FieldResolver(self._data, self._item, {**self._group_context, **ctx}, self._debug)
 
     # ── Core resolution ───────────────────────────────────────────
     def get(self, path: str, default: Any = "") -> Any:
@@ -52,7 +61,13 @@ class FieldResolver:
             return self._group_context.get(path[6:], default)
 
         # Normal dot-path traversal
-        return _traverse(path, self._data, default)
+        result = _traverse(path, self._data, default)
+        if self._debug and result == default and "." in path and _logger is not None:
+            _logger.record_mismatch(
+                value=path, expected_type="field_path",
+                result=default, field=path,
+            )
+        return result
 
     def get_formatted(self, path: str, fmt: Optional[str] = None,
                       default: Any = "") -> str:
@@ -189,7 +204,13 @@ def format_value(value: Any, fmt: Optional[str]) -> str:
                 "21": "ENDOSO DE TÍTULOS",
             }.get(str(value), str(value))
     except (ValueError, TypeError, AttributeError):
-        pass
+        if _logger is not None:
+            _logger.record_mismatch(
+                value=repr(value)[:200],
+                expected_type=f"format:{fmt}",
+                result=str(value),
+                field=fmt or "",
+            )
     return str(value)
 
 # Aliases for backward-compat with test_advanced_engine imports

@@ -11,7 +11,6 @@ const EngineCoreRoutingRegistry = (() => {
     function registerAllEngines() {
       reg('RulerEngine', typeof RulerEngine !== 'undefined' ? RulerEngine : null);
       reg('GridEngine', typeof GridEngine !== 'undefined' ? GridEngine : null);
-      reg('SnapEngine', typeof SnapEngine !== 'undefined' ? SnapEngine : null);
       reg('WorkspaceScrollEngine', typeof WorkspaceScrollEngine !== 'undefined' ? WorkspaceScrollEngine : null);
       reg('RenderScheduler', typeof RenderScheduler !== 'undefined' ? RenderScheduler : null);
       reg('ZoomEngineV19', typeof ZoomEngineV19 !== 'undefined' ? ZoomEngineV19 : null);

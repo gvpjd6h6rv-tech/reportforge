@@ -26,6 +26,9 @@ function createEngineCoreRuntime(deps = {}) {
   const validateCanonicalRuntime = typeof deps.validateCanonicalRuntime === 'function'
     ? deps.validateCanonicalRuntime
     : () => {};
+  const validateOrphanNodes = typeof deps.validateOrphanNodes === 'function'
+    ? deps.validateOrphanNodes
+    : () => {};
   const assertSelectionState = typeof deps.assertSelectionState === 'function'
     ? deps.assertSelectionState
     : () => {};
@@ -169,6 +172,7 @@ function createEngineCoreRuntime(deps = {}) {
     validateCanvasContract(contracts, collectedIssues);
     validateScrollContract(contracts, collectedIssues);
     validateCanonicalRuntime(collectedIssues);
+    validateOrphanNodes(collectedIssues);
     const actualIssues = Array.isArray(collectedIssues)
       ? collectedIssues.filter(Boolean)
       : [];

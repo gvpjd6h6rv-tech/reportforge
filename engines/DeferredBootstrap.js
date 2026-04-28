@@ -40,17 +40,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (typeof HistoryEngine !== 'undefined') {
-    if (typeof DS !== 'undefined' && typeof DS.saveHistory === 'function') {
+    if (typeof DS !== 'undefined' && typeof DS.saveHistory === 'function' && !DS.saveHistory._rfPhase3Patched) {
       const _origSave = DS.saveHistory.bind(DS);
       DS.saveHistory = function() {
         _origSave();
       };
+      DS.saveHistory._rfPhase3Patched = true;
     }
   }
 
   if (typeof KeyboardEngine !== 'undefined') KeyboardEngine.init();
 
-  if (typeof DesignZoomEngine !== 'undefined') {
+  if (typeof DesignZoomEngine !== 'undefined' && !DesignZoomEngine._apply._rfPhase3Patched) {
     const _prevApply3 = DesignZoomEngine._apply.bind(DesignZoomEngine);
     DesignZoomEngine._apply = function(z, ax, ay) {
       if (typeof window !== 'undefined' && typeof window.__rfTraceLegacy === 'function') {
@@ -73,6 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
     };
+    DesignZoomEngine._apply._rfPhase3Patched = true;
   }
 
   console.log('[ReportForge v19.3] Phase 3 engines ready: CanvasLayoutEngine, SectionLayoutEngine, ElementLayoutEngine, PreviewEngineV19, OverlayEngine, HistoryEngine, KeyboardEngine, ClipboardEngine');
@@ -83,11 +85,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof EngineCore !== 'undefined') {
       EngineCore.init();
 
-      if (typeof ZoomEngineV19 !== 'undefined') {
+      if (typeof ZoomEngineV19 !== 'undefined' && !ZoomEngineV19.set._rfEngineCorePatched) {
         const _origSet = ZoomEngineV19.set.bind(ZoomEngineV19);
         ZoomEngineV19.set = function(z, ax, ay) {
           _origSet(z, ax, ay);
         };
+        ZoomEngineV19.set._rfEngineCorePatched = true;
       }
 
       RuntimeServicesDeferred?.expose('EngineRegistry', EngineCore.registry);

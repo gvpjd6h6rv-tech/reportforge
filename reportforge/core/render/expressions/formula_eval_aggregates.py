@@ -40,14 +40,16 @@ def agg_count(evaluator, args: list) -> int:
 
 def agg_max(evaluator, args: list) -> Any:
     field, items = agg_items(evaluator, args)
-    vals = [r.get(field) for r in items if r.get(field) is not None] if field else items
-    return max(vals) if vals else None
+    raw = [r.get(field) for r in items if r.get(field) is not None] if field else list(items)
+    nums = [to_num(v) for v in raw if v is not None]
+    return max(nums) if nums else None
 
 
 def agg_min(evaluator, args: list) -> Any:
     field, items = agg_items(evaluator, args)
-    vals = [r.get(field) for r in items if r.get(field) is not None] if field else items
-    return min(vals) if vals else None
+    raw = [r.get(field) for r in items if r.get(field) is not None] if field else list(items)
+    nums = [to_num(v) for v in raw if v is not None]
+    return min(nums) if nums else None
 
 
 def agg_distinct_count(evaluator, args: list) -> int:

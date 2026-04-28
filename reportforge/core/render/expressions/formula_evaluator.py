@@ -7,6 +7,12 @@ from .formula_ast import EvalTiming
 from .formula_parser import parse_formula
 from .formula_eval_nodes import eval_node as _eval_node_dispatch
 
+# Lazy import — logger is optional; never crashes if absent.
+try:
+    from .coercion_logger import coercion_logger as _logger
+except Exception:  # pragma: no cover
+    _logger = None  # type: ignore[assignment]
+
 
 class FormulaError(Exception):
     pass
@@ -64,6 +70,11 @@ class FormulaEvaluator:
             ast = parse_formula(expr_or_name)
             return self._eval_node(ast, local)
         except Exception:
+            if _logger is not None:
+                _logger.record_mismatch(
+                    value=expr_or_name[:200], expected_type="formula",
+                    result="", field=expr_or_name[:80],
+                )
             return ""
 
     def eval_formula(self, formula_text: str) -> Any:
@@ -71,6 +82,11 @@ class FormulaEvaluator:
             ast = parse_formula(formula_text)
             return self._eval_node(ast, {})
         except Exception:
+            if _logger is not None:
+                _logger.record_mismatch(
+                    value=formula_text[:200], expected_type="formula",
+                    result="", field=formula_text[:80],
+                )
             return ""
 
     def _eval_node(self, node: Any, local: Dict) -> Any:

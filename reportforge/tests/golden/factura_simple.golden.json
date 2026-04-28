@@ -1,0 +1,39 @@
+{
+  "version": "1.0",
+  "description": "Golden snapshot for canonical factura payload. Regenerate with UPDATE_GOLDEN=1.",
+  "resolved_fields": {
+    "meta.doc_num": "001-001-000000042",
+    "meta.doc_type": "FACTURA",
+    "meta.fecha_emision": "2024-01-15",
+    "empresa.razon_social": "ACME S.A.",
+    "empresa.ruc": "0990123456001",
+    "empresa.direccion_matriz": "Av. Principal 123",
+    "cliente.razon_social": "Cliente Test",
+    "cliente.identificacion": "0987654321",
+    "cliente.email": "test@cliente.com",
+    "fiscal.ambiente": "PRODUCCI\u00d3N",
+    "fiscal.tipo_emision": "NORMAL",
+    "totales.subtotal": 21.0,
+    "totales.iva_12": 2.52,
+    "totales.total": 23.52
+  },
+  "item_fields": {
+    "item.codigo": "P001",
+    "item.descripcion": "Producto de prueba",
+    "item.cantidad": 2,
+    "item.precio_unitario": 10.5,
+    "item.descuento": 0.0,
+    "item.subtotal": 21.0
+  },
+  "formatted_fields": {
+    "totales.total|currency": "23.52",
+    "totales.subtotal|currency": "21.00",
+    "totales.iva_12|currency": "2.52",
+    "meta.fecha_emision|date": "15/01/2024"
+  },
+  "nullability": {
+    "empresa.email": "",
+    "cliente.fax": "",
+    "meta.nonexistent": ""
+  }
+}

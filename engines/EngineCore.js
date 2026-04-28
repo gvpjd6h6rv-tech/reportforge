@@ -179,6 +179,7 @@ const _runtime = _runtimeFactory({
   validateCanvasContract: _contracts.validateCanvasContract,
   validateScrollContract: _contracts.validateScrollContract,
   validateCanonicalRuntime: _contracts.validateCanonicalRuntime,
+  validateOrphanNodes: _contracts.validateOrphanNodes,
   assertSelectionState: _contracts.assertSelectionState,
   assertZoomContract: _contracts.assertZoomContract,
   getPointer: () => RF.Geometry.viewToModel(_state.ptr.clientX, _state.ptr.clientY),

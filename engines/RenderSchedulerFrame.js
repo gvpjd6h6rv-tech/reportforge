@@ -4,6 +4,12 @@
   const S = global.RenderSchedulerState;
   const H = global.RenderSchedulerHelpers;
 
+  function perfNow() {
+    return global.performance && typeof global.performance.now === 'function'
+      ? global.performance.now()
+      : Date.now();
+  }
+
   function _runStableFrameInvariants(meta) {
     if (S.stableInvariantRafId !== null) {
       cancelAnimationFrame(S.stableInvariantRafId);
@@ -97,6 +103,7 @@
         handles: 0,
         post: 0,
       },
+      phases: [],
     };
     let firstError = null;
 
@@ -110,6 +117,10 @@
           : i === S.PRIORITY.VISUAL ? 'visual'
           : i === S.PRIORITY.HANDLES ? 'handles'
           : 'post';
+        const phaseStartedAt = perfNow();
+        const phaseT0 = perfNow();
+        let slowestMs = 0;
+        let slowestKey = null;
         H.trace('RenderScheduler', 'priority-begin', {
           priority: priorityName,
           queued: tasks.length,
@@ -117,9 +128,20 @@
         q.clear();
         for (const [key, fn] of tasks) {
           try {
+            const taskKey = typeof key === 'symbol' ? key.toString() : String(key);
+            const taskT0 = perfNow();
             S.writeScope = priorityName;
             S.writeScopeDepth += 1;
             fn();
+            const taskMs = perfNow() - taskT0;
+            if (taskMs > slowestMs) {
+              slowestMs = taskMs;
+              slowestKey = taskKey;
+            }
+            if (taskMs > S.hotspotThresholdMs) {
+              S.hotspots.push({ frame: S.frame, phase: priorityName, key: taskKey, taskMs });
+              if (S.hotspots.length > S.hotspotLimit) S.hotspots.shift();
+            }
             S.writeScopeDepth -= 1;
             if (S.writeScopeDepth === 0) S.writeScope = null;
             if (i === S.PRIORITY.LAYOUT) frameMeta.executed.layout += 1;
@@ -138,9 +160,18 @@
             }, priorityName, S.frame);
           }
         }
+        const durationMs = perfNow() - phaseStartedAt;
+        frameMeta.phases.push({
+          priority: i,
+          phase: priorityName,
+          queued: tasks.length,
+          executed: frameMeta.executed[priorityName],
+          durationMs,
+        });
         H.trace('RenderScheduler', 'priority-complete', {
           priority: priorityName,
           executed: frameMeta.executed[priorityName],
+          durationMs,
         }, priorityName, S.frame);
         if (priorityName === 'layout') S.invalidations.layout.dirty = false;
         if (priorityName === 'visual') {
@@ -177,5 +208,11 @@
     if (!S.rafId) S.rafId = requestAnimationFrame(_flush);
   }
 
-  global.RenderSchedulerFrame = { flush: _flush, kick: _kick, runStableFrameInvariants: _runStableFrameInvariants };
+  global.RenderSchedulerFrame = {
+    flush: _flush,
+    kick: _kick,
+    runStableFrameInvariants: _runStableFrameInvariants,
+    getHotspots: () => S.hotspots.slice(),
+    clearHotspots: () => { S.hotspots.length = 0; },
+  };
 })(window);

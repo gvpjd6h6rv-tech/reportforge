@@ -85,158 +85,9 @@
     border: 1px solid rgba(199,255,210,.95);
     flex: 0 0 auto;
   }
-  #rf-debug-panel {
-    position: fixed;
-    z-index: calc(var(--rf-z-ctx) + 12);
-    min-inline-size: 220px;
-    max-inline-size: 280px;
-    display: none;
-    flex-direction: column;
-    gap: 8px;
-    padding: 8px;
-    border-radius: 8px;
-    background: rgba(9, 18, 14, .94);
-    border: 1px solid rgba(82,255,122,.35);
-    box-shadow: 0 8px 20px rgba(0,0,0,.35);
-    color: #d7ffe1;
-    font: 10px/1.2 var(--rf-font-ui);
-    pointer-events: auto;
-    user-select: none;
-    backdrop-filter: blur(4px);
-  }
-  #rf-debug-panel.is-on { display: flex; }
-  #rf-debug-panel-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    text-transform: uppercase;
-    letter-spacing: .06em;
-    color: #9dffb2;
-    font-size: 9px;
-    cursor: grab;
-  }
-  #rf-debug-panel-head.is-dragging,
-  #rf-debug-overlay-head.is-dragging { cursor: grabbing; }
-  #rf-debug-presets,
-  #rf-debug-channels {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-  .rf-debug-chip {
-    border: 1px solid rgba(255,255,255,.14);
-    background: rgba(255,255,255,.06);
-    color: inherit;
-    border-radius: 999px;
-    padding: 3px 7px;
-    font: inherit;
-    cursor: pointer;
-  }
-  .rf-debug-chip.is-active {
-    background: rgba(82,255,122,.16);
-    border-color: rgba(82,255,122,.4);
-    color: #b8ffca;
-  }
-  .rf-debug-check {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 3px 6px;
-    border-radius: 999px;
-    border: 1px solid rgba(255,255,255,.1);
-    background: rgba(255,255,255,.04);
-    cursor: pointer;
-  }
-  .rf-debug-check input {
-    margin: 0;
-    accent-color: #52ff7a;
-  }
-  #rf-debug-overlay {
-    position: fixed;
-    inset-inline-end: 10px;
-    inset-block-end: 26px;
-    z-index: calc(var(--rf-z-ctx) + 10);
-    min-inline-size: 180px;
-    max-inline-size: 220px;
-    padding: 8px 10px;
-    display: none;
-    flex-direction: column;
-    gap: 6px;
-    background: rgba(9, 18, 14, .9);
-    border: 1px solid rgba(82,255,122,.4);
-    border-radius: 8px;
-    box-shadow: 0 8px 20px rgba(0,0,0,.35);
-    color: #d7ffe1;
-    font: 11px/1.2 var(--rf-font-ui);
-    pointer-events: auto;
-    user-select: none;
-    backdrop-filter: blur(4px);
-  }
-  #rf-debug-overlay.is-on { display: flex; }
-  #rf-debug-overlay-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
-    color: #9dffb2;
-    text-transform: uppercase;
-    letter-spacing: .06em;
-    font-size: 9px;
-    cursor: grab;
-  }
-  #rf-debug-overlay-layers {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 4px;
-  }
-  .rf-debug-layer {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 6px;
-    align-items: center;
-    padding: 4px 6px;
-    border-radius: 5px;
-    background: rgba(255,255,255,.04);
-    border: 1px solid rgba(255,255,255,.05);
-    transition: background .12s ease, border-color .12s ease, box-shadow .12s ease;
-  }
-  .rf-debug-layer.active {
-    background: rgba(82,255,122,.14);
-    border-color: rgba(82,255,122,.45);
-    box-shadow: inset 0 0 0 1px rgba(82,255,122,.18), 0 0 10px rgba(82,255,122,.12);
-  }
-  .rf-debug-layer-name {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    min-width: 0;
-  }
-  .rf-debug-layer-dot {
-    inline-size: 7px;
-    block-size: 7px;
-    border-radius: 50%;
-    background: rgba(164,172,168,.55);
-    flex: 0 0 auto;
-  }
-  .rf-debug-layer.active .rf-debug-layer-dot {
-    background: #52ff7a;
-    box-shadow: 0 0 8px rgba(82,255,122,.75);
-  }
-  .rf-debug-layer-label {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .rf-debug-layer-meta {
-    color: rgba(215,255,225,.72);
-    font-size: 10px;
-  }
-  [data-ui="modern"] #rf-debug-overlay {
-    background: rgba(15, 23, 42, .88);
-    border-color: rgba(110,255,153,.35);
-    color: #e6fff0;
-  }
+  /* DebugOverlay + DebugChannelsPanel: styles migrated to Shadow DOM (#48/#49).
+     Styles now live as _DEBUG_OVERLAY_CSS / _DEBUG_PANEL_CSS inside each engine's
+     attachShadow() call. The global cascade cannot reach them. */
   .tb-btn {
     inline-size: 16px;
     block-size: 14px;
@@ -561,3 +412,52 @@
   .sb-cell.grow { flex: 1; }
 }
 
+
+.rf-test-orb {
+  width: 68px;
+  height: 68px;
+  margin-inline-start: 8px;
+  border-radius: 50%;
+  border: 3px solid #8e989f;
+  background:
+    radial-gradient(circle at 35% 28%, #ffffff 0%, #d8dde1 10%, #4b555d 36%, #111820 72%, #05080b 100%);
+  color: #f5f7fa;
+  font: 700 9px/1.05 Tahoma, Arial, sans-serif;
+  letter-spacing: .5px;
+  text-align: center;
+  box-shadow:
+    inset 0 2px 4px rgba(255,255,255,.7),
+    inset 0 -6px 10px rgba(0,0,0,.75),
+    0 3px 8px rgba(0,0,0,.55);
+  cursor: pointer;
+}
+
+.rf-test-orb:hover {
+  border-color: #d7dde2;
+  filter: brightness(1.15);
+}
+
+.rf-test-orb:active,
+.rf-test-orb.is-running {
+  transform: translateY(1px) scale(.98);
+  background:
+    radial-gradient(circle at 35% 28%, #fff8d8 0%, #f0c84c 16%, #5d4b12 45%, #111820 78%, #05080b 100%);
+}
+
+.rf-test-orb.is-pass {
+  border-color: #38ff6a;
+}
+
+.rf-test-orb.is-fail {
+  border-color: #ff304f;
+}
+
+#rf-test-quick,
+#rf-test-full {
+  position: fixed;
+  top: 34px;
+  z-index: 99999;
+}
+
+#rf-test-quick { right: 92px; }
+#rf-test-full  { right: 18px; }

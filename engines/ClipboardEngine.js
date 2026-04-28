@@ -10,7 +10,11 @@
 
 const ClipboardEngine = (() => {
   const PASTE_OFFSET = 8;   // model units
-  let _clipboard = [];      // array of deep-copied DS elements
+  const S = typeof ClipboardState !== 'undefined' ? ClipboardState : (() => {
+    // Inline fallback when ClipboardState is not loaded (test / legacy context).
+    let _c = [];
+    return { get: () => _c, set: (v) => { _c = v; }, clear: () => { _c = []; }, hasContent: () => _c.length > 0, snapshot: () => _c.slice(), size: () => _c.length };
+  })();
 
   function _deepCopyEl(el) {
     return JSON.parse(JSON.stringify(el));
@@ -28,10 +32,7 @@ const ClipboardEngine = (() => {
     if (typeof DS === 'undefined') return;
     const sel = [...DS.selection];
     if (!sel.length) return;
-    _clipboard = sel
-      .map(id => DS.getElementById(id))
-      .filter(Boolean)
-      .map(_deepCopyEl);
+    S.set(sel.map(id => DS.getElementById(id)).filter(Boolean).map(_deepCopyEl));
   }
 
   /**
@@ -39,11 +40,11 @@ const ClipboardEngine = (() => {
    * Returns array of newly created element IDs.
    */
   function paste() {
-    if (!_clipboard.length || typeof DS === 'undefined') return [];
+    if (!S.hasContent() || typeof DS === 'undefined') return [];
     if (typeof HistoryEngine !== 'undefined') HistoryEngine.push('paste');
 
     const newIds = [];
-    _clipboard.forEach(src => {
+    S.snapshot().forEach(src => {
       const el = _deepCopyEl(src);
       el.id = _newId();
       el.x  = src.x + PASTE_OFFSET;
@@ -54,7 +55,7 @@ const ClipboardEngine = (() => {
     });
 
     // Offset original clipboard for next paste
-    _clipboard.forEach(el => { el.x += PASTE_OFFSET; el.y += PASTE_OFFSET; });
+    S.get().forEach(el => { el.x += PASTE_OFFSET; el.y += PASTE_OFFSET; });
 
     // Re-render and select new elements
     if (typeof SelectionEngine !== 'undefined') {
@@ -83,7 +84,7 @@ const ClipboardEngine = (() => {
   function duplicate() {
     copy();
     // Reset offset so duplicate lands adjacent to original
-    _clipboard.forEach(el => { el.x -= PASTE_OFFSET; el.y -= PASTE_OFFSET; });
+    S.get().forEach(el => { el.x -= PASTE_OFFSET; el.y -= PASTE_OFFSET; });
     return paste();
   }
 
@@ -92,8 +93,9 @@ const ClipboardEngine = (() => {
     cut,
     paste,
     duplicate,
-    hasContent() { return _clipboard.length > 0; },
-    clear()      { _clipboard = []; },
+    hasContent() { return S.hasContent(); },
+    clear()      { S.clear(); },
+    state:       S,
   };
 })();
 

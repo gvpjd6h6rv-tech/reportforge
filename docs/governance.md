@@ -101,7 +101,7 @@ Whitelist actual de `window.* =` permitidos:
 - `shadeColor`
 - `canvas`
 - `__rfVerify`
-- `SnapEngine`
+- `SnapCore/SnapState`
 - `GridEngine`
 - `RulerEngine`
 - `WorkspaceScrollEngine`

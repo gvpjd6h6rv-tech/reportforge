@@ -102,6 +102,15 @@
     DS.saveHistory();
   }
 
+  function alignMiddles() {
+    const sel = DS.getSelectedElements();
+    if (sel.length < 2) return;
+    const m = sel.reduce((a, e) => a + (e.y + e.h / 2), 0) / sel.length;
+    updateSelectedLayouts((e) => ({ y: DS.snap(m - e.h / 2) }));
+    syncSelectionPanels();
+    DS.saveHistory();
+  }
+
   function sameWidth() {
     const sel = DS.getSelectedElements();
     if (sel.length < 2) return;
@@ -189,6 +198,7 @@
     alignRights,
     alignTops,
     alignBottoms,
+    alignMiddles,
     sameWidth,
     sameHeight,
     bringFront,

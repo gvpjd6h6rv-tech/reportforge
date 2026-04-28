@@ -53,7 +53,7 @@
   - [designer/crystal-reports-designer-v4.html](/home/mimi/Escritorio/RF/designer/crystal-reports-designer-v4.html#L6462)
   - [designer/crystal-reports-designer-v4.html](/home/mimi/Escritorio/RF/designer/crystal-reports-designer-v4.html#L6488)
 - Compatibility shim in snap path
-  - [engines/SnapEngine.js](/home/mimi/Escritorio/RF/engines/SnapEngine.js#L144)
+  - [engines/SnapCore.js / SnapState.js](/home/mimi/Escritorio/RF/engines/SnapCore.js / SnapState.js#L144)
 
 ## Code Classification
 

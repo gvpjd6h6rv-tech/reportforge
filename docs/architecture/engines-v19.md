@@ -48,20 +48,20 @@ Auto-hides when `RF.Geometry.scale(10) < 3px`.
 
 ---
 
-## SnapEngine
+## SnapCore/SnapState
 
-**File:** `engines/SnapEngine.js`
+**File:** `engines/SnapCore.js / SnapState.js`
 
 All snap operations in MODEL SPACE.
 
 ```js
-SnapEngine.init()
-SnapEngine.snap(modelValue)            // → snapped model value
-SnapEngine.snapPoint(modelX, modelY)   // → {x,y} snapped model
-SnapEngine.snapFromClient(cx, cy)      // → {x,y} view px (full pipeline)
-SnapEngine.getAlignmentGuides(el, threshold) // → guide candidates
-SnapEngine.setEnabled(bool)
-SnapEngine.setGrid(modelUnits)
+SnapCore/SnapState.init()
+SnapCore/SnapState.snap(modelValue)            // → snapped model value
+SnapCore/SnapState.snapPoint(modelX, modelY)   // → {x,y} snapped model
+SnapCore/SnapState.snapFromClient(cx, cy)      // → {x,y} view px (full pipeline)
+SnapCore/SnapState.getAlignmentGuides(el, threshold) // → guide candidates
+SnapCore/SnapState.setEnabled(bool)
+SnapCore/SnapState.setGrid(modelUnits)
 ```
 
 **Pipeline:**
@@ -69,7 +69,7 @@ SnapEngine.setGrid(modelUnits)
 clientXY → RF.Geometry.viewToModel → snap(model) → RF.Geometry.modelToView → DOM
 ```
 
-`DS.snap` is shimmed to `SnapEngine.snap` for legacy compatibility.
+`DS.snap` is shimmed to `SnapCore/SnapState.snap` for legacy compatibility.
 
 ---
 
@@ -119,9 +119,9 @@ DesignZoomEngine._apply = function(z, ax, ay) {
   workspace.dispatchEvent(new CustomEvent('rf:zoom-changed', { detail: { zoom: z } }));
 };
 
-// 3. SnapEngine + DS.snap shim
-SnapEngine.init();
-DS.snap = (v) => SnapEngine.snap(v);
+// 3. SnapCore/SnapState + DS.snap shim
+SnapCore/SnapState.init();
+DS.snap = (v) => SnapCore/SnapState.snap(v);
 
 // 4. GridEngine, WorkspaceScrollEngine
 GridEngine.init();

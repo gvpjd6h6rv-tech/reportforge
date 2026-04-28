@@ -3,6 +3,12 @@ from __future__ import annotations
 import datetime
 from typing import Any
 
+# Lazy import — logger is optional; never crashes if absent.
+try:
+    from .coercion_logger import coercion_logger as _logger
+except Exception:  # pragma: no cover
+    _logger = None  # type: ignore[assignment]
+
 
 def _to_num(v: Any) -> float:
     if v is None or v == "":
@@ -12,6 +18,8 @@ def _to_num(v: Any) -> float:
     try:
         return float(v)
     except (TypeError, ValueError):
+        if _logger is not None:
+            _logger.record_mismatch(value=v, expected_type="number", result=0.0)
         return 0.0
 
 
@@ -29,6 +37,7 @@ def _to_date(v: Any) -> datetime.date:
     if isinstance(v, datetime.date):
         return v
     if v is None or v == "":
+        # None/empty → today() is documented behavior; not a mismatch
         return datetime.date.today()
     s = str(v).strip()
     for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d",
@@ -37,6 +46,8 @@ def _to_date(v: Any) -> datetime.date:
             return datetime.datetime.strptime(s, fmt).date()
         except ValueError:
             pass
+    if _logger is not None:
+        _logger.record_mismatch(value=v, expected_type="date", result="today()")
     return datetime.date.today()
 
 
@@ -52,4 +63,6 @@ def _to_datetime(v: Any) -> datetime.datetime:
             return datetime.datetime.strptime(s, fmt)
         except ValueError:
             pass
+    if _logger is not None:
+        _logger.record_mismatch(value=v, expected_type="datetime", result="now()")
     return datetime.datetime.now()

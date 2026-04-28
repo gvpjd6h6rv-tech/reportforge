@@ -33,6 +33,7 @@ from .api_contracts import (
     JrxmlRenderRequest,
 )
 from .api_helpers import _format_response, _resolve_layout, _validate
+from .rate_limit import make_rate_limit_middleware
 from .api_routes_datasources import register_datasource_routes
 from .api_routes_designer import register_designer_routes
 from .api_routes_render import register_render_routes
@@ -48,7 +49,7 @@ from reportforge.server.tenant import get_tenant, get_registry
 logger = logging.getLogger("reportforge.api")
 
 
-def create_app() -> "FastAPI":
+def create_app(*, rate_limit_rpm: int = 0) -> "FastAPI":
     if not _HAS_FASTAPI:
         raise ImportError("FastAPI not installed. Run: pip install fastapi uvicorn python-multipart")
 
@@ -79,6 +80,9 @@ def create_app() -> "FastAPI":
 
     cache = get_cache()
     registry = get_registry()
+
+    _rate_limiter = make_rate_limit_middleware(limit_rpm=rate_limit_rpm)
+    app.middleware("http")(_rate_limiter)
 
     @app.middleware("http")
     async def _timing(request: Request, call_next):

@@ -18,6 +18,8 @@
   <div id="titlebar-controls">
     <div id="ui-mode-stack">
       <div id="ui-mode-btn" title="Cambiar interfaz (Classic/Modern)">◧ Classic</div>
+      <button class="rf-test-orb" id="rf-test-quick" data-action="run-tests-quick" title="Run quick validation">RUN<br>SMOKE</button>
+      <button class="rf-test-orb" id="rf-test-full" data-action="run-tests-full" title="Run full certification">RUN<br>FULL<br>CERTIFICATION</button>
       <div id="rf-debug-indicator" aria-live="polite">
         <span id="rf-debug-indicator-led"></span>
         <span>debug on</span>
@@ -89,9 +91,9 @@
 <div class="dropdown" id="dd-formato">
   <div class="dd-item" data-action="format-field">⚙ <span>Formatear campo...</span><span class="dd-shortcut">Alt+Enter</span></div>
   <div class="dd-sep"></div>
-  <div class="dd-item" data-action="align-left">⬱ <span>Alinear a la izquierda</span></div>
-  <div class="dd-item" data-action="align-center">≡ <span>Centrar</span></div>
-  <div class="dd-item" data-action="align-right">⬰ <span>Alinear a la derecha</span></div>
+  <div class="dd-item" data-format="align-left">⬱ <span>Alinear a la izquierda</span></div>
+  <div class="dd-item" data-format="align-center">≡ <span>Centrar</span></div>
+  <div class="dd-item" data-format="align-right">⬰ <span>Alinear a la derecha</span></div>
   <div class="dd-sep"></div>
   <div class="dd-item" data-action="align-tops">⬆ <span>Alinear bordes superiores</span></div>
   <div class="dd-item" data-action="align-middles">⬕ <span>Alinear centros verticales</span></div>
@@ -363,10 +365,10 @@
 <!-- ══ ReportForge v19 Engine Modules ══════════════════════════════ -->
 <script src="/engines/WorkspaceScrollEngine.js"></script>
 <script src="/engines/GridEngine.js"></script>
-<script src="/engines/SnapEngine.js"></script>
 <script src="/engines/RulerEngine.js"></script>
 <script src="/engines/GlobalEventHandlers.js"></script>
 <script src="/engines/RenderSchedulerState.js"></script>
+<script src="/engines/RenderSchedulerObservability.js"></script>
 <script src="/engines/RenderSchedulerFrame.js"></script>
 <script src="/engines/RenderSchedulerQueue.js"></script>
 <script src="/engines/RenderSchedulerScope.js"></script>
@@ -395,6 +397,8 @@
 <script src="/engines/SectionResizeEngine.js"></script>
 <script src="/engines/InsertEngine.js"></script>
 <script src="/engines/RuntimeBootstrap.js"></script>
+<script src="/engines/TestOutputSanitizer.js"></script>
+<script src="/engines/TestRunnerUI.js"></script>
 
 <!-- ══ ReportForge v19 Phase 2 — Interaction & System Engines ════════ -->
 <script src="/engines/RenderScheduler.js"></script>

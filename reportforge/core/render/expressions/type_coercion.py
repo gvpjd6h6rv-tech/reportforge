@@ -5,6 +5,12 @@ from typing import Any, Optional
 
 from .formula_ast import VarType
 
+# Lazy import — coercion_logger is optional; never crashes if absent.
+try:
+    from .coercion_logger import coercion_logger as _coercion_logger
+except Exception:  # pragma: no cover
+    _coercion_logger = None  # type: ignore[assignment]
+
 
 def default_for_type(vtype: VarType) -> Any:
     defaults = {
@@ -30,7 +36,7 @@ def truthy(v: Any) -> bool:
     return bool(v)
 
 
-def to_num(v: Any) -> float:
+def to_num(v: Any, *, _field: str = "") -> float:
     if v is None:
         return 0
     if isinstance(v, bool):
@@ -40,6 +46,10 @@ def to_num(v: Any) -> float:
     try:
         return float(str(v).replace(",", ""))
     except Exception:
+        if _coercion_logger is not None:
+            _coercion_logger.record_mismatch(
+                value=v, expected_type="number", result=0, field=_field,
+            )
         return 0
 
 
@@ -65,7 +75,7 @@ def cmp(a: Any, b: Any) -> int:
         return (sa > sb) - (sa < sb)
 
 
-def parse_date(s: Any) -> Optional[datetime.date]:
+def parse_date(s: Any, *, _field: str = "") -> Optional[datetime.date]:
     if isinstance(s, (datetime.date, datetime.datetime)):
         return s
     for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%d-%m-%Y", "%Y/%m/%d"):
@@ -73,6 +83,10 @@ def parse_date(s: Any) -> Optional[datetime.date]:
             return datetime.datetime.strptime(str(s).strip(), fmt).date()
         except Exception:
             pass
+    if _coercion_logger is not None:
+        _coercion_logger.record_mismatch(
+            value=s, expected_type="date", result=None, field=_field,
+        )
     return None
 
 

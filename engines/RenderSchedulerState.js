@@ -21,6 +21,17 @@
       handles: { dirty: false, reason: null, frame: 0, count: 0 },
       scroll: { dirty: false, reason: null, frame: 0, count: 0 },
     },
+    // ── Render metrics (#50-#53) ─────────────────────────────────────
+    // Max expected frame-flushes per second for a report designer (not a game).
+    stormThreshold: 30,
+    // Rolling ring of performance.now() timestamps — last 60 flush start times.
+    recentFrameTimes: [],
+    // Whether a render storm was detected in this session (latches until clearStorm()).
+    stormActive: false,
+    // Per-task hotspot log (#52): tasks that exceeded one frame budget (16ms).
+    // Rolling ring — capped at 100 entries; oldest dropped first.
+    hotspotThresholdMs: 16,
+    hotspots: [],
   };
 
   function _trace(source, event, payload, phase, frame) {
