@@ -5,10 +5,9 @@
 'use strict';
 
 window.RulerEngineRenderer = (() => {
-  const H_RULER_H  = 16;
-  const V_GUTTER_W = 14;
-  const V_TICK_W   = 8;
-  const V_TOTAL_W  = V_GUTTER_W + V_TICK_W;
+  // ── Constants — derived from SSOT (engines/RuntimeConfig.js) ────
+  const { topPx: H_RULER_H, sidePx: V_TOTAL_W,
+          gutterPx: V_GUTTER_W, tickPx: V_TICK_W } = RF.RuntimeConfig.ruler;
 
   const SECTION_COLORS = {
     rh: '#FFFDE7', ph: '#E8F5E9', det: '#FFF',

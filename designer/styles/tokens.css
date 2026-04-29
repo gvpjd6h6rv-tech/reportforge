@@ -81,8 +81,8 @@
     --rf-tabs-h:       26px;
     --rf-docbar-h:     28px;
     --rf-statusbar-h:  20px;
-    --rf-ruler-top:    16px;
-    --rf-ruler-side:   22px;  /* v18.8: wider ruler for readability */
+    --rf-ruler-top:    22px;  /* SSOT: must match RF.RuntimeConfig.ruler.topPx */
+    --rf-ruler-side:   22px;  /* SSOT: must match RF.RuntimeConfig.ruler.sidePx */
     --rf-handle-size:  6px;
     --rf-panel-l:      clamp(130px, 15vw, 170px);
     --rf-panel-r:      clamp(180px, 18vw, 220px);

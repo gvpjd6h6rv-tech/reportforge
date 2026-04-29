@@ -43,14 +43,7 @@
     background: var(--rf-ruler-bg);
     border-inline-end: 1px solid var(--rf-border-mid);
     position: relative;
-  ;
-    /* v18.6: enforce 16px width, match horizontal ruler height */
-    width: 22px;
-    min-width: 22px;
-    max-width: 22px;
-    background: #EBEBEB;
   }
-  #ruler-h { height: 16px; /* v18.6 */ }
 
   #ruler-v-inner {
     position: absolute;
@@ -153,7 +146,7 @@
     right: 0;       /* right edge of section */
     top: 0;         /* full section height start */
     bottom: 0;      /* full section height end */
-    width: 22px;    /* fixed width, not height */
+    width: 22px;    /* fixed width, not height */ /* SSOT_ALLOWED — section-label tab, not ruler */
     border-left: 1px solid var(--rf-border-mid);
     display: flex;
     align-items: center;

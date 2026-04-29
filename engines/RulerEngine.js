@@ -23,11 +23,9 @@
 'use strict';
 
 window.RulerEngine = (() => {
-  // ── Constants ────────────────────────────────────────────────────
-  const H_RULER_H  = 16;   // CSS px height of horizontal ruler
-  const V_GUTTER_W = 14;   // CSS px width of section-label gutter
-  const V_TICK_W   = 8;    // CSS px width of tick column
-  const V_TOTAL_W  = V_GUTTER_W + V_TICK_W;  // = 22px
+  // ── Constants — derived from SSOT (engines/RuntimeConfig.js) ────
+  const { topPx: H_RULER_H, sidePx: V_TOTAL_W,
+          gutterPx: V_GUTTER_W, tickPx: V_TICK_W } = RF.RuntimeConfig.ruler;
 
   // Section stype → background colour
   const SECTION_COLORS = {
@@ -192,12 +190,14 @@ window.RulerEngine = (() => {
     }
 
     // ── Gutter/tick separator ──────────────────────────────────────
-    ctx.strokeStyle = '#AAAAAA';
-    ctx.lineWidth   = 1;
-    ctx.beginPath();
-    ctx.moveTo(V_GUTTER_W, 0);
-    ctx.lineTo(V_GUTTER_W, cssH);
-    ctx.stroke();
+    if (V_GUTTER_W > 0) {
+      ctx.strokeStyle = '#AAAAAA';
+      ctx.lineWidth   = 1;
+      ctx.beginPath();
+      ctx.moveTo(V_GUTTER_W, 0);
+      ctx.lineTo(V_GUTTER_W, cssH);
+      ctx.stroke();
+    }
 
     // ── Tick marks ─────────────────────────────────────────────────
     ctx.strokeStyle = '#000000';
@@ -212,19 +212,22 @@ window.RulerEngine = (() => {
       if (y > cssH + 0.5) break;
 
       const isMajor = (i % (step * 5) === 0);
-      const tickLen = isMajor ? V_TICK_W : Math.floor(V_TICK_W / 2);
+      const tickLen = isMajor ? 9 : 5;
 
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(V_GUTTER_W, y);
-      ctx.lineTo(V_GUTTER_W + tickLen, y);
+      ctx.moveTo(V_TOTAL_W - tickLen, y);
+      ctx.lineTo(V_TOTAL_W, y);
       ctx.stroke();
 
       if (isMajor && i > 0) {
         ctx.save();
-        ctx.translate(V_GUTTER_W + V_TICK_W / 2, y);
+        /* canonical vertical ruler:
+           like horizontal ruler:
+           tick from edge inward + label visually above tick */
+        ctx.translate(V_TOTAL_W - tickLen - 5, y - 5);
         ctx.rotate(-Math.PI / 2);
-        ctx.textAlign    = 'center';
+        ctx.textAlign    = 'right';
         ctx.textBaseline = 'middle';
         ctx.fillText(i, 0, 0);
         ctx.restore();
@@ -238,7 +241,7 @@ window.RulerEngine = (() => {
         ctx.strokeStyle = 'rgba(0,100,220,0.6)';
         ctx.lineWidth   = 1;
         ctx.beginPath();
-        ctx.moveTo(V_GUTTER_W, cy);
+        ctx.moveTo(0, cy);
         ctx.lineTo(V_TOTAL_W, cy);
         ctx.stroke();
       }

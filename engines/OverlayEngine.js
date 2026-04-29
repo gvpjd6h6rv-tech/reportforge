@@ -14,11 +14,12 @@ const OverlayEngine = {
     this.renderVRuler();
   },
   renderHRuler(){
+    return;
     const canvas=document.getElementById('ruler-h-inner');
     const ws=document.getElementById('workspace');
     const cl=document.getElementById('canvas-layer');
     const cssW=ws.clientWidth;
-    const cssH=16;
+    const cssH=RF.RuntimeConfig.ruler.topPx;
     const clR=cl.getBoundingClientRect(), wsR=ws.getBoundingClientRect();
     const canvasOffX=Math.round(clR.left-wsR.left);
     const canvasW=Math.round(clR.width);
@@ -48,14 +49,15 @@ const OverlayEngine = {
     }
   },
   renderVRuler(){
+    return;
     const canvasEl=document.getElementById('ruler-v-inner');
     const vTop=RF.Geometry.rulerVTop();
     canvasEl.style.top=vTop+'px';
     const clEl=document.getElementById('canvas-layer');
     const cssH=clEl ? Math.round(clEl.getBoundingClientRect().height) : Math.ceil(RF.Geometry.scale(DS.getTotalHeight()));
-    const GUTTER_W = 14;
-    const RULER_W = 8;
-    const TOTAL_W = GUTTER_W + RULER_W;
+    const GUTTER_W = RF.RuntimeConfig.ruler.gutterPx;
+    const RULER_W  = RF.RuntimeConfig.ruler.tickPx;
+    const TOTAL_W  = GUTTER_W + RULER_W;
     const cssW = TOTAL_W;
     const dpr=window.devicePixelRatio||1;
     canvasEl.width=Math.round(cssW*dpr);
@@ -105,10 +107,11 @@ const OverlayEngine = {
       ctx.stroke();
       if(isMajor && i>0){
         ctx.save();
-        ctx.translate(GUTTER_W + RULER_W/2, y);
+        ctx.translate(TOTAL_W - 2, y);
         ctx.rotate(-Math.PI/2);
-        ctx.textAlign='center'; ctx.textBaseline='middle';
-        ctx.fillText(i, 0, 0);
+        ctx.textAlign='right';
+        ctx.textBaseline='middle';
+        ctx.fillText(i, 0, -2);
         ctx.restore();
       }
     }

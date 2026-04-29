@@ -32,7 +32,7 @@ function applyLayout() {
   const vp  = document.getElementById('viewport');
   if (cl) {
     cl.style.setProperty('--layout-canvas-left', lay.marginLeft + 'px');
-    cl.style.setProperty('--layout-canvas-top',  lay.marginTop  + 16 + 'px');
+    cl.style.setProperty('--layout-canvas-top',  lay.marginTop  + CFG.RULER_H + 'px');
   }
   if (vp) {
   }
@@ -65,7 +65,7 @@ const DesignZoomEngine={
     const applyZoomChrome = () => {
       vp.style.transform       = 'none';
       vp.style.transformOrigin = '';
-      vp.style.marginBottom    = '16px';
+      vp.style.marginBottom    = CFG.RULER_H + 'px';
       vp.style.display = 'block';
       vp.style.width   = (PAGE_W * z) + 'px';
       cl.style.transform = '';
@@ -169,14 +169,14 @@ const ZoomEngineV19 = (() => {
     get zoom() { return RF.Geometry.zoom(); },
     fitWidth() {
       const ws  = document.getElementById('workspace');
-      const lay = typeof computeLayout === 'function' ? computeLayout() : { rulerWidth: 22 };
+      const lay = typeof computeLayout === 'function' ? computeLayout() : { rulerWidth: CFG.RULER_W };
       if (!ws) return;
       const avail = ws.clientWidth - lay.rulerWidth - 32;
       this.setFree(avail / CFG.PAGE_W);
     },
     fitPage() {
       const ws  = document.getElementById('workspace');
-      const lay = typeof computeLayout === 'function' ? computeLayout() : { rulerWidth: 22, rulerHeight: 16 };
+      const lay = typeof computeLayout === 'function' ? computeLayout() : { rulerWidth: CFG.RULER_W, rulerHeight: CFG.RULER_H };
       if (!ws || typeof DS === 'undefined') return;
       const availW = ws.clientWidth  - lay.rulerWidth  - 32;
       const availH = ws.clientHeight - lay.rulerHeight - 32;

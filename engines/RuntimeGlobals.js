@@ -163,21 +163,23 @@ RF.Geometry = {
 };
 
 window.CFG = {
-  GRID: 4, PAGE_W: 754,
-  MODEL_GRID: 0.01 * 96 / 25.4,
-  PAGE_MARGIN_LEFT: 0,
-  PAGE_MARGIN_TOP: 0,
-  RULER_W: 22,
-  RULER_H: 16,
-  MIN_EL_W: 8, MIN_EL_H: 6,
-  HANDLE_HIT: 4,
-  ZOOM_LEVELS: [0.25,0.5,0.75,1.0,1.25,1.5,2.0,4.0],
+  GRID:            RF.RuntimeConfig.canvas.grid,
+  PAGE_W:          RF.RuntimeConfig.canvas.pageW,
+  MODEL_GRID:      RF.RuntimeConfig.canvas.modelGrid,
+  PAGE_MARGIN_LEFT: RF.RuntimeConfig.canvas.pageMarginLeft,
+  PAGE_MARGIN_TOP:  RF.RuntimeConfig.canvas.pageMarginTop,
+  RULER_W:         RF.RuntimeConfig.ruler.sidePx,
+  RULER_H:         RF.RuntimeConfig.ruler.topPx,
+  MIN_EL_W:        RF.RuntimeConfig.canvas.minElW,
+  MIN_EL_H:        RF.RuntimeConfig.canvas.minElH,
+  HANDLE_HIT:      RF.RuntimeConfig.canvas.handleHit,
+  ZOOM_LEVELS:     [...RF.RuntimeConfig.zoom.steps],
   FONTS: ['Arial','Tahoma','Courier New','Times New Roman','Calibri','Verdana','Georgia'],
   FONT_SIZES: [6,7,8,9,10,11,12,14,16,18,20,24,28,36],
 };
 
-window.CFG.SECTION_MIN_H = 12;
-window.CFG.SECTION_MAX_H = 800;
+window.CFG.SECTION_MIN_H = RF.RuntimeConfig.canvas.sectionMinH;
+window.CFG.SECTION_MAX_H = RF.RuntimeConfig.canvas.sectionMaxH;
 
 window.FIELD_TREE = {
   database:{label:'Campos de base de datos',icon:'🗄️',children:{
