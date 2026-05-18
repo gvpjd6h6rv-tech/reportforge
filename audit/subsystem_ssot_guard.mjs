@@ -30,7 +30,11 @@
  *   KeyboardEngine must expose `registry` pointing to KeyboardRegistry.
  *   These surface the SSOT for consumers and tests.
  *
- * Usage:
+ * ⚠  INTERNAL — do not run directly in CI.
+ *    CI entry point: npm run test:ssot  (audit/ssot_guard.mjs)
+ *    Running this file alone leaves the configurational SSOT layer unverified.
+ *
+ * Usage (local debugging only):
  *   node audit/subsystem_ssot_guard.mjs          # fail on violations
  *   node audit/subsystem_ssot_guard.mjs --report # report only
  */
@@ -53,7 +57,7 @@ function check(rule, file, condition, desc) {
   if (!condition) violations.push({ rule, file: `engines/${file}`, desc });
 }
 
-// RULE-D: State/Registry files must exist.
+// RULE-D (SSOT-EXIST-001): State/Registry files must exist.
 check('SSOT-EXIST-001', 'ClipboardState.js',
   exists('ClipboardState.js'),
   'ClipboardState.js must exist — SSOT for clipboard contents');
@@ -65,6 +69,21 @@ check('SSOT-EXIST-001', 'DragState.js',
 check('SSOT-EXIST-001', 'KeyboardRegistry.js',
   exists('KeyboardRegistry.js'),
   'KeyboardRegistry.js must exist — SSOT for keyboard handler bindings');
+
+// RULE-D-ENGINE (SSOT-EXIST-002): Engine files must also exist.
+// If an engine file is absent the SSOT pattern cannot be verified for that subsystem.
+// A missing engine = unconfirmed compliance, not a pass.
+check('SSOT-EXIST-002', 'ClipboardEngine.js',
+  exists('ClipboardEngine.js'),
+  'ClipboardEngine.js must exist — required to verify the clipboard SSOT pattern');
+
+check('SSOT-EXIST-002', 'DragEngine.js',
+  exists('DragEngine.js'),
+  'DragEngine.js must exist — required to verify the drag SSOT pattern');
+
+check('SSOT-EXIST-002', 'KeyboardEngine.js',
+  exists('KeyboardEngine.js'),
+  'KeyboardEngine.js must exist — required to verify the keyboard SSOT pattern');
 
 if (exists('ClipboardEngine.js')) {
   const src = read('ClipboardEngine.js');

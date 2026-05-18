@@ -16,8 +16,13 @@
  *
  * Any line with a trailing comment containing SSOT_ALLOWED is exempt.
  *
- * Usage:  node audit/configurational_ssot_guard.mjs
- * Exit:   0 = PASS,  1 = FAIL
+ * ⚠  INTERNAL — do not run directly in CI.
+ *    CI entry point: npm run test:ssot  (audit/ssot_guard.mjs)
+ *    Running this file alone leaves the subsystem SSOT layer unverified.
+ *
+ * Usage (local debugging only):
+ *   node audit/configurational_ssot_guard.mjs
+ * Exit: 0 = PASS,  1 = FAIL
  */
 
 import { readFileSync, readdirSync, statSync, existsSync } from 'fs';
@@ -94,26 +99,40 @@ function walkDir(dir, cb) {
 
 // JS patterns forbidden outside canonical source
 // Each entry: { re, rule }
+// cssH alternation includes canonTopPx so the guard stays correct even after
+// RuntimeConfig.ruler.topPx is changed — without removing historical catches.
+const _cssHAlt = [...new Set([canonTopPx, 16, 22, 24])].join('|');
 const FORBIDDEN_JS = [
-  { re: /\bconst\s+H_RULER_H\s*=\s*\d+/,       rule: 'H_RULER_H assigned outside RuntimeConfig' },
-  { re: /\bconst\s+V_TOTAL_W\s*=\s*\d+/,        rule: 'V_TOTAL_W assigned outside RuntimeConfig' },
-  { re: /\bconst\s+V_GUTTER_W\s*=\s*\d+/,       rule: 'V_GUTTER_W assigned outside RuntimeConfig' },
-  { re: /\bconst\s+V_TICK_W\s*=\s*\d+/,         rule: 'V_TICK_W assigned outside RuntimeConfig' },
-  { re: /\bRULER_W\s*:\s*\d+/,                  rule: 'RULER_W literal outside RuntimeConfig' },
-  { re: /\bRULER_H\s*:\s*\d+/,                  rule: 'RULER_H literal outside RuntimeConfig' },
-  { re: /rulerWidth\s*:\s*\d+/,                  rule: 'Hardcoded rulerWidth fallback literal' },
-  { re: /rulerHeight\s*:\s*\d+/,                 rule: 'Hardcoded rulerHeight fallback literal' },
-  { re: /\bconst\s+cssH\s*=\s*(16|22|24)\s*;/,  rule: 'Hardcoded ruler cssH literal (use RuntimeConfig.ruler.topPx)' },
-  { re: /marginBottom\s*[=:]\s*['"](?:16|22)px['"]/,rule: 'Hardcoded ruler marginBottom literal (use RuntimeConfig.ruler.topPx)' },
-  { re: /\+\s*(?:16|22)\s*\+\s*['"]px['"]/,     rule: 'Hardcoded ruler px addition in layout' },
+  { re: /\bconst\s+H_RULER_H\s*=\s*\d+/,                              rule: 'H_RULER_H assigned outside RuntimeConfig' },
+  { re: /\bconst\s+V_TOTAL_W\s*=\s*\d+/,                              rule: 'V_TOTAL_W assigned outside RuntimeConfig' },
+  { re: /\bconst\s+V_GUTTER_W\s*=\s*\d+/,                             rule: 'V_GUTTER_W assigned outside RuntimeConfig' },
+  { re: /\bconst\s+V_TICK_W\s*=\s*\d+/,                               rule: 'V_TICK_W assigned outside RuntimeConfig' },
+  { re: /\bRULER_W\s*:\s*\d+/,                                         rule: 'RULER_W literal outside RuntimeConfig' },
+  { re: /\bRULER_H\s*:\s*\d+/,                                         rule: 'RULER_H literal outside RuntimeConfig' },
+  { re: /rulerWidth\s*:\s*\d+/,                                         rule: 'Hardcoded rulerWidth fallback literal' },
+  { re: /rulerHeight\s*:\s*\d+/,                                        rule: 'Hardcoded rulerHeight fallback literal' },
+  { re: new RegExp(`\\bconst\\s+cssH\\s*=\\s*(${_cssHAlt})\\s*;`),     rule: 'Hardcoded ruler cssH literal (use RuntimeConfig.ruler.topPx)' },
+  { re: /marginBottom\s*[=:]\s*['"](?:16|22)px['"]/,                   rule: 'Hardcoded ruler marginBottom literal (use RuntimeConfig.ruler.topPx)' },
+  { re: /\+\s*(?:16|22)\s*\+\s*['"]px['"]/,                            rule: 'Hardcoded ruler px addition in layout' },
 ];
 
-// CSS patterns forbidden outside tokens.css (must use var(--rf-ruler-*))
+// CSS patterns forbidden outside tokens.css — built from canonical values so the
+// guard stays correct when RuntimeConfig.ruler.topPx / sidePx change.
+// Hardcoded literals equal to the canonical ruler dimensions must use var(--rf-ruler-*).
 const FORBIDDEN_CSS = [
-  { re: /^\s*width\s*:\s*22px\s*;/,     rule: 'Hardcoded 22px width (use var(--rf-ruler-side))' },
-  { re: /^\s*min-width\s*:\s*22px\s*;/, rule: 'Hardcoded 22px min-width (use var(--rf-ruler-side))' },
-  { re: /^\s*max-width\s*:\s*22px\s*;/, rule: 'Hardcoded 22px max-width (use var(--rf-ruler-side))' },
-  { re: /^\s*height\s*:\s*(?:16|22)px\s*;/, rule: 'Hardcoded ruler height in CSS (use var(--rf-ruler-top))' },
+  { re: new RegExp(`^\\s*width\\s*:\\s*${canonSidePx}px\\s*;`),
+    rule: `Hardcoded ${canonSidePx}px width (use var(--rf-ruler-side))` },
+  { re: new RegExp(`^\\s*min-width\\s*:\\s*${canonSidePx}px\\s*;`),
+    rule: `Hardcoded ${canonSidePx}px min-width (use var(--rf-ruler-side))` },
+  { re: new RegExp(`^\\s*max-width\\s*:\\s*${canonSidePx}px\\s*;`),
+    rule: `Hardcoded ${canonSidePx}px max-width (use var(--rf-ruler-side))` },
+  { re: new RegExp(`^\\s*height\\s*:\\s*${canonTopPx}px\\s*;`),
+    rule: `Hardcoded ${canonTopPx}px height in CSS (use var(--rf-ruler-top))` },
+  // When sidePx ≠ topPx also flag the side dimension used as a height (wrong axis).
+  ...(canonTopPx !== canonSidePx
+    ? [{ re: new RegExp(`^\\s*height\\s*:\\s*${canonSidePx}px\\s*;`),
+         rule: `Hardcoded ${canonSidePx}px height in CSS (use var(--rf-ruler-*))` }]
+    : []),
 ];
 
 // HTML canvas attr patterns
