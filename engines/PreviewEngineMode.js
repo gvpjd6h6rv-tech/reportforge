@@ -11,11 +11,11 @@
     const applyPreviewChrome = () => {
       const cl = document.getElementById('canvas-layer');
       if (cl) cl.classList.add('preview-mode');
-      DS.zoomDesign = DS.zoom;
+      DS.setZoomDesign(DS.zoom, 'PreviewEngineMode.show');
       document.body.setAttribute('data-render-mode', 'preview');
       document.getElementById('tab-preview')?.classList.add('active');
       document.getElementById('tab-design')?.classList.remove('active');
-      DS.previewMode = true;
+      DS.setPreviewMode(true, 'PreviewEngineMode.show');
     };
     if (typeof RenderScheduler !== 'undefined') {
       RenderScheduler.flushSync(applyPreviewChrome, 'PreviewEngineV19.show');
@@ -34,13 +34,13 @@
     const applyDesignChrome = () => {
       const cl = document.getElementById('canvas-layer');
       if (cl) cl.classList.remove('preview-mode');
-      DS.zoomPreview = DS.zoom;
+      DS.setZoomPreview(DS.zoom, 'PreviewEngineMode.hide');
       document.body.removeAttribute('data-render-mode');
       document.getElementById('tab-design')?.classList.add('active');
       document.getElementById('tab-preview')?.classList.remove('active');
       const ws = document.getElementById('workspace');
       if (ws) { ws.scrollLeft = _sc.x; ws.scrollTop = _sc.y; }
-      DS.previewMode = false;
+      DS.setPreviewMode(false, 'PreviewEngineMode.hide');
     };
     if (typeof DesignZoomEngine !== 'undefined') DesignZoomEngine.set(DS.zoomDesign);
     if (typeof RenderScheduler !== 'undefined') {

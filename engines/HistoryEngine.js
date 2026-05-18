@@ -49,8 +49,8 @@ const HistoryEngine = (() => {
     if (!snap || typeof DS === 'undefined') return;
     try {
       const state = JSON.parse(snap);
-      DS.elements = state.elements;
-      DS.sections = state.sections;
+      DS.setElements(state.elements, 'HistoryEngine.restore');
+      DS.setSections(state.sections, 'HistoryEngine.restore');
       // Trigger re-render
       if (typeof CanvasLayoutEngine !== 'undefined') CanvasLayoutEngine.update();
       if (typeof SectionLayoutEngine !== 'undefined') SectionLayoutEngine.update();
@@ -89,8 +89,6 @@ const HistoryEngine = (() => {
       if (redoSnap) _redoStack.push({ label: entry.label, snapshot: redoSnap });
       _restore(entry.snapshot);
       _notify();
-      // Delegate to monolithic undo
-      if (typeof DS !== 'undefined' && typeof DS.undo === 'function') DS.undo();
       return true;
     },
 
@@ -101,7 +99,6 @@ const HistoryEngine = (() => {
       if (undoSnap) _undoStack.push({ label: entry.label, snapshot: undoSnap });
       _restore(entry.snapshot);
       _notify();
-      if (typeof DS !== 'undefined' && typeof DS.redo === 'function') DS.redo();
       return true;
     },
 

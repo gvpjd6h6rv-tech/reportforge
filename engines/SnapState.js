@@ -13,7 +13,8 @@ const SnapState = (() => {
 
   function setEnabled(v) {
     _enabled = !!v;
-    if (typeof DS !== 'undefined') DS.snapToGrid = _enabled;
+    if (typeof DS !== 'undefined' && typeof DS.setSnapToGrid === 'function') DS.setSnapToGrid(_enabled, 'SnapState.setEnabled');
+    else if (typeof DS !== 'undefined') DS.snapToGrid = _enabled;
   }
 
   function toggle() {

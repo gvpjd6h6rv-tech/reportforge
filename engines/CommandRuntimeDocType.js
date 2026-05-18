@@ -37,8 +37,8 @@
           btn.classList.toggle('active', btn.dataset.doctype === prev));
         return;
       }
-      DS.sections = dt.defaultSections.map((s) => ({ ...s }));
-      DS.elements = [];
+      DS.setSections(dt.defaultSections.map((s) => ({ ...s })), 'CommandRuntimeDocType.switchDocType');
+      DS.setElements([], 'CommandRuntimeDocType.switchDocType');
       DS.clearSelectionState();
       SectionEngine.render();
       SelectionEngine.clearSelection();

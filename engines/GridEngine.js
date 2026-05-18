@@ -72,7 +72,8 @@ window.GridEngine = (() => {
     /** Show or hide the grid */
     setVisible(v) {
       _visible = !!v;
-      if (typeof DS !== 'undefined') DS.gridVisible = _visible;
+      if (typeof DS !== 'undefined' && typeof DS.setGridVisible === 'function') DS.setGridVisible(_visible, 'GridEngine.setVisible');
+      else if (typeof DS !== 'undefined') DS.gridVisible = _visible;
       scheduleUpdate();
     },
 

@@ -61,7 +61,7 @@ const DesignZoomEngine={
         ws.scrollTop  = (cy + ws.scrollTop)  * ratio - cy;
       }
     }
-    DS.setZoom(z);
+    DS.setZoom(z, 'DesignZoomEngine._apply');
     const applyZoomChrome = () => {
       vp.style.transform       = 'none';
       vp.style.transformOrigin = '';

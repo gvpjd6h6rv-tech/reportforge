@@ -25,8 +25,8 @@
       setStatus('No se puede eliminar la última sección');
       return;
     }
-    DS.elements = DS.elements.filter((e) => e.sectionId !== secId);
-    DS.sections = DS.sections.filter((s) => s.id !== secId);
+    DS.setElements(DS.elements.filter((e) => e.sectionId !== secId), 'CommandRuntimeSections.deleteSection');
+    DS.setSections(DS.sections.filter((s) => s.id !== secId), 'CommandRuntimeSections.deleteSection');
     DS.saveHistory();
     _canonicalCanvasWriter().renderAll();
     setStatus('Sección eliminada');
@@ -55,7 +55,6 @@
     if (!sec) return;
     const name = prompt('Nombre de sección:', sec.label || sec.stype || sec.id);
     if (name) {
-      sec.label = name;
       sec.label = name;
       DS.saveHistory();
       _canonicalCanvasWriter().renderAll();

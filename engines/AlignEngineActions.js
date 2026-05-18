@@ -10,10 +10,10 @@ const AlignEngineActions = {
     const ids = [...DS.selection];
     if (ids.length < 2) return;
     const els = ids.map(id => DS.getElementById(id)).filter(Boolean);
-    if (dir === 'left') { const minX = Math.min(...els.map(e => e.x)); els.forEach(e => DS.updateElementLayout(e.id, { x: minX })); }
-    if (dir === 'right') { const maxR = Math.max(...els.map(e => e.x + e.w)); els.forEach(e => DS.updateElementLayout(e.id, { x: maxR - e.w })); }
-    if (dir === 'top') { const minY = Math.min(...els.map(e => e.y)); els.forEach(e => DS.updateElementLayout(e.id, { y: minY })); }
-    if (dir === 'bottom') { const maxB = Math.max(...els.map(e => e.y + e.h)); els.forEach(e => DS.updateElementLayout(e.id, { y: maxB - e.h })); }
+    if (dir === 'left') { const minX = Math.min(...els.map(e => e.x)); els.forEach(e => DS.updateElementLayout(e.id, { x: minX }, 'AlignEngineActions.fallback')); }
+    if (dir === 'right') { const maxR = Math.max(...els.map(e => e.x + e.w)); els.forEach(e => DS.updateElementLayout(e.id, { x: maxR - e.w }, 'AlignEngineActions.fallback')); }
+    if (dir === 'top') { const minY = Math.min(...els.map(e => e.y)); els.forEach(e => DS.updateElementLayout(e.id, { y: minY }, 'AlignEngineActions.fallback')); }
+    if (dir === 'bottom') { const maxB = Math.max(...els.map(e => e.y + e.h)); els.forEach(e => DS.updateElementLayout(e.id, { y: maxB - e.h }, 'AlignEngineActions.fallback')); }
     _canonicalCanvasWriter().renderAll();
   },
 };

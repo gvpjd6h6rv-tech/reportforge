@@ -155,11 +155,11 @@ const SelectionInteraction = (() => {
         DS.updateElementLayout(el.id, {
           sectionId: target.section.id,
           y: SelectionState.snap(Math.max(0, rawAbsY - SelectionState.getSectionTop(target.section.id))),
-        });
+        }, 'SelectionInteraction.move');
       } else {
-        DS.updateElementLayout(el.id, { y: SelectionState.snap(Math.max(0, orig.y + dy)) });
+        DS.updateElementLayout(el.id, { y: SelectionState.snap(Math.max(0, orig.y + dy)) }, 'SelectionInteraction.move');
       }
-      DS.updateElementLayout(el.id, { x: SelectionState.snap(Math.max(0, Math.min(CFG.PAGE_W - el.w, newX))) });
+      DS.updateElementLayout(el.id, { x: SelectionState.snap(Math.max(0, Math.min(CFG.PAGE_W - el.w, newX))) }, 'SelectionInteraction.move');
       const div = document.querySelector(`.cr-element[data-id="${orig.id}"]`);
       if (div) {
         div.classList.add('dragging');
@@ -204,7 +204,7 @@ const SelectionInteraction = (() => {
     if (p.includes('s')) h = Math.max(CFG.MIN_EL_H, SelectionState.snap(h + dy));
     if (p.includes('w')) { const nw = Math.max(CFG.MIN_EL_W, SelectionState.snap(w - dx)); x = SelectionState.snap(x + w - nw); w = nw; }
     if (p.includes('n')) { const nh = Math.max(CFG.MIN_EL_H, SelectionState.snap(h - dy)); y = SelectionState.snap(y + h - nh); h = nh; }
-    DS.updateElementLayout(el.id, { x, y, w, h });
+    DS.updateElementLayout(el.id, { x, y, w, h }, 'SelectionInteraction.resize');
     _canonicalCanvasWriter().updateElementPosition(d.elId);
     if (DS.previewMode) {
       document.querySelectorAll(`.pv-el[data-origin-id="${d.elId}"]`).forEach(pv => {

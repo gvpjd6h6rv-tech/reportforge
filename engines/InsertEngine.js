@@ -4,7 +4,7 @@ const InsertEngine = {
   _startPos:null,
 
   setTool(tool){
-    DS.tool=tool;
+    DS.setTool(tool, 'InsertEngine.setTool');
     document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));
     const cs=document.getElementById('workspace');
     cs.className='';cs.classList.add(`tool-${tool}`);

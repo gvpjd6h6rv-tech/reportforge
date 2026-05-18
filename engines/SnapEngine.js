@@ -132,7 +132,8 @@ window.SnapEngine = (() => {
     /** Enable/disable snapping */
     setEnabled(v) {
       _enabled = !!v;
-      if (typeof DS !== 'undefined') DS.snapToGrid = _enabled;
+      if (typeof DS !== 'undefined' && typeof DS.setSnapToGrid === 'function') DS.setSnapToGrid(_enabled, 'SnapEngine.setEnabled');
+      else if (typeof DS !== 'undefined') DS.snapToGrid = _enabled;
     },
 
     toggle() { this.setEnabled(!_enabled); },

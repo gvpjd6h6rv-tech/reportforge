@@ -35,8 +35,8 @@
     if (!data) { alert('No encontrado.'); return; }
     try {
       const parsed = JSON.parse(data);
-      DS.sections = parsed.sections;
-      DS.elements = parsed.elements;
+      DS.setSections(parsed.sections, 'CommandRuntimeFile.load');
+      DS.setElements(parsed.elements, 'CommandRuntimeFile.load');
       DS.clearSelectionState();
       SectionEngine.render();
       SelectionEngine.clearSelection();
@@ -61,8 +61,8 @@
     reader.onload = (e) => {
       try {
         const data = JSON.parse(e.target.result);
-        DS.sections = data.sections;
-        DS.elements = data.elements;
+        DS.setSections(data.sections, 'CommandRuntimeFile.importJSON');
+        DS.setElements(data.elements, 'CommandRuntimeFile.importJSON');
         DS.clearSelectionState();
         SectionEngine.render();
         SelectionEngine.clearSelection();

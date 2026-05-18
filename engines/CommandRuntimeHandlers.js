@@ -8,7 +8,7 @@
     switch (action) {
       case 'new':
         if (confirm('¿Nuevo reporte? Se perderán los cambios no guardados.')) {
-          DS.elements = [];
+          DS.setElements([], 'CommandRuntimeHandlers.new');
           DS.sections.forEach((s) => { if (s.stype === 'det') s.height = 14; else s.height = 60; });
           DS.clearSelectionState();
           SectionEngine.render();
@@ -57,13 +57,13 @@
       case 'clear-guides': AlignmentGuides && AlignmentGuides.clear(); break;
       case 'set-margin-left': {
         const v = parseInt(prompt('Margen izquierdo (px):', DS.pageMarginLeft || 0));
-        if (!isNaN(v)) { DS.pageMarginLeft = Math.max(0, v); applyLayout && applyLayout(); DS.saveHistory(); }
+        if (!isNaN(v)) { DS.setPageMarginLeft(v, 'CommandRuntimeHandlers.setMarginLeft'); applyLayout && applyLayout(); DS.saveHistory(); }
         break;
       }
       case 'set-margin-right': setStatus('Margen derecho: use Configurar página'); break;
       case 'set-margin-top': {
         const v = parseInt(prompt('Margen superior (px):', DS.pageMarginTop || 0));
-        if (!isNaN(v)) { DS.pageMarginTop = Math.max(0, v); applyLayout && applyLayout(); DS.saveHistory(); }
+        if (!isNaN(v)) { DS.setPageMarginTop(v, 'CommandRuntimeHandlers.setMarginTop'); applyLayout && applyLayout(); DS.saveHistory(); }
         break;
       }
       case 'set-margin-bottom': setStatus('Margen inferior: use Configurar página'); break;
@@ -81,7 +81,7 @@
         document.getElementById('btn-grid').classList.toggle('active', DS.gridVisible);
         break;
       case 'toggle-snap':
-        DS.snapToGrid = !DS.snapToGrid;
+        DS.setSnapToGrid(!DS.snapToGrid, 'CommandRuntimeHandlers.toggleSnap');
         document.getElementById('btn-snap').classList.toggle('active', DS.snapToGrid);
         break;
       case 'toggle-rulers': RulerEngine.toggle(); break;
@@ -177,25 +177,3 @@
     handleFontSizeChange,
   };
 })(window);
-  async function runRepoTests(kind) {
-    const btn = document.getElementById(kind === 'quick' ? 'rf-test-quick' : 'rf-test-full');
-    btn?.classList.remove('is-pass', 'is-fail');
-    btn?.classList.add('is-running');
-    setStatus(`Running ${kind} tests...`);
-    try {
-      const res = await fetch(`/tests/${kind}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
-      const data = await res.json();
-      console.log(`[RF tests:${kind}]`, data);
-      btn?.classList.remove('is-running');
-      btn?.classList.add(data.ok ? 'is-pass' : 'is-fail');
-      setStatus(`${kind} tests ${data.ok ? 'PASSED' : 'FAILED'} (${data.durationMs}ms)`);
-      alert(`${kind.toUpperCase()} TESTS ${data.ok ? 'PASSED' : 'FAILED'}\n\n${data.cmd}\n\n${(data.stdout || data.stderr || '').slice(-3000)}`);
-    } catch (err) {
-      btn?.classList.remove('is-running');
-      btn?.classList.add('is-fail');
-      setStatus(`${kind} tests crashed`);
-      alert(`Tests crashed: ${err}`);
-    }
-  }
-
-

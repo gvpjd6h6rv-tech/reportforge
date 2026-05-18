@@ -14,8 +14,8 @@ const HistorySnapshot = (() => {
     if (!snap || typeof DS === 'undefined') return false;
     try {
       const state = JSON.parse(snap);
-      DS.elements = state.elements;
-      DS.sections = state.sections;
+      DS.setElements(state.elements, 'HistorySnapshot.apply');
+      DS.setSections(state.sections, 'HistorySnapshot.apply');
       if (typeof CanvasLayoutEngine !== 'undefined' && typeof CanvasLayoutEngine.update === 'function') CanvasLayoutEngine.update();
       if (typeof SectionLayoutEngine !== 'undefined' && typeof SectionLayoutEngine.update === 'function') SectionLayoutEngine.update();
       if (typeof ElementLayoutEngine !== 'undefined' && typeof ElementLayoutEngine.update === 'function') ElementLayoutEngine.update();

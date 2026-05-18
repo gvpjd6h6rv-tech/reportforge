@@ -5,7 +5,7 @@
 
   function updateSelectedLayouts(partial) {
     DS.getSelectedElements().forEach((el) => {
-      DS.updateElementLayout(el.id, partial(el));
+      DS.updateElementLayout(el.id, partial(el), 'CommandRuntimeSelection.updateLayout');
       _canonicalCanvasWriter().updateElementPosition(el.id);
     });
   }
@@ -42,7 +42,7 @@
     const sel = [...DS.selection];
     if (!sel.length) return;
     sel.forEach((id) => {
-      DS.elements = DS.elements.filter((e) => e.id !== id);
+      DS.setElements(DS.elements.filter((e) => e.id !== id), 'CommandRuntimeSelection.removeSelection');
       const div = document.querySelector(`.cr-element[data-id="${id}"]`);
       if (div) div.remove();
     });
@@ -115,7 +115,7 @@
     const sel = DS.getSelectedElements();
     if (sel.length < 2) return;
     const ref = sel[0];
-    sel.slice(1).forEach((e) => { DS.updateElementLayout(e.id, { w: ref.w }); _canonicalCanvasWriter().updateElementPosition(e.id); });
+    sel.slice(1).forEach((e) => { DS.updateElementLayout(e.id, { w: ref.w }, 'CommandRuntimeSelection.sameWidth'); _canonicalCanvasWriter().updateElementPosition(e.id); });
     syncSelectionPanels();
     DS.saveHistory();
   }
@@ -124,7 +124,7 @@
     const sel = DS.getSelectedElements();
     if (sel.length < 2) return;
     const ref = sel[0];
-    sel.slice(1).forEach((e) => { DS.updateElementLayout(e.id, { h: ref.h }); _canonicalCanvasWriter().updateElementPosition(e.id); });
+    sel.slice(1).forEach((e) => { DS.updateElementLayout(e.id, { h: ref.h }, 'CommandRuntimeSelection.sameHeight'); _canonicalCanvasWriter().updateElementPosition(e.id); });
     syncSelectionPanels();
     DS.saveHistory();
   }
