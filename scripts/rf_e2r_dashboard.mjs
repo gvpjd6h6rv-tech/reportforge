@@ -47,11 +47,19 @@ const ownerMap = load('audit/subsystem_ownership_map.json');
 const ownerById = Object.fromEntries((ownerMap.subsystems ?? []).map(s => [s.id, s]));
 const covById   = Object.fromEntries((coverage.subsystems  ?? []).map(s => [s.id, s]));
 
-// ─── Band (mirrors e2r_guard thresholds — do not modify) ──────────────────────
-function toBand(coverageReal, hasExclusion) {
+// ─── Coverage band (e2r_guard thresholds — internal use only for bandFactor) ──
+function coverageToBand(coverageReal, hasExclusion) {
   if (coverageReal >= 5) return 'green';
   if (coverageReal >= 1) return 'yellow';
   return hasExclusion ? 'backlog' : 'red';
+}
+
+// ─── Dashboard band (score-derived — what CLI and HTML display) ───────────────
+// Opción A: score >= 80 → green | score >= 50 → yellow | score < 50 → red
+function scoreToBand(score) {
+  if (score >= 80) return 'green';
+  if (score >= 50) return 'yellow';
+  return 'red';
 }
 
 // ─── Risk normalisation ────────────────────────────────────────────────────────
@@ -65,7 +73,6 @@ function computeEntry(sub) {
   const cov          = covById[sub.id]  ?? {};
   const coverageReal = cov.coverageReal ?? 0;
   const hasExclusion = Boolean(cov.coverageExclusion);
-  const band         = toBand(coverageReal, hasExclusion);
 
   // surface — normalised allowed-file count; larger surface = more exposure
   const af      = (sub.allowedFiles ?? []).length;
@@ -86,11 +93,12 @@ function computeEntry(sub) {
   const guardList  = sub.requiredGuardCI ?? [];
   const guardBonus = guardList.length > 0 ? 100 : 0;
 
-  // band factor
-  const BAND_FACTOR = { green: 100, yellow: 50, red: 0, backlog: 20 };
-  const bandFactor  = BAND_FACTOR[band] ?? 0;
+  // bandFactor uses coverageToBand (e2r_guard thresholds) — formula unchanged
+  const BAND_FACTOR   = { green: 100, yellow: 50, red: 0, backlog: 20 };
+  const coverageBand  = coverageToBand(coverageReal, hasExclusion);
+  const bandFactor    = BAND_FACTOR[coverageBand] ?? 0;
 
-  // composite score
+  // composite score (formula unchanged)
   const score = Math.round(
     0.35 * bandFactor          +
     0.20 * (100 - surface)     +
@@ -99,6 +107,9 @@ function computeEntry(sub) {
     0.10 * (100 - riskScore)   +
     0.05 * guardBonus
   );
+
+  // dashboard band: score-derived (Opción A: ≥80 green, ≥50 yellow, <50 red)
+  const band = scoreToBand(score);
 
   const tests = (cov.passingTests ?? []).length;
 
@@ -140,7 +151,8 @@ const snapshot = {
   version:           '1.0.0',
   generatedAt:       new Date().toISOString(),
   formula:           FORMULA,
-  bandThresholds:    'green=coverageReal≥5 | yellow=coverageReal 1–4 | red=coverageReal=0 | backlog=excluded',
+  bandThresholds:    'green=score≥80 | yellow=score 50–79 | red=score<50  (score-derived, Opción A)',
+  bandNote:          'Dashboard band is score-derived. E2R guard uses coverageReal bands internally (untouched).',
   totalPassingTests: coverage.totalPassingTests,
   subsystems:        entries,
 };
