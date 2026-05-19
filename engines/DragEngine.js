@@ -110,16 +110,16 @@ const DragEngine = (() => {
       drag.startPositions.forEach(orig => {
         const el = DS.getElementById(orig.id); if (!el) return;
         const newX = Math.max(0, Math.min(CFG.PAGE_W - el.w, orig.x + finalDX));
-        el.x = _snap(newX);
-
         const newAbsY = orig.sectionTop + orig.y + finalDY;
         const target  = DS.getSectionAtY(newAbsY + el.h / 2);
+        const patch = { x: _snap(newX) };
         if (target) {
-          el.sectionId = target.section.id;
-          el.y = _snap(Math.max(0, newAbsY - DS.getSectionTop(target.section.id)));
+          patch.sectionId = target.section.id;
+          patch.y = _snap(Math.max(0, newAbsY - DS.getSectionTop(target.section.id)));
         } else {
-          el.y = _snap(Math.max(0, orig.y + finalDY));
+          patch.y = _snap(Math.max(0, orig.y + finalDY));
         }
+        DS.updateElementLayout(orig.id, patch, 'DragEngine.move');
 
         // Update DOM via RF.Geometry
         const div = document.querySelector(`.cr-element[data-id="${orig.id}"]`);
@@ -148,7 +148,7 @@ const DragEngine = (() => {
     if (p.includes('n')) { const nh = Math.max(CFG.MIN_EL_H || 4,  _snap(h - rawDY)); y = _snap(y + h - nh); h = nh; }
 
     RenderScheduler.layout(() => {
-      el.x = x; el.y = y; el.w = w; el.h = h;
+      DS.updateElementLayout(el.id, { x, y, w, h }, 'DragEngine.resize');
       const div = document.querySelector(`.cr-element[data-id="${el.id}"]`);
       if (div) {
         const vp = RF.Geometry.modelToView(el.x, el.y);

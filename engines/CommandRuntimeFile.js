@@ -37,7 +37,7 @@
       const parsed = JSON.parse(data);
       DS.setSections(parsed.sections, 'CommandRuntimeFile.load');
       DS.setElements(parsed.elements, 'CommandRuntimeFile.load');
-      DS.clearSelectionState();
+      DS.clearSelectionState('CommandRuntimeFile.load');
       SectionEngine.render();
       SelectionEngine.clearSelection();
       setStatus(`✓ Abierto: ${choice}`);
@@ -63,7 +63,7 @@
         const data = JSON.parse(e.target.result);
         DS.setSections(data.sections, 'CommandRuntimeFile.importJSON');
         DS.setElements(data.elements, 'CommandRuntimeFile.importJSON');
-        DS.clearSelectionState();
+        DS.clearSelectionState('CommandRuntimeFile.importJSON');
         SectionEngine.render();
         SelectionEngine.clearSelection();
         setStatus('✓ Diseño importado');

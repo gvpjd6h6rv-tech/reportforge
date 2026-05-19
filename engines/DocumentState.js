@@ -100,7 +100,7 @@ const DocumentState = (() => {
       return selection;
     },
     assertZoom(zoom) {
-      if (typeof zoom !== 'number' || !Number.isFinite(zoom)) throw new Error('INVALID ZOOM CONTRACT');
+      if (typeof zoom !== 'number' || !Number.isFinite(zoom) || zoom <= 0) throw new Error('INVALID ZOOM CONTRACT');
       return zoom;
     },
     assertLayoutPatch(patch) {

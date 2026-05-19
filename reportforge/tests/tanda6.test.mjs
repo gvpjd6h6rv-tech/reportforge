@@ -1,5 +1,5 @@
 /**
- * TANDA 6 — STABILITY-001..018
+ * TANDA 6 — STABILITY-001..020
  * History / Commands / Stability / Negative paths
  * No mocks. Runtime real en /
  */
@@ -304,7 +304,7 @@ test('TANDA 6 — STABILITY-001..018', { timeout: 300000 }, async (t) => {
         CommandEngine.delete();   // no debe eliminar nada
         CommandEngine.copy();     // no debe hacer nada
         CommandEngine.selectAll();
-        DS.clearSelectionState();
+        DS.clearSelectionState('test');
       });
       await page.waitForTimeout(200);
 
@@ -539,7 +539,7 @@ test('TANDA 6 — STABILITY-001..018', { timeout: 300000 }, async (t) => {
       // y re-seleccionamos vía DS para evitar que e102 (en DOM aún desplazado) se superponga a e103
       await page.evaluate((elId) => {
         ElementLayoutEngine.update();
-        DS.selectOnly(elId);
+        DS.selectOnly(elId, 'test');
         SelectionEngine.renderHandles();
       }, id);
       await page.waitForTimeout(300);
@@ -560,6 +560,80 @@ test('TANDA 6 — STABILITY-001..018', { timeout: 300000 }, async (t) => {
       const snap = await getSelectionSnapshot(page);
       assert.equal(snap.uniqueElementIds, snap.elementCount, 'DOM: no hay IDs duplicados');
     });
+
+      // ─── STABILITY-019 ──────────────────────────────────────────────────────
+      // [C-06] Adversarial: DS.zoomPreview must survive hide() unchanged.
+      // Bug: hide() called setZoomPreview(DS.zoom) AFTER DesignZoomEngine.set()
+      // overwrote DS.zoom with the design zoom — so zoomPreview was clobbered.
+      // Fix: capturedPreviewZoom captured BEFORE DesignZoomEngine.set().
+      await t.test('STABILITY-019 [C-06] preview zoom not clobbered by hide()', async () => {
+        await reloadRuntime(page, server.baseUrl);
+
+        // Set a distinctive design zoom
+        await setZoom(page, 1.0);
+
+        // Enter preview mode
+        await enterPreview(page);
+        await page.waitForTimeout(200);
+
+        // While in preview, set preview zoom to a distinctive value ≠ design zoom
+        const PREVIEW_ZOOM = 0.75;
+        await page.evaluate((pz) => {
+          if (typeof PreviewZoomEngine !== 'undefined') PreviewZoomEngine.set(pz);
+          else DS.setZoomPreview(pz, 'test.C06');
+        }, PREVIEW_ZOOM);
+        await page.waitForTimeout(100);
+
+        // Verify DS.zoom is now the preview zoom (PreviewZoomEngine.set changed DS.zoom)
+        const activeDuringPreview = await page.evaluate(() => DS.zoom);
+        assert.ok(
+          Math.abs(activeDuringPreview - PREVIEW_ZOOM) < 0.01,
+          `[C-06] DS.zoom during preview must be ~${PREVIEW_ZOOM}, got ${activeDuringPreview}`,
+        );
+
+        // Exit preview (calls PreviewEngineMode.hide()).
+        // With the bug: hide() called DesignZoomEngine.set(zoomDesign) first (DS.zoom → 1.0),
+        // then setZoomPreview(DS.zoom) → stored 1.0 instead of the actual preview zoom.
+        // With the fix: capturedPreviewZoom = DS.zoom (0.75) BEFORE DesignZoomEngine.set.
+        await exitPreview(page);
+        await page.waitForTimeout(200);
+
+        // DS.zoomPreview must be the preview zoom (0.75), NOT the design zoom (1.0).
+        const zoomAfterHide = await page.evaluate(() => DS.zoomPreview);
+        assert.ok(
+          Math.abs(zoomAfterHide - PREVIEW_ZOOM) < 0.01,
+          `[C-06] DS.zoomPreview after hide() must be ~${PREVIEW_ZOOM} (preserved), ` +
+          `got ${zoomAfterHide}. If ${zoomAfterHide} ≈ 1.0, hide() clobbered zoomPreview with design zoom.`,
+        );
+      });
+
+      // ─── STABILITY-020 ──────────────────────────────────────────────────────
+      // [P2] Adversarial: DocumentStore setter guard fires on direct critical writes.
+      // DS.zoom = x, DS.sections = [], DS.elements = [], DS.selection = new Set()
+      // must ALL throw — confirming no bypass path remains.
+      await t.test('STABILITY-020 [P2] DS setter guard throws on direct critical-field writes', async () => {
+        await reloadRuntime(page, server.baseUrl);
+
+        const results = await page.evaluate(() => {
+          const results = {};
+          const CRITICAL = ['zoom', 'zoomDesign', 'zoomPreview', 'sections', 'elements', 'selection', 'tool', 'previewMode', 'pageMarginLeft', 'pageMarginTop'];
+          const TEST_VALUES = { zoom: 1.5, zoomDesign: 1.5, zoomPreview: 1.5, sections: [], elements: [], selection: new Set(), tool: 'text', previewMode: false, pageMarginLeft: 0, pageMarginTop: 0 };
+          for (const field of CRITICAL) {
+            try {
+              DS[field] = TEST_VALUES[field];
+              results[field] = 'DID_NOT_THROW';
+            } catch (e) {
+              results[field] = e.message.includes('forbidden') ? 'THREW_FORBIDDEN' : 'THREW_OTHER:' + e.message;
+            }
+          }
+          return results;
+        });
+
+        for (const [field, outcome] of Object.entries(results)) {
+          assert.equal(outcome, 'THREW_FORBIDDEN',
+            `[P2] DS.${field}= must throw 'forbidden' — got: ${outcome}. Direct write bypass is active.`);
+        }
+      });
 
     await assertNoConsoleErrors(consoleErrors, 'TANDA 6 STABILITY');
   } finally {

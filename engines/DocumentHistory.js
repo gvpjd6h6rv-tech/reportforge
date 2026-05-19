@@ -26,7 +26,7 @@ const DocumentHistory = (() => {
     }
   }
 
-  function createDocumentHistory(state, notify, global) {
+  function createDocumentHistory(state, notify, global, getApi) {
     return Object.freeze({
       saveHistory() {
         const snapshot = JSON.stringify({
@@ -43,9 +43,9 @@ const DocumentHistory = (() => {
         if (state.historyIndex <= 0) return;
         state.historyIndex -= 1;
         const snapshot = JSON.parse(state.history[state.historyIndex]);
-        state.sections = snapshot.sections;
-        state.elements = snapshot.elements;
-        state.selection.clear();
+        const a = typeof getApi === 'function' && getApi();
+        if (a) { a.setSections(snapshot.sections, 'DocumentHistory.undo'); a.setElements(snapshot.elements, 'DocumentHistory.undo'); a.clearSelectionState('DocumentHistory.undo'); }
+        else { state.sections = snapshot.sections; state.elements = snapshot.elements; state.selection.clear(); }
         if (typeof notify === 'function') notify();
         syncViewsAfterHistoryChange(global, state);
         this.updateUndoRedo();
@@ -54,9 +54,9 @@ const DocumentHistory = (() => {
         if (state.historyIndex >= state.history.length - 1) return;
         state.historyIndex += 1;
         const snapshot = JSON.parse(state.history[state.historyIndex]);
-        state.sections = snapshot.sections;
-        state.elements = snapshot.elements;
-        state.selection.clear();
+        const a = typeof getApi === 'function' && getApi();
+        if (a) { a.setSections(snapshot.sections, 'DocumentHistory.redo'); a.setElements(snapshot.elements, 'DocumentHistory.redo'); a.clearSelectionState('DocumentHistory.redo'); }
+        else { state.sections = snapshot.sections; state.elements = snapshot.elements; state.selection.clear(); }
         if (typeof notify === 'function') notify();
         syncViewsAfterHistoryChange(global, state);
         this.updateUndoRedo();

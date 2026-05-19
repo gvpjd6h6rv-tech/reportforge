@@ -10,7 +10,9 @@
     const afterIdx = DS.sections.findIndex((s) => s.id === afterId);
     const newId = `s-det-${Date.now()}`;
     const newSec = { id: newId, stype: 'det', label: 'Detalle', abbr: 'D', height: 20, visible: true };
-    DS.sections.splice(afterIdx + 1, 0, newSec);
+    const newSections = [...DS.sections];
+    newSections.splice(afterIdx + 1, 0, newSec);
+    DS.setSections(newSections, 'CommandRuntimeSections.insertSection');
     DS.saveHistory();
     _canonicalCanvasWriter().renderAll();
     setStatus(`Sección insertada: ${newSec.label}`);
@@ -36,7 +38,11 @@
     const secId = DS.sections[1]?.id;
     if (!secId) return;
     const idx = DS.sections.findIndex((s) => s.id === secId);
-    if (idx > 0) [DS.sections[idx - 1], DS.sections[idx]] = [DS.sections[idx], DS.sections[idx - 1]];
+    if (idx > 0) {
+      const s = [...DS.sections];
+      [s[idx - 1], s[idx]] = [s[idx], s[idx - 1]];
+      DS.setSections(s, 'CommandRuntimeSections.moveSectionUp');
+    }
     DS.saveHistory();
     _canonicalCanvasWriter().renderAll();
     setStatus('Sección movida arriba');
@@ -44,7 +50,11 @@
 
   function moveSectionDown() {
     const idx = 1;
-    if (idx < DS.sections.length - 1) [DS.sections[idx], DS.sections[idx + 1]] = [DS.sections[idx + 1], DS.sections[idx]];
+    if (idx < DS.sections.length - 1) {
+      const s = [...DS.sections];
+      [s[idx], s[idx + 1]] = [s[idx + 1], s[idx]];
+      DS.setSections(s, 'CommandRuntimeSections.moveSectionDown');
+    }
     DS.saveHistory();
     _canonicalCanvasWriter().renderAll();
     setStatus('Sección movida abajo');
@@ -55,7 +65,7 @@
     if (!sec) return;
     const name = prompt('Nombre de sección:', sec.label || sec.stype || sec.id);
     if (name) {
-      sec.label = name;
+      DS.setSections(DS.sections.map(s => s.id === sec.id ? { ...s, label: name } : s), 'CommandRuntimeSections.renameSection');
       DS.saveHistory();
       _canonicalCanvasWriter().renderAll();
     }
@@ -90,10 +100,11 @@
   function toggleSectionVisibility(sectionId) {
     const sec = DS.sections.find((s) => s.id === sectionId);
     if (!sec) return;
-    sec.visible = !sec.visible;
+    const newVisible = !sec.visible;
+    DS.setSections(DS.sections.map(s => s.id === sectionId ? { ...s, visible: newVisible } : s), 'CommandRuntimeSections.toggleSectionVisibility');
     DS.saveHistory();
     _canonicalCanvasWriter().renderAll();
-    setStatus(`Sección ${sec.label}: ${sec.visible ? 'visible' : 'oculta'}`);
+    setStatus(`Sección ${sec.label}: ${newVisible ? 'visible' : 'oculta'}`);
   }
 
   global.CommandRuntimeSections = {

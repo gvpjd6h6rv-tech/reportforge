@@ -10,7 +10,7 @@
         if (confirm('¿Nuevo reporte? Se perderán los cambios no guardados.')) {
           DS.setElements([], 'CommandRuntimeHandlers.new');
           DS.sections.forEach((s) => { if (s.stype === 'det') s.height = 14; else s.height = 60; });
-          DS.clearSelectionState();
+          DS.clearSelectionState('CommandRuntimeHandlers.new');
           SectionEngine.render();
           SelectionEngine.clearSelection();
           DS.saveHistory();
@@ -48,7 +48,7 @@
       case 'group': CommandEngine.group && CommandEngine.group(); break;
       case 'ungroup': CommandEngine.ungroup && CommandEngine.ungroup(); break;
       case 'invert-selection': CommandEngine.invertSelection && CommandEngine.invertSelection(); break;
-      case 'deselect-all': DS.clearSelectionState(); SelectionEngine.renderHandles && SelectionEngine.renderHandles(); break;
+      case 'deselect-all': DS.clearSelectionState('CommandRuntimeHandlers.deselectAll'); SelectionEngine.renderHandles && SelectionEngine.renderHandles(); break;
       case 'zoom-fit-page': CommandEngine.zoomFitPage && CommandEngine.zoomFitPage(); break;
       case 'zoom-fit-width': CommandEngine.zoomFitWidth && CommandEngine.zoomFitWidth(); break;
       case 'add-horizontal-guide': CommandEngine.addHGuide && CommandEngine.addHGuide(); break;

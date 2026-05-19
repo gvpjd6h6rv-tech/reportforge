@@ -12,7 +12,7 @@ import {
 // Returns the element's model snapshot (id, type, and all scalar properties).
 async function selectAndRenderPanel(page, id) {
   const el = await page.evaluate((elId) => {
-    DS.selectOnly(elId);
+    DS.selectOnly(elId, 'test');
     PropertiesEngine.render();
     const e = DS.elements.find((x) => x.id === elId);
     if (!e) return null;
@@ -42,7 +42,7 @@ test('TANDA 9 — PANEL-001..020', { timeout: 300000 }, async (t) => {
       await t.test('PANEL-001 no selection: #props-empty visible, #props-form hidden', async () => {
         await reloadRuntime(page, server.baseUrl);
         // Ensure nothing is selected
-        await page.evaluate(() => { DS.clearSelectionState(); PropertiesEngine.render(); });
+        await page.evaluate(() => { DS.clearSelectionState('test'); PropertiesEngine.render(); });
         await page.waitForTimeout(50);
 
         const state = await page.evaluate(() => ({
@@ -242,7 +242,7 @@ test('TANDA 9 — PANEL-001..020', { timeout: 300000 }, async (t) => {
         assert.ok(formShownBefore, 'PANEL-013: panel must be visible before clearing selection');
 
         // Clear selection and re-render
-        await page.evaluate(() => { DS.clearSelectionState(); PropertiesEngine.render(); });
+        await page.evaluate(() => { DS.clearSelectionState('test'); PropertiesEngine.render(); });
         await page.waitForTimeout(50);
 
         const formHiddenAfter = await page.evaluate(() => document.getElementById('props-form')?.classList.contains('hidden') ?? true);
@@ -335,8 +335,8 @@ test('TANDA 9 — PANEL-001..020', { timeout: 300000 }, async (t) => {
         assert.ok(id0 && id1, 'PANEL-020: template must have at least 2 elements');
 
         await page.evaluate(({ a, b }) => {
-          DS.selectOnly(a);
-          DS.addSelection(b);
+          DS.selectOnly(a, 'test');
+          DS.addSelection(b, 'test');
           PropertiesEngine.render();
         }, { a: id0, b: id1 });
         await page.waitForTimeout(50);

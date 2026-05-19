@@ -231,7 +231,7 @@ test('TANDA 5 — INTERACTION-EDGE-001..018', { timeout: 300000 }, async (t) => 
       // AlignmentGuides puede fijar a guías cercanas; verificamos sólo que la posición es
       // válida (>= 0) y que el overlay queda alineado — es el invariante real del test.
       // re-seleccionar vía DS tras cambio de zoom (click puede ser interceptado por sel-box a zoom 1.5)
-      await page.evaluate(() => { DS.selectOnly('e101'); SelectionEngine.renderHandles(); });
+      await page.evaluate(() => { DS.selectOnly('e101', 'test'); SelectionEngine.renderHandles(); });
       await page.waitForTimeout(150);
       await dragSelectedElement(page, 8, 8);
       pos = await page.evaluate(() => {
@@ -495,7 +495,7 @@ test('TANDA 5 — INTERACTION-EDGE-001..018', { timeout: 300000 }, async (t) => 
       // Volver a zoom original
       await setZoom(page, 1);
       // Re-seleccionar vía DS para evitar que e101 (desplazado) quede detrás de e102
-      await page.evaluate(() => { DS.selectOnly('e101'); SelectionEngine.renderHandles(); });
+      await page.evaluate(() => { DS.selectOnly('e101', 'test'); SelectionEngine.renderHandles(); });
       await page.waitForTimeout(150);
 
       // overlay/geom: exactamente 1 sel-box, sin duplicados

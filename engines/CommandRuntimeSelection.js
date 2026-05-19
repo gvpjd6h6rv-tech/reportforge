@@ -24,15 +24,18 @@
 
   function paste() {
     if (!DS.clipboard.length) return;
-    DS.clearSelectionState();
-    DS.clipboard.forEach((json) => {
+    DS.clearSelectionState('CommandRuntimeSelection.paste');
+    const newEls = DS.clipboard.map((json) => {
       const el = JSON.parse(json);
       el.id = newId();
       el.x = DS.snap(el.x + 8);
       el.y = DS.snap(el.y + 8);
-      DS.elements.push(el);
+      return el;
+    });
+    DS.setElements([...DS.elements, ...newEls], 'CommandRuntimeSelection.paste');
+    newEls.forEach((el) => {
       _canonicalCanvasWriter().renderElement(el);
-      DS.addSelection(el.id);
+      DS.addSelection(el.id, 'CommandRuntimeSelection.paste');
     });
     syncSelectionPanels();
     DS.saveHistory();
@@ -46,14 +49,14 @@
       const div = document.querySelector(`.cr-element[data-id="${id}"]`);
       if (div) div.remove();
     });
-    DS.clearSelectionState();
+    DS.clearSelectionState('CommandRuntimeSelection.removeSelection');
     syncSelectionPanels();
     DS.saveHistory();
   }
 
   function selectAll() {
-    DS.clearSelectionState();
-    DS.elements.forEach((e) => DS.addSelection(e.id));
+    DS.clearSelectionState('CommandRuntimeSelection.selectAll');
+    DS.elements.forEach((e) => DS.addSelection(e.id, 'CommandRuntimeSelection.selectAll'));
     syncSelectionPanels();
   }
 
@@ -181,8 +184,8 @@
   function invertSelection() {
     const allIds = new Set(DS.elements.map((e) => e.id));
     const curSel = new Set(DS.selection);
-    DS.clearSelectionState();
-    allIds.forEach((id) => { if (!curSel.has(id)) DS.addSelection(id); });
+    DS.clearSelectionState('CommandRuntimeSelection.invertSelection');
+    allIds.forEach((id) => { if (!curSel.has(id)) DS.addSelection(id, 'CommandRuntimeSelection.invertSelection'); });
     renderSelectionHandles();
     setStatus('Selección invertida');
   }

@@ -259,7 +259,7 @@ test('canonical runtime anti-regression suite', { timeout: 120000 }, async (t) =
 
     await t.test('secuencia encadenada', async () => {
       await page.evaluate(() => {
-        DS.selectOnly('e101');
+        DS.selectOnly('e101', 'test');
         SelectionEngine.renderHandles();
       });
       await page.waitForTimeout(120);

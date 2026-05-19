@@ -14,19 +14,19 @@ const SelectionState = (() => {
   }
 
   function clearSelection() {
-    DS.clearSelectionState();
+    DS.clearSelectionState('SelectionState.clearSelection');
   }
 
   function selectOnly(id) {
-    DS.selectOnly(id);
+    DS.selectOnly(id, 'SelectionState.selectOnly');
   }
 
   function addSelection(id) {
-    DS.addSelection(id);
+    DS.addSelection(id, 'SelectionState.addSelection');
   }
 
   function removeSelection(id) {
-    DS.removeSelection(id);
+    DS.removeSelection(id, 'SelectionState.removeSelection');
   }
 
   function isSelected(id) {
@@ -54,7 +54,7 @@ const SelectionState = (() => {
   }
 
   function clearSelectionState() {
-    DS.clearSelectionState();
+    DS.clearSelectionState('SelectionState.clearSelectionState');
   }
 
   return {

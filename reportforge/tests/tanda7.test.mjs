@@ -24,7 +24,7 @@ async function focusCanvas(page) {
 // Selección programática — evita interceptación por sel-box en handles-layer
 async function selectById(page, id) {
   await page.evaluate((elId) => {
-    DS.selectOnly(elId);
+    DS.selectOnly(elId, 'test');
     SelectionEngine.renderHandles();
   }, id);
   await page.waitForTimeout(80);
@@ -58,7 +58,7 @@ test('TANDA 7 — KB-001..020', { timeout: 300000 }, async (t) => {
     // cubre: design | valida: DS/modelo (Delete sin selección = no-op)
     await t.test('KB-002 delete key no-op without selection in design', async () => {
       await reloadRuntime(page, server.baseUrl);
-      await page.evaluate(() => { DS.clearSelectionState(); SelectionEngine.clearSelection(); });
+      await page.evaluate(() => { DS.clearSelectionState('test'); SelectionEngine.clearSelection(); });
       await page.waitForTimeout(80);
       const before = await page.evaluate(() => DS.elements.length);
       assert.equal(await page.evaluate(() => DS.selection.size), 0, 'KB-002: pre: selección debe estar vacía');
@@ -349,7 +349,7 @@ test('TANDA 7 — KB-001..020', { timeout: 300000 }, async (t) => {
       const e101Exists = await page.evaluate(() => !!DS.getElementById('e101'));
       if (e101Exists) {
         await page.evaluate(() => {
-          DS.selectOnly('e101');
+          DS.selectOnly('e101', 'test');
           SelectionEngine.renderHandles();
           FormatEngine.updateToolbar();
         });

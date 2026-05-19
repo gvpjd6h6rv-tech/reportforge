@@ -65,8 +65,8 @@ const KeyboardBindings = (() => {
 
       registry.register('ctrl+a', () => {
         if (typeof DS !== 'undefined' && typeof SelectionEngine !== 'undefined') {
-          DS.clearSelectionState();
-          DS.elements.forEach((el) => DS.addSelection(el.id));
+          DS.clearSelectionState('KeyboardBindings.selectAll');
+          DS.elements.forEach((el) => DS.addSelection(el.id, 'KeyboardBindings.selectAll'));
           SelectionEngine.renderHandles();
         }
       });

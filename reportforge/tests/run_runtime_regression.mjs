@@ -257,7 +257,7 @@ async function run() {
 
     await step('secuencia encadenada', async () => {
       await page.evaluate(() => {
-        DS.selectOnly('e101');
+        DS.selectOnly('e101', 'test');
         SelectionEngine.renderHandles();
       });
       await page.waitForTimeout(120);

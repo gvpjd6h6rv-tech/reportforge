@@ -9,9 +9,9 @@ const FieldExplorerDrop = (() => {
       content: field.path,
       fontSize: 8,
     });
-    DS.elements.push(el);
+    DS.setElements([...DS.elements, el], 'FieldExplorerDrop.insertField');
     _canonicalCanvasWriter().renderElement(el);
-    DS.selectOnly(el.id);
+    DS.selectOnly(el.id, 'FieldExplorerDrop.insertField');
     SelectionEngine.renderHandles();
     PropertiesEngine.render();
     FormatEngine.updateToolbar();
@@ -48,9 +48,9 @@ const FieldExplorerDrop = (() => {
       const el = mkEl('field', secId, x, relY, 150, 14, {
         fieldPath: field.path, fieldFmt: fmtDef, content: field.path, fontSize: 8,
       });
-      DS.elements.push(el);
+      DS.setElements([...DS.elements, el], 'FieldExplorerDrop.drop');
       _canonicalCanvasWriter().renderElement(el);
-      DS.selectOnly(el.id);
+      DS.selectOnly(el.id, 'FieldExplorerDrop.drop');
       SelectionEngine.renderHandles();
       PropertiesEngine.render();
       FormatEngine.updateToolbar();

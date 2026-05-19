@@ -192,7 +192,7 @@ test('#21 backend authority — no phantom lock state on fresh load', { timeout:
 
       // 2. Select an element and lock it via the canonical command
       await page.evaluate(() => {
-        DS.selection = new Set([DS.elements[0].id]);
+        DS.selectOnly(DS.elements[0].id, 'test.lockObject');
       });
       await page.evaluate(() => {
         if (typeof CommandEngine !== 'undefined' && typeof CommandEngine.lockObject === 'function') {

@@ -138,7 +138,7 @@ test('TANDA 10 — MENU-001..020', { timeout: 300000 }, async (t) => {
         await reloadRuntime(page, server.baseUrl);
         const elId = await page.evaluate(() => {
           const el = DS.elements[0];
-          DS.selectOnly(el.id);
+          DS.selectOnly(el.id, 'test');
           return el.id;
         });
         await showContextMenu(page, 'element');
@@ -152,7 +152,7 @@ test('TANDA 10 — MENU-001..020', { timeout: 300000 }, async (t) => {
       await t.test('MENU-011 clicking Eliminar from element menu removes element from DS.elements', async () => {
         await reloadRuntime(page, server.baseUrl);
         const countBefore = await page.evaluate(() => {
-          DS.selectOnly(DS.elements[0].id);
+          DS.selectOnly(DS.elements[0].id, 'test');
           return DS.elements.length;
         });
         await showContextMenu(page, 'element');
@@ -166,7 +166,7 @@ test('TANDA 10 — MENU-001..020', { timeout: 300000 }, async (t) => {
       await t.test('MENU-012 Seleccionar todo from canvas menu selects all elements', async () => {
         await reloadRuntime(page, server.baseUrl);
         const totalElements = await page.evaluate(() => {
-          DS.clearSelectionState();
+          DS.clearSelectionState('test');
           return DS.elements.length;
         });
         await showContextMenu(page, 'canvas');
@@ -193,7 +193,7 @@ test('TANDA 10 — MENU-001..020', { timeout: 300000 }, async (t) => {
       await t.test('MENU-014 Cortar removes selected element (cut = copy + delete)', async () => {
         await reloadRuntime(page, server.baseUrl);
         const { countBefore, selectedId } = await page.evaluate(() => {
-          DS.selectOnly(DS.elements[0].id);
+          DS.selectOnly(DS.elements[0].id, 'test');
           return { countBefore: DS.elements.length, selectedId: DS.elements[0].id };
         });
         await showContextMenu(page, 'element');
@@ -212,7 +212,7 @@ test('TANDA 10 — MENU-001..020', { timeout: 300000 }, async (t) => {
         await reloadRuntime(page, server.baseUrl);
         // First copy an element so clipboard is populated
         const countBefore = await page.evaluate(() => {
-          DS.selectOnly(DS.elements[0].id);
+          DS.selectOnly(DS.elements[0].id, 'test');
           CommandEngine.copy();
           return DS.elements.length;
         });
@@ -240,7 +240,7 @@ test('TANDA 10 — MENU-001..020', { timeout: 300000 }, async (t) => {
       await t.test('MENU-017 right-click on element auto-selects it if not already selected', async () => {
         await reloadRuntime(page, server.baseUrl);
         // Clear selection first
-        await page.evaluate(() => DS.clearSelectionState());
+        await page.evaluate(() => DS.clearSelectionState('test'));
 
         const el = page.locator('.cr-element:not(.pv-el)').first();
         const elId = await el.getAttribute('data-id');
@@ -283,7 +283,7 @@ test('TANDA 10 — MENU-001..020', { timeout: 300000 }, async (t) => {
         await reloadRuntime(page, server.baseUrl);
         const { elId, zBefore } = await page.evaluate(() => {
           const el = DS.elements[0];
-          DS.selectOnly(el.id);
+          DS.selectOnly(el.id, 'test');
           return { elId: el.id, zBefore: el.zIndex ?? 0 };
         });
         await showContextMenu(page, 'element');

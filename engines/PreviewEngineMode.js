@@ -31,10 +31,11 @@
 
   function hide() {
     const t0 = performance.now();
+    const capturedPreviewZoom = DS.zoom; // capture preview zoom BEFORE DesignZoomEngine.set overwrites DS.zoom
     const applyDesignChrome = () => {
       const cl = document.getElementById('canvas-layer');
       if (cl) cl.classList.remove('preview-mode');
-      DS.setZoomPreview(DS.zoom, 'PreviewEngineMode.hide');
+      DS.setZoomPreview(capturedPreviewZoom, 'PreviewEngineMode.hide');
       document.body.removeAttribute('data-render-mode');
       document.getElementById('tab-design')?.classList.add('active');
       document.getElementById('tab-preview')?.classList.remove('active');

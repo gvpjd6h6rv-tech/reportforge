@@ -39,7 +39,7 @@
       }
       DS.setSections(dt.defaultSections.map((s) => ({ ...s })), 'CommandRuntimeDocType.switchDocType');
       DS.setElements([], 'CommandRuntimeDocType.switchDocType');
-      DS.clearSelectionState();
+      DS.clearSelectionState('CommandRuntimeDocType.switchDocType');
       SectionEngine.render();
       SelectionEngine.clearSelection();
       DS.saveHistory();

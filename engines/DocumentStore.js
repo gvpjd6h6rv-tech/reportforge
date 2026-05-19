@@ -6,10 +6,9 @@
   let api = null;
   const history = DocumentHistory.createDocumentHistory(state, () => {
     if (api) api.notify();
-  }, global);
+  }, global, () => api);
   const actions = DocumentActions.createDocumentActions(state, selectors, invariants, history, () => api);
 
-  // DS.state is the canonical source of truth for document runtime state.
   api = {
     state,
     actions,
@@ -49,18 +48,13 @@
     snap: (...args) => selectors.snap(...args),
   };
 
-  for (const key of [
-    'sections', 'elements', 'selection', 'tool', 'zoom', 'zoomDesign', 'zoomPreview',
-    'gridVisible', 'snapToGrid', 'previewMode', 'pageMarginLeft', 'pageMarginTop',
-    'previewZoom', 'clipboard', 'history', 'historyIndex', '_subs'
-  ]) {
+  const _GUARDED = 'sections|elements|selection|zoom|zoomDesign|zoomPreview|tool|previewMode|pageMarginLeft|pageMarginTop';
+  for (const key of ['sections','elements','selection','tool','zoom','zoomDesign','zoomPreview','gridVisible','snapToGrid','previewMode','pageMarginLeft','pageMarginTop','previewZoom','clipboard','history','historyIndex','_subs']) {
     Object.defineProperty(api, key, {
-      enumerable: true,
-      configurable: false,
-      get() {
-        return state[key];
-      },
+      enumerable: true, configurable: false,
+      get() { return state[key]; },
       set(value) {
+        if (_GUARDED.includes(key)) throw new Error(`[DS] DS.${key}= forbidden; use set${key[0].toUpperCase()+key.slice(1)}(v, source)`);
         state[key] = value;
       },
     });
@@ -72,6 +66,6 @@
 
   global.newId = newId;
   global.mkEl = mkEl;
-  global.DS = api;
+  global.DS = api; // DS.state + DS.actions + DS.selectors + DS.invariants
   actions.saveHistory();
 })(window);

@@ -75,10 +75,6 @@ const HistoryEngine = (() => {
       if (_undoStack.length > MAX_STACK) _undoStack.shift();
       _redoStack.length = 0;   // invalidate redo on new action
       _notify();
-      // Delegate to monolithic saveHistory if available
-      if (typeof DS !== 'undefined' && typeof DS.saveHistory === 'function') {
-        DS.saveHistory();
-      }
     },
 
     undo() {

@@ -77,8 +77,8 @@ const FieldExplorerEngine = {
       fieldFmt:field.vtype==='currency'?'currency':field.vtype==='date'?'date':null,
       content:field.path,fontSize:8,
     });
-    DS.elements.push(el);_canonicalCanvasWriter().renderElement(el);
-    DS.selectOnly(el.id);
+    DS.setElements([...DS.elements, el], 'FieldExplorerEngine.insertField');_canonicalCanvasWriter().renderElement(el);
+    DS.selectOnly(el.id, 'FieldExplorerEngine.insertField');
     SelectionEngine.renderHandles();PropertiesEngine.render();FormatEngine.updateToolbar();
     DS.saveHistory();
     document.getElementById('sb-msg').textContent=`Campo '${field.path}' insertado`;
@@ -113,8 +113,8 @@ const FieldExplorerEngine = {
       const el=mkEl('field',secId,x,relY,150,14,{
         fieldPath:field.path,fieldFmt:fmtDef,content:field.path,fontSize:8,
       });
-      DS.elements.push(el);_canonicalCanvasWriter().renderElement(el);
-      DS.selectOnly(el.id);
+      DS.setElements([...DS.elements, el], 'FieldExplorerEngine.drop');_canonicalCanvasWriter().renderElement(el);
+      DS.selectOnly(el.id, 'FieldExplorerEngine.drop');
       SelectionEngine.renderHandles();PropertiesEngine.render();FormatEngine.updateToolbar();
       DS.saveHistory();
       document.getElementById('sb-msg').textContent=`Campo '${field.path}' colocado`;

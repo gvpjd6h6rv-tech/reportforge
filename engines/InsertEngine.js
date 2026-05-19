@@ -60,9 +60,9 @@ const InsertEngine = {
     else if(tool==='line') newEl=mkEl('line',secId,x,relY,w,Math.max(h,2),{borderColor:'#000',lineWidth:1});
     else if(tool==='box') newEl=mkEl('rect',secId,x,relY,w,h,{bgColor:'transparent',borderColor:'#000',borderWidth:1});
     if(!newEl)return;
-    DS.elements.push(newEl);
+    DS.setElements([...DS.elements, newEl], 'InsertEngine.onMouseUp');
     _canonicalCanvasWriter().renderElement(newEl);
-    DS.selectOnly(newEl.id);
+    DS.selectOnly(newEl.id, 'InsertEngine.onMouseUp');
     SelectionEngine.renderHandles();
     PropertiesEngine.render();FormatEngine.updateToolbar();
     DS.saveHistory();

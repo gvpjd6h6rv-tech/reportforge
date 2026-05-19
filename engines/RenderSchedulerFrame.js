@@ -84,9 +84,23 @@
     S.rafId = null;
     S.frame++;
     S.locked = true;
+
+    // Storm detection (#53): track flush rate, fire rf:render-storm when burst detected.
+    const nowMs = Date.now();
+    S.recentFrameTimes.push(nowMs);
+    S.recentFrameTimes = S.recentFrameTimes.filter(t => nowMs - t <= 1000);
+    if (S.recentFrameTimes.length > S.stormThreshold && !S.stormActive) {
+      S.stormActive = true;
+      global.dispatchEvent(new global.CustomEvent('rf:render-storm', {
+        detail: { framesInWindow: S.recentFrameTimes.length, stormThreshold: S.stormThreshold, frame: S.frame },
+      }));
+    }
+
     const scheduler = global.RenderScheduler || null;
+    const flushT0 = perfNow();
     const frameMeta = {
       frame: S.frame,
+      startMs: flushT0,
       startedAt: new Date().toISOString(),
       invalidations: scheduler && typeof scheduler.getInvalidationState === 'function'
         ? scheduler.getInvalidationState()
@@ -139,8 +153,8 @@
               slowestKey = taskKey;
             }
             if (taskMs > S.hotspotThresholdMs) {
-              S.hotspots.push({ frame: S.frame, phase: priorityName, key: taskKey, taskMs });
-              if (S.hotspots.length > S.hotspotLimit) S.hotspots.shift();
+              S.hotspots.push({ frame: S.frame, phase: priorityName, key: taskKey, ms: taskMs });
+              if (S.hotspots.length > 100) S.hotspots.shift();
             }
             S.writeScopeDepth -= 1;
             if (S.writeScopeDepth === 0) S.writeScope = null;
@@ -163,10 +177,13 @@
         const durationMs = perfNow() - phaseStartedAt;
         frameMeta.phases.push({
           priority: i,
-          phase: priorityName,
+          name: priorityName,
           queued: tasks.length,
+          tasks: tasks.length,
           executed: frameMeta.executed[priorityName],
           durationMs,
+          slowestMs,
+          slowestKey,
         });
         H.trace('RenderScheduler', 'priority-complete', {
           priority: priorityName,
@@ -183,6 +200,7 @@
       }
     } finally {
       S.locked = false;
+      frameMeta.durationMs = perfNow() - flushT0;
       frameMeta.completedAt = new Date().toISOString();
       frameMeta.pendingWork = H.hasPendingWork();
       frameMeta.stable = H.isStableFrame({ ...frameMeta, error: firstError });
@@ -214,5 +232,7 @@
     runStableFrameInvariants: _runStableFrameInvariants,
     getHotspots: () => S.hotspots.slice(),
     clearHotspots: () => { S.hotspots.length = 0; },
+    clearStorm: () => { S.recentFrameTimes.length = 0; S.stormActive = false; },
+    getFrameRate: () => S.recentFrameTimes.length,
   };
 })(window);
