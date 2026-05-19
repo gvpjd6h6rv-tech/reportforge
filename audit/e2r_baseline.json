@@ -1,8 +1,6 @@
 {
-  "version": "1.0.0",
-  "generatedAt": "2026-05-19T16:57:05.451Z",
-  "description": "E2R baseline snapshot \u2014 approved state. Used by e2r_guard.mjs for anti-degradation enforcement.",
-  "totalPassingTests": 46,
+  "generatedAt": "2026-05-19T19:28:01.406Z",
+  "totalPassingTests": 48,
   "subsystems": [
     {
       "id": "SS-01",
@@ -19,8 +17,8 @@
       "name": "history",
       "tier": "core",
       "risk": "high",
-      "coverageReal": 0,
-      "band": "backlog",
+      "coverageReal": 4,
+      "band": "yellow",
       "hasExclusion": true,
       "exclusionReason": "BACKLOG"
     },
@@ -59,7 +57,7 @@
       "name": "selection-drag",
       "tier": "core",
       "risk": "critical",
-      "coverageReal": 9,
+      "coverageReal": 8,
       "band": "green",
       "hasExclusion": false,
       "exclusionReason": null
@@ -69,7 +67,7 @@
       "name": "preview",
       "tier": "core",
       "risk": "high",
-      "coverageReal": 7,
+      "coverageReal": 6,
       "band": "green",
       "hasExclusion": false,
       "exclusionReason": null
@@ -229,7 +227,7 @@
       "name": "formula-eval-python",
       "tier": "core",
       "risk": "critical",
-      "coverageReal": 9,
+      "coverageReal": 8,
       "band": "green",
       "hasExclusion": false,
       "exclusionReason": null
@@ -249,7 +247,7 @@
       "name": "element-rendering",
       "tier": "core",
       "risk": "critical",
-      "coverageReal": 11,
+      "coverageReal": 10,
       "band": "green",
       "hasExclusion": false,
       "exclusionReason": null
@@ -279,7 +277,7 @@
       "name": "server-api",
       "tier": "supporting",
       "risk": "medium",
-      "coverageReal": 7,
+      "coverageReal": 6,
       "band": "green",
       "hasExclusion": false,
       "exclusionReason": null

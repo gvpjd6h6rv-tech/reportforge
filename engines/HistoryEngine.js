@@ -51,10 +51,11 @@ const HistoryEngine = (() => {
       const state = JSON.parse(snap);
       DS.setElements(state.elements, 'HistoryEngine.restore');
       DS.setSections(state.sections, 'HistoryEngine.restore');
-      // Trigger re-render
+      // Trigger re-render: renderAll removes stale element DOM nodes and rebuilds
+      // from DS.elements — required after undo/redo to remove deleted elements.
       if (typeof CanvasLayoutEngine !== 'undefined') CanvasLayoutEngine.update();
       if (typeof SectionLayoutEngine !== 'undefined') SectionLayoutEngine.update();
-      if (typeof ElementLayoutEngine !== 'undefined') ElementLayoutEngine.update();
+      if (typeof CanvasLayoutEngine !== 'undefined') CanvasLayoutEngine.renderAll();
       if (typeof OverlayEngine !== 'undefined') OverlayEngine.render();
     } catch (e) {
       console.error('[HistoryEngine] restore failed:', e);

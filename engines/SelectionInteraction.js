@@ -141,6 +141,7 @@ const SelectionInteraction = (() => {
 
   function _doMove(engine, pos, e) {
     const d = engine._drag;
+    if (!d.moved && typeof HistoryEngine !== 'undefined') HistoryEngine.push('move');
     d.moved = true;
     const dx = pos.x - d.startX;
     const dy = pos.y - d.startY;

@@ -90,11 +90,7 @@
       "unresolvedAmbiguities": [
         "DocumentHistory vs HistoryEngine: are these two synchronized stacks or independent? HistoryEngine.undo() calls _restore() then previously also called DS.undo() (double-apply bug fixed in write-log PR). The canonical undo path is not documented.",
         "HistoryState.js purpose unclear without reading the full file \u2014 may be redundant with DocumentHistory internal state"
-      ],
-      "coverageExclusion": {
-        "reason": "BACKLOG",
-        "justification": "undo_redo_user_parity tests fail due to real logic bug (undo leaves phantom element empcvhvl9aal). Requires fix in undo/redo logic before coverage can be established. Not a test environment issue."
-      }
+      ]
     },
     {
       "id": "SS-03",
