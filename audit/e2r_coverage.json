@@ -1,0 +1,514 @@
+{
+  "generatedAt": "2026-05-19T16:57:05.451Z",
+  "manifestFile": "audit/e2r_run_manifest.json",
+  "ownershipFile": "audit/subsystem_ownership_map.json",
+  "totalPassingTests": 46,
+  "formula": "coverageReal = round((passingTests.length / totalPassingTests) * 100)",
+  "limitations": [
+    "Only *.test.mjs files in reportforge/tests/ (non-recursive) are included in manifest.",
+    "browser/playwright tests timeout → contribute 0 even if they pass in full CI.",
+    "Python test suites (SS-B*) are not run by node:test → always 0.",
+    "user_parity/* tests are excluded from manifest → 0 for subsystems covered only by them.",
+    "run_runtime_regression.mjs is not *.test.mjs → excluded from manifest.",
+    "coverageReal is a relative metric (% of total passing tests), not line/branch coverage."
+  ],
+  "subsystems": [
+    {
+      "id": "SS-01",
+      "name": "document-state",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "risk": "critical",
+      "existingTests": [
+        "reportforge/tests/engine_contracts.test.mjs",
+        "reportforge/tests/runtime_write_log.test.mjs",
+        "reportforge/tests/critical_runtime_contracts.test.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/engine_contracts.test.mjs",
+        "reportforge/tests/runtime_write_log.test.mjs"
+      ],
+      "coverageReal": 4,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-02",
+      "name": "history",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "risk": "high",
+      "existingTests": [
+        "reportforge/tests/user_parity/undo_redo_user_parity.test.mjs",
+        "reportforge/tests/user_parity/undo_redo_mixed_history_user_parity.test.mjs"
+      ],
+      "passingTests": [],
+      "coverageReal": 0,
+      "coverageNote": "BACKLOG: undo_redo_user_parity tests fail due to real logic bug (undo leaves phantom element empcvhvl9aal). Requires fix in undo/redo logic before coverage can be established. Not a test environment issue.",
+      "coverageExclusion": {
+        "reason": "BACKLOG",
+        "justification": "undo_redo_user_parity tests fail due to real logic bug (undo leaves phantom element empcvhvl9aal). Requires fix in undo/redo logic before coverage can be established. Not a test environment issue."
+      }
+    },
+    {
+      "id": "SS-03",
+      "name": "render-scheduler",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "risk": "critical",
+      "existingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "coverageReal": 2,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-04",
+      "name": "geometry",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "risk": "critical",
+      "existingTests": [
+        "reportforge/tests/geometry_core.test.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/geometry_core.test.mjs"
+      ],
+      "coverageReal": 2,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-05",
+      "name": "canvas-layout",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "risk": "critical",
+      "existingTests": [
+        "reportforge/tests/run_runtime_regression.mjs",
+        "reportforge/tests/critical_runtime_contracts.test.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/run_runtime_regression.mjs"
+      ],
+      "coverageReal": 2,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-06",
+      "name": "selection-drag",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "risk": "critical",
+      "existingTests": [
+        "reportforge/tests/user_parity/fast_interaction_smoke_user_parity.test.mjs",
+        "reportforge/tests/user_parity/multiselect_drag_user_parity.test.mjs",
+        "reportforge/tests/user_parity/resize_smoke_user_parity.test.mjs",
+        "reportforge/tests/user_parity/selection_handle_stacking_user_parity.test.mjs",
+        "reportforge/tests/run_runtime_regression.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/user_parity/fast_interaction_smoke_user_parity.test.mjs",
+        "reportforge/tests/user_parity/resize_smoke_user_parity.test.mjs",
+        "reportforge/tests/user_parity/selection_handle_stacking_user_parity.test.mjs",
+        "reportforge/tests/run_runtime_regression.mjs"
+      ],
+      "coverageReal": 9,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-07",
+      "name": "preview",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "risk": "high",
+      "existingTests": [
+        "reportforge/tests/user_parity/preview_clipping_user_parity.test.mjs",
+        "reportforge/tests/user_parity/clipboard_design_preview_parity.test.mjs",
+        "reportforge/tests/run_runtime_regression.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/user_parity/preview_clipping_user_parity.test.mjs",
+        "reportforge/tests/user_parity/clipboard_design_preview_parity.test.mjs",
+        "reportforge/tests/run_runtime_regression.mjs"
+      ],
+      "coverageReal": 7,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-08",
+      "name": "commands",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "risk": "high",
+      "existingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs"
+      ],
+      "coverageReal": 4,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-09",
+      "name": "insert",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "risk": "medium",
+      "existingTests": [
+        "reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs"
+      ],
+      "coverageReal": 2,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-10",
+      "name": "format-properties",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "risk": "medium",
+      "existingTests": [
+        "reportforge/tests/format_controls_regression.test.mjs",
+        "reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs"
+      ],
+      "coverageReal": 2,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-11",
+      "name": "zoom",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "risk": "medium",
+      "existingTests": [
+        "reportforge/tests/user_parity/zoom_extremes_smoke_user_parity.test.mjs",
+        "reportforge/tests/run_runtime_regression.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/user_parity/zoom_extremes_smoke_user_parity.test.mjs",
+        "reportforge/tests/run_runtime_regression.mjs"
+      ],
+      "coverageReal": 4,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-12",
+      "name": "alignment-snap",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "risk": "medium",
+      "existingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "coverageReal": 2,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-13",
+      "name": "clipboard",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "risk": "low",
+      "existingTests": [
+        "reportforge/tests/user_parity/clipboard_visible_composition_user_parity.test.mjs",
+        "reportforge/tests/user_parity/clipboard_design_preview_parity.test.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/user_parity/clipboard_visible_composition_user_parity.test.mjs",
+        "reportforge/tests/user_parity/clipboard_design_preview_parity.test.mjs"
+      ],
+      "coverageReal": 4,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-14",
+      "name": "keyboard",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "risk": "low",
+      "existingTests": [
+        "reportforge/tests/keyboard_registry.test.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/keyboard_registry.test.mjs"
+      ],
+      "coverageReal": 2,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-15",
+      "name": "formula-js",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "risk": "low",
+      "existingTests": [
+        "reportforge/tests/type_coercion_js.test.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/type_coercion_js.test.mjs"
+      ],
+      "coverageReal": 2,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-16",
+      "name": "doc-types-fields",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "risk": "low",
+      "existingTests": [
+        "reportforge/tests/user_parity/template_smoke_user_parity.test.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/user_parity/template_smoke_user_parity.test.mjs"
+      ],
+      "coverageReal": 2,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-17",
+      "name": "workspace-ui",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "risk": "medium",
+      "existingTests": [
+        "reportforge/tests/pixel_contracts.test.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/pixel_contracts.test.mjs"
+      ],
+      "coverageReal": 2,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-18",
+      "name": "engine-core-init",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "risk": "medium",
+      "existingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/engine_contracts.test.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/engine_contracts.test.mjs"
+      ],
+      "coverageReal": 4,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-19",
+      "name": "debug",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "risk": "low",
+      "existingTests": [
+        "reportforge/tests/debuggability.test.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/debuggability.test.mjs"
+      ],
+      "coverageReal": 2,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-20",
+      "name": "ui-adapters",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "risk": "low",
+      "existingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "coverageReal": 2,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-21",
+      "name": "write-log",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "risk": "medium",
+      "existingTests": [
+        "reportforge/tests/runtime_write_log.test.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/runtime_write_log.test.mjs"
+      ],
+      "coverageReal": 2,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-22",
+      "name": "test-tooling",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "risk": "low",
+      "existingTests": [],
+      "passingTests": [],
+      "coverageReal": 0,
+      "coverageNote": "BACKLOG: TestOutputSanitizer.js and TestRunnerUI.js are test tooling accidentally placed in engines/. No production contracts to test. Candidate for relocation per existing notes.",
+      "coverageExclusion": {
+        "reason": "BACKLOG",
+        "justification": "TestOutputSanitizer.js and TestRunnerUI.js are test tooling accidentally placed in engines/. No production contracts to test. Candidate for relocation per existing notes."
+      }
+    },
+    {
+      "id": "SS-B01",
+      "name": "formula-eval-python",
+      "domain": "backend-render",
+      "tier": "core",
+      "risk": "critical",
+      "existingTests": [
+        "reportforge/tests/test_formula_engine.py",
+        "reportforge/tests/test_cr_functions.py",
+        "reportforge/tests/test_cr_functions_traceability.py",
+        "reportforge/tests/test_coercion_traceability.py"
+      ],
+      "passingTests": [
+        "reportforge/tests/test_formula_engine.py",
+        "reportforge/tests/test_cr_functions.py",
+        "reportforge/tests/test_cr_functions_traceability.py",
+        "reportforge/tests/test_coercion_traceability.py"
+      ],
+      "coverageReal": 9,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-B02",
+      "name": "datasource",
+      "domain": "backend-render",
+      "tier": "core",
+      "risk": "critical",
+      "existingTests": [
+        "reportforge/tests/test_e2e_api_journey.py",
+        "reportforge/tests/test_load.py"
+      ],
+      "passingTests": [
+        "reportforge/tests/test_e2e_api_journey.py",
+        "reportforge/tests/test_load.py"
+      ],
+      "coverageReal": 4,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-B03",
+      "name": "element-rendering",
+      "domain": "backend-render",
+      "tier": "core",
+      "risk": "critical",
+      "existingTests": [
+        "reportforge/tests/test_render_engine.py",
+        "reportforge/tests/test_html_rendering_golden.py",
+        "reportforge/tests/test_golden_payload.py",
+        "reportforge/tests/test_render_engine_phase2.py",
+        "reportforge/tests/test_advanced_engine.py"
+      ],
+      "passingTests": [
+        "reportforge/tests/test_render_engine.py",
+        "reportforge/tests/test_html_rendering_golden.py",
+        "reportforge/tests/test_golden_payload.py",
+        "reportforge/tests/test_render_engine_phase2.py",
+        "reportforge/tests/test_advanced_engine.py"
+      ],
+      "coverageReal": 11,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-B04",
+      "name": "export-pipeline",
+      "domain": "backend-render",
+      "tier": "core",
+      "risk": "critical",
+      "existingTests": [
+        "reportforge/tests/test_pdf_generator.py",
+        "reportforge/tests/test_round_trip.py"
+      ],
+      "passingTests": [
+        "reportforge/tests/test_pdf_generator.py",
+        "reportforge/tests/test_round_trip.py"
+      ],
+      "coverageReal": 4,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-B05",
+      "name": "doc-models-python",
+      "domain": "backend-render",
+      "tier": "supporting",
+      "risk": "low",
+      "existingTests": [
+        "reportforge/tests/test_doc_types.py",
+        "reportforge/tests/test_input_schema.py"
+      ],
+      "passingTests": [
+        "reportforge/tests/test_doc_types.py",
+        "reportforge/tests/test_input_schema.py"
+      ],
+      "coverageReal": 4,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-B06",
+      "name": "server-api",
+      "domain": "backend-render",
+      "tier": "supporting",
+      "risk": "medium",
+      "existingTests": [
+        "reportforge/tests/test_server.py",
+        "reportforge/tests/test_server_imports.py",
+        "reportforge/tests/test_e2e_api_journey.py"
+      ],
+      "passingTests": [
+        "reportforge/tests/test_server.py",
+        "reportforge/tests/test_server_imports.py",
+        "reportforge/tests/test_e2e_api_journey.py"
+      ],
+      "coverageReal": 7,
+      "coverageNote": null,
+      "coverageExclusion": null
+    }
+  ]
+}
