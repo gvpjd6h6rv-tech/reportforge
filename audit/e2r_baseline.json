@@ -1,0 +1,288 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2026-05-19T16:57:05.451Z",
+  "description": "E2R baseline snapshot \u2014 approved state. Used by e2r_guard.mjs for anti-degradation enforcement.",
+  "totalPassingTests": 46,
+  "subsystems": [
+    {
+      "id": "SS-01",
+      "name": "document-state",
+      "tier": "core",
+      "risk": "critical",
+      "coverageReal": 4,
+      "band": "yellow",
+      "hasExclusion": false,
+      "exclusionReason": null
+    },
+    {
+      "id": "SS-02",
+      "name": "history",
+      "tier": "core",
+      "risk": "high",
+      "coverageReal": 0,
+      "band": "backlog",
+      "hasExclusion": true,
+      "exclusionReason": "BACKLOG"
+    },
+    {
+      "id": "SS-03",
+      "name": "render-scheduler",
+      "tier": "core",
+      "risk": "critical",
+      "coverageReal": 2,
+      "band": "yellow",
+      "hasExclusion": false,
+      "exclusionReason": null
+    },
+    {
+      "id": "SS-04",
+      "name": "geometry",
+      "tier": "core",
+      "risk": "critical",
+      "coverageReal": 2,
+      "band": "yellow",
+      "hasExclusion": false,
+      "exclusionReason": null
+    },
+    {
+      "id": "SS-05",
+      "name": "canvas-layout",
+      "tier": "core",
+      "risk": "critical",
+      "coverageReal": 2,
+      "band": "yellow",
+      "hasExclusion": false,
+      "exclusionReason": null
+    },
+    {
+      "id": "SS-06",
+      "name": "selection-drag",
+      "tier": "core",
+      "risk": "critical",
+      "coverageReal": 9,
+      "band": "green",
+      "hasExclusion": false,
+      "exclusionReason": null
+    },
+    {
+      "id": "SS-07",
+      "name": "preview",
+      "tier": "core",
+      "risk": "high",
+      "coverageReal": 7,
+      "band": "green",
+      "hasExclusion": false,
+      "exclusionReason": null
+    },
+    {
+      "id": "SS-08",
+      "name": "commands",
+      "tier": "core",
+      "risk": "high",
+      "coverageReal": 4,
+      "band": "yellow",
+      "hasExclusion": false,
+      "exclusionReason": null
+    },
+    {
+      "id": "SS-09",
+      "name": "insert",
+      "tier": "supporting",
+      "risk": "medium",
+      "coverageReal": 2,
+      "band": "yellow",
+      "hasExclusion": false,
+      "exclusionReason": null
+    },
+    {
+      "id": "SS-10",
+      "name": "format-properties",
+      "tier": "supporting",
+      "risk": "medium",
+      "coverageReal": 2,
+      "band": "yellow",
+      "hasExclusion": false,
+      "exclusionReason": null
+    },
+    {
+      "id": "SS-11",
+      "name": "zoom",
+      "tier": "supporting",
+      "risk": "medium",
+      "coverageReal": 4,
+      "band": "yellow",
+      "hasExclusion": false,
+      "exclusionReason": null
+    },
+    {
+      "id": "SS-12",
+      "name": "alignment-snap",
+      "tier": "supporting",
+      "risk": "medium",
+      "coverageReal": 2,
+      "band": "yellow",
+      "hasExclusion": false,
+      "exclusionReason": null
+    },
+    {
+      "id": "SS-13",
+      "name": "clipboard",
+      "tier": "supporting",
+      "risk": "low",
+      "coverageReal": 4,
+      "band": "yellow",
+      "hasExclusion": false,
+      "exclusionReason": null
+    },
+    {
+      "id": "SS-14",
+      "name": "keyboard",
+      "tier": "supporting",
+      "risk": "low",
+      "coverageReal": 2,
+      "band": "yellow",
+      "hasExclusion": false,
+      "exclusionReason": null
+    },
+    {
+      "id": "SS-15",
+      "name": "formula-js",
+      "tier": "supporting",
+      "risk": "low",
+      "coverageReal": 2,
+      "band": "yellow",
+      "hasExclusion": false,
+      "exclusionReason": null
+    },
+    {
+      "id": "SS-16",
+      "name": "doc-types-fields",
+      "tier": "supporting",
+      "risk": "low",
+      "coverageReal": 2,
+      "band": "yellow",
+      "hasExclusion": false,
+      "exclusionReason": null
+    },
+    {
+      "id": "SS-17",
+      "name": "workspace-ui",
+      "tier": "supporting",
+      "risk": "medium",
+      "coverageReal": 2,
+      "band": "yellow",
+      "hasExclusion": false,
+      "exclusionReason": null
+    },
+    {
+      "id": "SS-18",
+      "name": "engine-core-init",
+      "tier": "supporting",
+      "risk": "medium",
+      "coverageReal": 4,
+      "band": "yellow",
+      "hasExclusion": false,
+      "exclusionReason": null
+    },
+    {
+      "id": "SS-19",
+      "name": "debug",
+      "tier": "supporting",
+      "risk": "low",
+      "coverageReal": 2,
+      "band": "yellow",
+      "hasExclusion": false,
+      "exclusionReason": null
+    },
+    {
+      "id": "SS-20",
+      "name": "ui-adapters",
+      "tier": "supporting",
+      "risk": "low",
+      "coverageReal": 2,
+      "band": "yellow",
+      "hasExclusion": false,
+      "exclusionReason": null
+    },
+    {
+      "id": "SS-21",
+      "name": "write-log",
+      "tier": "supporting",
+      "risk": "medium",
+      "coverageReal": 2,
+      "band": "yellow",
+      "hasExclusion": false,
+      "exclusionReason": null
+    },
+    {
+      "id": "SS-22",
+      "name": "test-tooling",
+      "tier": "supporting",
+      "risk": "low",
+      "coverageReal": 0,
+      "band": "backlog",
+      "hasExclusion": true,
+      "exclusionReason": "BACKLOG"
+    },
+    {
+      "id": "SS-B01",
+      "name": "formula-eval-python",
+      "tier": "core",
+      "risk": "critical",
+      "coverageReal": 9,
+      "band": "green",
+      "hasExclusion": false,
+      "exclusionReason": null
+    },
+    {
+      "id": "SS-B02",
+      "name": "datasource",
+      "tier": "core",
+      "risk": "critical",
+      "coverageReal": 4,
+      "band": "yellow",
+      "hasExclusion": false,
+      "exclusionReason": null
+    },
+    {
+      "id": "SS-B03",
+      "name": "element-rendering",
+      "tier": "core",
+      "risk": "critical",
+      "coverageReal": 11,
+      "band": "green",
+      "hasExclusion": false,
+      "exclusionReason": null
+    },
+    {
+      "id": "SS-B04",
+      "name": "export-pipeline",
+      "tier": "core",
+      "risk": "critical",
+      "coverageReal": 4,
+      "band": "yellow",
+      "hasExclusion": false,
+      "exclusionReason": null
+    },
+    {
+      "id": "SS-B05",
+      "name": "doc-models-python",
+      "tier": "supporting",
+      "risk": "low",
+      "coverageReal": 4,
+      "band": "yellow",
+      "hasExclusion": false,
+      "exclusionReason": null
+    },
+    {
+      "id": "SS-B06",
+      "name": "server-api",
+      "tier": "supporting",
+      "risk": "medium",
+      "coverageReal": 7,
+      "band": "green",
+      "hasExclusion": false,
+      "exclusionReason": null
+    }
+  ]
+}

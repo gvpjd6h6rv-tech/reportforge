@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-19T16:57:05.451Z",
+  "generatedAt": "2026-05-19T17:31:22.363Z",
   "manifestFile": "audit/e2r_run_manifest.json",
   "ownershipFile": "audit/subsystem_ownership_map.json",
   "totalPassingTests": 46,
