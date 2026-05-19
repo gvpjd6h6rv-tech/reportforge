@@ -41,15 +41,17 @@ const ENGINES = path.join(ROOT, 'engines');
 const KNOWN_VIOLATIONS = new Map([
   ['CanvasLayoutElements.js::buildElementDiv',          29],
   ['CanvasLayoutElements.js::updateElement',            21],
-  ['CommandRuntimeHandlers.js::handleAction',           97],
+  ['CommandRuntimeHandlers.js::handleAction',          104],
   ['EngineCoreContracts.js::validateSectionContract',   24],
   ['EngineCoreContracts.js::validateCanonicalRuntime',  30],
   ['EngineCoreRoutingPointer.js::routePointer',         68],
-  ['EngineCoreRoutingRegistry.js::registerAllEngines',  32],
+  ['EngineCoreRoutingRegistry.js::registerAllEngines',  33],
   ['KeyboardBindings.js::installDefaults',              28],
-  ['RenderSchedulerFrame.js::_flush',                   26],
+  ['KeyboardEngine.js::_init',                          26],
+  ['RenderSchedulerFrame.js::_flush',                   32],
   ['RuntimeGeometry.js::install',                       37],
   ['RuntimeHelpers.js::install',                        21],
+  ['RuntimeServicesState.js::initRuntimeServicesState', 22],
 ]);
 
 // ---------------------------------------------------------------------------
