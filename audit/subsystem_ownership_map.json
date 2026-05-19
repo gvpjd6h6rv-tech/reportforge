@@ -9,7 +9,7 @@
       "name": "document-state",
       "domain": "designer-runtime",
       "tier": "core",
-      "owner": "unassigned",
+      "owner": "designer-runtime/document-state",
       "allowedFiles": [
         "DocumentStore.js",
         "DocumentState.js",
@@ -66,7 +66,7 @@
       "name": "history",
       "domain": "designer-runtime",
       "tier": "core",
-      "owner": "unassigned",
+      "owner": "designer-runtime/history",
       "allowedFiles": [
         "DocumentHistory.js",
         "HistoryEngine.js",
@@ -97,7 +97,7 @@
       "name": "render-scheduler",
       "domain": "designer-runtime",
       "tier": "core",
-      "owner": "unassigned",
+      "owner": "designer-runtime/render-scheduler",
       "allowedFiles": [
         "RenderScheduler.js",
         "RenderSchedulerState.js",
@@ -132,7 +132,7 @@
       "name": "geometry",
       "domain": "designer-runtime",
       "tier": "core",
-      "owner": "unassigned",
+      "owner": "designer-runtime/geometry",
       "allowedFiles": [
         "GeometryCore.js",
         "CanvasGeometry.js",
@@ -177,7 +177,7 @@
       "name": "canvas-layout",
       "domain": "designer-runtime",
       "tier": "core",
-      "owner": "unassigned",
+      "owner": "designer-runtime/canvas-layout",
       "allowedFiles": [
         "CanvasLayoutEngine.js",
         "CanvasLayoutSize.js",
@@ -212,7 +212,7 @@
       "name": "selection-drag",
       "domain": "designer-runtime",
       "tier": "core",
-      "owner": "unassigned",
+      "owner": "designer-runtime/selection-drag",
       "allowedFiles": [
         "SelectionEngine.js",
         "SelectionState.js",
@@ -268,7 +268,7 @@
       "name": "preview",
       "domain": "designer-runtime",
       "tier": "core",
-      "owner": "unassigned",
+      "owner": "designer-runtime/preview",
       "allowedFiles": [
         "PreviewEngine.js",
         "PreviewEngineMode.js",
@@ -309,7 +309,7 @@
       "name": "commands",
       "domain": "designer-runtime",
       "tier": "core",
-      "owner": "unassigned",
+      "owner": "designer-runtime/commands",
       "allowedFiles": [
         "CommandRuntime.js",
         "CommandRuntimeHandlers.js",
@@ -350,7 +350,7 @@
       "name": "insert",
       "domain": "designer-runtime",
       "tier": "supporting",
-      "owner": "unassigned",
+      "owner": "designer-runtime/insert",
       "allowedFiles": [
         "InsertEngine.js"
       ],
@@ -377,7 +377,7 @@
       "name": "format-properties",
       "domain": "designer-runtime",
       "tier": "supporting",
-      "owner": "unassigned",
+      "owner": "designer-runtime/format-properties",
       "allowedFiles": [
         "FormatEngine.js",
         "PropertiesEngine.js",
@@ -411,7 +411,7 @@
       "name": "zoom",
       "domain": "designer-runtime",
       "tier": "supporting",
-      "owner": "unassigned",
+      "owner": "designer-runtime/zoom",
       "allowedFiles": [
         "ZoomEngine.js"
       ],
@@ -447,7 +447,7 @@
       "name": "alignment-snap",
       "domain": "designer-runtime",
       "tier": "supporting",
-      "owner": "unassigned",
+      "owner": "designer-runtime/alignment-snap",
       "allowedFiles": [
         "AlignmentEngine.js",
         "AlignmentGeometry.js",
@@ -500,7 +500,7 @@
       "name": "clipboard",
       "domain": "designer-runtime",
       "tier": "supporting",
-      "owner": "unassigned",
+      "owner": "designer-runtime/clipboard",
       "allowedFiles": [
         "ClipboardEngine.js",
         "ClipboardState.js"
@@ -537,7 +537,7 @@
       "name": "keyboard",
       "domain": "designer-runtime",
       "tier": "supporting",
-      "owner": "unassigned",
+      "owner": "designer-runtime/keyboard",
       "allowedFiles": [
         "KeyboardEngine.js",
         "KeyboardRegistry.js",
@@ -569,7 +569,7 @@
       "name": "formula-js",
       "domain": "designer-runtime",
       "tier": "supporting",
-      "owner": "unassigned",
+      "owner": "designer-runtime/formula-js",
       "allowedFiles": [
         "FormulaEngine.js",
         "FormulaEditorDialog.js",
@@ -601,7 +601,7 @@
       "name": "doc-types-fields",
       "domain": "designer-runtime",
       "tier": "supporting",
-      "owner": "unassigned",
+      "owner": "designer-runtime/doc-types-fields",
       "allowedFiles": [
         "DocTypeRegistry.js",
         "DocTypeAndProbes.js",
@@ -639,7 +639,7 @@
       "name": "workspace-ui",
       "domain": "designer-runtime",
       "tier": "supporting",
-      "owner": "unassigned",
+      "owner": "designer-runtime/workspace-ui",
       "allowedFiles": [
         "RulerEngine.js",
         "RulerEngineRenderer.js",
@@ -683,7 +683,7 @@
       "name": "engine-core-init",
       "domain": "designer-runtime",
       "tier": "supporting",
-      "owner": "unassigned",
+      "owner": "designer-runtime/engine-core-init",
       "allowedFiles": [
         "EngineCore.js",
         "EngineCoreRuntime.js",
@@ -728,7 +728,7 @@
       "name": "debug",
       "domain": "designer-runtime",
       "tier": "supporting",
-      "owner": "unassigned",
+      "owner": "designer-runtime/debug",
       "allowedFiles": [
         "DebugTrace.js",
         "DebugOverlay.js",
@@ -758,7 +758,7 @@
       "name": "ui-adapters",
       "domain": "designer-runtime",
       "tier": "supporting",
-      "owner": "unassigned",
+      "owner": "designer-runtime/ui-adapters",
       "allowedFiles": [
         "UIAdapters.js",
         "MenuAdapters.js",
@@ -790,7 +790,7 @@
       "name": "write-log",
       "domain": "designer-runtime",
       "tier": "supporting",
-      "owner": "unassigned",
+      "owner": "designer-runtime/write-log",
       "allowedFiles": [
         "RuntimeWriteLog.js"
       ],
@@ -819,7 +819,7 @@
       "name": "formula-eval-python",
       "domain": "backend-render",
       "tier": "core",
-      "owner": "unassigned",
+      "owner": "backend-render/formula-eval-python",
       "allowedFiles": [],
       "legacyFiles": [],
       "writableState": [],
@@ -845,7 +845,7 @@
       "name": "datasource",
       "domain": "backend-render",
       "tier": "core",
-      "owner": "unassigned",
+      "owner": "backend-render/datasource",
       "allowedFiles": [],
       "legacyFiles": [],
       "writableState": [],
@@ -865,7 +865,7 @@
       "name": "element-rendering",
       "domain": "backend-render",
       "tier": "core",
-      "owner": "unassigned",
+      "owner": "backend-render/element-rendering",
       "allowedFiles": [],
       "legacyFiles": [],
       "writableState": [],
@@ -888,7 +888,7 @@
       "name": "export-pipeline",
       "domain": "backend-render",
       "tier": "core",
-      "owner": "unassigned",
+      "owner": "backend-render/export-pipeline",
       "allowedFiles": [],
       "legacyFiles": [],
       "writableState": [],
@@ -908,7 +908,7 @@
       "name": "doc-models-python",
       "domain": "backend-render",
       "tier": "supporting",
-      "owner": "unassigned",
+      "owner": "backend-render/doc-models-python",
       "allowedFiles": [],
       "legacyFiles": [],
       "writableState": [],
@@ -928,7 +928,7 @@
       "name": "server-api",
       "domain": "backend-render",
       "tier": "supporting",
-      "owner": "unassigned",
+      "owner": "backend-render/server-api",
       "allowedFiles": [],
       "legacyFiles": [],
       "writableState": [],
