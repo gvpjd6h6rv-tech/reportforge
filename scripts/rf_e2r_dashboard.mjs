@@ -174,7 +174,7 @@ const C = {
   val:    '\x1b[38;2;220;220;220m',   // light white — values
 };
 
-const BAND_ICON  = { green: '🏆', yellow: '✨', red: '🔴', backlog: '⏸️' };
+const BAND_ICON  = { green: '🏆', yellow: '✨', red: '🚨', backlog: '⏸️' };
 const BAND_DOT   = { green: '🟢', yellow: '🟡', red: '🔴', backlog: '⚫' };
 const BAND_CLR   = { green: C.green, yellow: C.yellow, red: C.red, backlog: C.gray };
 
