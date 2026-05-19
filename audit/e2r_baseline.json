@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-19T19:28:01.406Z",
+  "generatedAt": "2026-05-19T19:44:32.869Z",
   "totalPassingTests": 48,
   "subsystems": [
     {
@@ -19,8 +19,8 @@
       "risk": "high",
       "coverageReal": 4,
       "band": "yellow",
-      "hasExclusion": true,
-      "exclusionReason": "BACKLOG"
+      "hasExclusion": false,
+      "exclusionReason": null
     },
     {
       "id": "SS-03",
@@ -211,16 +211,6 @@
       "band": "yellow",
       "hasExclusion": false,
       "exclusionReason": null
-    },
-    {
-      "id": "SS-22",
-      "name": "test-tooling",
-      "tier": "supporting",
-      "risk": "low",
-      "coverageReal": 0,
-      "band": "backlog",
-      "hasExclusion": true,
-      "exclusionReason": "BACKLOG"
     },
     {
       "id": "SS-B01",

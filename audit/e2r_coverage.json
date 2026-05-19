@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-19T19:38:35.890Z",
+  "generatedAt": "2026-05-19T19:44:32.850Z",
   "manifestFile": "audit/e2r_run_manifest.json",
   "ownershipFile": "audit/subsystem_ownership_map.json",
   "totalPassingTests": 48,
@@ -374,21 +374,6 @@
       "coverageReal": 2,
       "coverageNote": null,
       "coverageExclusion": null
-    },
-    {
-      "id": "SS-22",
-      "name": "test-tooling",
-      "domain": "designer-runtime",
-      "tier": "supporting",
-      "risk": "low",
-      "existingTests": [],
-      "passingTests": [],
-      "coverageReal": 0,
-      "coverageNote": "BACKLOG: TestOutputSanitizer.js and TestRunnerUI.js are test tooling accidentally placed in engines/. No production contracts to test. Candidate for relocation per existing notes.",
-      "coverageExclusion": {
-        "reason": "BACKLOG",
-        "justification": "TestOutputSanitizer.js and TestRunnerUI.js are test tooling accidentally placed in engines/. No production contracts to test. Candidate for relocation per existing notes."
-      }
     },
     {
       "id": "SS-B01",
