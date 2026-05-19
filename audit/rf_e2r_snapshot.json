@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "generatedAt": "2026-05-19T22:12:52.091Z",
+  "generatedAt": "2026-05-19T22:24:53.403Z",
   "formula": "score = 0.35*bandFactor + 0.20*(100-surface) + 0.15*(100-legacyDebt) + 0.15*(100-coupling) + 0.10*(100-riskScore) + 0.05*guardBonus",
   "bandThresholds": "green=score≥80 | yellow=score 50–79 | red=score<50  (score-derived, Opción A)",
   "bandNote": "Dashboard band is score-derived. E2R guard uses coverageReal bands internally (untouched).",
@@ -8,47 +8,31 @@
   "subsystems": [
     {
       "id": "SS-12",
-      "name": "alignment-snap",
+      "name": "snap",
       "domain": "designer-runtime",
       "tier": "supporting",
-      "score": 42,
+      "score": 43,
       "band": "red",
-      "owner": "designer-runtime/alignment-snap",
-      "coverageReal": 2,
-      "surface": 100,
+      "owner": "designer-runtime/snap",
+      "coverageReal": 0,
+      "surface": 29,
       "legacyDebt": 0,
-      "coupling": 99,
+      "coupling": 33,
       "risk": 60,
-      "requiredGuardCI": true,
-      "tests": 1,
-      "allowedFiles": 14,
+      "requiredGuardCI": false,
+      "tests": 0,
+      "allowedFiles": 4,
       "allowedFilesList": [
-        "AlignmentEngine.js",
-        "AlignmentGeometry.js",
-        "AlignmentGuides.js",
-        "AlignmentGuideOverlay.js",
-        "AlignmentActions.js",
-        "AlignEngineActions.js",
-        "AlignEngine.js",
         "SnapEngine.js",
         "SnapState.js",
         "SnapCore.js",
-        "SnapGuides.js",
-        "GuideEngine.js",
-        "GuideRenderer.js",
-        "GuideState.js"
+        "SnapGuides.js"
       ],
-      "existingTestsList": [
-        "reportforge/tests/governance_guardrails.test.mjs"
-      ],
-      "passingTestsList": [
-        "reportforge/tests/governance_guardrails.test.mjs"
-      ],
-      "requiredGuardCIList": [
-        "audit/ssot_guard.mjs"
-      ],
-      "notes": "ssot_guard.mjs enforces SnapEngine→SnapState delegation. AlignEngine.js and AlignEngineActions.js contain identical _fallback() implementations — one is likely a refactor artifact.",
-      "coverageNote": null
+      "existingTestsList": [],
+      "passingTestsList": [],
+      "requiredGuardCIList": [],
+      "notes": "SnapEngine.js has internal let _gridModel/_enabled duplicating SnapState — SSOT pattern declared in ownership_map notes but not enforced by any guard. DragEngine.js calls SnapCore.snapValue() and SnapState.getGrid()/isEnabled() directly.",
+      "coverageNote": "no tests declared in existingTests"
     },
     {
       "id": "SS-18",
@@ -276,6 +260,39 @@
       "coverageNote": null
     },
     {
+      "id": "SS-23",
+      "name": "alignment",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "score": 54,
+      "band": "yellow",
+      "owner": "designer-runtime/alignment",
+      "coverageReal": 2,
+      "surface": 36,
+      "legacyDebt": 0,
+      "coupling": 66,
+      "risk": 60,
+      "requiredGuardCI": false,
+      "tests": 1,
+      "allowedFiles": 5,
+      "allowedFilesList": [
+        "AlignmentEngine.js",
+        "AlignmentGeometry.js",
+        "AlignmentActions.js",
+        "AlignEngine.js",
+        "AlignEngineActions.js"
+      ],
+      "existingTestsList": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "passingTestsList": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "requiredGuardCIList": [],
+      "notes": "AlignEngine.js and AlignEngineActions.js are identical implementations (same 5 methods + same _fallback). AlignmentEngine.js and AlignmentGeometry.js duplicate _bounds() and compute() logic. Both pairs are refactor artifacts shipping to production.",
+      "coverageNote": null
+    },
+    {
       "id": "SS-06",
       "name": "selection-drag",
       "domain": "designer-runtime",
@@ -358,6 +375,39 @@
       ],
       "requiredGuardCIList": [],
       "notes": "FieldExplorerDrop.js may call DS.elements.push() directly bypassing DocumentActions — not confirmed. DocTypeAndProbes.js and DocTypeProbes.js appear to overlap — only one may be needed.",
+      "coverageNote": null
+    },
+    {
+      "id": "SS-24",
+      "name": "guide-rendering",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "score": 56,
+      "band": "yellow",
+      "owner": "designer-runtime/guide-rendering",
+      "coverageReal": 2,
+      "surface": 36,
+      "legacyDebt": 0,
+      "coupling": 66,
+      "risk": 40,
+      "requiredGuardCI": false,
+      "tests": 1,
+      "allowedFiles": 5,
+      "allowedFilesList": [
+        "GuideEngine.js",
+        "GuideRenderer.js",
+        "GuideState.js",
+        "AlignmentGuides.js",
+        "AlignmentGuideOverlay.js"
+      ],
+      "existingTestsList": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "passingTestsList": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "requiredGuardCIList": [],
+      "notes": "GuideEngine.js and GuideRenderer.js duplicate _getContainer(), GUIDE_COLOR constants and rendering logic. AlignmentGuides.js and AlignmentGuideOverlay.js also duplicate guide DOM creation. UI-only — no DS critical field mutations.",
       "coverageNote": null
     },
     {

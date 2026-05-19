@@ -114,11 +114,11 @@
     },
     {
       "id": "SS-12",
-      "name": "alignment-snap",
+      "name": "snap",
       "tier": "supporting",
       "risk": "medium",
-      "coverageReal": 2,
-      "band": "yellow",
+      "coverageReal": 0,
+      "band": "red",
       "hasExclusion": false,
       "exclusionReason": null
     },
@@ -207,6 +207,26 @@
       "name": "write-log",
       "tier": "supporting",
       "risk": "medium",
+      "coverageReal": 2,
+      "band": "yellow",
+      "hasExclusion": false,
+      "exclusionReason": null
+    },
+    {
+      "id": "SS-23",
+      "name": "alignment",
+      "tier": "supporting",
+      "risk": "medium",
+      "coverageReal": 2,
+      "band": "yellow",
+      "hasExclusion": false,
+      "exclusionReason": null
+    },
+    {
+      "id": "SS-24",
+      "name": "guide-rendering",
+      "tier": "supporting",
+      "risk": "low",
       "coverageReal": 2,
       "band": "yellow",
       "hasExclusion": false,
