@@ -1,0 +1,968 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2026-05-18",
+  "description": "ReportForge subsystem ownership map — PR-1 of E2R. No scores. No snapshots. Conservative, verifiable inventory.",
+  "sharedFiles": [],
+  "subsystems": [
+    {
+      "id": "SS-01",
+      "name": "document-state",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "owner": "unassigned",
+      "allowedFiles": [
+        "DocumentStore.js",
+        "DocumentState.js",
+        "DocumentActions.js",
+        "DocumentSelectors.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [
+        "DS.sections",
+        "DS.elements",
+        "DS.selection",
+        "DS.zoom",
+        "DS.zoomDesign",
+        "DS.zoomPreview",
+        "DS.tool",
+        "DS.previewMode",
+        "DS.pageMarginLeft",
+        "DS.pageMarginTop",
+        "DS.gridVisible",
+        "DS.snapToGrid",
+        "DS.clipboard"
+      ],
+      "selectors": [
+        "DS.getElementById",
+        "DS.getSection",
+        "DS.getSectionTop",
+        "DS.getSectionAtY",
+        "DS.getTotalHeight",
+        "DS.getSelectedElements",
+        "DS.isSelected",
+        "DS.snap"
+      ],
+      "events": [
+        "DS.subscribe(fn)",
+        "DS.notify()"
+      ],
+      "existingTests": [
+        "reportforge/tests/engine_contracts.test.mjs",
+        "reportforge/tests/runtime_write_log.test.mjs",
+        "reportforge/tests/critical_runtime_contracts.test.mjs"
+      ],
+      "requiredGuardCI": [
+        "audit/runtime_trace_guard.mjs",
+        "audit/ssot_guard.mjs"
+      ],
+      "risk": "critical",
+      "notes": "Central SSOT for all mutable designer state. All mutations must pass through DocumentActions + RuntimeWriteLog. The property setters on DS (via defineProperty loop in DocumentStore.js) bypass write logging — callers must use set* methods, not direct assignment.",
+      "unresolvedAmbiguities": [
+        "DocumentHistory.js is composed inside DocumentStore.js but has distinct undo/redo responsibility — see SS-02 for boundary question"
+      ]
+    },
+    {
+      "id": "SS-02",
+      "name": "history",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "owner": "unassigned",
+      "allowedFiles": [
+        "DocumentHistory.js",
+        "HistoryEngine.js",
+        "HistorySnapshot.js",
+        "HistoryState.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [
+        "DS.history",
+        "DS.historyIndex"
+      ],
+      "selectors": [],
+      "events": [],
+      "existingTests": [
+        "reportforge/tests/user_parity/undo_redo_user_parity.test.mjs",
+        "reportforge/tests/user_parity/undo_redo_mixed_history_user_parity.test.mjs"
+      ],
+      "requiredGuardCI": [],
+      "risk": "high",
+      "notes": "justification: no dedicated CI gate yet; covered indirectly by runtime regression snapshot baselines and user_parity undo/redo tests. Two parallel undo stacks exist: DocumentHistory (snapshot-based, wired into DocumentStore) and HistoryEngine (label-based, max 100, standalone). Their synchronization is unclear — HistoryEngine.push() delegates to DS.saveHistory() creating a potential double-save.",
+      "unresolvedAmbiguities": [
+        "DocumentHistory vs HistoryEngine: are these two synchronized stacks or independent? HistoryEngine.undo() calls _restore() then previously also called DS.undo() (double-apply bug fixed in write-log PR). The canonical undo path is not documented.",
+        "HistoryState.js purpose unclear without reading the full file — may be redundant with DocumentHistory internal state"
+      ]
+    },
+    {
+      "id": "SS-03",
+      "name": "render-scheduler",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "owner": "unassigned",
+      "allowedFiles": [
+        "RenderScheduler.js",
+        "RenderSchedulerState.js",
+        "RenderSchedulerQueue.js",
+        "RenderSchedulerScope.js",
+        "RenderSchedulerFrame.js",
+        "RenderSchedulerObservability.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [
+        "S.locked (internal semaphore)"
+      ],
+      "selectors": [
+        "RenderSchedulerScope.currentWriteScope()"
+      ],
+      "events": [
+        "RenderScheduler.flushSync(fn, label)",
+        "RenderScheduler.schedule(priority, fn)"
+      ],
+      "existingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "requiredGuardCI": [],
+      "risk": "critical",
+      "notes": "justification: governance_guardrails.test.mjs test 44 enforces that only RenderSchedulerFrame sets S.locked. Phase order (layout→visual→handles→post) enforced by audit/pipeline_phase_guard.mjs. No dedicated unit test suite — all coverage is integration-level.",
+      "unresolvedAmbiguities": [
+        "RenderSchedulerObservability.js: unclear if it emits to an external sink or only to console — if external, creates hidden coupling"
+      ]
+    },
+    {
+      "id": "SS-04",
+      "name": "geometry",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "owner": "unassigned",
+      "allowedFiles": [
+        "GeometryCore.js",
+        "CanvasGeometry.js",
+        "RuntimeGeometry.js",
+        "RuntimeGlobals.js",
+        "RuntimeConfig.js",
+        "RuntimeData.js",
+        "RuntimeHelpers.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [],
+      "selectors": [
+        "RF.Geometry.modelToView(x, y)",
+        "RF.Geometry.viewToModel(x, y)",
+        "RF.Geometry.rectToView(rect)",
+        "RF.Geometry.zoom()",
+        "RF.Geometry.scale(v)",
+        "RF.Geometry.unscale(v)",
+        "CFG.PAGE_W",
+        "CFG.RULER_H",
+        "CFG.RULER_W",
+        "CFG.MODEL_GRID"
+      ],
+      "events": [],
+      "existingTests": [
+        "reportforge/tests/geometry_core.test.mjs"
+      ],
+      "requiredGuardCI": [
+        "audit/configurational_ssot_guard.mjs",
+        "audit/geometric_assertions_guard.mjs",
+        "audit/shared_core_guard.mjs"
+      ],
+      "risk": "critical",
+      "notes": "RuntimeConfig.js is the SSOT for all layout constants (ruler.topPx=22, ruler.sidePx=22, canvas.pageW=754, grid=4). All other subsystems must read from CFG — never hardcode. RuntimeData.js and RuntimeHelpers.js roles are underdocumented.",
+      "unresolvedAmbiguities": [
+        "RuntimeGlobals.js contains Matrix2D and AABB classes — unclear if these are actively used or vestigial",
+        "RuntimeData.js purpose not fully verified — may duplicate RuntimeHelpers.js"
+      ]
+    },
+    {
+      "id": "SS-05",
+      "name": "canvas-layout",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "owner": "unassigned",
+      "allowedFiles": [
+        "CanvasLayoutEngine.js",
+        "CanvasLayoutSize.js",
+        "CanvasLayoutElements.js",
+        "CanvasLayoutContracts.js",
+        "ElementLayoutEngine.js",
+        "SectionLayoutEngine.js",
+        "SectionEngine.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [],
+      "selectors": [],
+      "events": [
+        "CanvasLayoutEngine.renderAll()",
+        "CanvasLayoutEngine.updateSync()",
+        "ElementLayoutEngine.updatePosition(id)"
+      ],
+      "existingTests": [
+        "reportforge/tests/run_runtime_regression.mjs",
+        "reportforge/tests/critical_runtime_contracts.test.mjs"
+      ],
+      "requiredGuardCI": [],
+      "risk": "critical",
+      "notes": "justification: covered by runtime regression baselines — canvas layout divergence manifests as screenshot mismatch. SectionEngine.js renders section DOM; SectionLayoutEngine.js manages section heights. Overlap possible — see ambiguities.",
+      "unresolvedAmbiguities": [
+        "SectionEngine.js vs SectionLayoutEngine.js: boundary unclear. Both deal with section rendering. One may be a refactor artifact of the other.",
+        "CanvasLayoutEngine delegates to CanvasLayoutSize and CanvasLayoutElements — the split between size computation and element rendering is intentional but not enforced by a guard"
+      ]
+    },
+    {
+      "id": "SS-06",
+      "name": "selection-drag",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "owner": "unassigned",
+      "allowedFiles": [
+        "SelectionEngine.js",
+        "SelectionState.js",
+        "SelectionInteraction.js",
+        "SelectionInteractionMotion.js",
+        "SelectionInteractionPointer.js",
+        "SelectionOverlay.js",
+        "SelectionHitTest.js",
+        "SelectionGeometry.js",
+        "SelectionEngineContracts.js",
+        "DragEngine.js",
+        "DragState.js",
+        "HitTestEngine.js",
+        "HitTestGeometry.js",
+        "HandlesEngine.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [
+        "DS.selection",
+        "DragState (session-local)"
+      ],
+      "selectors": [
+        "SelectionState.isSelected(id)",
+        "SelectionState.getSelectedElements()",
+        "SelectionState.getElementById(id)",
+        "SelectionState.getSectionTop(id)"
+      ],
+      "events": [
+        "pointerdown on .cr-element",
+        "pointermove on workspace",
+        "pointerup on workspace"
+      ],
+      "existingTests": [
+        "reportforge/tests/user_parity/fast_interaction_smoke_user_parity.test.mjs",
+        "reportforge/tests/user_parity/multiselect_drag_user_parity.test.mjs",
+        "reportforge/tests/user_parity/resize_smoke_user_parity.test.mjs",
+        "reportforge/tests/user_parity/selection_handle_stacking_user_parity.test.mjs",
+        "reportforge/tests/run_runtime_regression.mjs"
+      ],
+      "requiredGuardCI": [
+        "audit/ssot_guard.mjs"
+      ],
+      "risk": "critical",
+      "notes": "ssot_guard.mjs enforces DragEngine→DragState delegation. SelectionInteraction.js and SelectionInteractionMotion.js implement the same _doMove/_doResize logic — the active path is controlled by RF.RuntimeServices.isEngineCoreInteractionEnabled().",
+      "unresolvedAmbiguities": [
+        "SelectionInteraction.js vs SelectionInteractionMotion.js: both implement _doMove and _doResize. Which one is used in production? The routing flag isEngineCoreInteractionEnabled() determines the active path but the non-active file still ships.",
+        "HandlesEngine.js vs SelectionOverlay.js: both appear to render selection handles. Canonical file not confirmed.",
+        "SelectionState.js vs DS.selection: SelectionState exposes its own API (selectOnly, addSelection, etc.) in parallel with DS.selectOnly etc. — are these the same object or two separate state stores?"
+      ]
+    },
+    {
+      "id": "SS-07",
+      "name": "preview",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "owner": "unassigned",
+      "allowedFiles": [
+        "PreviewEngine.js",
+        "PreviewEngineMode.js",
+        "PreviewEngineRenderer.js",
+        "PreviewEngineData.js",
+        "PreviewEngineContracts.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [
+        "DS.previewMode",
+        "DS.zoomDesign",
+        "DS.zoomPreview"
+      ],
+      "selectors": [
+        "PreviewEngineMode.isActive()"
+      ],
+      "events": [
+        "PreviewEngineMode.show()",
+        "PreviewEngineMode.hide()",
+        "PreviewEngineMode.toggle()",
+        "PreviewEngineRenderer.refresh()"
+      ],
+      "existingTests": [
+        "reportforge/tests/user_parity/preview_clipping_user_parity.test.mjs",
+        "reportforge/tests/user_parity/clipboard_design_preview_parity.test.mjs",
+        "reportforge/tests/run_runtime_regression.mjs"
+      ],
+      "requiredGuardCI": [],
+      "risk": "high",
+      "notes": "justification: covered by runtime regression baseline runtime-preview.png and preview_clipping_user_parity.test.mjs. PreviewEngine.js is the top-level compositor (previously named PreviewEngineV19 in docs). PreviewZoomEngine lives inside ZoomEngine.js (SS-11) — cross-subsystem coupling.",
+      "unresolvedAmbiguities": [
+        "PreviewZoomEngine is defined inside ZoomEngine.js (SS-11) but exclusively used by PreviewEngineMode — boundary ownership unclear",
+        "DS._sampleData is read by PreviewEngineData but assigned by DocTypeAndProbes (SS-16) — cross-subsystem write to private state field"
+      ]
+    },
+    {
+      "id": "SS-08",
+      "name": "commands",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "owner": "unassigned",
+      "allowedFiles": [
+        "CommandRuntime.js",
+        "CommandRuntimeHandlers.js",
+        "CommandRuntimeSelection.js",
+        "CommandRuntimeSections.js",
+        "CommandRuntimeFile.js",
+        "CommandRuntimeDocType.js",
+        "CommandRuntimeView.js",
+        "CommandRuntimeShared.js",
+        "CommandRuntimeInit.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [],
+      "selectors": [],
+      "events": [
+        "CommandEngine.cut()",
+        "CommandEngine.copy()",
+        "CommandEngine.paste()",
+        "CommandEngine.delete()",
+        "CommandEngine.selectAll()",
+        "CommandEngine.alignLefts()",
+        "CommandEngine.insertSection()",
+        "CommandEngine.deleteSection()"
+      ],
+      "existingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs"
+      ],
+      "requiredGuardCI": [],
+      "risk": "high",
+      "notes": "justification: governance_guardrails.test.mjs tests 6 and 17 enforce that the monolith does not define command orchestration or UI adapter wiring inline. CommandRuntimeView.js content not fully verified — may contain view commands (zoom-fit-page, add-guide).",
+      "unresolvedAmbiguities": [
+        "CommandRuntimeView.js full content not read — unclear which commands it handles"
+      ]
+    },
+    {
+      "id": "SS-09",
+      "name": "insert",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "owner": "unassigned",
+      "allowedFiles": [
+        "InsertEngine.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [
+        "DS.tool"
+      ],
+      "selectors": [],
+      "events": [
+        "InsertEngine.setTool(tool)",
+        "InsertEngine.onCanvasMouseDown(e)",
+        "InsertEngine.onMouseUp(e)"
+      ],
+      "existingTests": [
+        "reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs"
+      ],
+      "requiredGuardCI": [],
+      "risk": "medium",
+      "notes": "Single file, 83 lines. Could be absorbed into SS-08 commands. Kept separate because it owns the DS.tool write and the insert-drag gesture lifecycle.",
+      "unresolvedAmbiguities": []
+    },
+    {
+      "id": "SS-10",
+      "name": "format-properties",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "owner": "unassigned",
+      "allowedFiles": [
+        "FormatEngine.js",
+        "PropertiesEngine.js",
+        "PropertiesEnginePanel.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [],
+      "selectors": [
+        "DS.getSelectedElements()"
+      ],
+      "events": [
+        "FormatEngine.applyFormat(key, value)",
+        "FormatEngine.toggleFormat(key)",
+        "FormatEngine.updateToolbar()",
+        "PropertiesEngine.render()",
+        "PropertiesEngine.updatePositionFields(el)"
+      ],
+      "existingTests": [
+        "reportforge/tests/format_controls_regression.test.mjs",
+        "reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs"
+      ],
+      "requiredGuardCI": [],
+      "risk": "medium",
+      "notes": "FormatEngine may mutate element properties (color, fontFamily, etc.) directly on the element object rather than through DS.setElements — needs verification. If confirmed, this is a write-log bypass.",
+      "unresolvedAmbiguities": [
+        "FormatEngine.applyFormat: does it mutate element.* directly or go through DocumentActions? Not confirmed from code scan."
+      ]
+    },
+    {
+      "id": "SS-11",
+      "name": "zoom",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "owner": "unassigned",
+      "allowedFiles": [
+        "ZoomEngine.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [
+        "DS.zoom",
+        "DS.previewZoom (non-critical, direct)"
+      ],
+      "selectors": [
+        "DesignZoomEngine.get()",
+        "PreviewZoomEngine.get()"
+      ],
+      "events": [
+        "DesignZoomEngine.set(z)",
+        "DesignZoomEngine.zoomIn()",
+        "DesignZoomEngine.zoomOut()",
+        "PreviewZoomEngine.set(z)",
+        "ZoomWidget.sync()"
+      ],
+      "existingTests": [
+        "reportforge/tests/user_parity/zoom_extremes_smoke_user_parity.test.mjs",
+        "reportforge/tests/run_runtime_regression.mjs"
+      ],
+      "requiredGuardCI": [],
+      "risk": "medium",
+      "notes": "Single file containing three objects: DesignZoomEngine, PreviewZoomEngine, ZoomWidget. Low cohesion. PreviewZoomEngine is used exclusively by SS-07 preview but lives here. DS.previewZoom is written directly (non-critical field, no setPreviewZoom method in DocumentActions).",
+      "unresolvedAmbiguities": [
+        "PreviewZoomEngine ownership: logically belongs to preview (SS-07) but physically lives in ZoomEngine.js"
+      ]
+    },
+    {
+      "id": "SS-12",
+      "name": "alignment-snap",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "owner": "unassigned",
+      "allowedFiles": [
+        "AlignmentEngine.js",
+        "AlignmentGeometry.js",
+        "AlignmentGuides.js",
+        "AlignmentGuideOverlay.js",
+        "AlignmentActions.js",
+        "AlignEngineActions.js",
+        "AlignEngine.js",
+        "SnapEngine.js",
+        "SnapState.js",
+        "SnapCore.js",
+        "SnapGuides.js",
+        "GuideEngine.js",
+        "GuideRenderer.js",
+        "GuideState.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [
+        "DS.snapToGrid",
+        "DS.gridVisible",
+        "SnapState._enabled",
+        "SnapState._gridModel"
+      ],
+      "selectors": [
+        "SnapEngine.snap(v)",
+        "AlignmentEngine.compute(el, others)"
+      ],
+      "events": [
+        "GuideEngine.show(guides)",
+        "GuideEngine.hide()",
+        "SnapEngine.setEnabled(v)",
+        "SnapEngine.toggle()"
+      ],
+      "existingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "requiredGuardCI": [
+        "audit/ssot_guard.mjs"
+      ],
+      "risk": "medium",
+      "notes": "ssot_guard.mjs enforces SnapEngine→SnapState delegation. AlignEngine.js and AlignEngineActions.js contain identical _fallback() implementations — one is likely a refactor artifact.",
+      "unresolvedAmbiguities": [
+        "AlignEngine.js vs AlignEngineActions.js: both have same _fallback() method. Which is canonical? Both ship to production.",
+        "AlignmentActions.js purpose not verified — may be a third align implementation",
+        "SnapCore.js vs SnapEngine.js vs SnapState.js: three files for snapping — exact responsibility boundaries unclear"
+      ]
+    },
+    {
+      "id": "SS-13",
+      "name": "clipboard",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "owner": "unassigned",
+      "allowedFiles": [
+        "ClipboardEngine.js",
+        "ClipboardState.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [
+        "DS.clipboard (non-critical, direct write in CommandRuntimeSelection)"
+      ],
+      "selectors": [
+        "ClipboardState.get()",
+        "ClipboardState.hasContent()"
+      ],
+      "events": [
+        "ClipboardEngine.copy(els)",
+        "ClipboardEngine.paste()",
+        "ClipboardState.set(items)",
+        "ClipboardState.clear()"
+      ],
+      "existingTests": [
+        "reportforge/tests/user_parity/clipboard_visible_composition_user_parity.test.mjs",
+        "reportforge/tests/user_parity/clipboard_design_preview_parity.test.mjs"
+      ],
+      "requiredGuardCI": [
+        "audit/ssot_guard.mjs"
+      ],
+      "risk": "low",
+      "notes": "ssot_guard.mjs enforces ClipboardEngine→ClipboardState delegation. DS.clipboard is still written directly by CommandRuntimeSelection (non-critical field, runtime_trace_guard warns but does not fail). Dual write path: ClipboardState.set() and DS.clipboard=.",
+      "unresolvedAmbiguities": [
+        "DS.clipboard vs ClipboardState: two sources of truth for clipboard contents. DS.clipboard is the field read by consumers (DS.clipboard.length), ClipboardState is the SSOT. Are they kept in sync?"
+      ]
+    },
+    {
+      "id": "SS-14",
+      "name": "keyboard",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "owner": "unassigned",
+      "allowedFiles": [
+        "KeyboardEngine.js",
+        "KeyboardRegistry.js",
+        "KeyboardBindings.js",
+        "KeyboardCombo.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [
+        "KeyboardRegistry (binding table)"
+      ],
+      "selectors": [],
+      "events": [
+        "keydown on window"
+      ],
+      "existingTests": [],
+      "requiredGuardCI": [
+        "audit/ssot_guard.mjs"
+      ],
+      "risk": "low",
+      "notes": "ssot_guard.mjs enforces KeyboardEngine→KeyboardRegistry delegation. KeyboardBindings.js content not fully verified — may define the concrete key combo table.",
+      "unresolvedAmbiguities": [
+        "KeyboardBindings.js: defines key combo data or registers handlers? Not confirmed."
+      ]
+    },
+    {
+      "id": "SS-15",
+      "name": "formula-js",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "owner": "unassigned",
+      "allowedFiles": [
+        "FormulaEngine.js",
+        "FormulaEditorDialog.js",
+        "FormulaAndDebug.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [],
+      "selectors": [
+        "FormulaEngine.evaluate(expr, context)"
+      ],
+      "events": [
+        "FormulaEditorDialog.open(el)"
+      ],
+      "existingTests": [
+        "reportforge/tests/type_coercion_js.test.mjs"
+      ],
+      "requiredGuardCI": [
+        "audit/coercion_map_guard.mjs"
+      ],
+      "risk": "low",
+      "notes": "Frontend-only formula evaluator used by PreviewEngineData for field preview. Likely a subset of the Python formula evaluator (SS-B01). FormulaAndDebug.js may mix formula and debug concerns — low cohesion signal.",
+      "unresolvedAmbiguities": [
+        "FormulaEngine.js (JS) vs Python formula evaluator: are they the same algorithm? Divergence would cause design-preview inconsistency.",
+        "FormulaAndDebug.js: mixing two concerns in one file — unclear if intentional or migration artifact"
+      ]
+    },
+    {
+      "id": "SS-16",
+      "name": "doc-types-fields",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "owner": "unassigned",
+      "allowedFiles": [
+        "DocTypeRegistry.js",
+        "DocTypeAndProbes.js",
+        "DocTypeProbes.js",
+        "FieldExplorerEngine.js",
+        "FieldExplorerTree.js",
+        "FieldExplorerDrop.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [
+        "DS._docType",
+        "DS._sampleData"
+      ],
+      "selectors": [
+        "DocTypeRegistry.get(key)",
+        "FieldExplorerEngine.getActiveTree()"
+      ],
+      "events": [
+        "FieldExplorerDrop.onDrop(fieldPath, el)",
+        "FieldExplorerEngine.render()"
+      ],
+      "existingTests": [
+        "reportforge/tests/user_parity/template_smoke_user_parity.test.mjs"
+      ],
+      "requiredGuardCI": [],
+      "risk": "low",
+      "notes": "FieldExplorerDrop.js may call DS.elements.push() directly bypassing DocumentActions — not confirmed. DocTypeAndProbes.js and DocTypeProbes.js appear to overlap — only one may be needed.",
+      "unresolvedAmbiguities": [
+        "DocTypeAndProbes.js vs DocTypeProbes.js: overlap suspected. Which is canonical?",
+        "FieldExplorerDrop.js: likely calls DS.elements.push() directly — write-log bypass risk not yet verified"
+      ]
+    },
+    {
+      "id": "SS-17",
+      "name": "workspace-ui",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "owner": "unassigned",
+      "allowedFiles": [
+        "RulerEngine.js",
+        "RulerEngineRenderer.js",
+        "GridEngine.js",
+        "WorkspaceScrollEngine.js",
+        "WorkspaceScrollEngineLayout.js",
+        "WorkspaceScrollEngineRuntime.js",
+        "OverlayEngine.js",
+        "SectionResizeEngine.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [
+        "DS.gridVisible",
+        "DS.snapToGrid"
+      ],
+      "selectors": [
+        "WorkspaceScrollEngine.getScrollPos()"
+      ],
+      "events": [
+        "RulerEngine.updateCursor(x, y)",
+        "RulerEngine.toggle()",
+        "GridEngine.setVisible(v)",
+        "GridEngine.toggle()",
+        "SectionResizeEngine.onDrag(e)"
+      ],
+      "existingTests": [
+        "reportforge/tests/pixel_contracts.test.mjs"
+      ],
+      "requiredGuardCI": [
+        "audit/configurational_ssot_guard.mjs",
+        "audit/pixel-contracts.mjs"
+      ],
+      "risk": "medium",
+      "notes": "RulerEngine reads ruler dimensions from RuntimeConfig (CFG.RULER_H, CFG.RULER_W) — enforced by configurational_ssot_guard. GridEngine.setVisible writes DS.gridVisible through DocumentActions.setGridVisible (with fallback for legacy environments). OverlayEngine manages multiple overlay layers.",
+      "unresolvedAmbiguities": [
+        "OverlayEngine.js: manages which overlay layers exactly? Debug, guides, selection, all of them?"
+      ]
+    },
+    {
+      "id": "SS-18",
+      "name": "engine-core-init",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "owner": "unassigned",
+      "allowedFiles": [
+        "EngineCore.js",
+        "EngineCoreRuntime.js",
+        "EngineCoreContracts.js",
+        "EngineCoreRouting.js",
+        "EngineCoreRoutingPointer.js",
+        "EngineCoreRoutingZoom.js",
+        "EngineCoreRoutingRegistry.js",
+        "EngineCoreRoutingWorkspace.js",
+        "RuntimeServices.js",
+        "RuntimeServicesState.js",
+        "RuntimeServicesTrace.js",
+        "RuntimeBootstrap.js",
+        "DeferredBootstrap.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [],
+      "selectors": [
+        "RuntimeServices.isEngineCoreInteractionEnabled()",
+        "RuntimeServices.setOwner(name, engine)",
+        "RuntimeServices.setFlag(flag, value)"
+      ],
+      "events": [
+        "DOMContentLoaded (RuntimeBootstrap)",
+        "EngineCoreRouting.routePointerEvent(e)",
+        "EngineCoreRouting.routeZoomEvent(e)"
+      ],
+      "existingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/engine_contracts.test.mjs"
+      ],
+      "requiredGuardCI": [],
+      "risk": "medium",
+      "notes": "justification: governance_guardrails.test.mjs test 10 enforces that contract helpers load before EngineCore. This subsystem is scaffolding — it wires all other subsystems at boot but has no domain logic of its own. 13 files is high for an init subsystem — some may be refactor artifacts.",
+      "unresolvedAmbiguities": [
+        "RuntimeBootstrap.js vs DeferredBootstrap.js: both handle deferred init. Which runs first? Are they in sequence or conditional?",
+        "EngineCoreRuntime.js: validates contracts at runtime — may overlap with EngineCoreContracts.js"
+      ]
+    },
+    {
+      "id": "SS-19",
+      "name": "debug",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "owner": "unassigned",
+      "allowedFiles": [
+        "DebugTrace.js",
+        "DebugOverlay.js",
+        "DebugChannelsPanel.js",
+        "DebugPanelUtils.js",
+        "DebugTraceToggle.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [
+        "localStorage['RF_DEBUG_STATE_V1']"
+      ],
+      "selectors": [
+        "window.RF_DEBUG",
+        "window.rfTrace(channel, ...args)"
+      ],
+      "events": [],
+      "existingTests": [
+        "reportforge/tests/debuggability.test.mjs"
+      ],
+      "requiredGuardCI": [],
+      "risk": "low",
+      "notes": "Non-production subsystem. Toggle channels: runtime, scheduler, invariants, elements, selection, resize, edit, overlay, zoom, scroll, move. Stored in localStorage so debug state survives page reload.",
+      "unresolvedAmbiguities": []
+    },
+    {
+      "id": "SS-20",
+      "name": "ui-adapters",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "owner": "unassigned",
+      "allowedFiles": [
+        "UIAdapters.js",
+        "MenuAdapters.js",
+        "GlobalEventHandlers.js",
+        "DesignerUI.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [
+        "localStorage['rf-ui-mode']"
+      ],
+      "selectors": [],
+      "events": [
+        "click on menu items",
+        "input on toolbar controls",
+        "window global events"
+      ],
+      "existingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "requiredGuardCI": [],
+      "risk": "low",
+      "notes": "Thin adapter layer between DOM events and CommandEngine. DesignerUI.js switches between classic (Crystal Reports style) and modern UI modes. governance_guardrails.test.mjs test 7 enforces that the monolith does not define UI adapter wiring inline.",
+      "unresolvedAmbiguities": [
+        "GlobalEventHandlers.js: what global events exactly? window.onresize, window.onkeydown, or something else?"
+      ]
+    },
+    {
+      "id": "SS-21",
+      "name": "write-log",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "owner": "unassigned",
+      "allowedFiles": [
+        "RuntimeWriteLog.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [],
+      "selectors": [
+        "RuntimeWriteLog.getLastWriter(field)",
+        "RuntimeWriteLog.getWrites(field)",
+        "RuntimeWriteLog.summary()"
+      ],
+      "events": [
+        "RuntimeWriteLog.recordWrite({field, value, source, phase})"
+      ],
+      "existingTests": [
+        "reportforge/tests/runtime_write_log.test.mjs"
+      ],
+      "requiredGuardCI": [
+        "audit/runtime_trace_guard.mjs"
+      ],
+      "risk": "medium",
+      "notes": "Append-only audit log for all DS mutations. Throws hard on missing source or UNKNOWN source. Phase guard (off/warn/throw) enforces render-phase ordering. CI gate: audit/runtime_trace_guard.mjs scans engines/ for direct DS.<criticalField>= assignments that bypass this log.",
+      "unresolvedAmbiguities": []
+    },
+    {
+      "id": "SS-22",
+      "name": "test-tooling",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "owner": "unassigned",
+      "allowedFiles": [
+        "TestOutputSanitizer.js",
+        "TestRunnerUI.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [],
+      "selectors": [],
+      "events": [],
+      "existingTests": [],
+      "requiredGuardCI": [],
+      "risk": "low",
+      "notes": "These files should not be in engines/ — they are test tooling accidentally placed alongside production code. Candidate for relocation to reportforge/tests/. No production code should import them.",
+      "unresolvedAmbiguities": [
+        "TestOutputSanitizer.js and TestRunnerUI.js in engines/ is a governance violation — are they imported by any production engine?"
+      ]
+    },
+    {
+      "id": "SS-B01",
+      "name": "formula-eval-python",
+      "domain": "backend-render",
+      "tier": "core",
+      "owner": "unassigned",
+      "allowedFiles": [],
+      "legacyFiles": [],
+      "writableState": [],
+      "selectors": [],
+      "events": [],
+      "existingTests": [
+        "reportforge/tests/test_formula_engine.py",
+        "reportforge/tests/test_cr_functions.py",
+        "reportforge/tests/test_cr_functions_traceability.py",
+        "reportforge/tests/test_coercion_traceability.py"
+      ],
+      "requiredGuardCI": [
+        "audit/coercion_map_guard.mjs"
+      ],
+      "risk": "critical",
+      "notes": "Python formula tokenizer→parser→AST→evaluator with Crystal Reports function registry. Located at reportforge/core/render/expressions/. allowedFiles intentionally empty — Python modules not verified by this JS guard. File verification deferred to a dedicated Python guard.",
+      "unresolvedAmbiguities": [
+        "Formula engine (JS, SS-15) vs formula evaluator (Python, SS-B01): algorithm parity not verified"
+      ]
+    },
+    {
+      "id": "SS-B02",
+      "name": "datasource",
+      "domain": "backend-render",
+      "tier": "core",
+      "owner": "unassigned",
+      "allowedFiles": [],
+      "legacyFiles": [],
+      "writableState": [],
+      "selectors": [],
+      "events": [],
+      "existingTests": [
+        "reportforge/tests/test_e2e_api_journey.py",
+        "reportforge/tests/test_load.py"
+      ],
+      "requiredGuardCI": [],
+      "risk": "critical",
+      "notes": "justification: no JS-accessible CI guard; Python integration tested via test_e2e_api_journey.py. Located at reportforge/core/render/datasource/. DB introspection, caching, multi-dataset coordination, live data feeds. allowedFiles intentionally empty — Python file verification deferred.",
+      "unresolvedAmbiguities": []
+    },
+    {
+      "id": "SS-B03",
+      "name": "element-rendering",
+      "domain": "backend-render",
+      "tier": "core",
+      "owner": "unassigned",
+      "allowedFiles": [],
+      "legacyFiles": [],
+      "writableState": [],
+      "selectors": [],
+      "events": [],
+      "existingTests": [
+        "reportforge/tests/test_render_engine.py",
+        "reportforge/tests/test_html_rendering_golden.py",
+        "reportforge/tests/test_golden_payload.py",
+        "reportforge/tests/test_render_engine_phase2.py",
+        "reportforge/tests/test_advanced_engine.py"
+      ],
+      "requiredGuardCI": [],
+      "risk": "critical",
+      "notes": "justification: golden baseline tests cover rendering correctness. Located at reportforge/core/render/engines/. Renders HTML, barcodes, charts, crosstabs, tables, subreports. allowedFiles intentionally empty — Python file verification deferred.",
+      "unresolvedAmbiguities": []
+    },
+    {
+      "id": "SS-B04",
+      "name": "export-pipeline",
+      "domain": "backend-render",
+      "tier": "core",
+      "owner": "unassigned",
+      "allowedFiles": [],
+      "legacyFiles": [],
+      "writableState": [],
+      "selectors": [],
+      "events": [],
+      "existingTests": [
+        "reportforge/tests/test_pdf_generator.py",
+        "reportforge/tests/test_round_trip.py"
+      ],
+      "requiredGuardCI": [],
+      "risk": "critical",
+      "notes": "justification: test_pdf_generator.py and test_round_trip.py cover export correctness. Located at reportforge/core/render/export/. Formats: CSV, DOCX, HTML, PDF, PNG, RTF, XLSX. allowedFiles intentionally empty — Python file verification deferred.",
+      "unresolvedAmbiguities": []
+    },
+    {
+      "id": "SS-B05",
+      "name": "doc-models-python",
+      "domain": "backend-render",
+      "tier": "supporting",
+      "owner": "unassigned",
+      "allowedFiles": [],
+      "legacyFiles": [],
+      "writableState": [],
+      "selectors": [],
+      "events": [],
+      "existingTests": [
+        "reportforge/tests/test_doc_types.py",
+        "reportforge/tests/test_input_schema.py"
+      ],
+      "requiredGuardCI": [],
+      "risk": "low",
+      "notes": "5 document type models (factura, remision, nota_credito, retencion, liquidacion). Located at reportforge/core/models/. SSOT for document structure on the Python side. allowedFiles intentionally empty — Python file verification deferred.",
+      "unresolvedAmbiguities": []
+    },
+    {
+      "id": "SS-B06",
+      "name": "server-api",
+      "domain": "backend-render",
+      "tier": "supporting",
+      "owner": "unassigned",
+      "allowedFiles": [],
+      "legacyFiles": [],
+      "writableState": [],
+      "selectors": [],
+      "events": [],
+      "existingTests": [
+        "reportforge/tests/test_server.py",
+        "reportforge/tests/test_server_imports.py",
+        "reportforge/tests/test_e2e_api_journey.py"
+      ],
+      "requiredGuardCI": [],
+      "risk": "medium",
+      "notes": "justification: test_server.py covers route correctness. Flask API located at reportforge/server/. Routes: datasources, designer, render, system, templates, tenants. Thin facade — all domain logic delegated to SS-B01 through SS-B04. allowedFiles intentionally empty — Python file verification deferred.",
+      "unresolvedAmbiguities": []
+    }
+  ]
+}
