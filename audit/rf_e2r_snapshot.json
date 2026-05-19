@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "generatedAt": "2026-05-19T23:32:29.879Z",
+  "generatedAt": "2026-05-19T23:40:05.510Z",
   "formula": "score = 0.35*bandFactor + 0.20*(100-surface) + 0.15*(100-legacyDebt) + 0.15*(100-coupling) + 0.10*(100-riskScore) + 0.05*guardBonus",
   "bandThresholds": "green=score≥80 | yellow=score 50–79 | red=score<50  (score-derived, Opción A)",
   "bandNote": "Dashboard band is score-derived. E2R guard uses coverageReal bands internally (untouched).",
