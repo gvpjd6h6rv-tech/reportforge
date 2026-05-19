@@ -165,7 +165,7 @@ const C = {
   reset:  '\x1b[0m',
   bold:   '\x1b[1m',
   dim:    '\x1b[2m',
-  red:    '\x1b[31m',
+  red:    '\x1b[38;2;239;83;80m',
   yellow: '\x1b[38;2;255;179;0m',
   green:  '\x1b[38;2;0;255;0m',
   gray:   '\x1b[90m',
