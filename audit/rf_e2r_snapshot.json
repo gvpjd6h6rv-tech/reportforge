@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "generatedAt": "2026-05-19T22:46:52.742Z",
+  "generatedAt": "2026-05-19T23:32:29.879Z",
   "formula": "score = 0.35*bandFactor + 0.20*(100-surface) + 0.15*(100-legacyDebt) + 0.15*(100-coupling) + 0.10*(100-riskScore) + 0.05*guardBonus",
   "bandThresholds": "green=score≥80 | yellow=score 50–79 | red=score<50  (score-derived, Opción A)",
   "bandNote": "Dashboard band is score-derived. E2R guard uses coverageReal bands internally (untouched).",
@@ -873,42 +873,6 @@
       "coverageNote": null
     },
     {
-      "id": "SS-12",
-      "name": "snap",
-      "domain": "designer-runtime",
-      "tier": "supporting",
-      "score": 78,
-      "band": "yellow",
-      "owner": "designer-runtime/snap",
-      "coverageReal": 6,
-      "surface": 29,
-      "legacyDebt": 0,
-      "coupling": 33,
-      "risk": 60,
-      "requiredGuardCI": false,
-      "tests": 3,
-      "allowedFiles": 4,
-      "allowedFilesList": [
-        "SnapEngine.js",
-        "SnapState.js",
-        "SnapCore.js",
-        "SnapGuides.js"
-      ],
-      "existingTestsList": [
-        "reportforge/tests/snap_core.test.mjs",
-        "reportforge/tests/snap_state.test.mjs",
-        "reportforge/tests/snap_engine.test.mjs"
-      ],
-      "passingTestsList": [
-        "reportforge/tests/snap_core.test.mjs",
-        "reportforge/tests/snap_state.test.mjs",
-        "reportforge/tests/snap_engine.test.mjs"
-      ],
-      "requiredGuardCIList": [],
-      "notes": "SnapEngine.js has internal let _gridModel/_enabled duplicating SnapState — SSOT pattern declared in ownership_map notes but not enforced by any guard. DragEngine.js calls SnapCore.snapValue() and SnapState.getGrid()/isEnabled() directly.",
-      "coverageNote": null
-    },
-    {
       "id": "SS-B01",
       "name": "formula-eval-python",
       "domain": "backend-render",
@@ -1007,6 +971,41 @@
       ],
       "requiredGuardCIList": [],
       "notes": "justification: test_server.py covers route correctness. Flask API located at reportforge/server/. Routes: datasources, designer, render, system, templates, tenants. Thin facade — all domain logic delegated to SS-B01 through SS-B04. allowedFiles intentionally empty — Python file verification deferred.",
+      "coverageNote": null
+    },
+    {
+      "id": "SS-12",
+      "name": "snap",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "score": 95,
+      "band": "green",
+      "owner": "designer-runtime/snap",
+      "coverageReal": 6,
+      "surface": 7,
+      "legacyDebt": 0,
+      "coupling": 0,
+      "risk": 40,
+      "requiredGuardCI": true,
+      "tests": 3,
+      "allowedFiles": 1,
+      "allowedFilesList": [
+        "SnapEngine.js"
+      ],
+      "existingTestsList": [
+        "reportforge/tests/snap_core.test.mjs",
+        "reportforge/tests/snap_state.test.mjs",
+        "reportforge/tests/snap_engine.test.mjs"
+      ],
+      "passingTestsList": [
+        "reportforge/tests/snap_core.test.mjs",
+        "reportforge/tests/snap_state.test.mjs",
+        "reportforge/tests/snap_engine.test.mjs"
+      ],
+      "requiredGuardCIList": [
+        "audit/ssot_guard.mjs"
+      ],
+      "notes": "SnapEngine.js is the single facade for all snap operations: snap/snapPoint/snapFromClient, grid config, enable/disable, alignment guides. SnapCore.js, SnapState.js, SnapGuides.js moved to sharedFiles — they are redundant utilities that duplicate SnapEngine internals, kept for backwards-compat callers (DragEngine, RuntimeBootstrap).",
       "coverageNote": null
     }
   ]

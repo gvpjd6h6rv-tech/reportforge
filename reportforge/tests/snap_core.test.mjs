@@ -1,7 +1,8 @@
 'use strict';
 /**
- * SS-12 snap — SnapCore unit tests
- * Pure math: snapValue and snapPoint — no DOM, no globals required.
+ * SS-12 snap — snap math contracts (via SnapEngine facade)
+ * Tests the same core snap/snapPoint math contracts previously in SnapCore.
+ * SnapCore.js moved to sharedFiles — contracts verified through SnapEngine API.
  */
 import test   from 'node:test';
 import assert from 'node:assert/strict';
@@ -12,76 +13,78 @@ import { fileURLToPath }    from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
-function loadSnapCore() {
-  const src = fs.readFileSync(resolve(ROOT, 'engines/SnapCore.js'), 'utf8');
-  const ctx = { module: { exports: {} } };
+function loadSnap() {
+  const src = fs.readFileSync(resolve(ROOT, 'engines/SnapEngine.js'), 'utf8');
+  const ctx = { window: {}, module: { exports: {} } };
   vm.runInNewContext(src, ctx);
   return ctx.module.exports;
 }
 
-// ── snapValue ─────────────────────────────────────────────────────────────────
+// ── snap math (grid=4) ────────────────────────────────────────────────────────
 
-test('SnapCore.snapValue — rounds to nearest grid multiple (grid=4)', () => {
-  const SC = loadSnapCore();
-  assert.equal(SC.snapValue(0,  4, true),  0);   // on grid
-  assert.equal(SC.snapValue(4,  4, true),  4);   // on grid
-  assert.equal(SC.snapValue(8,  4, true),  8);   // on grid
-  assert.equal(SC.snapValue(3,  4, true),  4);   // 3 → nearest is 4
-  assert.equal(SC.snapValue(1,  4, true),  0);   // 1 → nearest is 0
-  assert.equal(SC.snapValue(6,  4, true),  8);   // 6 → nearest is 8 (0.5 rounds up)
-  assert.equal(SC.snapValue(5,  4, true),  4);   // 5 → nearest is 4
-  assert.equal(SC.snapValue(7,  4, true),  8);   // 7 → nearest is 8
+test('snap math — rounds to nearest grid multiple (grid=4)', () => {
+  const E = loadSnap();
+  E.setGrid(4); E.setEnabled(true);
+  assert.equal(E.snap(0),  0);   // on grid
+  assert.equal(E.snap(4),  4);   // on grid
+  assert.equal(E.snap(8),  8);   // on grid
+  assert.equal(E.snap(3),  4);   // 3 → nearest is 4
+  assert.equal(E.snap(1),  0);   // 1 → nearest is 0
+  assert.equal(E.snap(6),  8);   // 6 → 8 (0.5 rounds up)
+  assert.equal(E.snap(5),  4);   // 5 → nearest is 4
+  assert.equal(E.snap(7),  8);   // 7 → nearest is 8
 });
 
-test('SnapCore.snapValue — rounds to nearest grid multiple (grid=10)', () => {
-  const SC = loadSnapCore();
-  assert.equal(SC.snapValue(9.7, 10, true), 10);  // 9.7 → 10
-  assert.equal(SC.snapValue(4,   10, true),  0);  // 4 → 0
-  assert.equal(SC.snapValue(50,  10, true), 50);  // already aligned
-  assert.equal(SC.snapValue(15,  10, true), 20);  // 15 → 20 (0.5 rounds up)
+test('snap math — rounds to nearest grid multiple (grid=10)', () => {
+  const E = loadSnap();
+  E.setGrid(10); E.setEnabled(true);
+  assert.equal(E.snap(9.7), 10);  // 9.7 → 10
+  assert.equal(E.snap(4),    0);  // 4 → 0
+  assert.equal(E.snap(50),  50);  // already aligned
+  assert.equal(E.snap(15),  20);  // 15 → 20 (0.5 rounds up)
 });
 
-test('SnapCore.snapValue — disabled returns value unchanged', () => {
-  const SC = loadSnapCore();
-  assert.equal(SC.snapValue(9,   4, false), 9);
-  assert.equal(SC.snapValue(9.7, 10, false), 9.7);
-  assert.equal(SC.snapValue(3,   4, false), 3);
+test('snap math — disabled returns value unchanged', () => {
+  const E = loadSnap();
+  E.setGrid(4); E.setEnabled(false);
+  assert.equal(E.snap(9),   9);
+  assert.equal(E.snap(3),   3);
+  E.setGrid(10);
+  assert.equal(E.snap(9.7), 9.7);
 });
 
-test('SnapCore.snapValue — grid=0 or negative returns value unchanged', () => {
-  const SC = loadSnapCore();
-  assert.equal(SC.snapValue(9, 0,  true), 9);
-  assert.equal(SC.snapValue(9, -4, true), 9);
-});
-
-test('SnapCore.snapValue — negative values snap correctly', () => {
-  const SC = loadSnapCore();
-  assert.equal(SC.snapValue(-5,  4, true), -4);  // -5 → -4 (closer)
-  assert.equal(SC.snapValue(-3,  4, true), -4);  // -3 → -4 (closer)
-  assert.equal(SC.snapValue(-4,  4, true), -4);  // on grid
-  assert.equal(SC.snapValue(-8,  4, true), -8);  // on grid
-  // Avoid -1 and -2: Math.round(-0.25) and Math.round(-0.5) produce -0 in V8
+test('snap math — negative values snap correctly', () => {
+  const E = loadSnap();
+  E.setGrid(4); E.setEnabled(true);
+  assert.equal(E.snap(-5), -4);  // -5 → -4 (closer)
+  assert.equal(E.snap(-3), -4);  // -3 → -4 (closer)
+  assert.equal(E.snap(-4), -4);  // on grid
+  assert.equal(E.snap(-8), -8);  // on grid
+  // Avoid -1 and -2: Math.round(-0.25/-0.5) produce -0 in V8 (strict !== 0)
 });
 
 // ── snapPoint ────────────────────────────────────────────────────────────────
 
-test('SnapCore.snapPoint — snaps both coordinates', () => {
-  const SC = loadSnapCore();
-  const pt = SC.snapPoint(3, 7, 4, true);
+test('snapPoint — snaps both coordinates (grid=4)', () => {
+  const E = loadSnap();
+  E.setGrid(4); E.setEnabled(true);
+  const pt = E.snapPoint(3, 7);
   assert.equal(pt.x, 4);   // 3 → 4
   assert.equal(pt.y, 8);   // 7 → 8
 });
 
-test('SnapCore.snapPoint — disabled passes through unchanged', () => {
-  const SC = loadSnapCore();
-  const pt = SC.snapPoint(3, 7, 4, false);
+test('snapPoint — disabled passes through unchanged', () => {
+  const E = loadSnap();
+  E.setGrid(4); E.setEnabled(false);
+  const pt = E.snapPoint(3, 7);
   assert.equal(pt.x, 3);
   assert.equal(pt.y, 7);
 });
 
-test('SnapCore.snapPoint — already-aligned coordinates unchanged', () => {
-  const SC = loadSnapCore();
-  const pt = SC.snapPoint(8, 12, 4, true);
+test('snapPoint — already-aligned coordinates unchanged', () => {
+  const E = loadSnap();
+  E.setGrid(4); E.setEnabled(true);
+  const pt = E.snapPoint(8, 12);
   assert.equal(pt.x, 8);
   assert.equal(pt.y, 12);
 });

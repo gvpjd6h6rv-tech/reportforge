@@ -2,7 +2,11 @@
   "version": "1.0.0",
   "generatedAt": "2026-05-18",
   "description": "ReportForge subsystem ownership map — PR-1 of E2R. No scores. No snapshots. Conservative, verifiable inventory.",
-  "sharedFiles": [],
+  "sharedFiles": [
+    "SnapCore.js",
+    "SnapState.js",
+    "SnapGuides.js"
+  ],
   "subsystems": [
     {
       "id": "SS-01",
@@ -449,10 +453,7 @@
       "tier": "supporting",
       "owner": "designer-runtime/snap",
       "allowedFiles": [
-        "SnapEngine.js",
-        "SnapState.js",
-        "SnapCore.js",
-        "SnapGuides.js"
+        "SnapEngine.js"
       ],
       "legacyFiles": [],
       "writableState": [
@@ -474,12 +475,12 @@
         "reportforge/tests/snap_state.test.mjs",
         "reportforge/tests/snap_engine.test.mjs"
       ],
-      "requiredGuardCI": [],
-      "risk": "medium",
-      "notes": "SnapEngine.js has internal let _gridModel/_enabled duplicating SnapState — SSOT pattern declared in ownership_map notes but not enforced by any guard. DragEngine.js calls SnapCore.snapValue() and SnapState.getGrid()/isEnabled() directly.",
-      "unresolvedAmbiguities": [
-        "SnapEngine internal state vs SnapState: two sources of truth for the same values — which is authoritative?"
-      ]
+      "requiredGuardCI": [
+        "audit/ssot_guard.mjs"
+      ],
+      "risk": "low",
+      "notes": "SnapEngine.js is the single facade for all snap operations: snap/snapPoint/snapFromClient, grid config, enable/disable, alignment guides. SnapCore.js, SnapState.js, SnapGuides.js moved to sharedFiles — they are redundant utilities that duplicate SnapEngine internals, kept for backwards-compat callers (DragEngine, RuntimeBootstrap).",
+      "unresolvedAmbiguities": []
     },
     {
       "id": "SS-23",

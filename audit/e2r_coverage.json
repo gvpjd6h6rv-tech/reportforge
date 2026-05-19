@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-05-19T22:47:39.312Z",
+  "generatedAt": "2026-05-19T23:30:13.630Z",
   "manifestFile": "audit/e2r_run_manifest.json",
   "ownershipFile": "audit/subsystem_ownership_map.json",
-  "totalPassingTests": 50,
+  "totalPassingTests": 51,
   "formula": "coverageReal = round((passingTests.length / totalPassingTests) * 100)",
   "limitations": [
     "Only *.test.mjs files in reportforge/tests/ (non-recursive) are included in manifest.",
@@ -216,7 +216,7 @@
       "name": "snap",
       "domain": "designer-runtime",
       "tier": "supporting",
-      "risk": "medium",
+      "risk": "low",
       "existingTests": [
         "reportforge/tests/snap_core.test.mjs",
         "reportforge/tests/snap_state.test.mjs",
@@ -322,9 +322,11 @@
       "existingTests": [
         "reportforge/tests/user_parity/template_smoke_user_parity.test.mjs"
       ],
-      "passingTests": [],
-      "coverageReal": 0,
-      "coverageNote": "declared tests not in passing manifest (timeout, fail, or not a node:test .mjs)",
+      "passingTests": [
+        "reportforge/tests/user_parity/template_smoke_user_parity.test.mjs"
+      ],
+      "coverageReal": 2,
+      "coverageNote": null,
       "coverageExclusion": null
     },
     {
