@@ -170,6 +170,8 @@ const C = {
   green:  '\x1b[38;2;0;255;0m',
   gray:   '\x1b[90m',
   blue:   '\x1b[34m',
+  key:    '\x1b[38;2;86;182;194m',   // cyan — parameter names
+  val:    '\x1b[38;2;220;220;220m',   // light white — values
 };
 
 const BAND_ICON  = { green: '🏆', yellow: '✨', red: '🔴', backlog: '⏸️' };
@@ -198,13 +200,18 @@ for (const e of entries) {
     ` score ${C.bold}${String(e.score).padStart(3)}${C.reset}` +
     `  ${bc}${scoreBar(e.score)}${C.reset}\n`
   );
-  process.stdout.write(`${C.gray}     owner: ${e.owner}${C.reset}\n`);
+  process.stdout.write(`     ${C.key}owner:${C.reset} ${C.val}${e.owner}${C.reset}\n`);
   process.stdout.write(
-    `${C.dim}     coverageReal=${e.coverageReal}  surface=${e.surface}  legacyDebt=${e.legacyDebt}` +
-    `  coupling=${e.coupling}  risk=${e.risk}${C.reset}\n`
+    `     ${C.key}coverageReal=${C.reset}${C.val}${e.coverageReal}${C.reset}` +
+    `  ${C.key}surface=${C.reset}${C.val}${e.surface}${C.reset}` +
+    `  ${C.key}legacyDebt=${C.reset}${C.val}${e.legacyDebt}${C.reset}` +
+    `  ${C.key}coupling=${C.reset}${C.val}${e.coupling}${C.reset}` +
+    `  ${C.key}risk=${C.reset}${C.val}${e.risk}${C.reset}\n`
   );
   process.stdout.write(
-    `${C.dim}     requiredGuardCI=${e.requiredGuardCI}  tests=${e.tests}  allowedFiles=${e.allowedFiles}${C.reset}\n`
+    `     ${C.key}requiredGuardCI=${C.reset}${C.val}${e.requiredGuardCI}${C.reset}` +
+    `  ${C.key}tests=${C.reset}${C.val}${e.tests}${C.reset}` +
+    `  ${C.key}allowedFiles=${C.reset}${C.val}${e.allowedFiles}${C.reset}\n`
   );
   process.stdout.write('\n');
 }
