@@ -167,7 +167,7 @@ const C = {
   dim:    '\x1b[2m',
   red:    '\x1b[31m',
   yellow: '\x1b[33m',
-  green:  '\x1b[32m',
+  green:  '\x1b[38;2;0;255;0m',
   gray:   '\x1b[90m',
   blue:   '\x1b[34m',
 };
