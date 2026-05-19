@@ -212,7 +212,7 @@ for (const e of entries) {
 if (!HTML_FLAG) process.exit(0);
 
 // ─── HTML dashboard ────────────────────────────────────────────────────────────
-const BAND_HEX  = { green: '#4caf50', yellow: '#ffb300', red: '#ef5350', backlog: '#78909c' };
+const BAND_HEX  = { green: '#00ff00', yellow: '#ffb300', red: '#ef5350', backlog: '#78909c' };
 const BAND_BG   = { green: '#1b2e1b', yellow: '#2b2200', red: '#2b1414', backlog: '#1a2030' };
 
 function esc(s) {
