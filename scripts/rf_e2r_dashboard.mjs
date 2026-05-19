@@ -165,7 +165,7 @@ const C = {
   reset:  '\x1b[0m',
   bold:   '\x1b[1m',
   dim:    '\x1b[2m',
-  red:    '\x1b[38;2;239;83;80m',
+  red:    '\x1b[38;2;255;0;51m',
   yellow: '\x1b[38;2;255;179;0m',
   green:  '\x1b[38;2;0;255;0m',
   gray:   '\x1b[90m',
@@ -212,7 +212,7 @@ for (const e of entries) {
 if (!HTML_FLAG) process.exit(0);
 
 // ─── HTML dashboard ────────────────────────────────────────────────────────────
-const BAND_HEX  = { green: '#00ff00', yellow: '#ffb300', red: '#ef5350', backlog: '#78909c' };
+const BAND_HEX  = { green: '#00ff00', yellow: '#ffb300', red: '#ff0033', backlog: '#78909c' };
 const BAND_BG   = { green: '#1b2e1b', yellow: '#2b2200', red: '#2b1414', backlog: '#1a2030' };
 
 function esc(s) {
