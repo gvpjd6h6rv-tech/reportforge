@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-05-19T22:25:39.921Z",
+  "generatedAt": "2026-05-19T22:47:39.312Z",
   "manifestFile": "audit/e2r_run_manifest.json",
   "ownershipFile": "audit/subsystem_ownership_map.json",
-  "totalPassingTests": 48,
+  "totalPassingTests": 50,
   "formula": "coverageReal = round((passingTests.length / totalPassingTests) * 100)",
   "limitations": [
     "Only *.test.mjs files in reportforge/tests/ (non-recursive) are included in manifest.",
@@ -217,10 +217,18 @@
       "domain": "designer-runtime",
       "tier": "supporting",
       "risk": "medium",
-      "existingTests": [],
-      "passingTests": [],
-      "coverageReal": 0,
-      "coverageNote": "no tests declared in existingTests",
+      "existingTests": [
+        "reportforge/tests/snap_core.test.mjs",
+        "reportforge/tests/snap_state.test.mjs",
+        "reportforge/tests/snap_engine.test.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/snap_core.test.mjs",
+        "reportforge/tests/snap_state.test.mjs",
+        "reportforge/tests/snap_engine.test.mjs"
+      ],
+      "coverageReal": 6,
+      "coverageNote": null,
       "coverageExclusion": null
     },
     {
@@ -314,11 +322,9 @@
       "existingTests": [
         "reportforge/tests/user_parity/template_smoke_user_parity.test.mjs"
       ],
-      "passingTests": [
-        "reportforge/tests/user_parity/template_smoke_user_parity.test.mjs"
-      ],
-      "coverageReal": 2,
-      "coverageNote": null,
+      "passingTests": [],
+      "coverageReal": 0,
+      "coverageNote": "declared tests not in passing manifest (timeout, fail, or not a node:test .mjs)",
       "coverageExclusion": null
     },
     {

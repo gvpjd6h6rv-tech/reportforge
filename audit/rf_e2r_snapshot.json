@@ -1,39 +1,11 @@
 {
   "version": "1.0.0",
-  "generatedAt": "2026-05-19T22:24:53.403Z",
+  "generatedAt": "2026-05-19T22:46:52.742Z",
   "formula": "score = 0.35*bandFactor + 0.20*(100-surface) + 0.15*(100-legacyDebt) + 0.15*(100-coupling) + 0.10*(100-riskScore) + 0.05*guardBonus",
   "bandThresholds": "green=score≥80 | yellow=score 50–79 | red=score<50  (score-derived, Opción A)",
   "bandNote": "Dashboard band is score-derived. E2R guard uses coverageReal bands internally (untouched).",
-  "totalPassingTests": 48,
+  "totalPassingTests": 51,
   "subsystems": [
-    {
-      "id": "SS-12",
-      "name": "snap",
-      "domain": "designer-runtime",
-      "tier": "supporting",
-      "score": 43,
-      "band": "red",
-      "owner": "designer-runtime/snap",
-      "coverageReal": 0,
-      "surface": 29,
-      "legacyDebt": 0,
-      "coupling": 33,
-      "risk": 60,
-      "requiredGuardCI": false,
-      "tests": 0,
-      "allowedFiles": 4,
-      "allowedFilesList": [
-        "SnapEngine.js",
-        "SnapState.js",
-        "SnapCore.js",
-        "SnapGuides.js"
-      ],
-      "existingTestsList": [],
-      "passingTestsList": [],
-      "requiredGuardCIList": [],
-      "notes": "SnapEngine.js has internal let _gridModel/_enabled duplicating SnapState — SSOT pattern declared in ownership_map notes but not enforced by any guard. DragEngine.js calls SnapCore.snapValue() and SnapState.getGrid()/isEnabled() directly.",
-      "coverageNote": "no tests declared in existingTests"
-    },
     {
       "id": "SS-18",
       "name": "engine-core-init",
@@ -898,6 +870,42 @@
         "audit/runtime_trace_guard.mjs"
       ],
       "notes": "Append-only audit log for all DS mutations. Throws hard on missing source or UNKNOWN source. Phase guard (off/warn/throw) enforces render-phase ordering. CI gate: audit/runtime_trace_guard.mjs scans engines/ for direct DS.<criticalField>= assignments that bypass this log.",
+      "coverageNote": null
+    },
+    {
+      "id": "SS-12",
+      "name": "snap",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "score": 78,
+      "band": "yellow",
+      "owner": "designer-runtime/snap",
+      "coverageReal": 6,
+      "surface": 29,
+      "legacyDebt": 0,
+      "coupling": 33,
+      "risk": 60,
+      "requiredGuardCI": false,
+      "tests": 3,
+      "allowedFiles": 4,
+      "allowedFilesList": [
+        "SnapEngine.js",
+        "SnapState.js",
+        "SnapCore.js",
+        "SnapGuides.js"
+      ],
+      "existingTestsList": [
+        "reportforge/tests/snap_core.test.mjs",
+        "reportforge/tests/snap_state.test.mjs",
+        "reportforge/tests/snap_engine.test.mjs"
+      ],
+      "passingTestsList": [
+        "reportforge/tests/snap_core.test.mjs",
+        "reportforge/tests/snap_state.test.mjs",
+        "reportforge/tests/snap_engine.test.mjs"
+      ],
+      "requiredGuardCIList": [],
+      "notes": "SnapEngine.js has internal let _gridModel/_enabled duplicating SnapState — SSOT pattern declared in ownership_map notes but not enforced by any guard. DragEngine.js calls SnapCore.snapValue() and SnapState.getGrid()/isEnabled() directly.",
       "coverageNote": null
     },
     {

@@ -117,8 +117,8 @@
       "name": "snap",
       "tier": "supporting",
       "risk": "medium",
-      "coverageReal": 0,
-      "band": "red",
+      "coverageReal": 6,
+      "band": "green",
       "hasExclusion": false,
       "exclusionReason": null
     },

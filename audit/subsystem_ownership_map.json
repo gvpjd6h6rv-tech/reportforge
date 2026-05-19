@@ -469,7 +469,11 @@
         "SnapEngine.setEnabled(v)",
         "SnapEngine.toggle()"
       ],
-      "existingTests": [],
+      "existingTests": [
+        "reportforge/tests/snap_core.test.mjs",
+        "reportforge/tests/snap_state.test.mjs",
+        "reportforge/tests/snap_engine.test.mjs"
+      ],
       "requiredGuardCI": [],
       "risk": "medium",
       "notes": "SnapEngine.js has internal let _gridModel/_enabled duplicating SnapState — SSOT pattern declared in ownership_map notes but not enforced by any guard. DragEngine.js calls SnapCore.snapValue() and SnapState.getGrid()/isEnabled() directly.",
