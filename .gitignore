@@ -26,3 +26,4 @@ node
 # local binaries
 node
 audit_out/
+reportforge/tests/user_parity/visual/artifacts/

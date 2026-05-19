@@ -1,120 +1,194 @@
 #!/usr/bin/env node
 /**
- * E2R Run Manifest — Evidencia de Ejecución Real
+ * E2R Run Manifest — Evidencia de Ejecución Real (multi-runner)
  *
- * Runs each *.test.mjs file in reportforge/tests/ individually via `node --test`,
- * captures real exit-code per file, and writes audit/e2r_run_manifest.json.
+ * Runners soportados:
+ *   node:test          — *.test.mjs en reportforge/tests/ (no recursivo)
+ *   playwright         — *.test.mjs en reportforge/tests/user_parity/
+ *   runtime-regression — reportforge/tests/run_runtime_regression.mjs
+ *   pytest             — *.py declarados en subsystem_ownership_map.json existingTests
  *
- * Rules:
- *   - NO hardcoded file lists — files discovered from filesystem at runtime.
- *   - NO glob as evidence — every entry in the manifest reflects an actual execution.
- *   - NO runner inference — runner is explicit: we call `node --test`.
- *   - Exits 0 always (except: no test files found, or manifest write failure).
- *   - ALWAYS terminates — no hanging pipes, no orphan handles.
- *
- * result values:
- *   "pass"    — node --test exited 0
- *   "fail"    — node --test exited non-0
- *   "timeout" — did not complete within PER_FILE_TIMEOUT_MS
+ * Reglas:
+ *   - Cada entrada refleja ejecución real — sin inferencia por nombre.
+ *   - result: "pass" | "fail" | "timeout" | "unavailable"
+ *   - "unavailable" solo si el runner no está instalado (pytest).
+ *   - Exits 0 siempre — manifest es evidencia, no gate.
+ *   - SIEMPRE termina — sin handles abiertos, sin pipes que bloqueen.
  */
 
-import { readdirSync, writeFileSync } from 'node:fs';
-import { spawn }                      from 'node:child_process';
-import { resolve, relative, join }    from 'node:path';
-import { fileURLToPath }              from 'node:url';
+import { readdirSync, writeFileSync, existsSync, readFileSync } from 'node:fs';
+import { spawn, spawnSync }                                      from 'node:child_process';
+import { resolve, relative, join, dirname }                      from 'node:path';
+import { fileURLToPath }                                         from 'node:url';
 
-const __dirname = fileURLToPath(new URL('.', import.meta.url));
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT      = resolve(__dirname, '..');
 const TESTS_DIR = join(ROOT, 'reportforge', 'tests');
 const OUTPUT    = join(__dirname, 'e2r_run_manifest.json');
 
-const PER_FILE_TIMEOUT_MS = 12_000;   // enough for tanda11 (~6 s) and slow node tests; browser tests → timeout
-const GLOBAL_TIMEOUT_MS   = 120_000;  // hard ceiling for the whole script
+const TIMEOUT_MS = {
+  NODE_TEST:          12_000,
+  PLAYWRIGHT:         45_000,
+  RUNTIME_REGRESSION: 120_000,
+  PYTEST:             20_000,
+  GLOBAL:             180_000,
+};
 
-// ── Global safety-net timer ───────────────────────────────────────────────────
-// If the script somehow stalls past the ceiling, write whatever we have and exit.
+// ── Global safety-net ─────────────────────────────────────────────────────────
 let entries = [];
-const globalTimer = setTimeout(() => {
-  writeManifest();
-  process.exit(0);
-}, GLOBAL_TIMEOUT_MS);
-globalTimer.unref(); // doesn't prevent normal exit
+const globalTimer = setTimeout(() => { writeManifest(); process.exit(0); }, TIMEOUT_MS.GLOBAL);
+globalTimer.unref();
 
-// ── File discovery ────────────────────────────────────────────────────────────
-const testFiles = readdirSync(TESTS_DIR)
-  .filter((f) => f.endsWith('.test.mjs'))
-  .sort()
-  .map((f) => join(TESTS_DIR, f));
-
-if (testFiles.length === 0) {
-  console.error('E2R manifest: no *.test.mjs files found in', TESTS_DIR);
-  process.exit(1);
-}
-
-// ── Per-file runner ───────────────────────────────────────────────────────────
-function runFile(absPath) {
-  return new Promise((resolve) => {
-    // detached: true → child runs as process group leader so we can kill the
-    //                   whole group (catches Playwright browsers, etc.)
-    // stdio: 'ignore' → no pipe buffers to fill/deadlock
-    const child = spawn('node', ['--test', absPath], {
-      stdio:    'ignore',
-      detached: true,
-    });
-    // unref so the child doesn't keep our event loop alive if we time out
+// ── Core runner ───────────────────────────────────────────────────────────────
+function runProcess(args, timeoutMs) {
+  return new Promise((res) => {
+    const t0    = Date.now();
+    const child = spawn(args[0], args.slice(1), { stdio: 'ignore', detached: true });
     child.unref();
-
-    let settled = false;
+    let done = false;
 
     const timer = setTimeout(() => {
-      if (settled) return;
-      settled = true;
-      // Kill entire process group to reap Playwright / server children
+      if (done) return;
+      done = true;
       try { process.kill(-child.pid, 'SIGKILL'); } catch (_) {}
       try { child.kill('SIGKILL'); }              catch (_) {}
-      resolve('timeout');
-    }, PER_FILE_TIMEOUT_MS);
+      res({ result: 'timeout', durationMs: Date.now() - t0 });
+    }, timeoutMs);
 
     child.on('close', (code) => {
-      if (settled) return;
-      settled = true;
+      if (done) return;
+      done = true;
       clearTimeout(timer);
-      resolve(code === 0 ? 'pass' : 'fail');
+      res({ result: code === 0 ? 'pass' : 'fail', durationMs: Date.now() - t0 });
     });
-
     child.on('error', () => {
-      if (settled) return;
-      settled = true;
+      if (done) return;
+      done = true;
       clearTimeout(timer);
-      resolve('fail');
+      res({ result: 'fail', durationMs: Date.now() - t0 });
     });
   });
 }
 
-// ── Write manifest ────────────────────────────────────────────────────────────
 function writeManifest() {
   writeFileSync(OUTPUT, JSON.stringify(entries, null, 2) + '\n');
 }
 
-// ── Main — run all files in parallel ─────────────────────────────────────────
+// ── Runner availability ───────────────────────────────────────────────────────
+const pytestAvailable = (() => {
+  const r = spawnSync('python3', ['-m', 'pytest', '--version'],
+    { stdio: 'pipe', timeout: 5_000 });
+  return r.status === 0;
+})();
+
+// ── File discovery ────────────────────────────────────────────────────────────
+
+// 1. node:test — reportforge/tests/*.test.mjs
+const nodeTestFiles = readdirSync(TESTS_DIR)
+  .filter((f) => f.endsWith('.test.mjs'))
+  .sort()
+  .map((f) => join(TESTS_DIR, f));
+
+// 2. playwright — reportforge/tests/user_parity/*.test.mjs
+const userParityDir  = join(TESTS_DIR, 'user_parity');
+const playwrightFiles = existsSync(userParityDir)
+  ? readdirSync(userParityDir)
+      .filter((f) => f.endsWith('.test.mjs'))
+      .sort()
+      .map((f) => join(userParityDir, f))
+  : [];
+
+// 3. runtime-regression — single entry
+const runtimeRegressionFile = join(TESTS_DIR, 'run_runtime_regression.mjs');
+
+// 4. pytest — unique .py files declared in ownership map existingTests
+const ownershipMap  = JSON.parse(readFileSync(join(__dirname, 'subsystem_ownership_map.json'), 'utf8'));
+const pytestFilesSet = new Set();
+for (const sub of ownershipMap.subsystems ?? []) {
+  for (const t of sub.existingTests ?? []) {
+    if (t.endsWith('.py')) pytestFilesSet.add(t);
+  }
+}
+const pytestFiles = [...pytestFilesSet]
+  .sort()
+  .filter((relPath) => existsSync(join(ROOT, relPath)));
+
+// ── Build task list ───────────────────────────────────────────────────────────
+
+const tasks = [];
+
+// node:test
+for (const absPath of nodeTestFiles) {
+  const rel = relative(ROOT, absPath).replace(/\\/g, '/');
+  tasks.push({ rel, runner: 'node:test',
+    args: ['node', '--test', absPath], timeout: TIMEOUT_MS.NODE_TEST });
+}
+
+// playwright (user_parity)
+for (const absPath of playwrightFiles) {
+  const rel = relative(ROOT, absPath).replace(/\\/g, '/');
+  tasks.push({ rel, runner: 'playwright',
+    args: ['node', '--test', absPath], timeout: TIMEOUT_MS.PLAYWRIGHT });
+}
+
+// runtime-regression
+if (existsSync(runtimeRegressionFile)) {
+  const rel = relative(ROOT, runtimeRegressionFile).replace(/\\/g, '/');
+  tasks.push({ rel, runner: 'runtime-regression',
+    args: ['node', runtimeRegressionFile], timeout: TIMEOUT_MS.RUNTIME_REGRESSION });
+}
+
+// pytest
+for (const relPath of pytestFiles) {
+  const absPath = join(ROOT, relPath);
+  if (!pytestAvailable) {
+    tasks.push({ rel: relPath, runner: 'pytest',
+      args: null, timeout: 0, unavailable: true });
+  } else {
+    tasks.push({ rel: relPath, runner: 'pytest',
+      args: ['python3', '-m', 'pytest', absPath, '-q', '--tb=no'],
+      timeout: TIMEOUT_MS.PYTEST });
+  }
+}
+
+if (tasks.length === 0) {
+  console.error('E2R manifest: no test files found');
+  process.exit(1);
+}
+
+// ── Execute all in parallel ───────────────────────────────────────────────────
 const results = await Promise.all(
-  testFiles.map(async (absPath) => {
-    const relPath = relative(ROOT, absPath).replace(/\\/g, '/');
-    const result  = await runFile(absPath);
-    return { file: relPath, runner: 'node:test', command: `node --test ${relPath}`, filter: null, result };
+  tasks.map(async (t) => {
+    const { result, durationMs } = t.unavailable
+      ? { result: 'unavailable', durationMs: 0 }
+      : await runProcess(t.args, t.timeout);
+    return {
+      file:       t.rel,
+      runner:     t.runner,
+      command:    t.args ? t.args.slice(1).join(' ') : 'unavailable',
+      filter:     null,
+      result,
+      durationMs,
+    };
   })
 );
-entries = results.sort((a, b) => a.file.localeCompare(b.file));
 
+entries = results.sort((a, b) => a.file.localeCompare(b.file));
 writeManifest();
 clearTimeout(globalTimer);
 
-const passed  = entries.filter((e) => e.result === 'pass').length;
-const failed  = entries.filter((e) => e.result === 'fail').length;
-const timedOut = entries.filter((e) => e.result === 'timeout').length;
+// ── Summary ───────────────────────────────────────────────────────────────────
+const byRunner = {};
+for (const e of entries) {
+  if (!byRunner[e.runner]) byRunner[e.runner] = { pass: 0, fail: 0, timeout: 0, unavailable: 0 };
+  byRunner[e.runner][e.result] = (byRunner[e.runner][e.result] ?? 0) + 1;
+}
 
-const failNote    = failed   > 0 ? ` | ${failed} fail`                        : '';
-const timeoutNote = timedOut > 0 ? ` | ${timedOut} timeout (browser env req)` : '';
-console.log(`E2R manifest: ${passed}/${entries.length} passed${failNote}${timeoutNote} → ${relative(ROOT, OUTPUT)}`);
+const totalPass = entries.filter((e) => e.result === 'pass').length;
+console.log(`E2R manifest: ${totalPass}/${entries.length} pass → ${relative(ROOT, OUTPUT)}`);
+for (const [runner, counts] of Object.entries(byRunner)) {
+  const parts = Object.entries(counts).filter(([, v]) => v > 0).map(([k, v]) => `${v} ${k}`);
+  console.log(`  ${runner.padEnd(20)} ${parts.join(' | ')}`);
+}
 
 process.exit(0);
