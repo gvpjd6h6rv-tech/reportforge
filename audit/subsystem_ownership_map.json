@@ -13,7 +13,8 @@
     "EngineCoreContracts.js",
     "CanvasLayoutContracts.js",
     "CommandRuntimeShared.js",
-    "CommandRuntimeInit.js"
+    "CommandRuntimeInit.js",
+    "CanvasGeometry.js"
   ],
   "subsystems": [
     {
@@ -146,43 +147,26 @@
       "tier": "core",
       "owner": "designer-runtime/geometry",
       "allowedFiles": [
-        "GeometryCore.js",
-        "CanvasGeometry.js",
-        "RuntimeGeometry.js",
-        "RuntimeGlobals.js",
-        "RuntimeConfig.js",
-        "RuntimeData.js",
-        "RuntimeHelpers.js"
+        "GeometryCore.js"
       ],
       "legacyFiles": [],
       "writableState": [],
-      "selectors": [
-        "RF.Geometry.modelToView(x, y)",
-        "RF.Geometry.viewToModel(x, y)",
-        "RF.Geometry.rectToView(rect)",
-        "RF.Geometry.zoom()",
-        "RF.Geometry.scale(v)",
-        "RF.Geometry.unscale(v)",
-        "CFG.PAGE_W",
-        "CFG.RULER_H",
-        "CFG.RULER_W",
-        "CFG.MODEL_GRID"
-      ],
+      "selectors": [],
       "events": [],
       "existingTests": [
-        "reportforge/tests/geometry_core.test.mjs"
+        "reportforge/tests/geometry_core.test.mjs",
+        "reportforge/tests/geometry_core_extended.test.mjs",
+        "reportforge/tests/canvas_geometry.test.mjs"
       ],
       "requiredGuardCI": [
         "audit/configurational_ssot_guard.mjs",
         "audit/geometric_assertions_guard.mjs",
-        "audit/shared_core_guard.mjs"
+        "audit/shared_core_guard.mjs",
+        "audit/geometry_core_guard.mjs"
       ],
-      "risk": "critical",
-      "notes": "RuntimeConfig.js is the SSOT for all layout constants (ruler.topPx=22, ruler.sidePx=22, canvas.pageW=754, grid=4). All other subsystems must read from CFG — never hardcode. RuntimeData.js and RuntimeHelpers.js roles are underdocumented.",
-      "unresolvedAmbiguities": [
-        "RuntimeGlobals.js contains Matrix2D and AABB classes — unclear if these are actively used or vestigial",
-        "RuntimeData.js purpose not fully verified — may duplicate RuntimeHelpers.js"
-      ]
+      "risk": "low",
+      "notes": "GeometryCore.js is pure math — zero DOM, zero side effects, no globals. All 19 functions are deterministic transforms over plain objects. CanvasGeometry.js is sharedFiles (used by canvas-layout and geometry). Runtime init files (RuntimeConfig, RuntimeData, RuntimeHelpers, RuntimeGeometry, RuntimeGlobals) moved to SS-33 runtime-init.",
+      "unresolvedAmbiguities": []
     },
     {
       "id": "SS-05",
@@ -1248,6 +1232,50 @@
       "risk": "medium",
       "notes": "Implementation engines split from SS-05 canvas-layout facade. Responsibility boundary: SectionEngine = init phase (creates section DOM nodes from scratch via render()); SectionLayoutEngine = update phase (adjusts section heights/widths on zoom or resize). CanvasLayoutSize handles canvas-layer size computation (width/height/minHeight). CanvasLayoutElements handles element DOM rendering (buildElementDiv, renderAll, updateElement). ElementLayoutEngine applies model→view coordinate transforms to individual element divs. Risk medium: all engines interact with DOM but functional contracts are covered by canvas_layout_element and canvas_layout_section tests.",
       "unresolvedAmbiguities": []
+    },
+    {
+      "id": "SS-33",
+      "name": "runtime-init",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "owner": "designer-runtime/runtime-init",
+      "allowedFiles": [
+        "RuntimeConfig.js",
+        "RuntimeData.js",
+        "RuntimeHelpers.js",
+        "RuntimeGeometry.js",
+        "RuntimeGlobals.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [
+        "window.CFG",
+        "window.FIELD_TREE",
+        "window.SAMPLE_DATA",
+        "window.RF.Geometry"
+      ],
+      "selectors": [
+        "CFG.PAGE_W",
+        "CFG.RULER_H",
+        "CFG.RULER_W",
+        "CFG.MODEL_GRID",
+        "RF.Geometry.modelToView(x, y)",
+        "RF.Geometry.viewToModel(x, y)",
+        "RF.Geometry.zoom()",
+        "RF.Geometry.scale(v)",
+        "RF.Geometry.unscale(v)"
+      ],
+      "events": [],
+      "existingTests": [],
+      "requiredGuardCI": [
+        "audit/configurational_ssot_guard.mjs"
+      ],
+      "risk": "high",
+      "notes": "Bootstrap-phase installers for global runtime state. RuntimeConfig.js is the SSOT for layout constants. RuntimeData.js installs CFG/FIELD_TREE/SAMPLE_DATA. RuntimeHelpers.js installs resolveField/formatValue/initClock. RuntimeGeometry.js installs RF.Geometry (DOM-dependent transforms). RuntimeGlobals.js mutates window.RF.Geometry directly at top level and also installs Matrix2D/AABB/MagneticSnap/PointerNorm — these classes ARE actively used (RF.Geometry.Matrix2D = Matrix2D confirmed). Split from SS-04 geometry (PR-3) to isolate DOM-dependent init from pure-math core.",
+      "unresolvedAmbiguities": [],
+      "coverageExclusion": {
+        "reason": "backlog",
+        "justification": "RuntimeGlobals.js and RuntimeGeometry.js use top-level global mutations and DOM-dependent install() patterns that require significant browser-context vm setup. Unit tests planned for sprint +2."
+      }
     }
   ]
 }

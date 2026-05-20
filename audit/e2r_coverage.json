@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-05-20T18:22:41.318Z",
+  "generatedAt": "2026-05-20T18:56:09.548Z",
   "manifestFile": "audit/e2r_run_manifest.json",
   "ownershipFile": "audit/subsystem_ownership_map.json",
-  "totalPassingTests": 54,
+  "totalPassingTests": 55,
   "formula": "coverageReal = round((passingTests.length / totalPassingTests) * 100)",
   "limitations": [
     "Only *.test.mjs files in reportforge/tests/ (non-recursive) are included in manifest.",
@@ -71,14 +71,18 @@
       "name": "geometry",
       "domain": "designer-runtime",
       "tier": "core",
-      "risk": "critical",
+      "risk": "low",
       "existingTests": [
-        "reportforge/tests/geometry_core.test.mjs"
+        "reportforge/tests/geometry_core.test.mjs",
+        "reportforge/tests/geometry_core_extended.test.mjs",
+        "reportforge/tests/canvas_geometry.test.mjs"
       ],
       "passingTests": [
-        "reportforge/tests/geometry_core.test.mjs"
+        "reportforge/tests/geometry_core.test.mjs",
+        "reportforge/tests/geometry_core_extended.test.mjs",
+        "reportforge/tests/canvas_geometry.test.mjs"
       ],
-      "coverageReal": 2,
+      "coverageReal": 5,
       "coverageNote": null,
       "coverageExclusion": null
     },
@@ -98,7 +102,7 @@
         "reportforge/tests/canvas_layout_element.test.mjs",
         "reportforge/tests/canvas_layout_section.test.mjs"
       ],
-      "coverageReal": 6,
+      "coverageReal": 5,
       "coverageNote": null,
       "coverageExclusion": null
     },
@@ -141,7 +145,7 @@
         "reportforge/tests/user_parity/clipboard_design_preview_parity.test.mjs",
         "reportforge/tests/run_runtime_regression.mjs"
       ],
-      "coverageReal": 6,
+      "coverageReal": 5,
       "coverageNote": null,
       "coverageExclusion": null
     },
@@ -161,7 +165,7 @@
         "reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs",
         "reportforge/tests/command_runtime_selection.test.mjs"
       ],
-      "coverageReal": 6,
+      "coverageReal": 5,
       "coverageNote": null,
       "coverageExclusion": null
     },
@@ -316,7 +320,7 @@
         "reportforge/tests/snap_state.test.mjs",
         "reportforge/tests/snap_engine.test.mjs"
       ],
-      "coverageReal": 6,
+      "coverageReal": 5,
       "coverageNote": null,
       "coverageExclusion": null
     },
@@ -450,7 +454,7 @@
         "reportforge/tests/engine_contracts.test.mjs",
         "reportforge/tests/global_state_corruption.test.mjs"
       ],
-      "coverageReal": 6,
+      "coverageReal": 5,
       "coverageNote": null,
       "coverageExclusion": null
     },
@@ -535,10 +539,9 @@
         "reportforge/tests/test_load.py"
       ],
       "passingTests": [
-        "reportforge/tests/test_e2e_api_journey.py",
-        "reportforge/tests/test_load.py"
+        "reportforge/tests/test_e2e_api_journey.py"
       ],
-      "coverageReal": 4,
+      "coverageReal": 2,
       "coverageNote": null,
       "coverageExclusion": null
     },
@@ -618,7 +621,7 @@
         "reportforge/tests/test_server_imports.py",
         "reportforge/tests/test_e2e_api_journey.py"
       ],
-      "coverageReal": 6,
+      "coverageReal": 5,
       "coverageNote": null,
       "coverageExclusion": null
     },
@@ -672,9 +675,24 @@
         "reportforge/tests/canvas_layout_element.test.mjs",
         "reportforge/tests/canvas_layout_section.test.mjs"
       ],
-      "coverageReal": 6,
+      "coverageReal": 5,
       "coverageNote": null,
       "coverageExclusion": null
+    },
+    {
+      "id": "SS-33",
+      "name": "runtime-init",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "risk": "high",
+      "existingTests": [],
+      "passingTests": [],
+      "coverageReal": 0,
+      "coverageNote": "BACKLOG: RuntimeGlobals.js and RuntimeGeometry.js use top-level global mutations and DOM-dependent install() patterns that require significant browser-context vm setup. Unit tests planned for sprint +2.",
+      "coverageExclusion": {
+        "reason": "backlog",
+        "justification": "RuntimeGlobals.js and RuntimeGeometry.js use top-level global mutations and DOM-dependent install() patterns that require significant browser-context vm setup. Unit tests planned for sprint +2."
+      }
     }
   ]
 }

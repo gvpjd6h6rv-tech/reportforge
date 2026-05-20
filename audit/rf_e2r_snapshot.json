@@ -1,50 +1,11 @@
 {
   "version": "1.0.0",
-  "generatedAt": "2026-05-20T18:24:50.408Z",
+  "generatedAt": "2026-05-20T19:21:10.085Z",
   "formula": "score = 0.35*bandFactor + 0.20*(100-surface) + 0.15*(100-legacyDebt) + 0.15*(100-coupling) + 0.10*(100-riskScore) + 0.05*guardBonus",
   "bandThresholds": "green=score≥80 | yellow=score 50–79 | red=score<50  (score-derived, Opción A)",
   "bandNote": "Dashboard band is score-derived. E2R guard uses coverageReal bands internally (untouched).",
-  "totalPassingTests": 54,
+  "totalPassingTests": 55,
   "subsystems": [
-    {
-      "id": "SS-04",
-      "name": "geometry",
-      "domain": "designer-runtime",
-      "tier": "core",
-      "score": 53,
-      "band": "yellow",
-      "owner": "designer-runtime/geometry",
-      "coverageReal": 2,
-      "surface": 50,
-      "legacyDebt": 0,
-      "coupling": 66,
-      "risk": 100,
-      "requiredGuardCI": true,
-      "tests": 1,
-      "allowedFiles": 7,
-      "allowedFilesList": [
-        "GeometryCore.js",
-        "CanvasGeometry.js",
-        "RuntimeGeometry.js",
-        "RuntimeGlobals.js",
-        "RuntimeConfig.js",
-        "RuntimeData.js",
-        "RuntimeHelpers.js"
-      ],
-      "existingTestsList": [
-        "reportforge/tests/geometry_core.test.mjs"
-      ],
-      "passingTestsList": [
-        "reportforge/tests/geometry_core.test.mjs"
-      ],
-      "requiredGuardCIList": [
-        "audit/configurational_ssot_guard.mjs",
-        "audit/geometric_assertions_guard.mjs",
-        "audit/shared_core_guard.mjs"
-      ],
-      "notes": "RuntimeConfig.js is the SSOT for all layout constants (ruler.topPx=22, ruler.sidePx=22, canvas.pageW=754, grid=4). All other subsystems must read from CFG — never hardcode. RuntimeData.js and RuntimeHelpers.js roles are underdocumented.",
-      "coverageNote": null
-    },
     {
       "id": "SS-02",
       "name": "history",
@@ -263,6 +224,37 @@
       "requiredGuardCIList": [],
       "notes": "GuideEngine.js and GuideRenderer.js duplicate _getContainer(), GUIDE_COLOR constants and rendering logic. AlignmentGuides.js and AlignmentGuideOverlay.js also duplicate guide DOM creation. UI-only — no DS critical field mutations.",
       "coverageNote": null
+    },
+    {
+      "id": "SS-33",
+      "name": "runtime-init",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "score": 57,
+      "band": "yellow",
+      "owner": "designer-runtime/runtime-init",
+      "coverageReal": 0,
+      "surface": 36,
+      "legacyDebt": 0,
+      "coupling": 0,
+      "risk": 80,
+      "requiredGuardCI": true,
+      "tests": 0,
+      "allowedFiles": 5,
+      "allowedFilesList": [
+        "RuntimeConfig.js",
+        "RuntimeData.js",
+        "RuntimeHelpers.js",
+        "RuntimeGeometry.js",
+        "RuntimeGlobals.js"
+      ],
+      "existingTestsList": [],
+      "passingTestsList": [],
+      "requiredGuardCIList": [
+        "audit/configurational_ssot_guard.mjs"
+      ],
+      "notes": "Bootstrap-phase installers for global runtime state. RuntimeConfig.js is the SSOT for layout constants. RuntimeData.js installs CFG/FIELD_TREE/SAMPLE_DATA. RuntimeHelpers.js installs resolveField/formatValue/initClock. RuntimeGeometry.js installs RF.Geometry (DOM-dependent transforms). RuntimeGlobals.js mutates window.RF.Geometry directly at top level and also installs Matrix2D/AABB/MagneticSnap/PointerNorm — these classes ARE actively used (RF.Geometry.Matrix2D = Matrix2D confirmed). Split from SS-04 geometry (PR-3) to isolate DOM-dependent init from pure-math core.",
+      "coverageNote": "BACKLOG: RuntimeGlobals.js and RuntimeGeometry.js use top-level global mutations and DOM-dependent install() patterns that require significant browser-context vm setup. Unit tests planned for sprint +2."
     },
     {
       "id": "SS-17",
@@ -579,13 +571,13 @@
       "score": 68,
       "band": "yellow",
       "owner": "backend-render/datasource",
-      "coverageReal": 4,
+      "coverageReal": 2,
       "surface": 0,
       "legacyDebt": 0,
       "coupling": 0,
       "risk": 100,
       "requiredGuardCI": false,
-      "tests": 2,
+      "tests": 1,
       "allowedFiles": 0,
       "allowedFilesList": [],
       "existingTestsList": [
@@ -593,8 +585,7 @@
         "reportforge/tests/test_load.py"
       ],
       "passingTestsList": [
-        "reportforge/tests/test_e2e_api_journey.py",
-        "reportforge/tests/test_load.py"
+        "reportforge/tests/test_e2e_api_journey.py"
       ],
       "requiredGuardCIList": [],
       "notes": "justification: no JS-accessible CI guard; Python integration tested via test_e2e_api_journey.py. Located at reportforge/core/render/datasource/. DB introspection, caching, multi-dataset coordination, live data feeds. allowedFiles intentionally empty — Python file verification deferred.",
@@ -667,7 +658,7 @@
       "score": 70,
       "band": "yellow",
       "owner": "designer-runtime/preview",
-      "coverageReal": 6,
+      "coverageReal": 5,
       "surface": 36,
       "legacyDebt": 0,
       "coupling": 66,
@@ -1057,7 +1048,7 @@
       "score": 87,
       "band": "green",
       "owner": "designer-runtime/canvas-rendering",
-      "coverageReal": 6,
+      "coverageReal": 5,
       "surface": 36,
       "legacyDebt": 0,
       "coupling": 0,
@@ -1096,7 +1087,7 @@
       "score": 89,
       "band": "green",
       "owner": "backend-render/server-api",
-      "coverageReal": 6,
+      "coverageReal": 5,
       "surface": 0,
       "legacyDebt": 0,
       "coupling": 0,
@@ -1120,6 +1111,44 @@
       "coverageNote": null
     },
     {
+      "id": "SS-04",
+      "name": "geometry",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "score": 95,
+      "band": "green",
+      "owner": "designer-runtime/geometry",
+      "coverageReal": 5,
+      "surface": 7,
+      "legacyDebt": 0,
+      "coupling": 0,
+      "risk": 40,
+      "requiredGuardCI": true,
+      "tests": 3,
+      "allowedFiles": 1,
+      "allowedFilesList": [
+        "GeometryCore.js"
+      ],
+      "existingTestsList": [
+        "reportforge/tests/geometry_core.test.mjs",
+        "reportforge/tests/geometry_core_extended.test.mjs",
+        "reportforge/tests/canvas_geometry.test.mjs"
+      ],
+      "passingTestsList": [
+        "reportforge/tests/geometry_core.test.mjs",
+        "reportforge/tests/geometry_core_extended.test.mjs",
+        "reportforge/tests/canvas_geometry.test.mjs"
+      ],
+      "requiredGuardCIList": [
+        "audit/configurational_ssot_guard.mjs",
+        "audit/geometric_assertions_guard.mjs",
+        "audit/shared_core_guard.mjs",
+        "audit/geometry_core_guard.mjs"
+      ],
+      "notes": "GeometryCore.js is pure math — zero DOM, zero side effects, no globals. All 19 functions are deterministic transforms over plain objects. CanvasGeometry.js is sharedFiles (used by canvas-layout and geometry). Runtime init files (RuntimeConfig, RuntimeData, RuntimeHelpers, RuntimeGeometry, RuntimeGlobals) moved to SS-33 runtime-init.",
+      "coverageNote": null
+    },
+    {
       "id": "SS-05",
       "name": "canvas-layout",
       "domain": "designer-runtime",
@@ -1127,7 +1156,7 @@
       "score": 95,
       "band": "green",
       "owner": "designer-runtime/canvas-layout",
-      "coverageReal": 6,
+      "coverageReal": 5,
       "surface": 7,
       "legacyDebt": 0,
       "coupling": 0,
@@ -1162,7 +1191,7 @@
       "score": 95,
       "band": "green",
       "owner": "designer-runtime/commands",
-      "coverageReal": 6,
+      "coverageReal": 5,
       "surface": 7,
       "legacyDebt": 0,
       "coupling": 0,
@@ -1197,7 +1226,7 @@
       "score": 95,
       "band": "green",
       "owner": "designer-runtime/snap",
-      "coverageReal": 6,
+      "coverageReal": 5,
       "surface": 7,
       "legacyDebt": 0,
       "coupling": 0,
@@ -1232,7 +1261,7 @@
       "score": 95,
       "band": "green",
       "owner": "designer-runtime/engine-core-init",
-      "coverageReal": 6,
+      "coverageReal": 5,
       "surface": 7,
       "legacyDebt": 0,
       "coupling": 0,
