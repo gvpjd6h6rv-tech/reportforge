@@ -81,29 +81,23 @@
       "tier": "core",
       "owner": "designer-runtime/history",
       "allowedFiles": [
-        "DocumentHistory.js",
-        "HistoryEngine.js",
-        "HistorySnapshot.js",
         "HistoryState.js"
       ],
       "legacyFiles": [],
-      "writableState": [
-        "DS.history",
-        "DS.historyIndex"
-      ],
+      "writableState": [],
       "selectors": [],
       "events": [],
       "existingTests": [
+        "reportforge/tests/history_state.test.mjs",
         "reportforge/tests/user_parity/undo_redo_user_parity.test.mjs",
         "reportforge/tests/user_parity/undo_redo_mixed_history_user_parity.test.mjs"
       ],
-      "requiredGuardCI": [],
-      "risk": "high",
-      "notes": "justification: no dedicated CI gate yet; covered indirectly by runtime regression snapshot baselines and user_parity undo/redo tests. Two parallel undo stacks exist: DocumentHistory (snapshot-based, wired into DocumentStore) and HistoryEngine (label-based, max 100, standalone). Their synchronization is unclear — HistoryEngine.push() delegates to DS.saveHistory() creating a potential double-save.",
-      "unresolvedAmbiguities": [
-        "DocumentHistory vs HistoryEngine: are these two synchronized stacks or independent? HistoryEngine.undo() calls _restore() then previously also called DS.undo() (double-apply bug fixed in write-log PR). The canonical undo path is not documented.",
-        "HistoryState.js purpose unclear without reading the full file — may be redundant with DocumentHistory internal state"
-      ]
+      "requiredGuardCI": [
+        "audit/history_state_guard.mjs"
+      ],
+      "risk": "low",
+      "notes": "HistoryState.js is a pure factory — zero DOM, zero globals, zero side effects. createHistoryState(maxStack) returns an independent stack instance with pushUndo/popUndo/pushRedo/popRedo/clearRedo/canUndo/canRedo/suppress/onChange/summary/clear. DocumentHistory.js, HistoryEngine.js, HistorySnapshot.js moved to SS-34 history-runtime (DOM-heavy, singleton patterns).",
+      "unresolvedAmbiguities": []
     },
     {
       "id": "SS-03",
@@ -1275,6 +1269,39 @@
       "coverageExclusion": {
         "reason": "backlog",
         "justification": "RuntimeGlobals.js and RuntimeGeometry.js use top-level global mutations and DOM-dependent install() patterns that require significant browser-context vm setup. Unit tests planned for sprint +2."
+      }
+    },
+    {
+      "id": "SS-34",
+      "name": "history-runtime",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "owner": "designer-runtime/history-runtime",
+      "allowedFiles": [
+        "DocumentHistory.js",
+        "HistoryEngine.js",
+        "HistorySnapshot.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [
+        "DS.history",
+        "DS.historyIndex"
+      ],
+      "selectors": [],
+      "events": [],
+      "existingTests": [
+        "reportforge/tests/user_parity/undo_redo_user_parity.test.mjs",
+        "reportforge/tests/user_parity/undo_redo_mixed_history_user_parity.test.mjs"
+      ],
+      "requiredGuardCI": [
+        "audit/history_state_guard.mjs"
+      ],
+      "risk": "high",
+      "notes": "justification: DOM-heavy runtime undo/redo engines split from SS-02. DocumentHistory.js: snapshot-based history wired into DocumentStore (canonical path via DS.saveHistory()); DOM access in updateUndoRedo() (btn-undo/btn-redo); orchestrates SectionEngine, CanvasLayoutEngine, PreviewEngineV19, SelectionEngine, PropertiesEngine, FormatEngine on undo/redo. HistoryEngine.js: singleton label-tracking stack used by CommandRuntime; _restore() invokes CanvasLayoutEngine + SectionLayoutEngine + OverlayEngine. HistorySnapshot.js: DS capture/apply utility (duplicates HistoryEngine._snapshot/_restore logic — backlog). HistoryEngine inline state duplicates HistoryState.js factory — backlog for next refactor.",
+      "unresolvedAmbiguities": [],
+      "coverageExclusion": {
+        "reason": "backlog",
+        "justification": "DocumentHistory.js and HistoryEngine.js require DOM + full runtime context (DS, CanvasLayoutEngine, SectionEngine, etc.) to unit test meaningfully. Covered end-to-end by undo_redo_user_parity tests."
       }
     }
   ]

@@ -5,7 +5,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/architecture_matrix.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 395
+    "durationMs": 314
   },
   {
     "file": "reportforge/tests/browser_compatibility.test.mjs",
@@ -13,7 +13,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/browser_compatibility.test.mjs",
     "filter": null,
     "result": "timeout",
-    "durationMs": 12003
+    "durationMs": 12005
   },
   {
     "file": "reportforge/tests/canvas_geometry.test.mjs",
@@ -21,7 +21,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/canvas_geometry.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 395
+    "durationMs": 419
   },
   {
     "file": "reportforge/tests/canvas_layout_element.test.mjs",
@@ -29,7 +29,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/canvas_layout_element.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 394
+    "durationMs": 443
   },
   {
     "file": "reportforge/tests/canvas_layout_section.test.mjs",
@@ -37,7 +37,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/canvas_layout_section.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 393
+    "durationMs": 310
   },
   {
     "file": "reportforge/tests/command_runtime_selection.test.mjs",
@@ -45,7 +45,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/command_runtime_selection.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 392
+    "durationMs": 415
   },
   {
     "file": "reportforge/tests/critical_runtime_contracts.test.mjs",
@@ -53,7 +53,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/critical_runtime_contracts.test.mjs",
     "filter": null,
     "result": "timeout",
-    "durationMs": 12001
+    "durationMs": 12005
   },
   {
     "file": "reportforge/tests/cyclomatic_complexity.test.mjs",
@@ -61,7 +61,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/cyclomatic_complexity.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 390
+    "durationMs": 480
   },
   {
     "file": "reportforge/tests/debuggability.test.mjs",
@@ -69,7 +69,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/debuggability.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 5523
+    "durationMs": 5057
   },
   {
     "file": "reportforge/tests/document_actions_adversarial.test.mjs",
@@ -77,7 +77,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/document_actions_adversarial.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 636
+    "durationMs": 557
   },
   {
     "file": "reportforge/tests/engine_contracts.test.mjs",
@@ -85,7 +85,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/engine_contracts.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 445
+    "durationMs": 410
   },
   {
     "file": "reportforge/tests/format_controls_regression.test.mjs",
@@ -93,7 +93,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/format_controls_regression.test.mjs",
     "filter": null,
     "result": "timeout",
-    "durationMs": 12003
+    "durationMs": 12001
   },
   {
     "file": "reportforge/tests/geometry_core_extended.test.mjs",
@@ -101,7 +101,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/geometry_core_extended.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 404
+    "durationMs": 373
   },
   {
     "file": "reportforge/tests/geometry_core.test.mjs",
@@ -109,7 +109,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/geometry_core.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 405
+    "durationMs": 474
   },
   {
     "file": "reportforge/tests/global_state_corruption.test.mjs",
@@ -117,7 +117,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/global_state_corruption.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 748
+    "durationMs": 636
   },
   {
     "file": "reportforge/tests/governance_guardrails.test.mjs",
@@ -125,7 +125,15 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/governance_guardrails.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 374
+    "durationMs": 861
+  },
+  {
+    "file": "reportforge/tests/history_state.test.mjs",
+    "runner": "node:test",
+    "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/history_state.test.mjs",
+    "filter": null,
+    "result": "pass",
+    "durationMs": 401
   },
   {
     "file": "reportforge/tests/keyboard_registry.test.mjs",
@@ -133,7 +141,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/keyboard_registry.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 373
+    "durationMs": 468
   },
   {
     "file": "reportforge/tests/memory_leak_detection.test.mjs",
@@ -141,7 +149,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/memory_leak_detection.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 1389
+    "durationMs": 1360
   },
   {
     "file": "reportforge/tests/mutation_injection.test.mjs",
@@ -149,7 +157,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/mutation_injection.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 601
+    "durationMs": 396
   },
   {
     "file": "reportforge/tests/pixel_contracts.test.mjs",
@@ -157,7 +165,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/pixel_contracts.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 527
+    "durationMs": 344
   },
   {
     "file": "reportforge/tests/principles_enforcement.test.mjs",
@@ -165,7 +173,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/principles_enforcement.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 540
+    "durationMs": 620
   },
   {
     "file": "reportforge/tests/race_conditions.test.mjs",
@@ -173,7 +181,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/race_conditions.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 355
+    "durationMs": 313
   },
   {
     "file": "reportforge/tests/run_runtime_regression.mjs",
@@ -181,7 +189,7 @@
     "command": "/home/mimi/Escritorio/RF/reportforge/tests/run_runtime_regression.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 20208
+    "durationMs": 18112
   },
   {
     "file": "reportforge/tests/runtime_regression.test.mjs",
@@ -189,7 +197,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/runtime_regression.test.mjs",
     "filter": null,
     "result": "timeout",
-    "durationMs": 12003
+    "durationMs": 12001
   },
   {
     "file": "reportforge/tests/runtime_write_log.test.mjs",
@@ -197,7 +205,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/runtime_write_log.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 562
+    "durationMs": 524
   },
   {
     "file": "reportforge/tests/snap_core.test.mjs",
@@ -205,7 +213,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/snap_core.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 382
+    "durationMs": 620
   },
   {
     "file": "reportforge/tests/snap_engine.test.mjs",
@@ -213,7 +221,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/snap_engine.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 734
+    "durationMs": 522
   },
   {
     "file": "reportforge/tests/snap_state.test.mjs",
@@ -221,7 +229,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/snap_state.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 388
+    "durationMs": 524
   },
   {
     "file": "reportforge/tests/tanda1.test.mjs",
@@ -229,7 +237,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/tanda1.test.mjs",
     "filter": null,
     "result": "timeout",
-    "durationMs": 12012
+    "durationMs": 12006
   },
   {
     "file": "reportforge/tests/tanda10.test.mjs",
@@ -237,7 +245,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/tanda10.test.mjs",
     "filter": null,
     "result": "timeout",
-    "durationMs": 12010
+    "durationMs": 12005
   },
   {
     "file": "reportforge/tests/tanda11.test.mjs",
@@ -245,7 +253,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/tanda11.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 11512
+    "durationMs": 10503
   },
   {
     "file": "reportforge/tests/tanda2.test.mjs",
@@ -253,7 +261,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/tanda2.test.mjs",
     "filter": null,
     "result": "timeout",
-    "durationMs": 12015
+    "durationMs": 12003
   },
   {
     "file": "reportforge/tests/tanda3.test.mjs",
@@ -261,7 +269,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/tanda3.test.mjs",
     "filter": null,
     "result": "timeout",
-    "durationMs": 12013
+    "durationMs": 12002
   },
   {
     "file": "reportforge/tests/tanda4.test.mjs",
@@ -269,7 +277,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/tanda4.test.mjs",
     "filter": null,
     "result": "timeout",
-    "durationMs": 12010
+    "durationMs": 12008
   },
   {
     "file": "reportforge/tests/tanda5.test.mjs",
@@ -277,7 +285,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/tanda5.test.mjs",
     "filter": null,
     "result": "timeout",
-    "durationMs": 12015
+    "durationMs": 12010
   },
   {
     "file": "reportforge/tests/tanda6.test.mjs",
@@ -285,7 +293,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/tanda6.test.mjs",
     "filter": null,
     "result": "timeout",
-    "durationMs": 12008
+    "durationMs": 12005
   },
   {
     "file": "reportforge/tests/tanda7.test.mjs",
@@ -293,7 +301,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/tanda7.test.mjs",
     "filter": null,
     "result": "timeout",
-    "durationMs": 12033
+    "durationMs": 12006
   },
   {
     "file": "reportforge/tests/tanda8.test.mjs",
@@ -301,7 +309,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/tanda8.test.mjs",
     "filter": null,
     "result": "timeout",
-    "durationMs": 12028
+    "durationMs": 12008
   },
   {
     "file": "reportforge/tests/tanda9.test.mjs",
@@ -309,7 +317,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/tanda9.test.mjs",
     "filter": null,
     "result": "timeout",
-    "durationMs": 12013
+    "durationMs": 12003
   },
   {
     "file": "reportforge/tests/test_advanced_engine.py",
@@ -317,7 +325,7 @@
     "command": "-m pytest /home/mimi/Escritorio/RF/reportforge/tests/test_advanced_engine.py -q --tb=no",
     "filter": null,
     "result": "pass",
-    "durationMs": 2337
+    "durationMs": 3091
   },
   {
     "file": "reportforge/tests/test_coercion_traceability.py",
@@ -325,7 +333,7 @@
     "command": "-m pytest /home/mimi/Escritorio/RF/reportforge/tests/test_coercion_traceability.py -q --tb=no",
     "filter": null,
     "result": "pass",
-    "durationMs": 661
+    "durationMs": 1501
   },
   {
     "file": "reportforge/tests/test_cr_functions_traceability.py",
@@ -333,7 +341,7 @@
     "command": "-m pytest /home/mimi/Escritorio/RF/reportforge/tests/test_cr_functions_traceability.py -q --tb=no",
     "filter": null,
     "result": "pass",
-    "durationMs": 687
+    "durationMs": 1752
   },
   {
     "file": "reportforge/tests/test_cr_functions.py",
@@ -341,7 +349,7 @@
     "command": "-m pytest /home/mimi/Escritorio/RF/reportforge/tests/test_cr_functions.py -q --tb=no",
     "filter": null,
     "result": "pass",
-    "durationMs": 1693
+    "durationMs": 1418
   },
   {
     "file": "reportforge/tests/test_doc_types.py",
@@ -349,7 +357,7 @@
     "command": "-m pytest /home/mimi/Escritorio/RF/reportforge/tests/test_doc_types.py -q --tb=no",
     "filter": null,
     "result": "pass",
-    "durationMs": 1636
+    "durationMs": 1279
   },
   {
     "file": "reportforge/tests/test_e2e_api_journey.py",
@@ -357,7 +365,7 @@
     "command": "-m pytest /home/mimi/Escritorio/RF/reportforge/tests/test_e2e_api_journey.py -q --tb=no",
     "filter": null,
     "result": "pass",
-    "durationMs": 3587
+    "durationMs": 4771
   },
   {
     "file": "reportforge/tests/test_formula_engine.py",
@@ -365,7 +373,7 @@
     "command": "-m pytest /home/mimi/Escritorio/RF/reportforge/tests/test_formula_engine.py -q --tb=no",
     "filter": null,
     "result": "pass",
-    "durationMs": 1696
+    "durationMs": 1585
   },
   {
     "file": "reportforge/tests/test_golden_payload.py",
@@ -373,7 +381,7 @@
     "command": "-m pytest /home/mimi/Escritorio/RF/reportforge/tests/test_golden_payload.py -q --tb=no",
     "filter": null,
     "result": "pass",
-    "durationMs": 1831
+    "durationMs": 1775
   },
   {
     "file": "reportforge/tests/test_html_rendering_golden.py",
@@ -381,7 +389,7 @@
     "command": "-m pytest /home/mimi/Escritorio/RF/reportforge/tests/test_html_rendering_golden.py -q --tb=no",
     "filter": null,
     "result": "pass",
-    "durationMs": 1960
+    "durationMs": 1524
   },
   {
     "file": "reportforge/tests/test_input_schema.py",
@@ -389,15 +397,15 @@
     "command": "-m pytest /home/mimi/Escritorio/RF/reportforge/tests/test_input_schema.py -q --tb=no",
     "filter": null,
     "result": "pass",
-    "durationMs": 2136
+    "durationMs": 1357
   },
   {
     "file": "reportforge/tests/test_load.py",
     "runner": "pytest",
     "command": "-m pytest /home/mimi/Escritorio/RF/reportforge/tests/test_load.py -q --tb=no",
     "filter": null,
-    "result": "fail",
-    "durationMs": 6388
+    "result": "pass",
+    "durationMs": 5693
   },
   {
     "file": "reportforge/tests/test_pdf_generator.py",
@@ -405,7 +413,7 @@
     "command": "-m pytest /home/mimi/Escritorio/RF/reportforge/tests/test_pdf_generator.py -q --tb=no",
     "filter": null,
     "result": "pass",
-    "durationMs": 5280
+    "durationMs": 4647
   },
   {
     "file": "reportforge/tests/test_render_engine_phase2.py",
@@ -413,7 +421,7 @@
     "command": "-m pytest /home/mimi/Escritorio/RF/reportforge/tests/test_render_engine_phase2.py -q --tb=no",
     "filter": null,
     "result": "pass",
-    "durationMs": 2851
+    "durationMs": 4115
   },
   {
     "file": "reportforge/tests/test_render_engine.py",
@@ -421,7 +429,7 @@
     "command": "-m pytest /home/mimi/Escritorio/RF/reportforge/tests/test_render_engine.py -q --tb=no",
     "filter": null,
     "result": "pass",
-    "durationMs": 3706
+    "durationMs": 3654
   },
   {
     "file": "reportforge/tests/test_round_trip.py",
@@ -429,7 +437,7 @@
     "command": "-m pytest /home/mimi/Escritorio/RF/reportforge/tests/test_round_trip.py -q --tb=no",
     "filter": null,
     "result": "pass",
-    "durationMs": 1790
+    "durationMs": 1408
   },
   {
     "file": "reportforge/tests/test_server_imports.py",
@@ -437,7 +445,7 @@
     "command": "-m pytest /home/mimi/Escritorio/RF/reportforge/tests/test_server_imports.py -q --tb=no",
     "filter": null,
     "result": "pass",
-    "durationMs": 1755
+    "durationMs": 1415
   },
   {
     "file": "reportforge/tests/test_server.py",
@@ -445,7 +453,7 @@
     "command": "-m pytest /home/mimi/Escritorio/RF/reportforge/tests/test_server.py -q --tb=no",
     "filter": null,
     "result": "pass",
-    "durationMs": 3922
+    "durationMs": 3267
   },
   {
     "file": "reportforge/tests/type_coercion_js.test.mjs",
@@ -453,7 +461,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/type_coercion_js.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 781
+    "durationMs": 741
   },
   {
     "file": "reportforge/tests/user_parity/clipboard_design_preview_parity.test.mjs",
@@ -461,7 +469,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/user_parity/clipboard_design_preview_parity.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 32372
+    "durationMs": 30035
   },
   {
     "file": "reportforge/tests/user_parity/clipboard_visible_composition_user_parity.test.mjs",
@@ -469,7 +477,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/user_parity/clipboard_visible_composition_user_parity.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 10426
+    "durationMs": 9623
   },
   {
     "file": "reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs",
@@ -477,7 +485,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 19364
+    "durationMs": 18693
   },
   {
     "file": "reportforge/tests/user_parity/fast_interaction_smoke_user_parity.test.mjs",
@@ -485,7 +493,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/user_parity/fast_interaction_smoke_user_parity.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 17283
+    "durationMs": 17532
   },
   {
     "file": "reportforge/tests/user_parity/flaky_detection_user_parity.test.mjs",
@@ -493,7 +501,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/user_parity/flaky_detection_user_parity.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 12097
+    "durationMs": 10684
   },
   {
     "file": "reportforge/tests/user_parity/multiselect_drag_user_parity.test.mjs",
@@ -501,7 +509,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/user_parity/multiselect_drag_user_parity.test.mjs",
     "filter": null,
     "result": "fail",
-    "durationMs": 21641
+    "durationMs": 19918
   },
   {
     "file": "reportforge/tests/user_parity/multiselect_frame_glitch_user_parity.test.mjs",
@@ -509,7 +517,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/user_parity/multiselect_frame_glitch_user_parity.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 9063
+    "durationMs": 8230
   },
   {
     "file": "reportforge/tests/user_parity/preview_clipping_user_parity.test.mjs",
@@ -517,7 +525,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/user_parity/preview_clipping_user_parity.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 8711
+    "durationMs": 8966
   },
   {
     "file": "reportforge/tests/user_parity/resize_smoke_user_parity.test.mjs",
@@ -525,7 +533,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/user_parity/resize_smoke_user_parity.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 16959
+    "durationMs": 16681
   },
   {
     "file": "reportforge/tests/user_parity/selection_handle_stacking_user_parity.test.mjs",
@@ -533,7 +541,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/user_parity/selection_handle_stacking_user_parity.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 9001
+    "durationMs": 7169
   },
   {
     "file": "reportforge/tests/user_parity/session_replay_user_parity.test.mjs",
@@ -541,7 +549,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/user_parity/session_replay_user_parity.test.mjs",
     "filter": null,
     "result": "timeout",
-    "durationMs": 45005
+    "durationMs": 45012
   },
   {
     "file": "reportforge/tests/user_parity/template_smoke_user_parity.test.mjs",
@@ -549,7 +557,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/user_parity/template_smoke_user_parity.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 33643
+    "durationMs": 32414
   },
   {
     "file": "reportforge/tests/user_parity/undo_redo_mixed_history_user_parity.test.mjs",
@@ -557,7 +565,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/user_parity/undo_redo_mixed_history_user_parity.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 19930
+    "durationMs": 19222
   },
   {
     "file": "reportforge/tests/user_parity/undo_redo_user_parity.test.mjs",
@@ -565,7 +573,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/user_parity/undo_redo_user_parity.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 25066
+    "durationMs": 24871
   },
   {
     "file": "reportforge/tests/user_parity/visual_golden_user_parity.test.mjs",
@@ -573,7 +581,7 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/user_parity/visual_golden_user_parity.test.mjs",
     "filter": null,
     "result": "timeout",
-    "durationMs": 45007
+    "durationMs": 45010
   },
   {
     "file": "reportforge/tests/user_parity/zoom_extremes_smoke_user_parity.test.mjs",
@@ -581,6 +589,6 @@
     "command": "--test /home/mimi/Escritorio/RF/reportforge/tests/user_parity/zoom_extremes_smoke_user_parity.test.mjs",
     "filter": null,
     "result": "pass",
-    "durationMs": 18349
+    "durationMs": 20394
   }
 ]

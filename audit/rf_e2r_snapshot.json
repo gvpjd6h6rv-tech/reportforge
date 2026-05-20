@@ -1,45 +1,11 @@
 {
   "version": "1.0.0",
-  "generatedAt": "2026-05-20T19:21:10.085Z",
+  "generatedAt": "2026-05-20T21:08:19.399Z",
   "formula": "score = 0.35*bandFactor + 0.20*(100-surface) + 0.15*(100-legacyDebt) + 0.15*(100-coupling) + 0.10*(100-riskScore) + 0.05*guardBonus",
   "bandThresholds": "green=score≥80 | yellow=score 50–79 | red=score<50  (score-derived, Opción A)",
   "bandNote": "Dashboard band is score-derived. E2R guard uses coverageReal bands internally (untouched).",
-  "totalPassingTests": 55,
+  "totalPassingTests": 57,
   "subsystems": [
-    {
-      "id": "SS-02",
-      "name": "history",
-      "domain": "designer-runtime",
-      "tier": "core",
-      "score": 54,
-      "band": "yellow",
-      "owner": "designer-runtime/history",
-      "coverageReal": 4,
-      "surface": 29,
-      "legacyDebt": 0,
-      "coupling": 66,
-      "risk": 80,
-      "requiredGuardCI": false,
-      "tests": 2,
-      "allowedFiles": 4,
-      "allowedFilesList": [
-        "DocumentHistory.js",
-        "HistoryEngine.js",
-        "HistorySnapshot.js",
-        "HistoryState.js"
-      ],
-      "existingTestsList": [
-        "reportforge/tests/user_parity/undo_redo_user_parity.test.mjs",
-        "reportforge/tests/user_parity/undo_redo_mixed_history_user_parity.test.mjs"
-      ],
-      "passingTestsList": [
-        "reportforge/tests/user_parity/undo_redo_user_parity.test.mjs",
-        "reportforge/tests/user_parity/undo_redo_mixed_history_user_parity.test.mjs"
-      ],
-      "requiredGuardCIList": [],
-      "notes": "justification: no dedicated CI gate yet; covered indirectly by runtime regression snapshot baselines and user_parity undo/redo tests. Two parallel undo stacks exist: DocumentHistory (snapshot-based, wired into DocumentStore) and HistoryEngine (label-based, max 100, standalone). Their synchronization is unclear — HistoryEngine.push() delegates to DS.saveHistory() creating a potential double-save.",
-      "coverageNote": null
-    },
     {
       "id": "SS-03",
       "name": "render-scheduler",
@@ -571,13 +537,13 @@
       "score": 68,
       "band": "yellow",
       "owner": "backend-render/datasource",
-      "coverageReal": 2,
+      "coverageReal": 4,
       "surface": 0,
       "legacyDebt": 0,
       "coupling": 0,
       "risk": 100,
       "requiredGuardCI": false,
-      "tests": 1,
+      "tests": 2,
       "allowedFiles": 0,
       "allowedFilesList": [],
       "existingTestsList": [
@@ -585,7 +551,8 @@
         "reportforge/tests/test_load.py"
       ],
       "passingTestsList": [
-        "reportforge/tests/test_e2e_api_journey.py"
+        "reportforge/tests/test_e2e_api_journey.py",
+        "reportforge/tests/test_load.py"
       ],
       "requiredGuardCIList": [],
       "notes": "justification: no JS-accessible CI guard; Python integration tested via test_e2e_api_journey.py. Located at reportforge/core/render/datasource/. DB introspection, caching, multi-dataset coordination, live data feeds. allowedFiles intentionally empty — Python file verification deferred.",
@@ -714,6 +681,41 @@
       ],
       "requiredGuardCIList": [],
       "notes": "Single file, 83 lines. Could be absorbed into SS-08 commands. Kept separate because it owns the DS.tool write and the insert-drag gesture lifecycle.",
+      "coverageNote": null
+    },
+    {
+      "id": "SS-34",
+      "name": "history-runtime",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "score": 70,
+      "band": "yellow",
+      "owner": "designer-runtime/history-runtime",
+      "coverageReal": 4,
+      "surface": 21,
+      "legacyDebt": 0,
+      "coupling": 0,
+      "risk": 80,
+      "requiredGuardCI": true,
+      "tests": 2,
+      "allowedFiles": 3,
+      "allowedFilesList": [
+        "DocumentHistory.js",
+        "HistoryEngine.js",
+        "HistorySnapshot.js"
+      ],
+      "existingTestsList": [
+        "reportforge/tests/user_parity/undo_redo_user_parity.test.mjs",
+        "reportforge/tests/user_parity/undo_redo_mixed_history_user_parity.test.mjs"
+      ],
+      "passingTestsList": [
+        "reportforge/tests/user_parity/undo_redo_user_parity.test.mjs",
+        "reportforge/tests/user_parity/undo_redo_mixed_history_user_parity.test.mjs"
+      ],
+      "requiredGuardCIList": [
+        "audit/history_state_guard.mjs"
+      ],
+      "notes": "justification: DOM-heavy runtime undo/redo engines split from SS-02. DocumentHistory.js: snapshot-based history wired into DocumentStore (canonical path via DS.saveHistory()); DOM access in updateUndoRedo() (btn-undo/btn-redo); orchestrates SectionEngine, CanvasLayoutEngine, PreviewEngineV19, SelectionEngine, PropertiesEngine, FormatEngine on undo/redo. HistoryEngine.js: singleton label-tracking stack used by CommandRuntime; _restore() invokes CanvasLayoutEngine + SectionLayoutEngine + OverlayEngine. HistorySnapshot.js: DS capture/apply utility (duplicates HistoryEngine._snapshot/_restore logic — backlog). HistoryEngine inline state duplicates HistoryState.js factory — backlog for next refactor.",
       "coverageNote": null
     },
     {
@@ -1108,6 +1110,41 @@
       ],
       "requiredGuardCIList": [],
       "notes": "justification: test_server.py covers route correctness. Flask API located at reportforge/server/. Routes: datasources, designer, render, system, templates, tenants. Thin facade — all domain logic delegated to SS-B01 through SS-B04. allowedFiles intentionally empty — Python file verification deferred.",
+      "coverageNote": null
+    },
+    {
+      "id": "SS-02",
+      "name": "history",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "score": 95,
+      "band": "green",
+      "owner": "designer-runtime/history",
+      "coverageReal": 5,
+      "surface": 7,
+      "legacyDebt": 0,
+      "coupling": 0,
+      "risk": 40,
+      "requiredGuardCI": true,
+      "tests": 3,
+      "allowedFiles": 1,
+      "allowedFilesList": [
+        "HistoryState.js"
+      ],
+      "existingTestsList": [
+        "reportforge/tests/history_state.test.mjs",
+        "reportforge/tests/user_parity/undo_redo_user_parity.test.mjs",
+        "reportforge/tests/user_parity/undo_redo_mixed_history_user_parity.test.mjs"
+      ],
+      "passingTestsList": [
+        "reportforge/tests/history_state.test.mjs",
+        "reportforge/tests/user_parity/undo_redo_user_parity.test.mjs",
+        "reportforge/tests/user_parity/undo_redo_mixed_history_user_parity.test.mjs"
+      ],
+      "requiredGuardCIList": [
+        "audit/history_state_guard.mjs"
+      ],
+      "notes": "HistoryState.js is a pure factory — zero DOM, zero globals, zero side effects. createHistoryState(maxStack) returns an independent stack instance with pushUndo/popUndo/pushRedo/popRedo/clearRedo/canUndo/canRedo/suppress/onChange/summary/clear. DocumentHistory.js, HistoryEngine.js, HistorySnapshot.js moved to SS-34 history-runtime (DOM-heavy, singleton patterns).",
       "coverageNote": null
     },
     {

@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-05-20T18:56:09.548Z",
+  "generatedAt": "2026-05-20T20:55:44.331Z",
   "manifestFile": "audit/e2r_run_manifest.json",
   "ownershipFile": "audit/subsystem_ownership_map.json",
-  "totalPassingTests": 55,
+  "totalPassingTests": 57,
   "formula": "coverageReal = round((passingTests.length / totalPassingTests) * 100)",
   "limitations": [
     "Only *.test.mjs files in reportforge/tests/ (non-recursive) are included in manifest.",
@@ -37,16 +37,18 @@
       "name": "history",
       "domain": "designer-runtime",
       "tier": "core",
-      "risk": "high",
+      "risk": "low",
       "existingTests": [
+        "reportforge/tests/history_state.test.mjs",
         "reportforge/tests/user_parity/undo_redo_user_parity.test.mjs",
         "reportforge/tests/user_parity/undo_redo_mixed_history_user_parity.test.mjs"
       ],
       "passingTests": [
+        "reportforge/tests/history_state.test.mjs",
         "reportforge/tests/user_parity/undo_redo_user_parity.test.mjs",
         "reportforge/tests/user_parity/undo_redo_mixed_history_user_parity.test.mjs"
       ],
-      "coverageReal": 4,
+      "coverageReal": 5,
       "coverageNote": null,
       "coverageExclusion": null
     },
@@ -539,9 +541,10 @@
         "reportforge/tests/test_load.py"
       ],
       "passingTests": [
-        "reportforge/tests/test_e2e_api_journey.py"
+        "reportforge/tests/test_e2e_api_journey.py",
+        "reportforge/tests/test_load.py"
       ],
-      "coverageReal": 2,
+      "coverageReal": 4,
       "coverageNote": null,
       "coverageExclusion": null
     },
@@ -692,6 +695,27 @@
       "coverageExclusion": {
         "reason": "backlog",
         "justification": "RuntimeGlobals.js and RuntimeGeometry.js use top-level global mutations and DOM-dependent install() patterns that require significant browser-context vm setup. Unit tests planned for sprint +2."
+      }
+    },
+    {
+      "id": "SS-34",
+      "name": "history-runtime",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "risk": "high",
+      "existingTests": [
+        "reportforge/tests/user_parity/undo_redo_user_parity.test.mjs",
+        "reportforge/tests/user_parity/undo_redo_mixed_history_user_parity.test.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/user_parity/undo_redo_user_parity.test.mjs",
+        "reportforge/tests/user_parity/undo_redo_mixed_history_user_parity.test.mjs"
+      ],
+      "coverageReal": 4,
+      "coverageNote": null,
+      "coverageExclusion": {
+        "reason": "backlog",
+        "justification": "DocumentHistory.js and HistoryEngine.js require DOM + full runtime context (DS, CanvasLayoutEngine, SectionEngine, etc.) to unit test meaningfully. Covered end-to-end by undo_redo_user_parity tests."
       }
     }
   ]
