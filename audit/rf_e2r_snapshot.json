@@ -1,54 +1,11 @@
 {
   "version": "1.0.0",
-  "generatedAt": "2026-05-19T23:40:05.510Z",
+  "generatedAt": "2026-05-20T15:04:26.637Z",
   "formula": "score = 0.35*bandFactor + 0.20*(100-surface) + 0.15*(100-legacyDebt) + 0.15*(100-coupling) + 0.10*(100-riskScore) + 0.05*guardBonus",
   "bandThresholds": "green=score≥80 | yellow=score 50–79 | red=score<50  (score-derived, Opción A)",
   "bandNote": "Dashboard band is score-derived. E2R guard uses coverageReal bands internally (untouched).",
   "totalPassingTests": 51,
   "subsystems": [
-    {
-      "id": "SS-18",
-      "name": "engine-core-init",
-      "domain": "designer-runtime",
-      "tier": "supporting",
-      "score": 43,
-      "band": "red",
-      "owner": "designer-runtime/engine-core-init",
-      "coverageReal": 4,
-      "surface": 93,
-      "legacyDebt": 0,
-      "coupling": 66,
-      "risk": 60,
-      "requiredGuardCI": false,
-      "tests": 2,
-      "allowedFiles": 13,
-      "allowedFilesList": [
-        "EngineCore.js",
-        "EngineCoreRuntime.js",
-        "EngineCoreContracts.js",
-        "EngineCoreRouting.js",
-        "EngineCoreRoutingPointer.js",
-        "EngineCoreRoutingZoom.js",
-        "EngineCoreRoutingRegistry.js",
-        "EngineCoreRoutingWorkspace.js",
-        "RuntimeServices.js",
-        "RuntimeServicesState.js",
-        "RuntimeServicesTrace.js",
-        "RuntimeBootstrap.js",
-        "DeferredBootstrap.js"
-      ],
-      "existingTestsList": [
-        "reportforge/tests/governance_guardrails.test.mjs",
-        "reportforge/tests/engine_contracts.test.mjs"
-      ],
-      "passingTestsList": [
-        "reportforge/tests/governance_guardrails.test.mjs",
-        "reportforge/tests/engine_contracts.test.mjs"
-      ],
-      "requiredGuardCIList": [],
-      "notes": "justification: governance_guardrails.test.mjs test 10 enforces that contract helpers load before EngineCore. This subsystem is scaffolding — it wires all other subsystems at boot but has no domain logic of its own. 13 files is high for an init subsystem — some may be refactor artifacts.",
-      "coverageNote": null
-    },
     {
       "id": "SS-05",
       "name": "canvas-layout",
@@ -713,6 +670,36 @@
       "coverageNote": null
     },
     {
+      "id": "SS-25",
+      "name": "engine-core-bootstrap",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "score": 69,
+      "band": "yellow",
+      "owner": "designer-runtime/engine-core-bootstrap",
+      "coverageReal": 2,
+      "surface": 14,
+      "legacyDebt": 0,
+      "coupling": 0,
+      "risk": 60,
+      "requiredGuardCI": false,
+      "tests": 1,
+      "allowedFiles": 2,
+      "allowedFilesList": [
+        "RuntimeBootstrap.js",
+        "DeferredBootstrap.js"
+      ],
+      "existingTestsList": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "passingTestsList": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "requiredGuardCIList": [],
+      "notes": "Two-phase boot: RuntimeBootstrap.js registers DOMContentLoaded listeners for Phase 1 init (DesignerUI, SnapState, GridEngine, WorkspaceScrollEngine, ZoomEngine). DeferredBootstrap.js registers separate DOMContentLoaded listeners for Phase 3 (CanvasLayoutEngine, HistoryEngine, ZoomApply patch, DS.saveHistory patch). Both run independently — order is determined by <script> tag position in HTML, not by internal synchronization. RuntimeServices.js/State/Trace are in sharedFiles (used here and by SS-18 routing layer).",
+      "coverageNote": null
+    },
+    {
       "id": "SS-07",
       "name": "preview",
       "domain": "designer-runtime",
@@ -870,6 +857,46 @@
         "audit/runtime_trace_guard.mjs"
       ],
       "notes": "Append-only audit log for all DS mutations. Throws hard on missing source or UNKNOWN source. Phase guard (off/warn/throw) enforces render-phase ordering. CI gate: audit/runtime_trace_guard.mjs scans engines/ for direct DS.<criticalField>= assignments that bypass this log.",
+      "coverageNote": null
+    },
+    {
+      "id": "SS-18",
+      "name": "engine-core-init",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "score": 78,
+      "band": "yellow",
+      "owner": "designer-runtime/engine-core-init",
+      "coverageReal": 6,
+      "surface": 57,
+      "legacyDebt": 0,
+      "coupling": 0,
+      "risk": 60,
+      "requiredGuardCI": false,
+      "tests": 3,
+      "allowedFiles": 8,
+      "allowedFilesList": [
+        "EngineCore.js",
+        "EngineCoreRuntime.js",
+        "EngineCoreContracts.js",
+        "EngineCoreRouting.js",
+        "EngineCoreRoutingPointer.js",
+        "EngineCoreRoutingZoom.js",
+        "EngineCoreRoutingRegistry.js",
+        "EngineCoreRoutingWorkspace.js"
+      ],
+      "existingTestsList": [
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/engine_contracts.test.mjs",
+        "reportforge/tests/global_state_corruption.test.mjs"
+      ],
+      "passingTestsList": [
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/engine_contracts.test.mjs",
+        "reportforge/tests/global_state_corruption.test.mjs"
+      ],
+      "requiredGuardCIList": [],
+      "notes": "Event routing layer and runtime contract validation. Routing files (EngineCoreRouting*.js) dispatch pointer/zoom events to the correct engines. Contract files (EngineCore.js, EngineCoreContracts.js, EngineCoreRuntime.js) validate invariants at runtime via createEngineCoreContracts/createEngineCoreRuntime factory pattern. RuntimeBootstrap.js and DeferredBootstrap.js extracted to SS-25. RuntimeServices.js/State/Trace moved to sharedFiles — used by both SS-18 and SS-25.",
       "coverageNote": null
     },
     {

@@ -177,8 +177,8 @@
       "name": "engine-core-init",
       "tier": "supporting",
       "risk": "medium",
-      "coverageReal": 4,
-      "band": "yellow",
+      "coverageReal": 6,
+      "band": "green",
       "hasExclusion": false,
       "exclusionReason": null
     },
@@ -227,6 +227,16 @@
       "name": "guide-rendering",
       "tier": "supporting",
       "risk": "low",
+      "coverageReal": 2,
+      "band": "yellow",
+      "hasExclusion": false,
+      "exclusionReason": null
+    },
+    {
+      "id": "SS-25",
+      "name": "engine-core-bootstrap",
+      "tier": "supporting",
+      "risk": "medium",
       "coverageReal": 2,
       "band": "yellow",
       "hasExclusion": false,
