@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-20T15:02:07.839Z",
+  "generatedAt": "2026-05-20T15:54:46.621Z",
   "manifestFile": "audit/e2r_run_manifest.json",
   "ownershipFile": "audit/subsystem_ownership_map.json",
   "totalPassingTests": 51,
@@ -350,7 +350,7 @@
       "name": "engine-core-init",
       "domain": "designer-runtime",
       "tier": "supporting",
-      "risk": "medium",
+      "risk": "low",
       "existingTests": [
         "reportforge/tests/governance_guardrails.test.mjs",
         "reportforge/tests/engine_contracts.test.mjs",
@@ -546,6 +546,24 @@
         "reportforge/tests/governance_guardrails.test.mjs"
       ],
       "coverageReal": 2,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-26",
+      "name": "engine-core-routing",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "risk": "medium",
+      "existingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/engine_contracts.test.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/engine_contracts.test.mjs"
+      ],
+      "coverageReal": 4,
       "coverageNote": null,
       "coverageExclusion": null
     }

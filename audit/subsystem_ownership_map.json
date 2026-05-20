@@ -8,7 +8,9 @@
     "SnapGuides.js",
     "RuntimeServices.js",
     "RuntimeServicesState.js",
-    "RuntimeServicesTrace.js"
+    "RuntimeServicesTrace.js",
+    "EngineCoreRuntime.js",
+    "EngineCoreContracts.js"
   ],
   "subsystems": [
     {
@@ -746,14 +748,7 @@
       "tier": "supporting",
       "owner": "designer-runtime/engine-core-init",
       "allowedFiles": [
-        "EngineCore.js",
-        "EngineCoreRuntime.js",
-        "EngineCoreContracts.js",
-        "EngineCoreRouting.js",
-        "EngineCoreRoutingPointer.js",
-        "EngineCoreRoutingZoom.js",
-        "EngineCoreRoutingRegistry.js",
-        "EngineCoreRoutingWorkspace.js"
+        "EngineCore.js"
       ],
       "legacyFiles": [],
       "writableState": [],
@@ -772,9 +767,11 @@
         "reportforge/tests/engine_contracts.test.mjs",
         "reportforge/tests/global_state_corruption.test.mjs"
       ],
-      "requiredGuardCI": [],
-      "risk": "medium",
-      "notes": "Event routing layer and runtime contract validation. Routing files (EngineCoreRouting*.js) dispatch pointer/zoom events to the correct engines. Contract files (EngineCore.js, EngineCoreContracts.js, EngineCoreRuntime.js) validate invariants at runtime via createEngineCoreContracts/createEngineCoreRuntime factory pattern. RuntimeBootstrap.js and DeferredBootstrap.js extracted to SS-25. RuntimeServices.js/State/Trace moved to sharedFiles — used by both SS-18 and SS-25.",
+      "requiredGuardCI": [
+        "audit/engine_core_contracts_guard.mjs"
+      ],
+      "risk": "low",
+      "notes": "EngineCore.js is the single facade: wires createEngineCoreContracts (assertRectShape/assertSelectionState/assertLayoutContract/assertZoomContract), createEngineCoreRuntime (safe-mode, lifecycle), and createEngineCoreRouting (pointer/zoom/workspace dispatch). EngineCoreContracts.js and EngineCoreRuntime.js moved to sharedFiles — pure factories testable independently. EngineCoreRouting*.js extracted to SS-26. CI gate: engine_core_contracts_guard.mjs.",
       "unresolvedAmbiguities": []
     },
     {
@@ -1021,6 +1018,37 @@
       "requiredGuardCI": [],
       "risk": "medium",
       "notes": "Two-phase boot: RuntimeBootstrap.js registers DOMContentLoaded listeners for Phase 1 init (DesignerUI, SnapState, GridEngine, WorkspaceScrollEngine, ZoomEngine). DeferredBootstrap.js registers separate DOMContentLoaded listeners for Phase 3 (CanvasLayoutEngine, HistoryEngine, ZoomApply patch, DS.saveHistory patch). Both run independently — order is determined by <script> tag position in HTML, not by internal synchronization. RuntimeServices.js/State/Trace are in sharedFiles (used here and by SS-18 routing layer).",
+      "unresolvedAmbiguities": []
+    },
+    {
+      "id": "SS-26",
+      "name": "engine-core-routing",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "owner": "designer-runtime/engine-core-routing",
+      "allowedFiles": [
+        "EngineCoreRouting.js",
+        "EngineCoreRoutingPointer.js",
+        "EngineCoreRoutingZoom.js",
+        "EngineCoreRoutingRegistry.js",
+        "EngineCoreRoutingWorkspace.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [],
+      "selectors": [],
+      "events": [
+        "EngineCoreRouting.routePointerEvent(e)",
+        "EngineCoreRouting.routeZoomEvent(e)",
+        "EngineCoreRoutingRegistry.registerAllEngines()",
+        "EngineCoreRoutingWorkspace.wireWorkspaceEvents()"
+      ],
+      "existingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/engine_contracts.test.mjs"
+      ],
+      "requiredGuardCI": [],
+      "risk": "medium",
+      "notes": "Five-file routing layer: EngineCoreRouting.js is the orchestrator (wires Pointer/Zoom/Registry/Workspace factories). EngineCoreRoutingPointer.js dispatches pointer events to SelectionEngine/DragEngine. EngineCoreRoutingZoom.js handles zoom-change events. EngineCoreRoutingRegistry.js registers all global engine instances. EngineCoreRoutingWorkspace.js wires DOM workspace events. All use dependency-injection factories (createEngineCoreRouting*(deps)) — testable without DOM.",
       "unresolvedAmbiguities": []
     }
   ]

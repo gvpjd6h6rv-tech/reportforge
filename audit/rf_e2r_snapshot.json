@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "generatedAt": "2026-05-20T15:04:26.637Z",
+  "generatedAt": "2026-05-20T17:00:56.811Z",
   "formula": "score = 0.35*bandFactor + 0.20*(100-surface) + 0.15*(100-legacyDebt) + 0.15*(100-coupling) + 0.10*(100-riskScore) + 0.05*guardBonus",
   "bandThresholds": "green=score≥80 | yellow=score 50–79 | red=score<50  (score-derived, Opción A)",
   "bandNote": "Dashboard band is score-derived. E2R guard uses coverageReal bands internally (untouched).",
@@ -514,6 +514,41 @@
       "coverageNote": null
     },
     {
+      "id": "SS-26",
+      "name": "engine-core-routing",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "score": 64,
+      "band": "yellow",
+      "owner": "designer-runtime/engine-core-routing",
+      "coverageReal": 4,
+      "surface": 36,
+      "legacyDebt": 0,
+      "coupling": 0,
+      "risk": 60,
+      "requiredGuardCI": false,
+      "tests": 2,
+      "allowedFiles": 5,
+      "allowedFilesList": [
+        "EngineCoreRouting.js",
+        "EngineCoreRoutingPointer.js",
+        "EngineCoreRoutingZoom.js",
+        "EngineCoreRoutingRegistry.js",
+        "EngineCoreRoutingWorkspace.js"
+      ],
+      "existingTestsList": [
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/engine_contracts.test.mjs"
+      ],
+      "passingTestsList": [
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/engine_contracts.test.mjs"
+      ],
+      "requiredGuardCIList": [],
+      "notes": "Five-file routing layer: EngineCoreRouting.js is the orchestrator (wires Pointer/Zoom/Registry/Workspace factories). EngineCoreRoutingPointer.js dispatches pointer events to SelectionEngine/DragEngine. EngineCoreRoutingZoom.js handles zoom-change events. EngineCoreRoutingRegistry.js registers all global engine instances. EngineCoreRoutingWorkspace.js wires DOM workspace events. All use dependency-injection factories (createEngineCoreRouting*(deps)) — testable without DOM.",
+      "coverageNote": null
+    },
+    {
       "id": "SS-11",
       "name": "zoom",
       "domain": "designer-runtime",
@@ -860,46 +895,6 @@
       "coverageNote": null
     },
     {
-      "id": "SS-18",
-      "name": "engine-core-init",
-      "domain": "designer-runtime",
-      "tier": "supporting",
-      "score": 78,
-      "band": "yellow",
-      "owner": "designer-runtime/engine-core-init",
-      "coverageReal": 6,
-      "surface": 57,
-      "legacyDebt": 0,
-      "coupling": 0,
-      "risk": 60,
-      "requiredGuardCI": false,
-      "tests": 3,
-      "allowedFiles": 8,
-      "allowedFilesList": [
-        "EngineCore.js",
-        "EngineCoreRuntime.js",
-        "EngineCoreContracts.js",
-        "EngineCoreRouting.js",
-        "EngineCoreRoutingPointer.js",
-        "EngineCoreRoutingZoom.js",
-        "EngineCoreRoutingRegistry.js",
-        "EngineCoreRoutingWorkspace.js"
-      ],
-      "existingTestsList": [
-        "reportforge/tests/governance_guardrails.test.mjs",
-        "reportforge/tests/engine_contracts.test.mjs",
-        "reportforge/tests/global_state_corruption.test.mjs"
-      ],
-      "passingTestsList": [
-        "reportforge/tests/governance_guardrails.test.mjs",
-        "reportforge/tests/engine_contracts.test.mjs",
-        "reportforge/tests/global_state_corruption.test.mjs"
-      ],
-      "requiredGuardCIList": [],
-      "notes": "Event routing layer and runtime contract validation. Routing files (EngineCoreRouting*.js) dispatch pointer/zoom events to the correct engines. Contract files (EngineCore.js, EngineCoreContracts.js, EngineCoreRuntime.js) validate invariants at runtime via createEngineCoreContracts/createEngineCoreRuntime factory pattern. RuntimeBootstrap.js and DeferredBootstrap.js extracted to SS-25. RuntimeServices.js/State/Trace moved to sharedFiles — used by both SS-18 and SS-25.",
-      "coverageNote": null
-    },
-    {
       "id": "SS-B01",
       "name": "formula-eval-python",
       "domain": "backend-render",
@@ -1033,6 +1028,41 @@
         "audit/ssot_guard.mjs"
       ],
       "notes": "SnapEngine.js is the single facade for all snap operations: snap/snapPoint/snapFromClient, grid config, enable/disable, alignment guides. SnapCore.js, SnapState.js, SnapGuides.js moved to sharedFiles — they are redundant utilities that duplicate SnapEngine internals, kept for backwards-compat callers (DragEngine, RuntimeBootstrap).",
+      "coverageNote": null
+    },
+    {
+      "id": "SS-18",
+      "name": "engine-core-init",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "score": 95,
+      "band": "green",
+      "owner": "designer-runtime/engine-core-init",
+      "coverageReal": 6,
+      "surface": 7,
+      "legacyDebt": 0,
+      "coupling": 0,
+      "risk": 40,
+      "requiredGuardCI": true,
+      "tests": 3,
+      "allowedFiles": 1,
+      "allowedFilesList": [
+        "EngineCore.js"
+      ],
+      "existingTestsList": [
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/engine_contracts.test.mjs",
+        "reportforge/tests/global_state_corruption.test.mjs"
+      ],
+      "passingTestsList": [
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/engine_contracts.test.mjs",
+        "reportforge/tests/global_state_corruption.test.mjs"
+      ],
+      "requiredGuardCIList": [
+        "audit/engine_core_contracts_guard.mjs"
+      ],
+      "notes": "EngineCore.js is the single facade: wires createEngineCoreContracts (assertRectShape/assertSelectionState/assertLayoutContract/assertZoomContract), createEngineCoreRuntime (safe-mode, lifecycle), and createEngineCoreRouting (pointer/zoom/workspace dispatch). EngineCoreContracts.js and EngineCoreRuntime.js moved to sharedFiles — pure factories testable independently. EngineCoreRouting*.js extracted to SS-26. CI gate: engine_core_contracts_guard.mjs.",
       "coverageNote": null
     }
   ]

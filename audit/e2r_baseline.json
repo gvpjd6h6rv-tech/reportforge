@@ -176,7 +176,7 @@
       "id": "SS-18",
       "name": "engine-core-init",
       "tier": "supporting",
-      "risk": "medium",
+      "risk": "low",
       "coverageReal": 6,
       "band": "green",
       "hasExclusion": false,
@@ -238,6 +238,16 @@
       "tier": "supporting",
       "risk": "medium",
       "coverageReal": 2,
+      "band": "yellow",
+      "hasExclusion": false,
+      "exclusionReason": null
+    },
+    {
+      "id": "SS-26",
+      "name": "engine-core-routing",
+      "tier": "supporting",
+      "risk": "medium",
+      "coverageReal": 4,
       "band": "yellow",
       "hasExclusion": false,
       "exclusionReason": null
