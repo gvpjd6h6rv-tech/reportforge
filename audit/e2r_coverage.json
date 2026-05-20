@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-05-20T17:30:07.624Z",
+  "generatedAt": "2026-05-20T18:22:41.318Z",
   "manifestFile": "audit/e2r_run_manifest.json",
   "ownershipFile": "audit/subsystem_ownership_map.json",
-  "totalPassingTests": 52,
+  "totalPassingTests": 54,
   "formula": "coverageReal = round((passingTests.length / totalPassingTests) * 100)",
   "limitations": [
     "Only *.test.mjs files in reportforge/tests/ (non-recursive) are included in manifest.",
@@ -121,7 +121,7 @@
         "reportforge/tests/user_parity/selection_handle_stacking_user_parity.test.mjs",
         "reportforge/tests/run_runtime_regression.mjs"
       ],
-      "coverageReal": 8,
+      "coverageReal": 7,
       "coverageNote": null,
       "coverageExclusion": null
     },
@@ -150,6 +150,76 @@
       "name": "commands",
       "domain": "designer-runtime",
       "tier": "core",
+      "risk": "low",
+      "existingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs",
+        "reportforge/tests/command_runtime_selection.test.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs",
+        "reportforge/tests/command_runtime_selection.test.mjs"
+      ],
+      "coverageReal": 6,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-28",
+      "name": "command-selection",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "risk": "medium",
+      "existingTests": [
+        "reportforge/tests/command_runtime_selection.test.mjs",
+        "reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/command_runtime_selection.test.mjs",
+        "reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs"
+      ],
+      "coverageReal": 4,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-29",
+      "name": "command-sections",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "risk": "high",
+      "existingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "coverageReal": 2,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-30",
+      "name": "command-io",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "risk": "high",
+      "existingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "coverageReal": 2,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-31",
+      "name": "command-dispatcher",
+      "domain": "designer-runtime",
+      "tier": "core",
       "risk": "high",
       "existingTests": [
         "reportforge/tests/governance_guardrails.test.mjs",
@@ -160,6 +230,22 @@
         "reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs"
       ],
       "coverageReal": 4,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-32",
+      "name": "command-view",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "risk": "medium",
+      "existingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "coverageReal": 2,
       "coverageNote": null,
       "coverageExclusion": null
     },
@@ -434,7 +520,7 @@
         "reportforge/tests/test_cr_functions_traceability.py",
         "reportforge/tests/test_coercion_traceability.py"
       ],
-      "coverageReal": 8,
+      "coverageReal": 7,
       "coverageNote": null,
       "coverageExclusion": null
     },
@@ -449,9 +535,10 @@
         "reportforge/tests/test_load.py"
       ],
       "passingTests": [
-        "reportforge/tests/test_e2e_api_journey.py"
+        "reportforge/tests/test_e2e_api_journey.py",
+        "reportforge/tests/test_load.py"
       ],
-      "coverageReal": 2,
+      "coverageReal": 4,
       "coverageNote": null,
       "coverageExclusion": null
     },
@@ -475,7 +562,7 @@
         "reportforge/tests/test_render_engine_phase2.py",
         "reportforge/tests/test_advanced_engine.py"
       ],
-      "coverageReal": 10,
+      "coverageReal": 9,
       "coverageNote": null,
       "coverageExclusion": null
     },

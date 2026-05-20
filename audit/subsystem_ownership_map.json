@@ -11,7 +11,9 @@
     "RuntimeServicesTrace.js",
     "EngineCoreRuntime.js",
     "EngineCoreContracts.js",
-    "CanvasLayoutContracts.js"
+    "CanvasLayoutContracts.js",
+    "CommandRuntimeShared.js",
+    "CommandRuntimeInit.js"
   ],
   "subsystems": [
     {
@@ -316,15 +318,7 @@
       "tier": "core",
       "owner": "designer-runtime/commands",
       "allowedFiles": [
-        "CommandRuntime.js",
-        "CommandRuntimeHandlers.js",
-        "CommandRuntimeSelection.js",
-        "CommandRuntimeSections.js",
-        "CommandRuntimeFile.js",
-        "CommandRuntimeDocType.js",
-        "CommandRuntimeView.js",
-        "CommandRuntimeShared.js",
-        "CommandRuntimeInit.js"
+        "CommandRuntime.js"
       ],
       "legacyFiles": [],
       "writableState": [],
@@ -341,14 +335,185 @@
       ],
       "existingTests": [
         "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs",
+        "reportforge/tests/command_runtime_selection.test.mjs"
+      ],
+      "requiredGuardCI": [
+        "audit/command_runtime_guard.mjs"
+      ],
+      "risk": "low",
+      "notes": "CommandRuntime.js is a 26-line pure wiring facade: Object.assign merges selection/view/sections into CommandEngine, assigns FileEngine, exposes 11 handler globals — no DOM access, no monkey-patches, no external engine calls, no conditional logic. Risk reduced from high to low: the high-risk behaviour (DOM manipulation, prompt/confirm calls, localStorage, DS.saveHistory monkey-patch) resides exclusively in the sub-modules now owned by SS-28/29/30/31/32. command_runtime_guard.mjs enforces the no-inline-function constraint to prevent logic creep. CommandRuntimeShared.js and CommandRuntimeInit.js moved to sharedFiles — consumed by multiple sub-modules.",
+      "unresolvedAmbiguities": []
+    },
+    {
+      "id": "SS-28",
+      "name": "command-selection",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "owner": "designer-runtime/command-selection",
+      "allowedFiles": [
+        "CommandRuntimeSelection.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [],
+      "selectors": [],
+      "events": [
+        "CommandEngine.copy()",
+        "CommandEngine.cut()",
+        "CommandEngine.paste()",
+        "CommandEngine.delete()",
+        "CommandEngine.selectAll()",
+        "CommandEngine.alignLefts()",
+        "CommandEngine.alignCenters()",
+        "CommandEngine.alignRights()",
+        "CommandEngine.alignTops()",
+        "CommandEngine.alignMiddles()",
+        "CommandEngine.alignBottoms()",
+        "CommandEngine.sameWidth()",
+        "CommandEngine.sameHeight()",
+        "CommandEngine.bringFront()",
+        "CommandEngine.sendBack()",
+        "CommandEngine.bringForward()",
+        "CommandEngine.sendBackward()",
+        "CommandEngine.group()",
+        "CommandEngine.ungroup()",
+        "CommandEngine.invertSelection()"
+      ],
+      "existingTests": [
+        "reportforge/tests/command_runtime_selection.test.mjs",
         "reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs"
       ],
-      "requiredGuardCI": [],
+      "requiredGuardCI": [
+        "audit/command_runtime_guard.mjs"
+      ],
+      "risk": "medium",
+      "notes": "justification: command_runtime_selection.test.mjs covers all 20 operations via vm isolation (align math, z-order, clipboard offset, group/invert). Element selection and manipulation commands mutate DS.elements/selection and delegate DOM updates to _canonicalCanvasWriter(). No direct DOM construction — only position/z-order updates via the canvas writer.",
+      "unresolvedAmbiguities": []
+    },
+    {
+      "id": "SS-29",
+      "name": "command-sections",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "owner": "designer-runtime/command-sections",
+      "allowedFiles": [
+        "CommandRuntimeSections.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [],
+      "selectors": [],
+      "events": [
+        "CommandEngine.insertSection()",
+        "CommandEngine.deleteSection()",
+        "CommandEngine.moveSectionUp()",
+        "CommandEngine.moveSectionDown()",
+        "CommandEngine.renameSection()",
+        "CommandEngine.lockObject()",
+        "CommandEngine.unlockObject()",
+        "CommandEngine.hideObject()",
+        "CommandEngine.showObject()",
+        "CommandEngine.toggleSectionVisibility(id)"
+      ],
+      "existingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "requiredGuardCI": [
+        "audit/command_runtime_guard.mjs"
+      ],
       "risk": "high",
-      "notes": "justification: governance_guardrails.test.mjs tests 6 and 17 enforce that the monolith does not define command orchestration or UI adapter wiring inline. CommandRuntimeView.js content not fully verified — may contain view commands (zoom-fit-page, add-guide).",
-      "unresolvedAmbiguities": [
-        "CommandRuntimeView.js full content not read — unclear which commands it handles"
-      ]
+      "notes": "justification: governance_guardrails.test.mjs structural tests confirm no inline wiring in the monolith. Section management and object visibility commands. Calls prompt() for renameSection (blocking UI). lockObject/unlockObject/hideObject/showObject are object-level commands co-located here for historical reasons — they manipulate DS.elements directly. Risk high: direct DS mutation, prompt() calls, and renderAll() invocations on every operation.",
+      "unresolvedAmbiguities": []
+    },
+    {
+      "id": "SS-30",
+      "name": "command-io",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "owner": "designer-runtime/command-io",
+      "allowedFiles": [
+        "CommandRuntimeFile.js",
+        "CommandRuntimeDocType.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [],
+      "selectors": [],
+      "events": [
+        "FileEngine.save()",
+        "FileEngine.load()",
+        "FileEngine.exportJSON()",
+        "FileEngine.importJSON(file)",
+        "switchDocType(key)"
+      ],
+      "existingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "requiredGuardCI": [
+        "audit/command_runtime_guard.mjs"
+      ],
+      "risk": "high",
+      "notes": "File I/O (localStorage, FileReader, Blob URL) and document-type switching. CommandRuntimeDocType.js mutates FieldExplorerEngine._activeTree directly and calls confirm() when switching doc type. Risk high: browser APIs (localStorage, URL.createObjectURL, FileReader), blocking dialogs (prompt, confirm), and cross-engine mutation (FieldExplorerEngine).",
+      "unresolvedAmbiguities": []
+    },
+    {
+      "id": "SS-31",
+      "name": "command-dispatcher",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "owner": "designer-runtime/command-dispatcher",
+      "allowedFiles": [
+        "CommandRuntimeHandlers.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [],
+      "selectors": [],
+      "events": [
+        "handleAction(action)",
+        "handleToolSelection(tool)",
+        "handleViewSelection(view)",
+        "handleZoomSelection(value)",
+        "handleFormatAction(format)",
+        "handleFontFamilyChange(value)",
+        "handleFontSizeChange(value)"
+      ],
+      "existingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs"
+      ],
+      "requiredGuardCI": [
+        "audit/command_runtime_guard.mjs"
+      ],
+      "risk": "high",
+      "notes": "justification: governance_guardrails.test.mjs + content_edit_smoke_user_parity.test.mjs verify end-to-end dispatch. UI event dispatcher layer — 120-case switch in handleAction routes application-level events to engines (ZoomEngine, InsertEngine, FormatEngine, GridEngine, RulerEngine, AlignmentGuides, PreviewEngineRenderer). This is not a command but a UI adapter hub. Risk high: calls confirm() for new/quit, uses prompt() for margin commands, and dispatches to 8+ external engines. It is the application's single input surface.",
+      "unresolvedAmbiguities": []
+    },
+    {
+      "id": "SS-32",
+      "name": "command-view",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "owner": "designer-runtime/command-view",
+      "allowedFiles": [
+        "CommandRuntimeView.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [],
+      "selectors": [],
+      "events": [
+        "CommandEngine.zoomFitPage()",
+        "CommandEngine.zoomFitWidth()",
+        "CommandEngine.addHGuide()",
+        "CommandEngine.addVGuide()",
+        "CommandEngine.removeGuide()"
+      ],
+      "existingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "requiredGuardCI": [
+        "audit/command_runtime_guard.mjs"
+      ],
+      "risk": "medium",
+      "notes": "View-level commands: zoomFitPage/Width compute scale from workspace dimensions and delegate to DesignZoomEngine.setFree(). addHGuide/addVGuide/removeGuide create/remove DOM guide elements in guide-layer. Risk medium: DOM construction but no state mutation beyond guide-layer appendChild/remove.",
+      "unresolvedAmbiguities": []
     },
     {
       "id": "SS-09",

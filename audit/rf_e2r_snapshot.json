@@ -1,50 +1,11 @@
 {
   "version": "1.0.0",
-  "generatedAt": "2026-05-20T17:47:31.282Z",
+  "generatedAt": "2026-05-20T18:24:50.408Z",
   "formula": "score = 0.35*bandFactor + 0.20*(100-surface) + 0.15*(100-legacyDebt) + 0.15*(100-coupling) + 0.10*(100-riskScore) + 0.05*guardBonus",
   "bandThresholds": "green=score≥80 | yellow=score 50–79 | red=score<50  (score-derived, Opción A)",
   "bandNote": "Dashboard band is score-derived. E2R guard uses coverageReal bands internally (untouched).",
-  "totalPassingTests": 52,
+  "totalPassingTests": 54,
   "subsystems": [
-    {
-      "id": "SS-08",
-      "name": "commands",
-      "domain": "designer-runtime",
-      "tier": "core",
-      "score": 52,
-      "band": "yellow",
-      "owner": "designer-runtime/commands",
-      "coverageReal": 4,
-      "surface": 64,
-      "legacyDebt": 0,
-      "coupling": 33,
-      "risk": 80,
-      "requiredGuardCI": false,
-      "tests": 2,
-      "allowedFiles": 9,
-      "allowedFilesList": [
-        "CommandRuntime.js",
-        "CommandRuntimeHandlers.js",
-        "CommandRuntimeSelection.js",
-        "CommandRuntimeSections.js",
-        "CommandRuntimeFile.js",
-        "CommandRuntimeDocType.js",
-        "CommandRuntimeView.js",
-        "CommandRuntimeShared.js",
-        "CommandRuntimeInit.js"
-      ],
-      "existingTestsList": [
-        "reportforge/tests/governance_guardrails.test.mjs",
-        "reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs"
-      ],
-      "passingTestsList": [
-        "reportforge/tests/governance_guardrails.test.mjs",
-        "reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs"
-      ],
-      "requiredGuardCIList": [],
-      "notes": "justification: governance_guardrails.test.mjs tests 6 and 17 enforce that the monolith does not define command orchestration or UI adapter wiring inline. CommandRuntimeView.js content not fully verified — may contain view commands (zoom-fit-page, add-guide).",
-      "coverageNote": null
-    },
     {
       "id": "SS-04",
       "name": "geometry",
@@ -193,7 +154,7 @@
       "score": 55,
       "band": "yellow",
       "owner": "designer-runtime/selection-drag",
-      "coverageReal": 8,
+      "coverageReal": 7,
       "surface": 100,
       "legacyDebt": 0,
       "coupling": 99,
@@ -618,13 +579,13 @@
       "score": 68,
       "band": "yellow",
       "owner": "backend-render/datasource",
-      "coverageReal": 2,
+      "coverageReal": 4,
       "surface": 0,
       "legacyDebt": 0,
       "coupling": 0,
       "risk": 100,
       "requiredGuardCI": false,
-      "tests": 1,
+      "tests": 2,
       "allowedFiles": 0,
       "allowedFilesList": [],
       "existingTestsList": [
@@ -632,7 +593,8 @@
         "reportforge/tests/test_load.py"
       ],
       "passingTestsList": [
-        "reportforge/tests/test_e2e_api_journey.py"
+        "reportforge/tests/test_e2e_api_journey.py",
+        "reportforge/tests/test_load.py"
       ],
       "requiredGuardCIList": [],
       "notes": "justification: no JS-accessible CI guard; Python integration tested via test_e2e_api_journey.py. Located at reportforge/core/render/datasource/. DB introspection, caching, multi-dataset coordination, live data feeds. allowedFiles intentionally empty — Python file verification deferred.",
@@ -798,6 +760,102 @@
       "coverageNote": null
     },
     {
+      "id": "SS-30",
+      "name": "command-io",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "score": 72,
+      "band": "yellow",
+      "owner": "designer-runtime/command-io",
+      "coverageReal": 2,
+      "surface": 14,
+      "legacyDebt": 0,
+      "coupling": 0,
+      "risk": 80,
+      "requiredGuardCI": true,
+      "tests": 1,
+      "allowedFiles": 2,
+      "allowedFilesList": [
+        "CommandRuntimeFile.js",
+        "CommandRuntimeDocType.js"
+      ],
+      "existingTestsList": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "passingTestsList": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "requiredGuardCIList": [
+        "audit/command_runtime_guard.mjs"
+      ],
+      "notes": "File I/O (localStorage, FileReader, Blob URL) and document-type switching. CommandRuntimeDocType.js mutates FieldExplorerEngine._activeTree directly and calls confirm() when switching doc type. Risk high: browser APIs (localStorage, URL.createObjectURL, FileReader), blocking dialogs (prompt, confirm), and cross-engine mutation (FieldExplorerEngine).",
+      "coverageNote": null
+    },
+    {
+      "id": "SS-29",
+      "name": "command-sections",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "score": 73,
+      "band": "yellow",
+      "owner": "designer-runtime/command-sections",
+      "coverageReal": 2,
+      "surface": 7,
+      "legacyDebt": 0,
+      "coupling": 0,
+      "risk": 80,
+      "requiredGuardCI": true,
+      "tests": 1,
+      "allowedFiles": 1,
+      "allowedFilesList": [
+        "CommandRuntimeSections.js"
+      ],
+      "existingTestsList": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "passingTestsList": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "requiredGuardCIList": [
+        "audit/command_runtime_guard.mjs"
+      ],
+      "notes": "justification: governance_guardrails.test.mjs structural tests confirm no inline wiring in the monolith. Section management and object visibility commands. Calls prompt() for renameSection (blocking UI). lockObject/unlockObject/hideObject/showObject are object-level commands co-located here for historical reasons — they manipulate DS.elements directly. Risk high: direct DS mutation, prompt() calls, and renderAll() invocations on every operation.",
+      "coverageNote": null
+    },
+    {
+      "id": "SS-31",
+      "name": "command-dispatcher",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "score": 73,
+      "band": "yellow",
+      "owner": "designer-runtime/command-dispatcher",
+      "coverageReal": 4,
+      "surface": 7,
+      "legacyDebt": 0,
+      "coupling": 0,
+      "risk": 80,
+      "requiredGuardCI": true,
+      "tests": 2,
+      "allowedFiles": 1,
+      "allowedFilesList": [
+        "CommandRuntimeHandlers.js"
+      ],
+      "existingTestsList": [
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs"
+      ],
+      "passingTestsList": [
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs"
+      ],
+      "requiredGuardCIList": [
+        "audit/command_runtime_guard.mjs"
+      ],
+      "notes": "justification: governance_guardrails.test.mjs + content_edit_smoke_user_parity.test.mjs verify end-to-end dispatch. UI event dispatcher layer — 120-case switch in handleAction routes application-level events to engines (ZoomEngine, InsertEngine, FormatEngine, GridEngine, RulerEngine, AlignmentGuides, PreviewEngineRenderer). This is not a command but a UI adapter hub. Risk high: calls confirm() for new/quit, uses prompt() for margin commands, and dispatches to 8+ external engines. It is the application's single input surface.",
+      "coverageNote": null
+    },
+    {
       "id": "SS-B05",
       "name": "doc-models-python",
       "domain": "backend-render",
@@ -824,6 +882,70 @@
       ],
       "requiredGuardCIList": [],
       "notes": "5 document type models (factura, remision, nota_credito, retencion, liquidacion). Located at reportforge/core/models/. SSOT for document structure on the Python side. allowedFiles intentionally empty — Python file verification deferred.",
+      "coverageNote": null
+    },
+    {
+      "id": "SS-28",
+      "name": "command-selection",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "score": 75,
+      "band": "yellow",
+      "owner": "designer-runtime/command-selection",
+      "coverageReal": 4,
+      "surface": 7,
+      "legacyDebt": 0,
+      "coupling": 0,
+      "risk": 60,
+      "requiredGuardCI": true,
+      "tests": 2,
+      "allowedFiles": 1,
+      "allowedFilesList": [
+        "CommandRuntimeSelection.js"
+      ],
+      "existingTestsList": [
+        "reportforge/tests/command_runtime_selection.test.mjs",
+        "reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs"
+      ],
+      "passingTestsList": [
+        "reportforge/tests/command_runtime_selection.test.mjs",
+        "reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs"
+      ],
+      "requiredGuardCIList": [
+        "audit/command_runtime_guard.mjs"
+      ],
+      "notes": "justification: command_runtime_selection.test.mjs covers all 20 operations via vm isolation (align math, z-order, clipboard offset, group/invert). Element selection and manipulation commands mutate DS.elements/selection and delegate DOM updates to _canonicalCanvasWriter(). No direct DOM construction — only position/z-order updates via the canvas writer.",
+      "coverageNote": null
+    },
+    {
+      "id": "SS-32",
+      "name": "command-view",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "score": 75,
+      "band": "yellow",
+      "owner": "designer-runtime/command-view",
+      "coverageReal": 2,
+      "surface": 7,
+      "legacyDebt": 0,
+      "coupling": 0,
+      "risk": 60,
+      "requiredGuardCI": true,
+      "tests": 1,
+      "allowedFiles": 1,
+      "allowedFilesList": [
+        "CommandRuntimeView.js"
+      ],
+      "existingTestsList": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "passingTestsList": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "requiredGuardCIList": [
+        "audit/command_runtime_guard.mjs"
+      ],
+      "notes": "View-level commands: zoomFitPage/Width compute scale from workspace dimensions and delegate to DesignZoomEngine.setFree(). addHGuide/addVGuide/removeGuide create/remove DOM guide elements in guide-layer. Risk medium: DOM construction but no state mutation beyond guide-layer appendChild/remove.",
       "coverageNote": null
     },
     {
@@ -865,7 +987,7 @@
       "score": 85,
       "band": "green",
       "owner": "backend-render/formula-eval-python",
-      "coverageReal": 8,
+      "coverageReal": 7,
       "surface": 0,
       "legacyDebt": 0,
       "coupling": 33,
@@ -900,7 +1022,7 @@
       "score": 85,
       "band": "green",
       "owner": "backend-render/element-rendering",
-      "coverageReal": 10,
+      "coverageReal": 9,
       "surface": 0,
       "legacyDebt": 0,
       "coupling": 0,
@@ -1030,6 +1152,41 @@
         "audit/canvas_layout_guard.mjs"
       ],
       "notes": "CanvasLayoutEngine.js is a pure delegation facade (22 lines) — it routes calls to CanvasLayoutSize and CanvasLayoutElements without owning any logic. Risk reduced from critical to low: (1) delegation targets have functional vm tests (canvas_layout_element + canvas_layout_section), (2) canvas_layout_guard enforces the API surface and delegation pattern, (3) boundary split moved all implementation to SS-27 canvas-rendering, leaving SS-05 as a thin coordinator. CanvasLayoutContracts.js is sharedFiles (consumed by both Size and Elements). SectionEngine vs SectionLayoutEngine ambiguity resolved: SectionEngine = init phase (creates DOM from scratch on render), SectionLayoutEngine = update phase (adjusts heights/widths on zoom or resize). Delegation split ambiguity resolved by guard.",
+      "coverageNote": null
+    },
+    {
+      "id": "SS-08",
+      "name": "commands",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "score": 95,
+      "band": "green",
+      "owner": "designer-runtime/commands",
+      "coverageReal": 6,
+      "surface": 7,
+      "legacyDebt": 0,
+      "coupling": 0,
+      "risk": 40,
+      "requiredGuardCI": true,
+      "tests": 3,
+      "allowedFiles": 1,
+      "allowedFilesList": [
+        "CommandRuntime.js"
+      ],
+      "existingTestsList": [
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs",
+        "reportforge/tests/command_runtime_selection.test.mjs"
+      ],
+      "passingTestsList": [
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs",
+        "reportforge/tests/command_runtime_selection.test.mjs"
+      ],
+      "requiredGuardCIList": [
+        "audit/command_runtime_guard.mjs"
+      ],
+      "notes": "CommandRuntime.js is a 26-line pure wiring facade: Object.assign merges selection/view/sections into CommandEngine, assigns FileEngine, exposes 11 handler globals — no DOM access, no monkey-patches, no external engine calls, no conditional logic. Risk reduced from high to low: the high-risk behaviour (DOM manipulation, prompt/confirm calls, localStorage, DS.saveHistory monkey-patch) resides exclusively in the sub-modules now owned by SS-28/29/30/31/32. command_runtime_guard.mjs enforces the no-inline-function constraint to prevent logic creep. CommandRuntimeShared.js and CommandRuntimeInit.js moved to sharedFiles — consumed by multiple sub-modules.",
       "coverageNote": null
     },
     {
