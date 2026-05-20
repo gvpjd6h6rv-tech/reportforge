@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-05-20T15:54:46.621Z",
+  "generatedAt": "2026-05-20T17:30:07.624Z",
   "manifestFile": "audit/e2r_run_manifest.json",
   "ownershipFile": "audit/subsystem_ownership_map.json",
-  "totalPassingTests": 51,
+  "totalPassingTests": 52,
   "formula": "coverageReal = round((passingTests.length / totalPassingTests) * 100)",
   "limitations": [
     "Only *.test.mjs files in reportforge/tests/ (non-recursive) are included in manifest.",
@@ -87,15 +87,18 @@
       "name": "canvas-layout",
       "domain": "designer-runtime",
       "tier": "core",
-      "risk": "critical",
+      "risk": "low",
       "existingTests": [
         "reportforge/tests/run_runtime_regression.mjs",
-        "reportforge/tests/critical_runtime_contracts.test.mjs"
+        "reportforge/tests/canvas_layout_element.test.mjs",
+        "reportforge/tests/canvas_layout_section.test.mjs"
       ],
       "passingTests": [
-        "reportforge/tests/run_runtime_regression.mjs"
+        "reportforge/tests/run_runtime_regression.mjs",
+        "reportforge/tests/canvas_layout_element.test.mjs",
+        "reportforge/tests/canvas_layout_section.test.mjs"
       ],
-      "coverageReal": 2,
+      "coverageReal": 6,
       "coverageNote": null,
       "coverageExclusion": null
     },
@@ -446,10 +449,9 @@
         "reportforge/tests/test_load.py"
       ],
       "passingTests": [
-        "reportforge/tests/test_e2e_api_journey.py",
-        "reportforge/tests/test_load.py"
+        "reportforge/tests/test_e2e_api_journey.py"
       ],
-      "coverageReal": 4,
+      "coverageReal": 2,
       "coverageNote": null,
       "coverageExclusion": null
     },
@@ -564,6 +566,26 @@
         "reportforge/tests/engine_contracts.test.mjs"
       ],
       "coverageReal": 4,
+      "coverageNote": null,
+      "coverageExclusion": null
+    },
+    {
+      "id": "SS-27",
+      "name": "canvas-rendering",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "risk": "medium",
+      "existingTests": [
+        "reportforge/tests/run_runtime_regression.mjs",
+        "reportforge/tests/canvas_layout_element.test.mjs",
+        "reportforge/tests/canvas_layout_section.test.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/run_runtime_regression.mjs",
+        "reportforge/tests/canvas_layout_element.test.mjs",
+        "reportforge/tests/canvas_layout_section.test.mjs"
+      ],
+      "coverageReal": 6,
       "coverageNote": null,
       "coverageExclusion": null
     }

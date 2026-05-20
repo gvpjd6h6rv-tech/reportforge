@@ -1,47 +1,11 @@
 {
   "version": "1.0.0",
-  "generatedAt": "2026-05-20T17:04:52.210Z",
+  "generatedAt": "2026-05-20T17:47:31.282Z",
   "formula": "score = 0.35*bandFactor + 0.20*(100-surface) + 0.15*(100-legacyDebt) + 0.15*(100-coupling) + 0.10*(100-riskScore) + 0.05*guardBonus",
   "bandThresholds": "green=score≥80 | yellow=score 50–79 | red=score<50  (score-derived, Opción A)",
   "bandNote": "Dashboard band is score-derived. E2R guard uses coverageReal bands internally (untouched).",
-  "totalPassingTests": 51,
+  "totalPassingTests": 52,
   "subsystems": [
-    {
-      "id": "SS-05",
-      "name": "canvas-layout",
-      "domain": "designer-runtime",
-      "tier": "core",
-      "score": 48,
-      "band": "red",
-      "owner": "designer-runtime/canvas-layout",
-      "coverageReal": 2,
-      "surface": 50,
-      "legacyDebt": 0,
-      "coupling": 66,
-      "risk": 100,
-      "requiredGuardCI": false,
-      "tests": 1,
-      "allowedFiles": 7,
-      "allowedFilesList": [
-        "CanvasLayoutEngine.js",
-        "CanvasLayoutSize.js",
-        "CanvasLayoutElements.js",
-        "CanvasLayoutContracts.js",
-        "ElementLayoutEngine.js",
-        "SectionLayoutEngine.js",
-        "SectionEngine.js"
-      ],
-      "existingTestsList": [
-        "reportforge/tests/run_runtime_regression.mjs",
-        "reportforge/tests/critical_runtime_contracts.test.mjs"
-      ],
-      "passingTestsList": [
-        "reportforge/tests/run_runtime_regression.mjs"
-      ],
-      "requiredGuardCIList": [],
-      "notes": "justification: covered by runtime regression baselines — canvas layout divergence manifests as screenshot mismatch. SectionEngine.js renders section DOM; SectionLayoutEngine.js manages section heights. Overlap possible — see ambiguities.",
-      "coverageNote": null
-    },
     {
       "id": "SS-08",
       "name": "commands",
@@ -654,13 +618,13 @@
       "score": 68,
       "band": "yellow",
       "owner": "backend-render/datasource",
-      "coverageReal": 4,
+      "coverageReal": 2,
       "surface": 0,
       "legacyDebt": 0,
       "coupling": 0,
       "risk": 100,
       "requiredGuardCI": false,
-      "tests": 2,
+      "tests": 1,
       "allowedFiles": 0,
       "allowedFilesList": [],
       "existingTestsList": [
@@ -668,8 +632,7 @@
         "reportforge/tests/test_load.py"
       ],
       "passingTestsList": [
-        "reportforge/tests/test_e2e_api_journey.py",
-        "reportforge/tests/test_load.py"
+        "reportforge/tests/test_e2e_api_journey.py"
       ],
       "requiredGuardCIList": [],
       "notes": "justification: no JS-accessible CI guard; Python integration tested via test_e2e_api_journey.py. Located at reportforge/core/render/datasource/. DB introspection, caching, multi-dataset coordination, live data feeds. allowedFiles intentionally empty — Python file verification deferred.",
@@ -965,6 +928,45 @@
       "coverageNote": null
     },
     {
+      "id": "SS-27",
+      "name": "canvas-rendering",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "score": 87,
+      "band": "green",
+      "owner": "designer-runtime/canvas-rendering",
+      "coverageReal": 6,
+      "surface": 36,
+      "legacyDebt": 0,
+      "coupling": 0,
+      "risk": 60,
+      "requiredGuardCI": true,
+      "tests": 3,
+      "allowedFiles": 5,
+      "allowedFilesList": [
+        "CanvasLayoutSize.js",
+        "CanvasLayoutElements.js",
+        "SectionEngine.js",
+        "SectionLayoutEngine.js",
+        "ElementLayoutEngine.js"
+      ],
+      "existingTestsList": [
+        "reportforge/tests/run_runtime_regression.mjs",
+        "reportforge/tests/canvas_layout_element.test.mjs",
+        "reportforge/tests/canvas_layout_section.test.mjs"
+      ],
+      "passingTestsList": [
+        "reportforge/tests/run_runtime_regression.mjs",
+        "reportforge/tests/canvas_layout_element.test.mjs",
+        "reportforge/tests/canvas_layout_section.test.mjs"
+      ],
+      "requiredGuardCIList": [
+        "audit/canvas_layout_guard.mjs"
+      ],
+      "notes": "Implementation engines split from SS-05 canvas-layout facade. Responsibility boundary: SectionEngine = init phase (creates section DOM nodes from scratch via render()); SectionLayoutEngine = update phase (adjusts section heights/widths on zoom or resize). CanvasLayoutSize handles canvas-layer size computation (width/height/minHeight). CanvasLayoutElements handles element DOM rendering (buildElementDiv, renderAll, updateElement). ElementLayoutEngine applies model→view coordinate transforms to individual element divs. Risk medium: all engines interact with DOM but functional contracts are covered by canvas_layout_element and canvas_layout_section tests.",
+      "coverageNote": null
+    },
+    {
       "id": "SS-B06",
       "name": "server-api",
       "domain": "backend-render",
@@ -993,6 +995,41 @@
       ],
       "requiredGuardCIList": [],
       "notes": "justification: test_server.py covers route correctness. Flask API located at reportforge/server/. Routes: datasources, designer, render, system, templates, tenants. Thin facade — all domain logic delegated to SS-B01 through SS-B04. allowedFiles intentionally empty — Python file verification deferred.",
+      "coverageNote": null
+    },
+    {
+      "id": "SS-05",
+      "name": "canvas-layout",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "score": 95,
+      "band": "green",
+      "owner": "designer-runtime/canvas-layout",
+      "coverageReal": 6,
+      "surface": 7,
+      "legacyDebt": 0,
+      "coupling": 0,
+      "risk": 40,
+      "requiredGuardCI": true,
+      "tests": 3,
+      "allowedFiles": 1,
+      "allowedFilesList": [
+        "CanvasLayoutEngine.js"
+      ],
+      "existingTestsList": [
+        "reportforge/tests/run_runtime_regression.mjs",
+        "reportforge/tests/canvas_layout_element.test.mjs",
+        "reportforge/tests/canvas_layout_section.test.mjs"
+      ],
+      "passingTestsList": [
+        "reportforge/tests/run_runtime_regression.mjs",
+        "reportforge/tests/canvas_layout_element.test.mjs",
+        "reportforge/tests/canvas_layout_section.test.mjs"
+      ],
+      "requiredGuardCIList": [
+        "audit/canvas_layout_guard.mjs"
+      ],
+      "notes": "CanvasLayoutEngine.js is a pure delegation facade (22 lines) — it routes calls to CanvasLayoutSize and CanvasLayoutElements without owning any logic. Risk reduced from critical to low: (1) delegation targets have functional vm tests (canvas_layout_element + canvas_layout_section), (2) canvas_layout_guard enforces the API surface and delegation pattern, (3) boundary split moved all implementation to SS-27 canvas-rendering, leaving SS-05 as a thin coordinator. CanvasLayoutContracts.js is sharedFiles (consumed by both Size and Elements). SectionEngine vs SectionLayoutEngine ambiguity resolved: SectionEngine = init phase (creates DOM from scratch on render), SectionLayoutEngine = update phase (adjusts heights/widths on zoom or resize). Delegation split ambiguity resolved by guard.",
       "coverageNote": null
     },
     {

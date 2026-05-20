@@ -10,7 +10,8 @@
     "RuntimeServicesState.js",
     "RuntimeServicesTrace.js",
     "EngineCoreRuntime.js",
-    "EngineCoreContracts.js"
+    "EngineCoreContracts.js",
+    "CanvasLayoutContracts.js"
   ],
   "subsystems": [
     {
@@ -188,13 +189,7 @@
       "tier": "core",
       "owner": "designer-runtime/canvas-layout",
       "allowedFiles": [
-        "CanvasLayoutEngine.js",
-        "CanvasLayoutSize.js",
-        "CanvasLayoutElements.js",
-        "CanvasLayoutContracts.js",
-        "ElementLayoutEngine.js",
-        "SectionLayoutEngine.js",
-        "SectionEngine.js"
+        "CanvasLayoutEngine.js"
       ],
       "legacyFiles": [],
       "writableState": [],
@@ -202,19 +197,20 @@
       "events": [
         "CanvasLayoutEngine.renderAll()",
         "CanvasLayoutEngine.updateSync()",
-        "ElementLayoutEngine.updatePosition(id)"
+        "CanvasLayoutEngine.updateElement(id)",
+        "CanvasLayoutEngine.updateElementPosition(id)"
       ],
       "existingTests": [
         "reportforge/tests/run_runtime_regression.mjs",
-        "reportforge/tests/critical_runtime_contracts.test.mjs"
+        "reportforge/tests/canvas_layout_element.test.mjs",
+        "reportforge/tests/canvas_layout_section.test.mjs"
       ],
-      "requiredGuardCI": [],
-      "risk": "critical",
-      "notes": "justification: covered by runtime regression baselines — canvas layout divergence manifests as screenshot mismatch. SectionEngine.js renders section DOM; SectionLayoutEngine.js manages section heights. Overlap possible — see ambiguities.",
-      "unresolvedAmbiguities": [
-        "SectionEngine.js vs SectionLayoutEngine.js: boundary unclear. Both deal with section rendering. One may be a refactor artifact of the other.",
-        "CanvasLayoutEngine delegates to CanvasLayoutSize and CanvasLayoutElements — the split between size computation and element rendering is intentional but not enforced by a guard"
-      ]
+      "requiredGuardCI": [
+        "audit/canvas_layout_guard.mjs"
+      ],
+      "risk": "low",
+      "notes": "CanvasLayoutEngine.js is a pure delegation facade (22 lines) — it routes calls to CanvasLayoutSize and CanvasLayoutElements without owning any logic. Risk reduced from critical to low: (1) delegation targets have functional vm tests (canvas_layout_element + canvas_layout_section), (2) canvas_layout_guard enforces the API surface and delegation pattern, (3) boundary split moved all implementation to SS-27 canvas-rendering, leaving SS-05 as a thin coordinator. CanvasLayoutContracts.js is sharedFiles (consumed by both Size and Elements). SectionEngine vs SectionLayoutEngine ambiguity resolved: SectionEngine = init phase (creates DOM from scratch on render), SectionLayoutEngine = update phase (adjusts heights/widths on zoom or resize). Delegation split ambiguity resolved by guard.",
+      "unresolvedAmbiguities": []
     },
     {
       "id": "SS-06",
@@ -1049,6 +1045,43 @@
       "requiredGuardCI": [],
       "risk": "medium",
       "notes": "Five-file routing layer: EngineCoreRouting.js is the orchestrator (wires Pointer/Zoom/Registry/Workspace factories). EngineCoreRoutingPointer.js dispatches pointer events to SelectionEngine/DragEngine. EngineCoreRoutingZoom.js handles zoom-change events. EngineCoreRoutingRegistry.js registers all global engine instances. EngineCoreRoutingWorkspace.js wires DOM workspace events. All use dependency-injection factories (createEngineCoreRouting*(deps)) — testable without DOM.",
+      "unresolvedAmbiguities": []
+    },
+    {
+      "id": "SS-27",
+      "name": "canvas-rendering",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "owner": "designer-runtime/canvas-rendering",
+      "allowedFiles": [
+        "CanvasLayoutSize.js",
+        "CanvasLayoutElements.js",
+        "SectionEngine.js",
+        "SectionLayoutEngine.js",
+        "ElementLayoutEngine.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [],
+      "selectors": [],
+      "events": [
+        "SectionEngine.render()",
+        "SectionLayoutEngine.update()",
+        "SectionLayoutEngine.updateSync()",
+        "ElementLayoutEngine.update()",
+        "ElementLayoutEngine.updateSync()",
+        "ElementLayoutEngine.moveElement(el, dx, dy, grid)",
+        "ElementLayoutEngine.resizeElement(el, dw, dh, minSize)"
+      ],
+      "existingTests": [
+        "reportforge/tests/run_runtime_regression.mjs",
+        "reportforge/tests/canvas_layout_element.test.mjs",
+        "reportforge/tests/canvas_layout_section.test.mjs"
+      ],
+      "requiredGuardCI": [
+        "audit/canvas_layout_guard.mjs"
+      ],
+      "risk": "medium",
+      "notes": "Implementation engines split from SS-05 canvas-layout facade. Responsibility boundary: SectionEngine = init phase (creates section DOM nodes from scratch via render()); SectionLayoutEngine = update phase (adjusts section heights/widths on zoom or resize). CanvasLayoutSize handles canvas-layer size computation (width/height/minHeight). CanvasLayoutElements handles element DOM rendering (buildElementDiv, renderAll, updateElement). ElementLayoutEngine applies model→view coordinate transforms to individual element divs. Risk medium: all engines interact with DOM but functional contracts are covered by canvas_layout_element and canvas_layout_section tests.",
       "unresolvedAmbiguities": []
     }
   ]
