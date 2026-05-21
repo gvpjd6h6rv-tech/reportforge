@@ -85,6 +85,12 @@ const SelectionOverlay = (() => {
     const selectedIds = [...SelectionState.selectedIds()];
     const renderSelectionIds = SelectionHitTest.resolveRenderSelectionIds(engine, selectedIds);
     const selectedElements = SelectionState.selectedElementsFromIds(renderSelectionIds);
+    const activeSectionIds = new Set(selectedElements.map((el) => el.sectionId));
+    document.querySelectorAll('.cr-section').forEach((section) => {
+      section.style.boxShadow = activeSectionIds.has(section.dataset.sectionId)
+        ? 'inset 0 0 0 2px rgba(11, 98, 214, 0.6)'
+        : '';
+    });
     const branch = renderSelectionIds.length === 0 ? 'none' : (renderSelectionIds.length === 1 ? 'single' : 'multi');
     if (Array.isArray(window.__rfBranchAudit)) {
       window.__rfBranchAudit.push({

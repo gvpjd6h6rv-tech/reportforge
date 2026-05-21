@@ -165,7 +165,11 @@ const PropertiesEnginePanel = {
     setTimeout(()=>{
       document.getElementById(id)?.addEventListener('change',e=>{
         const el=DS.getSelectedElements()[0];if(!el)return;
+        const prevValue = el[key];
         el[key]=e.target.value;
+        if (el.type === 'field' && key === 'fieldPath' && (!el.content || el.content === prevValue || el.content === `{${prevValue}}` || el.content === 'Seleccione campo')) {
+          el.content = '';
+        }
         _canonicalCanvasWriter().updateElement(el.id);DS.saveHistory();
       });
     },0);
@@ -178,6 +182,7 @@ const PropertiesEnginePanel = {
     setTimeout(()=>{
       document.getElementById(id)?.addEventListener('change',e=>{
         DS.getSelectedElements().forEach(el=>{
+          const prevValue = el[key];
           el[key]=e.target.value;
           if(key==='sectionId'){
             const sec=DS.getSection(e.target.value);if(!sec)return;
@@ -185,6 +190,9 @@ const PropertiesEnginePanel = {
             if(oldDiv)oldDiv.remove();
             _canonicalCanvasWriter().renderElement(el);
           } else {
+            if (el.type === 'field' && key === 'fieldPath' && (!el.content || el.content === prevValue || el.content === `{${prevValue}}` || el.content === 'Seleccione campo')) {
+              el.content = '';
+            }
             _canonicalCanvasWriter().updateElement(el.id);
           }
           SelectionEngine.renderHandles();

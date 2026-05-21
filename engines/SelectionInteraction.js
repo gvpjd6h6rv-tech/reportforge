@@ -5,6 +5,31 @@ const SelectionInteraction = (() => {
     return window.RF?.RuntimeServices?.isEngineCoreInteractionEnabled?.() !== false;
   }
 
+  function _sectionBounds(sectionId) {
+    const section = DS.getSection(sectionId);
+    return {
+      section,
+      top: section ? DS.getSectionTop(sectionId) : 0,
+      height: section ? Number(section.height) || 0 : 0,
+    };
+  }
+
+  function _clampRectToSection(sectionId, rect) {
+    const bounds = _sectionBounds(sectionId);
+    const pageWidth = Number(CFG.PAGE_W) || 0;
+    const maxX = Math.max(0, pageWidth - rect.w);
+    const maxY = Math.max(0, bounds.height - rect.h);
+    const next = {
+      x: SelectionState.snap(Math.max(0, Math.min(rect.x, maxX))),
+      y: SelectionState.snap(Math.max(0, Math.min(rect.y, maxY))),
+      w: SelectionState.snap(Math.max(CFG.MIN_EL_W, Math.min(rect.w, pageWidth))),
+      h: SelectionState.snap(Math.max(CFG.MIN_EL_H, Math.min(rect.h, bounds.height || rect.h))),
+    };
+    next.w = SelectionState.snap(Math.max(CFG.MIN_EL_W, Math.min(next.w, Math.max(CFG.MIN_EL_W, pageWidth - next.x))));
+    next.h = SelectionState.snap(Math.max(CFG.MIN_EL_H, Math.min(next.h, Math.max(CFG.MIN_EL_H, bounds.height - next.y))));
+    return next;
+  }
+
   function onElementPointerDown(engine, e, id) {
     if (e.button !== 0) return;
     const el = SelectionState.getElementById(id); if (!el) return;
@@ -12,7 +37,7 @@ const SelectionInteraction = (() => {
     if (!div) return;
     const pointerId = SelectionHitTest.resolvePointerId(e);
     if (div.setPointerCapture && typeof pointerId === 'number') div.setPointerCapture(pointerId);
-    if (e.detail === 2 && el.type === 'text') {
+    if (e.detail === 2 && (el.type === 'text' || el.type === 'field')) {
       startTextEdit(engine, div, el); return;
     }
     const shiftKey = SelectionHitTest.isShiftSelection(e);
@@ -89,12 +114,35 @@ const SelectionInteraction = (() => {
     range.selectNodeContents(span);
     const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
     const commit = () => {
+      const text = (span.textContent || '').trim();
+      const idx = DS.elements.findIndex(item => item.id === el.id);
+      if (idx >= 0) {
+        const model = DS.elements[idx];
+        if (model.type === 'field') {
+          const bindingLike = /^[A-Za-z_][A-Za-z0-9_.]*$/.test(text);
+          if ((text.startsWith('{') && text.endsWith('}')) || bindingLike) {
+            model.fieldPath = text.startsWith('{') && text.endsWith('}')
+              ? text.slice(1, -1).trim()
+              : text;
+            model.content = '';
+          } else {
+            model.content = text;
+          }
+        } else {
+          model.content = text;
+        }
+        _canonicalCanvasWriter().updateElement(model.id);
+        if (typeof SelectionEngine !== 'undefined' && typeof SelectionEngine.renderHandles === 'function') {
+          SelectionEngine.renderHandles();
+        }
+        if (typeof PropertiesEngine !== 'undefined' && typeof PropertiesEngine.render === 'function') {
+          PropertiesEngine.render();
+        }
+      }
       span.contentEditable = 'false';
       span.style.pointerEvents = 'none';
       div.classList.remove('editing');
       SelectionState.saveHistory();
-      const idx = DS.elements.findIndex(item => item.id === el.id);
-      if (idx >= 0) { DS.elements[idx].content = span.textContent; }
     };
     span.addEventListener('blur', commit, { once: true });
     span.addEventListener('keydown', ke => { if (ke.key === 'Escape' || ke.key === 'Enter') span.blur(); });
@@ -148,27 +196,24 @@ const SelectionInteraction = (() => {
     const zoom = RF.Geometry.zoom();
     d.startPositions.forEach(orig => {
       const el = SelectionState.getElementById(orig.id); if (!el) return;
-      const rawAbsX = orig.x + dx;
-      const rawAbsY = orig.sectionTop + orig.y + dy;
-      let newX = SelectionState.snap(rawAbsX);
-      const target = SelectionState.getSectionAtY(rawAbsY + el.h / 2);
-      if (target) {
-        DS.updateElementLayout(el.id, {
-          sectionId: target.section.id,
-          y: SelectionState.snap(Math.max(0, rawAbsY - SelectionState.getSectionTop(target.section.id))),
-        }, 'SelectionInteraction.move');
-      } else {
-        DS.updateElementLayout(el.id, { y: SelectionState.snap(Math.max(0, orig.y + dy)) }, 'SelectionInteraction.move');
-      }
-      DS.updateElementLayout(el.id, { x: SelectionState.snap(Math.max(0, Math.min(CFG.PAGE_W - el.w, newX))) }, 'SelectionInteraction.move');
+      const sectionBounds = _sectionBounds(orig.sectionId);
+      const newX = SelectionState.snap(Math.max(0, Math.min(orig.x + dx, Math.max(0, CFG.PAGE_W - el.w))));
+      const newY = SelectionState.snap(Math.max(0, Math.min(orig.y + dy, Math.max(0, sectionBounds.height - el.h))));
+      DS.updateElementLayout(el.id, {
+        x: newX,
+        y: newY,
+      }, 'SelectionInteraction.move');
       const div = document.querySelector(`.cr-element[data-id="${orig.id}"]`);
       if (div) {
         div.classList.add('dragging');
         const _mp = RF.Geometry.modelToView(el.x, el.y);
         div.style.left = _mp.x + 'px';
         div.style.top = _mp.y + 'px';
-        const snappedAbsY = SelectionState.getSectionTop(el.sectionId) + el.y;
-        div.style.transform = `translate(${((rawAbsX - el.x) * zoom).toFixed(3)}px, ${((rawAbsY - snappedAbsY) * zoom).toFixed(3)}px)`;
+        const snappedAbsX = el.x;
+        const snappedAbsY = sectionBounds.top + el.y;
+        const rawAbsX = orig.x + dx;
+        const rawAbsY = orig.sectionTop + orig.y + dy;
+        div.style.transform = `translate(${((rawAbsX - snappedAbsX) * zoom).toFixed(3)}px, ${((rawAbsY - snappedAbsY) * zoom).toFixed(3)}px)`;
       }
       if (DS.previewMode) {
         document.querySelectorAll(`.pv-el[data-origin-id="${orig.id}"]`).forEach(pv => {
@@ -176,8 +221,11 @@ const SelectionInteraction = (() => {
           const _pp = RF.Geometry.rectToView(el);
           pv.style.left = _pp.left + 'px';
           pv.style.top = _pp.top + 'px';
-          const snappedAbsY = SelectionState.getSectionTop(el.sectionId) + el.y;
-          pv.style.transform = `translate(${((rawAbsX - el.x) * zoom).toFixed(3)}px, ${((rawAbsY - snappedAbsY) * zoom).toFixed(3)}px)`;
+          const snappedAbsX = el.x;
+          const snappedAbsY = sectionBounds.top + el.y;
+          const rawAbsX = orig.x + dx;
+          const rawAbsY = orig.sectionTop + orig.y + dy;
+          pv.style.transform = `translate(${((rawAbsX - snappedAbsX) * zoom).toFixed(3)}px, ${((rawAbsY - snappedAbsY) * zoom).toFixed(3)}px)`;
         });
       }
     });
@@ -186,6 +234,10 @@ const SelectionInteraction = (() => {
       requestAnimationFrame(() => {
         d._rafPending = false;
         engine.renderHandles();
+        if (typeof PropertiesEngine !== 'undefined' && DS.getSelectedElements().length === 1) {
+          const el = DS.getSelectedElements()[0];
+          if (el) PropertiesEngine.updatePositionFields(el);
+        }
         if (DS.selection.size === 1) {
           const el = DS.getElementById([...DS.selection][0]);
           if (el) document.getElementById('sb-pos').textContent = `X: ${el.x}   Y: ${el.y}`;
@@ -205,7 +257,8 @@ const SelectionInteraction = (() => {
     if (p.includes('s')) h = Math.max(CFG.MIN_EL_H, SelectionState.snap(h + dy));
     if (p.includes('w')) { const nw = Math.max(CFG.MIN_EL_W, SelectionState.snap(w - dx)); x = SelectionState.snap(x + w - nw); w = nw; }
     if (p.includes('n')) { const nh = Math.max(CFG.MIN_EL_H, SelectionState.snap(h - dy)); y = SelectionState.snap(y + h - nh); h = nh; }
-    DS.updateElementLayout(el.id, { x, y, w, h }, 'SelectionInteraction.resize');
+    const clamped = _clampRectToSection(el.sectionId, { x, y, w, h });
+    DS.updateElementLayout(el.id, clamped, 'SelectionInteraction.resize');
     _canonicalCanvasWriter().updateElementPosition(d.elId);
     if (DS.previewMode) {
       document.querySelectorAll(`.pv-el[data-origin-id="${d.elId}"]`).forEach(pv => {

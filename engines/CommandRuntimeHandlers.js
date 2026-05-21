@@ -20,7 +20,10 @@
       case 'save': FileEngine.save(); break;
       case 'save-as': FileEngine.exportJSON(); break;
       case 'export-json': FileEngine.exportJSON(); break;
-      case 'export-pdf': setStatus('PDF: instala WeasyPrint y usa el CLI: python -m core.render.cli generate -d 20482'); break;
+      case 'export-pdf':
+        FileEngine.exportPDF()
+          .catch((error) => alert(`Error al exportar PDF: ${error.message}`));
+        break;
       case 'quit': if (confirm('¿Cerrar ReportForge?')) window.close(); break;
       case 'undo': DS.undo(); SectionEngine.render(); SelectionEngine.clearSelection(); break;
       case 'redo': DS.redo(); SectionEngine.render(); SelectionEngine.clearSelection(); break;

@@ -19,6 +19,8 @@ def _post_render(handler, body: dict):
         exporter = Exporter(layout, data)
         if fmt == "html":
             _html(handler, exporter.render_html())
+        elif fmt == "pdf":
+            _temp_export(handler, exporter, ".pdf", exporter.to_pdf, "application/pdf")
         elif fmt == "csv":
             _respond(handler, 200, exporter.to_csv().encode("utf-8-sig"), "text/csv")
         elif fmt == "xlsx":

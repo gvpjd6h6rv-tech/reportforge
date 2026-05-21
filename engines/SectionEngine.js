@@ -21,6 +21,9 @@ const SectionEngine = {
       RenderScheduler.flushSync(() => {
         this.container.innerHTML='';
         this.container.style.width = RF.Geometry.scale(CFG.PAGE_W) + 'px';
+        const activeSectionIds = new Set((typeof DS !== 'undefined' && DS.getSelectedElements)
+          ? DS.getSelectedElements().map((el) => el.sectionId)
+          : []);
         for(const sec of DS.sections){
           const div = document.createElement('div');
           div.className='cr-section';
@@ -29,6 +32,9 @@ const SectionEngine = {
           div.style.height = RF.Geometry.scale(sec.height) + 'px';
           div.style.position='relative';
           div.style.width = RF.Geometry.scale(CFG.PAGE_W) + 'px';
+          if (activeSectionIds.has(sec.id)) {
+            div.style.boxShadow = 'inset 0 0 0 2px rgba(11, 98, 214, 0.6)';
+          }
           if(sec.visible === false) div.style.display='none';
           const label = document.createElement('div');
           label.className='section-label';
@@ -45,6 +51,9 @@ const SectionEngine = {
     } else {
       this.container.innerHTML='';
       this.container.style.width = RF.Geometry.scale(CFG.PAGE_W) + 'px';
+      const activeSectionIds = new Set((typeof DS !== 'undefined' && DS.getSelectedElements)
+        ? DS.getSelectedElements().map((el) => el.sectionId)
+        : []);
       for(const sec of DS.sections){
         const div = document.createElement('div');
         div.className='cr-section';
@@ -53,6 +62,9 @@ const SectionEngine = {
         div.style.height = RF.Geometry.scale(sec.height) + 'px';
         div.style.position='relative';
         div.style.width = RF.Geometry.scale(CFG.PAGE_W) + 'px';
+        if (activeSectionIds.has(sec.id)) {
+          div.style.boxShadow = 'inset 0 0 0 2px rgba(11, 98, 214, 0.6)';
+        }
         if(sec.visible === false) div.style.display='none';
         const label = document.createElement('div');
         label.className='section-label';

@@ -44,7 +44,9 @@
       icon.textContent = '⬚';
       const span = document.createElement('span');
       span.className = 'el-content';
-      span.textContent = el.fieldPath ? `{${el.fieldPath}}` : '';
+      span.textContent = el.content && el.content !== el.fieldPath
+        ? el.content
+        : (el.fieldPath ? `{${el.fieldPath}}` : '');
       div.appendChild(icon);
       div.appendChild(span);
     } else if (el.type === 'text') {
@@ -148,7 +150,11 @@
     else div.style.border = '';
     const span = div.querySelector('.el-content');
     if (span) {
-      if (el.type === 'field') span.textContent = el.fieldPath ? `{${el.fieldPath}}` : '';
+      if (el.type === 'field') {
+        span.textContent = el.content && el.content !== el.fieldPath
+          ? el.content
+          : (el.fieldPath ? `{${el.fieldPath}}` : '');
+      }
       else if (el.type === 'text') span.textContent = el.content || '';
     }
     if (typeof DS !== 'undefined')
