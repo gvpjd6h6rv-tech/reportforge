@@ -27,3 +27,5 @@ node
 node
 audit_out/
 reportforge/tests/user_parity/visual/artifacts/
+out/
+audit/rf_e2r_snapshot.json
