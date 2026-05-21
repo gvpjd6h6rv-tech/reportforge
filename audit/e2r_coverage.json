@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-20T20:55:44.331Z",
+  "generatedAt": "2026-05-21T12:41:09.908Z",
   "manifestFile": "audit/e2r_run_manifest.json",
   "ownershipFile": "audit/subsystem_ownership_map.json",
   "totalPassingTests": 57,
@@ -57,14 +57,18 @@
       "name": "render-scheduler",
       "domain": "designer-runtime",
       "tier": "core",
-      "risk": "critical",
+      "risk": "low",
       "existingTests": [
-        "reportforge/tests/governance_guardrails.test.mjs"
+        "reportforge/tests/render_scheduler_observability.test.mjs",
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/run_runtime_regression.mjs"
       ],
       "passingTests": [
-        "reportforge/tests/governance_guardrails.test.mjs"
+        "reportforge/tests/render_scheduler_observability.test.mjs",
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/run_runtime_regression.mjs"
       ],
-      "coverageReal": 2,
+      "coverageReal": 5,
       "coverageNote": null,
       "coverageExclusion": null
     },
@@ -716,6 +720,25 @@
       "coverageExclusion": {
         "reason": "backlog",
         "justification": "DocumentHistory.js and HistoryEngine.js require DOM + full runtime context (DS, CanvasLayoutEngine, SectionEngine, etc.) to unit test meaningfully. Covered end-to-end by undo_redo_user_parity tests."
+      }
+    },
+    {
+      "id": "SS-35",
+      "name": "render-scheduler-runtime",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "risk": "critical",
+      "existingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "coverageReal": 2,
+      "coverageNote": null,
+      "coverageExclusion": {
+        "reason": "backlog",
+        "justification": "RenderScheduler.js and RenderSchedulerFrame.js depend on requestAnimationFrame and real DOM callback timing. Unit testing requires substantial browser-context mocking. Covered integration-level by governance_guardrails.test.mjs (phase enforcement, S.locked guard)."
       }
     }
   ]

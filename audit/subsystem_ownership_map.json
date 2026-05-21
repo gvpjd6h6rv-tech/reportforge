@@ -106,33 +106,25 @@
       "tier": "core",
       "owner": "designer-runtime/render-scheduler",
       "allowedFiles": [
-        "RenderScheduler.js",
-        "RenderSchedulerState.js",
-        "RenderSchedulerQueue.js",
-        "RenderSchedulerScope.js",
-        "RenderSchedulerFrame.js",
         "RenderSchedulerObservability.js"
       ],
       "legacyFiles": [],
-      "writableState": [
-        "S.locked (internal semaphore)"
-      ],
-      "selectors": [
-        "RenderSchedulerScope.currentWriteScope()"
-      ],
+      "writableState": [],
+      "selectors": [],
       "events": [
-        "RenderScheduler.flushSync(fn, label)",
-        "RenderScheduler.schedule(priority, fn)"
+        "rf:render-storm (CustomEvent dispatched on storm detection)"
       ],
       "existingTests": [
-        "reportforge/tests/governance_guardrails.test.mjs"
+        "reportforge/tests/render_scheduler_observability.test.mjs",
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/run_runtime_regression.mjs"
       ],
-      "requiredGuardCI": [],
-      "risk": "critical",
-      "notes": "justification: governance_guardrails.test.mjs test 44 enforces that only RenderSchedulerFrame sets S.locked. Phase order (layout→visual→handles→post) enforced by audit/pipeline_phase_guard.mjs. No dedicated unit test suite — all coverage is integration-level.",
-      "unresolvedAmbiguities": [
-        "RenderSchedulerObservability.js: unclear if it emits to an external sink or only to console — if external, creates hidden coupling"
-      ]
+      "requiredGuardCI": [
+        "audit/render_scheduler_observability_guard.mjs"
+      ],
+      "risk": "low",
+      "notes": "RenderSchedulerObservability.js is a pure observability layer — zero DOM, zero globals, zero rAF. All 7 functions (now, recordFrameTime, recordHotspot, getFrameRate, clearStorm, getHotspots, clearHotspots) take an S object as first argument and operate on it directly — fully testable without browser context. Storm detection guards dispatchEvent behind availability check. RenderScheduler.js, RenderSchedulerState.js, RenderSchedulerQueue.js, RenderSchedulerScope.js, RenderSchedulerFrame.js moved to SS-35 render-scheduler-runtime.",
+      "unresolvedAmbiguities": []
     },
     {
       "id": "SS-04",
@@ -1302,6 +1294,48 @@
       "coverageExclusion": {
         "reason": "backlog",
         "justification": "DocumentHistory.js and HistoryEngine.js require DOM + full runtime context (DS, CanvasLayoutEngine, SectionEngine, etc.) to unit test meaningfully. Covered end-to-end by undo_redo_user_parity tests."
+      }
+    },
+    {
+      "id": "SS-35",
+      "name": "render-scheduler-runtime",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "owner": "designer-runtime/render-scheduler-runtime",
+      "allowedFiles": [
+        "RenderScheduler.js",
+        "RenderSchedulerState.js",
+        "RenderSchedulerQueue.js",
+        "RenderSchedulerScope.js",
+        "RenderSchedulerFrame.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [
+        "S.locked (internal semaphore)",
+        "S.queue",
+        "S.frame",
+        "S.recentFrameTimes",
+        "S.stormActive"
+      ],
+      "selectors": [
+        "RenderSchedulerScope.currentWriteScope()"
+      ],
+      "events": [
+        "RenderScheduler.flushSync(fn, label)",
+        "RenderScheduler.schedule(priority, fn)"
+      ],
+      "existingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "requiredGuardCI": [
+        "audit/pipeline_phase_guard.mjs"
+      ],
+      "risk": "critical",
+      "notes": "justification: DOM-heavy scheduling runtime split from SS-03. RenderScheduler.js: top-level singleton S, uses requestAnimationFrame directly, orchestrates queue flush with phase order (layout→visual→handles→post). RenderSchedulerFrame.js: the ONLY writer of S.locked (enforced by governance_guardrails.test.mjs test 44). RenderSchedulerScope.js: currentWriteScope() singleton. These files require browser context (rAF, DOM callbacks) for meaningful unit testing.",
+      "unresolvedAmbiguities": [],
+      "coverageExclusion": {
+        "reason": "backlog",
+        "justification": "RenderScheduler.js and RenderSchedulerFrame.js depend on requestAnimationFrame and real DOM callback timing. Unit testing requires substantial browser-context mocking. Covered integration-level by governance_guardrails.test.mjs (phase enforcement, S.locked guard)."
       }
     }
   ]

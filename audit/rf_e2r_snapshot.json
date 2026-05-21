@@ -1,45 +1,11 @@
 {
   "version": "1.0.0",
-  "generatedAt": "2026-05-20T21:08:19.399Z",
+  "generatedAt": "2026-05-21T12:35:05.756Z",
   "formula": "score = 0.35*bandFactor + 0.20*(100-surface) + 0.15*(100-legacyDebt) + 0.15*(100-coupling) + 0.10*(100-riskScore) + 0.05*guardBonus",
   "bandThresholds": "green=score≥80 | yellow=score 50–79 | red=score<50  (score-derived, Opción A)",
   "bandNote": "Dashboard band is score-derived. E2R guard uses coverageReal bands internally (untouched).",
   "totalPassingTests": 57,
   "subsystems": [
-    {
-      "id": "SS-03",
-      "name": "render-scheduler",
-      "domain": "designer-runtime",
-      "tier": "core",
-      "score": 54,
-      "band": "yellow",
-      "owner": "designer-runtime/render-scheduler",
-      "coverageReal": 2,
-      "surface": 43,
-      "legacyDebt": 0,
-      "coupling": 33,
-      "risk": 100,
-      "requiredGuardCI": false,
-      "tests": 1,
-      "allowedFiles": 6,
-      "allowedFilesList": [
-        "RenderScheduler.js",
-        "RenderSchedulerState.js",
-        "RenderSchedulerQueue.js",
-        "RenderSchedulerScope.js",
-        "RenderSchedulerFrame.js",
-        "RenderSchedulerObservability.js"
-      ],
-      "existingTestsList": [
-        "reportforge/tests/governance_guardrails.test.mjs"
-      ],
-      "passingTestsList": [
-        "reportforge/tests/governance_guardrails.test.mjs"
-      ],
-      "requiredGuardCIList": [],
-      "notes": "justification: governance_guardrails.test.mjs test 44 enforces that only RenderSchedulerFrame sets S.locked. Phase order (layout→visual→handles→post) enforced by audit/pipeline_phase_guard.mjs. No dedicated unit test suite — all coverage is integration-level.",
-      "coverageNote": null
-    },
     {
       "id": "SS-23",
       "name": "alignment",
@@ -463,6 +429,41 @@
       "coverageNote": null
     },
     {
+      "id": "SS-35",
+      "name": "render-scheduler-runtime",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "score": 65,
+      "band": "yellow",
+      "owner": "designer-runtime/render-scheduler-runtime",
+      "coverageReal": 2,
+      "surface": 36,
+      "legacyDebt": 0,
+      "coupling": 0,
+      "risk": 100,
+      "requiredGuardCI": true,
+      "tests": 1,
+      "allowedFiles": 5,
+      "allowedFilesList": [
+        "RenderScheduler.js",
+        "RenderSchedulerState.js",
+        "RenderSchedulerQueue.js",
+        "RenderSchedulerScope.js",
+        "RenderSchedulerFrame.js"
+      ],
+      "existingTestsList": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "passingTestsList": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "requiredGuardCIList": [
+        "audit/pipeline_phase_guard.mjs"
+      ],
+      "notes": "justification: DOM-heavy scheduling runtime split from SS-03. RenderScheduler.js: top-level singleton S, uses requestAnimationFrame directly, orchestrates queue flush with phase order (layout→visual→handles→post). RenderSchedulerFrame.js: the ONLY writer of S.locked (enforced by governance_guardrails.test.mjs test 44). RenderSchedulerScope.js: currentWriteScope() singleton. These files require browser context (rAF, DOM callbacks) for meaningful unit testing.",
+      "coverageNote": null
+    },
+    {
       "id": "SS-19",
       "name": "debug",
       "domain": "designer-runtime",
@@ -537,13 +538,13 @@
       "score": 68,
       "band": "yellow",
       "owner": "backend-render/datasource",
-      "coverageReal": 4,
+      "coverageReal": 2,
       "surface": 0,
       "legacyDebt": 0,
       "coupling": 0,
       "risk": 100,
       "requiredGuardCI": false,
-      "tests": 2,
+      "tests": 1,
       "allowedFiles": 0,
       "allowedFilesList": [],
       "existingTestsList": [
@@ -551,8 +552,7 @@
         "reportforge/tests/test_load.py"
       ],
       "passingTestsList": [
-        "reportforge/tests/test_e2e_api_journey.py",
-        "reportforge/tests/test_load.py"
+        "reportforge/tests/test_e2e_api_journey.py"
       ],
       "requiredGuardCIList": [],
       "notes": "justification: no JS-accessible CI guard; Python integration tested via test_e2e_api_journey.py. Located at reportforge/core/render/datasource/. DB introspection, caching, multi-dataset coordination, live data feeds. allowedFiles intentionally empty — Python file verification deferred.",
@@ -1145,6 +1145,41 @@
         "audit/history_state_guard.mjs"
       ],
       "notes": "HistoryState.js is a pure factory — zero DOM, zero globals, zero side effects. createHistoryState(maxStack) returns an independent stack instance with pushUndo/popUndo/pushRedo/popRedo/clearRedo/canUndo/canRedo/suppress/onChange/summary/clear. DocumentHistory.js, HistoryEngine.js, HistorySnapshot.js moved to SS-34 history-runtime (DOM-heavy, singleton patterns).",
+      "coverageNote": null
+    },
+    {
+      "id": "SS-03",
+      "name": "render-scheduler",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "score": 95,
+      "band": "green",
+      "owner": "designer-runtime/render-scheduler",
+      "coverageReal": 5,
+      "surface": 7,
+      "legacyDebt": 0,
+      "coupling": 0,
+      "risk": 40,
+      "requiredGuardCI": true,
+      "tests": 3,
+      "allowedFiles": 1,
+      "allowedFilesList": [
+        "RenderSchedulerObservability.js"
+      ],
+      "existingTestsList": [
+        "reportforge/tests/render_scheduler_observability.test.mjs",
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/run_runtime_regression.mjs"
+      ],
+      "passingTestsList": [
+        "reportforge/tests/render_scheduler_observability.test.mjs",
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/run_runtime_regression.mjs"
+      ],
+      "requiredGuardCIList": [
+        "audit/render_scheduler_observability_guard.mjs"
+      ],
+      "notes": "RenderSchedulerObservability.js is a pure observability layer — zero DOM, zero globals, zero rAF. All 7 functions (now, recordFrameTime, recordHotspot, getFrameRate, clearStorm, getHotspots, clearHotspots) take an S object as first argument and operate on it directly — fully testable without browser context. Storm detection guards dispatchEvent behind availability check. RenderScheduler.js, RenderSchedulerState.js, RenderSchedulerQueue.js, RenderSchedulerScope.js, RenderSchedulerFrame.js moved to SS-35 render-scheduler-runtime.",
       "coverageNote": null
     },
     {
