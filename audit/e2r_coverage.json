@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-05-21T12:41:09.908Z",
+  "generatedAt": "2026-05-21T15:30:49.852Z",
   "manifestFile": "audit/e2r_run_manifest.json",
   "ownershipFile": "audit/subsystem_ownership_map.json",
-  "totalPassingTests": 57,
+  "totalPassingTests": 59,
   "formula": "coverageReal = round((passingTests.length / totalPassingTests) * 100)",
   "limitations": [
     "Only *.test.mjs files in reportforge/tests/ (non-recursive) are included in manifest.",
@@ -28,7 +28,7 @@
         "reportforge/tests/engine_contracts.test.mjs",
         "reportforge/tests/runtime_write_log.test.mjs"
       ],
-      "coverageReal": 4,
+      "coverageReal": 3,
       "coverageNote": null,
       "coverageExclusion": null
     },
@@ -189,7 +189,7 @@
         "reportforge/tests/command_runtime_selection.test.mjs",
         "reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs"
       ],
-      "coverageReal": 4,
+      "coverageReal": 3,
       "coverageNote": null,
       "coverageExclusion": null
     },
@@ -239,7 +239,7 @@
         "reportforge/tests/governance_guardrails.test.mjs",
         "reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs"
       ],
-      "coverageReal": 4,
+      "coverageReal": 3,
       "coverageNote": null,
       "coverageExclusion": null
     },
@@ -306,7 +306,7 @@
         "reportforge/tests/user_parity/zoom_extremes_smoke_user_parity.test.mjs",
         "reportforge/tests/run_runtime_regression.mjs"
       ],
-      "coverageReal": 4,
+      "coverageReal": 3,
       "coverageNote": null,
       "coverageExclusion": null
     },
@@ -335,14 +335,18 @@
       "name": "alignment",
       "domain": "designer-runtime",
       "tier": "supporting",
-      "risk": "medium",
+      "risk": "low",
       "existingTests": [
-        "reportforge/tests/governance_guardrails.test.mjs"
+        "reportforge/tests/alignment_geometry.test.mjs",
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/run_runtime_regression.mjs"
       ],
       "passingTests": [
-        "reportforge/tests/governance_guardrails.test.mjs"
+        "reportforge/tests/alignment_geometry.test.mjs",
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/run_runtime_regression.mjs"
       ],
-      "coverageReal": 2,
+      "coverageReal": 5,
       "coverageNote": null,
       "coverageExclusion": null
     },
@@ -376,7 +380,7 @@
         "reportforge/tests/user_parity/clipboard_visible_composition_user_parity.test.mjs",
         "reportforge/tests/user_parity/clipboard_design_preview_parity.test.mjs"
       ],
-      "coverageReal": 4,
+      "coverageReal": 3,
       "coverageNote": null,
       "coverageExclusion": null
     },
@@ -548,7 +552,7 @@
         "reportforge/tests/test_e2e_api_journey.py",
         "reportforge/tests/test_load.py"
       ],
-      "coverageReal": 4,
+      "coverageReal": 3,
       "coverageNote": null,
       "coverageExclusion": null
     },
@@ -572,7 +576,7 @@
         "reportforge/tests/test_render_engine_phase2.py",
         "reportforge/tests/test_advanced_engine.py"
       ],
-      "coverageReal": 9,
+      "coverageReal": 8,
       "coverageNote": null,
       "coverageExclusion": null
     },
@@ -590,7 +594,7 @@
         "reportforge/tests/test_pdf_generator.py",
         "reportforge/tests/test_round_trip.py"
       ],
-      "coverageReal": 4,
+      "coverageReal": 3,
       "coverageNote": null,
       "coverageExclusion": null
     },
@@ -608,7 +612,7 @@
         "reportforge/tests/test_doc_types.py",
         "reportforge/tests/test_input_schema.py"
       ],
-      "coverageReal": 4,
+      "coverageReal": 3,
       "coverageNote": null,
       "coverageExclusion": null
     },
@@ -662,7 +666,7 @@
         "reportforge/tests/governance_guardrails.test.mjs",
         "reportforge/tests/engine_contracts.test.mjs"
       ],
-      "coverageReal": 4,
+      "coverageReal": 3,
       "coverageNote": null,
       "coverageExclusion": null
     },
@@ -715,7 +719,7 @@
         "reportforge/tests/user_parity/undo_redo_user_parity.test.mjs",
         "reportforge/tests/user_parity/undo_redo_mixed_history_user_parity.test.mjs"
       ],
-      "coverageReal": 4,
+      "coverageReal": 3,
       "coverageNote": null,
       "coverageExclusion": {
         "reason": "backlog",
@@ -739,6 +743,25 @@
       "coverageExclusion": {
         "reason": "backlog",
         "justification": "RenderScheduler.js and RenderSchedulerFrame.js depend on requestAnimationFrame and real DOM callback timing. Unit testing requires substantial browser-context mocking. Covered integration-level by governance_guardrails.test.mjs (phase enforcement, S.locked guard)."
+      }
+    },
+    {
+      "id": "SS-36",
+      "name": "alignment-runtime",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "risk": "medium",
+      "existingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "passingTests": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "coverageReal": 2,
+      "coverageNote": null,
+      "coverageExclusion": {
+        "reason": "backlog",
+        "justification": "AlignEngine.js and AlignmentEngine.js require DS, CommandEngine, and _canonicalCanvasWriter() to unit test meaningfully. AlignEngineActions.js is a literal duplicate of AlignEngine.js — consolidation is a backlog item. Covered integration-level by governance_guardrails.test.mjs."
       }
     }
   ]

@@ -1,44 +1,11 @@
 {
   "version": "1.0.0",
-  "generatedAt": "2026-05-21T14:24:39.803Z",
+  "generatedAt": "2026-05-21T15:29:56.954Z",
   "formula": "score = 0.35*bandFactor + 0.20*(100-surface) + 0.15*(100-legacyDebt) + 0.15*(100-coupling) + 0.10*(100-riskScore) + 0.05*guardBonus",
   "bandThresholds": "green=score≥80 | yellow=score 50–79 | red=score<50  (score-derived, Opción A)",
   "bandNote": "Dashboard band is score-derived. E2R guard uses coverageReal bands internally (untouched).",
-  "totalPassingTests": 57,
+  "totalPassingTests": 59,
   "subsystems": [
-    {
-      "id": "SS-23",
-      "name": "alignment",
-      "domain": "designer-runtime",
-      "tier": "supporting",
-      "score": 54,
-      "band": "yellow",
-      "owner": "designer-runtime/alignment",
-      "coverageReal": 2,
-      "surface": 36,
-      "legacyDebt": 0,
-      "coupling": 66,
-      "risk": 60,
-      "requiredGuardCI": false,
-      "tests": 1,
-      "allowedFiles": 5,
-      "allowedFilesList": [
-        "AlignmentEngine.js",
-        "AlignmentGeometry.js",
-        "AlignmentActions.js",
-        "AlignEngine.js",
-        "AlignEngineActions.js"
-      ],
-      "existingTestsList": [
-        "reportforge/tests/governance_guardrails.test.mjs"
-      ],
-      "passingTestsList": [
-        "reportforge/tests/governance_guardrails.test.mjs"
-      ],
-      "requiredGuardCIList": [],
-      "notes": "AlignEngine.js and AlignEngineActions.js are identical implementations (same 5 methods + same _fallback). AlignmentEngine.js and AlignmentGeometry.js duplicate _bounds() and compute() logic. Both pairs are refactor artifacts shipping to production.",
-      "coverageNote": null
-    },
     {
       "id": "SS-06",
       "name": "selection-drag",
@@ -235,7 +202,7 @@
       "score": 62,
       "band": "yellow",
       "owner": "designer-runtime/document-state",
-      "coverageReal": 4,
+      "coverageReal": 3,
       "surface": 29,
       "legacyDebt": 0,
       "coupling": 33,
@@ -370,7 +337,7 @@
       "score": 64,
       "band": "yellow",
       "owner": "designer-runtime/engine-core-routing",
-      "coverageReal": 4,
+      "coverageReal": 3,
       "surface": 36,
       "legacyDebt": 0,
       "coupling": 0,
@@ -405,7 +372,7 @@
       "score": 65,
       "band": "yellow",
       "owner": "designer-runtime/zoom",
-      "coverageReal": 4,
+      "coverageReal": 3,
       "surface": 7,
       "legacyDebt": 0,
       "coupling": 33,
@@ -538,7 +505,7 @@
       "score": 68,
       "band": "yellow",
       "owner": "backend-render/datasource",
-      "coverageReal": 4,
+      "coverageReal": 3,
       "surface": 0,
       "legacyDebt": 0,
       "coupling": 0,
@@ -567,7 +534,7 @@
       "score": 68,
       "band": "yellow",
       "owner": "backend-render/export-pipeline",
-      "coverageReal": 4,
+      "coverageReal": 3,
       "surface": 0,
       "legacyDebt": 0,
       "coupling": 0,
@@ -692,7 +659,7 @@
       "score": 70,
       "band": "yellow",
       "owner": "designer-runtime/history-runtime",
-      "coverageReal": 4,
+      "coverageReal": 3,
       "surface": 21,
       "legacyDebt": 0,
       "coupling": 0,
@@ -727,7 +694,7 @@
       "score": 71,
       "band": "yellow",
       "owner": "designer-runtime/clipboard",
-      "coverageReal": 4,
+      "coverageReal": 3,
       "surface": 14,
       "legacyDebt": 0,
       "coupling": 33,
@@ -751,6 +718,40 @@
         "audit/ssot_guard.mjs"
       ],
       "notes": "ssot_guard.mjs enforces ClipboardEngine→ClipboardState delegation. DS.clipboard is still written directly by CommandRuntimeSelection (non-critical field, runtime_trace_guard warns but does not fail). Dual write path: ClipboardState.set() and DS.clipboard=.",
+      "coverageNote": null
+    },
+    {
+      "id": "SS-36",
+      "name": "alignment-runtime",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "score": 71,
+      "band": "yellow",
+      "owner": "designer-runtime/alignment-runtime",
+      "coverageReal": 2,
+      "surface": 29,
+      "legacyDebt": 0,
+      "coupling": 0,
+      "risk": 60,
+      "requiredGuardCI": true,
+      "tests": 1,
+      "allowedFiles": 4,
+      "allowedFilesList": [
+        "AlignmentEngine.js",
+        "AlignmentActions.js",
+        "AlignEngine.js",
+        "AlignEngineActions.js"
+      ],
+      "existingTestsList": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "passingTestsList": [
+        "reportforge/tests/governance_guardrails.test.mjs"
+      ],
+      "requiredGuardCIList": [
+        "audit/alignment_geometry_guard.mjs"
+      ],
+      "notes": "justification: DOM-heavy alignment runtime split from SS-23. AlignEngine.js: facade calling CommandEngine.alignLeft/Right/Top/Bottom + DS.saveHistory() + _canonicalCanvasWriter().renderAll() in fallback. AlignEngineActions.js: exact duplicate of AlignEngine.js (only fallback caller string differs — backlog for consolidation). AlignmentEngine.js: duplicates all of AlignmentGeometry.js (_bounds/compute/computeSpacing) + adds align()/distribute() with hard DS.getSectionTop calls — backlog for consolidation with AlignmentGeometry.js. AlignmentActions.js: align/distribute that delegate to AlignmentGeometry._bounds as global + hard DS calls without typeof guard.",
       "coverageNote": null
     },
     {
@@ -824,7 +825,7 @@
       "score": 73,
       "band": "yellow",
       "owner": "designer-runtime/command-dispatcher",
-      "coverageReal": 4,
+      "coverageReal": 3,
       "surface": 7,
       "legacyDebt": 0,
       "coupling": 0,
@@ -857,7 +858,7 @@
       "score": 74,
       "band": "yellow",
       "owner": "backend-render/doc-models-python",
-      "coverageReal": 4,
+      "coverageReal": 3,
       "surface": 0,
       "legacyDebt": 0,
       "coupling": 0,
@@ -886,7 +887,7 @@
       "score": 75,
       "band": "yellow",
       "owner": "designer-runtime/command-selection",
-      "coverageReal": 4,
+      "coverageReal": 3,
       "surface": 7,
       "legacyDebt": 0,
       "coupling": 0,
@@ -1016,7 +1017,7 @@
       "score": 85,
       "band": "green",
       "owner": "backend-render/element-rendering",
-      "coverageReal": 9,
+      "coverageReal": 8,
       "surface": 0,
       "legacyDebt": 0,
       "coupling": 0,
@@ -1324,6 +1325,41 @@
         "audit/ssot_guard.mjs"
       ],
       "notes": "SnapEngine.js is the single facade for all snap operations: snap/snapPoint/snapFromClient, grid config, enable/disable, alignment guides. SnapCore.js, SnapState.js, SnapGuides.js moved to sharedFiles — they are redundant utilities that duplicate SnapEngine internals, kept for backwards-compat callers (DragEngine, RuntimeBootstrap).",
+      "coverageNote": null
+    },
+    {
+      "id": "SS-23",
+      "name": "alignment",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "score": 95,
+      "band": "green",
+      "owner": "designer-runtime/alignment",
+      "coverageReal": 5,
+      "surface": 7,
+      "legacyDebt": 0,
+      "coupling": 0,
+      "risk": 40,
+      "requiredGuardCI": true,
+      "tests": 3,
+      "allowedFiles": 1,
+      "allowedFilesList": [
+        "AlignmentGeometry.js"
+      ],
+      "existingTestsList": [
+        "reportforge/tests/alignment_geometry.test.mjs",
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/run_runtime_regression.mjs"
+      ],
+      "passingTestsList": [
+        "reportforge/tests/alignment_geometry.test.mjs",
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/run_runtime_regression.mjs"
+      ],
+      "requiredGuardCIList": [
+        "audit/alignment_geometry_guard.mjs"
+      ],
+      "notes": "AlignmentGeometry.js is the pure geometry layer — zero DOM, typeof guards for DS/CFG, module.exports present. Exports: _bounds (absolute bounds with sectionTop), compute (edge+center snap guides), computeSpacing (equal-spacing guides), THRESHOLD=4. AlignmentEngine.js, AlignmentActions.js, AlignEngine.js, AlignEngineActions.js moved to SS-36 alignment-runtime (DOM-heavy, DS hard-calls, CommandEngine coupling).",
       "coverageNote": null
     },
     {
