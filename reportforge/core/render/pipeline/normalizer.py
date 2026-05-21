@@ -43,6 +43,9 @@ def normalize_layout(raw: dict) -> dict:
     out["groups"]   = _norm_groups(_p(raw,"groups","groupBy") or [])
     out["sortBy"]   = _norm_sort(_p(raw,"sortBy","sort") or [])
     out["title"]    = _p(raw,"title","reportTitle") or out["name"]
+    out["barcodeFontFamily"] = str(_p(raw,"barcodeFontFamily","barcode_font_family") or "")
+    out["barcodeFontPath"]   = str(_p(raw,"barcodeFontPath","barcode_font_path") or "")
+    out["barcodeFontFormat"] = str(_p(raw,"barcodeFontFormat","barcode_font_format") or "truetype")
     out["sections"] = [_norm_sec(s,i) for i,s in enumerate(_p(raw,"sections","bands") or [])]
     out["elements"] = [e for r in (_p(raw,"elements","fields","objects") or [])
                        for e in [_norm_el(r)] if e]
@@ -121,6 +124,9 @@ def _norm_el(raw):
         # Barcode
         "barcodeType":      str(_p(raw,"barcodeType","barcode_type","symbology") or "code128"),
         "showText":         bool(_p(raw,"showText","show_text","displayText") if _p(raw,"showText","show_text","displayText") is not None else True),
+        "barcodeFontFamily":str(_p(raw,"barcodeFontFamily","barcode_font_family") or ""),
+        "barcodeFontPath":   str(_p(raw,"barcodeFontPath","barcode_font_path") or ""),
+        "barcodeFontFormat": str(_p(raw,"barcodeFontFormat","barcode_font_format") or "truetype"),
         # Crosstab
         "rowField":         str(_p(raw,"rowField","row_field") or ""),
         "colField":         str(_p(raw,"colField","col_field","columnField") or ""),

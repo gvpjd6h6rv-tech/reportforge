@@ -13,8 +13,11 @@
 
 from __future__ import annotations
 
+import os
+import subprocess
 from typing import Optional
 import html as _html
+from pathlib import Path
 
 from ..resolvers.field_resolver import FieldResolver
 from ..resolvers.layout_loader import Layout, Section, Element
@@ -60,7 +63,9 @@ class HtmlEngine:
         m = self._layout.margin_mm
         pw = self._layout.page_width
         debug_css = ".cr-section{outline:1px dashed rgba(255,0,0,.2)}" if self._debug else ""
+        font_css = self._barcode_font_css()
         return f"""
+{font_css}
 @page {{
     size: A4;
     margin: {m['top']}mm {m['right']}mm {m['bottom']}mm {m['left']}mm;
@@ -103,6 +108,62 @@ body{{font-family:Arial,Helvetica,sans-serif;font-size:8pt;color:#000;background
 }}
 {debug_css}
 """
+
+    def _barcode_font_css(self) -> str:
+        faces = []
+        seen: set[str] = set()
+        for el in self._layout.elements:
+            family = getattr(el, "barcodeFontFamily", "") or ""
+            if not family or family in seen:
+                continue
+            seen.add(family)
+            source = self._resolve_barcode_font_source(el, family)
+            if not source:
+                continue
+            if source["kind"] == "path":
+                faces.append(
+                    f"@font-face{{font-family:'{family}';src:local('{family}'),"
+                    f"url('{source['url']}') format('{source['format']}');}}"
+                )
+            else:
+                faces.append(f"@font-face{{font-family:'{family}';src:local('{family}');}}")
+        return "\n".join(faces)
+
+    def _resolve_barcode_font_source(self, el, family: str) -> dict[str, str] | None:
+        candidates: list[Path] = []
+        layout_path = str(getattr(el, "barcodeFontPath", "") or getattr(self._layout, "barcodeFontPath", "") or "")
+        env_path = os.getenv("REPORTFORGE_BARCODE_FONT_PATH", "").strip()
+        if layout_path:
+            candidates.append(Path(layout_path).expanduser())
+        if env_path:
+            candidates.append(Path(env_path).expanduser())
+        candidates.append(Path.home() / ".local" / "share" / "fonts" / f"{family}.ttf")
+        candidates.append(Path.home() / ".local" / "share" / "fonts" / f"{family}.otf")
+        candidates.append(Path("/usr/share/fonts") / f"{family}.ttf")
+        for path in candidates:
+            if path.exists():
+                return {
+                    "kind": "path",
+                    "url": path.resolve().as_uri(),
+                    "format": (getattr(el, "barcodeFontFormat", "") or "truetype").lower(),
+                }
+        if self._fc_exact_family_exists(family):
+            return {"kind": "local", "format": "truetype"}
+        return None
+
+    @staticmethod
+    def _fc_exact_family_exists(family: str) -> bool:
+        try:
+            proc = subprocess.run(
+                ["fc-match", "-f", "%{family}\n", family],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+        except Exception:
+            return False
+        return (proc.stdout or "").strip() == family
 
     def _render_report(self) -> str:
         h = self._layout.total_height()

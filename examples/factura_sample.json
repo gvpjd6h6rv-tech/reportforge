@@ -1,96 +1,56 @@
 {
-  "meta": {
-    "doc_entry": 20482,
-    "doc_num": 20482,
-    "obj_type": "13",
-    "currency": "USD"
-  },
-  "empresa": {
-    "razon_social": "DISTRIBUIDORA EPSON ECUADOR S.A.",
-    "nombre_comercial": "EPSON ECUADOR",
-    "ruc": "0991234567001",
-    "direccion_matriz": "Av. 9 de Octubre 1234, Guayaquil",
-    "obligado_contabilidad": "SI",
-    "agente_retencion": "NO"
-  },
-  "cliente": {
-    "razon_social": "SILVA LEON ROBERTO CARLOS",
-    "identificacion": "0923748188",
-    "direccion": "44 Y SEDALANA, Guayaquil",
-    "email": "roberto@email.com"
-  },
-  "fiscal": {
-    "ambiente": "PRUEBAS",
-    "tipo_emision": "NORMAL",
-    "numero_documento": "002-101-000020482",
-    "numero_autorizacion": "2602202601991234567001120010010000204821234567811",
-    "fecha_autorizacion": "2025-11-19T16:25:46",
-    "clave_acceso": "2602202601991234567001120010010000204821234567811"
-  },
-  "pago": {
-    "group_num": 3,
-    "forma_pago_fe": "01",
-    "plazo": null,
-    "unidad_tiempo": null,
-    "total": 124.2,
-    "status": "MAPPED",
-    "source": "AUT_BY_GROUPNUM"
-  },
+  "empresa_razon_social": "CAROLINA JULIA CHANG AJOY CHONG",
+  "empresa_ruc": "0913042669001",
+  "empresa_direccion_matriz": "COLON 426 ENTRE CHILE Y CHIMBORAZO",
+  "empresa_direccion_sucursal": "COLON 426 ENTRE CHILE Y CHIMBORAZO",
+  "empresa_obligado_contabilidad": "SI",
+  "empresa_agente_retencion": "1",
+  "empresa_telefono": "2530152",
+  "empresa_correo": "supermotosybicicletas@gmail.com",
+  "cliente_razon_social": "ACUÑA MANUEL",
+  "cliente_identificacion": "1304431248001",
+  "cliente_telefono": "05 2 649011",
+  "cliente_email": "sonnyfederico397@gmail.com",
+  "cliente_direccion": "9 DE OCTUBRE S/N ENTRE MANUEL LORENZO Y SUCRE",
+  "fiscal_numero_documento": "002-101-000021325",
+  "fiscal_numero_autorizacion": "2005202601091304266900120021010000213251234567813",
+  "fiscal_fecha_autorizacion": "2026-05-20T15:30:45-05:00",
+  "fiscal_ambiente": "Producción",
+  "fiscal_emision": "Normal",
+  "fiscal_clave_acceso": "2005202601091304266900120021010000213251234567813",
+  "fecha_emision": "20/05/2026",
+  "guia_remision": "",
   "items": [
-    {
-      "codigo": "BCANA.12",
-      "descripcion": "CANASTILLA INC. POSTERIOR TAIWAN DINT",
-      "cantidad": 30,
-      "precio_unitario": 0.1,
-      "descuento": 0,
-      "subtotal": 3
-    },
-    {
-      "codigo": "BCAUC.06",
-      "descripcion": "CAUCHO FRENO REFORZADO TAIWAN 460 CALIPER 56mm",
-      "cantidad": 10,
-      "precio_unitario": 0.37,
-      "descuento": 0,
-      "subtotal": 3.7
-    },
-    {
-      "codigo": "BEJE.18",
-      "descripcion": "EJE DEL GRUESO CICISMO FINO TAIWAN (26x14)",
-      "cantidad": 6,
-      "precio_unitario": 0.72,
-      "descuento": 0,
-      "subtotal": 4.32
-    },
-    {
-      "codigo": "BEJE.04",
-      "descripcion": "EJE DELANTERO FINO 5/16X148 mm TAIWAN",
-      "cantidad": 6,
-      "precio_unitario": 0.63,
-      "descuento": 0,
-      "subtotal": 3.78
-    },
-    {
-      "codigo": "BEJE.02",
-      "descripcion": "EJE POSTERIOR LARGO CINCIN 3/8x168mm TAIWAN",
-      "cantidad": 6,
-      "precio_unitario": 0.82,
-      "descuento": 0,
-      "subtotal": 4.92
-    },
-    {
-      "codigo": "BPEDA.12",
-      "descripcion": "PEDAL STD TAIWAN 3657 RECTANGULAR",
-      "cantidad": 2,
-      "precio_unitario": 2.25,
-      "descuento": 0,
-      "subtotal": 4.5
-    }
+    {"codigo": "BCABL.10", "descripcion": "CABLE DE CAMBIO SIN FORRO TAIWAN 1.2mmx1900mm", "cantidad": 100.00, "precio_unitario": 0.1739, "descuento": 0.00, "subtotal": 17.39},
+    {"codigo": "BCANA.12", "descripcion": "CANASTILLA BIC. POSTERIOR TAIWAN 1/4 X7", "cantidad": 100.00, "precio_unitario": 0.0870, "descuento": 0.00, "subtotal": 8.70},
+    {"codigo": "BCATA.98", "descripcion": "CATALINA 3V SHUN 7364P-1 CHICO TAIWAN BRAZO NATURAL / PROTECTOR NEGRO 24/34/42T PARA EJE CUADRA", "cantidad": 1.00, "precio_unitario": 11.7391, "descuento": 0.00, "subtotal": 11.74},
+    {"codigo": "BCONO.05", "descripcion": "CONO DE CARGA REFORZADO TAIWAN SPIN 2", "cantidad": 10.00, "precio_unitario": 1.1739, "descuento": 0.00, "subtotal": 11.74},
+    {"codigo": "BINFL.06", "descripcion": "INFLADOR DE PISO GIYO GRANDE ROJO, AZUL, AMARILLO GF-37 REVERSIBLE TAIWAN", "cantidad": 1.00, "precio_unitario": 8.2609, "descuento": 0.00, "subtotal": 8.26},
+    {"codigo": "BLLAN.221", "descripcion": "LLANTA 12-1/2 X 2-1/4 DURO PUPO MOTOCROSS 143 TAILANDIA", "cantidad": 3.00, "precio_unitario": 4.3478, "descuento": 0.00, "subtotal": 13.04},
+    {"codigo": "BLLAN.231", "descripcion": "LLANTA 16X2.125 DURO PUPO MOTOCROSS 143 TAILANDIA", "cantidad": 3.00, "precio_unitario": 4.4783, "descuento": 0.00, "subtotal": 13.43},
+    {"codigo": "BLLAN.200", "descripcion": "LLANTA 26 X 2.125 SEMIPUPO DURO TAILANDIA", "cantidad": 3.00, "precio_unitario": 7.3913, "descuento": 0.00, "subtotal": 22.17},
+    {"codigo": "BLLAN.219", "descripcion": "LLANTA 26X2.35 1046 DURO TAILANDIA", "cantidad": 3.00, "precio_unitario": 7.6957, "descuento": 0.00, "subtotal": 23.09},
+    {"codigo": "BLLAN.222", "descripcion": "LLANTA 27 X 1-1/4 HF-153 DURO TAILANDIA COLOR NEGRO", "cantidad": 3.00, "precio_unitario": 5.0870, "descuento": 0.00, "subtotal": 15.26},
+    {"codigo": "BLLAV.13", "descripcion": "LLAVE ALLEN 5mm Y 6mm TAIWAN CP", "cantidad": 25.00, "precio_unitario": 0.6957, "descuento": 0.00, "subtotal": 17.39},
+    {"codigo": "BPARC.01", "descripcion": "PARCHE CUADRADO GRANDE TAIWAN 24pcs CON GOMA 3209", "cantidad": 10.00, "precio_unitario": 0.9565, "descuento": 0.00, "subtotal": 9.57},
+    {"codigo": "BRULI.06", "descripcion": "RULIMAN 1/4 TAIWAN", "cantidad": 10.00, "precio_unitario": 0.6087, "descuento": 0.00, "subtotal": 6.09},
+    {"codigo": "BRULI.07", "descripcion": "RULIMAN 3/16 TAIWAN", "cantidad": 10.00, "precio_unitario": 0.3913, "descuento": 0.00, "subtotal": 3.91},
+    {"codigo": "BTUBO.66", "descripcion": "TUBO 24X1-3/8 A/V DURO TAILANDIA", "cantidad": 6.00, "precio_unitario": 1.7826, "descuento": 0.00, "subtotal": 10.70},
+    {"codigo": "BTUBO.69", "descripcion": "TUBO 29X2.40 L 48mm A/V VALVULA LARGA DURO TAILANDIA", "cantidad": 6.00, "precio_unitario": 2.6087, "descuento": 0.00, "subtotal": 15.65}
   ],
-  "totales": {
-    "subtotal_12": 24.22,
-    "subtotal_0": 0,
-    "subtotal_sin_impuestos": 24.22,
-    "iva_12": 2.91,
-    "importe_total": 27.13
-  }
+  "totales_subtotal_15": 208.13,
+  "totales_subtotal_iva_0": 0.00,
+  "totales_subtotal_no_objeto_iva": 0.00,
+  "totales_subtotal_exento_iva": 0.00,
+  "totales_subtotal_sin_impuestos": 208.13,
+  "totales_descuento_total": 0.00,
+  "totales_valor_ice": 0.00,
+  "totales_iva_15": 31.22,
+  "totales_propina": 0.00,
+  "totales_valor_total": 239.35,
+  "forma_pago_descripcion": "Otros con Utilización del Sistema Financiero",
+  "forma_pago_valor": 239.35,
+  "forma_pago_plazo": "",
+  "forma_pago_tiempo": "",
+  "observaciones": "1 carton y 1 atado de llantas"
 }

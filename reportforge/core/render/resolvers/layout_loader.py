@@ -31,6 +31,9 @@ class Layout:
         self.content_w   = self.page_width  - _mm(m.get("left",20)) - _mm(m.get("right",20))
         self.content_h   = self.page_height - _mm(m.get("top",15))  - _mm(m.get("bottom",15))
         self.groups      = raw.get("groups",[])
+        self.barcodeFontFamily = raw.get("barcodeFontFamily", "")
+        self.barcodeFontPath   = raw.get("barcodeFontPath", "")
+        self.barcodeFontFormat = raw.get("barcodeFontFormat", "truetype")
         self.sections    = self._parse_sections(raw.get("sections",[]))
         self.elements    = self._parse_elements(raw.get("elements",[]))
         self._by_section: dict[str,list] = {}
@@ -160,6 +163,10 @@ class Element:
         # Barcode extras
         self.barcodeType = raw.get("barcodeType", "code128")
         self.showText    = bool(raw.get("showText", True))
+        self.barcodeFontFamily = raw.get("barcodeFontFamily", "")
+        self.barcodeFontPath   = raw.get("barcodeFontPath", "")
+        self.barcodeFontFormat = raw.get("barcodeFontFormat", "truetype")
+        self.barcodeFontSize   = int(raw.get("barcodeFontSize", 8))
         # Crosstab extras
         self.rowField    = raw.get("rowField", "")
         self.colField    = raw.get("colField", "")
@@ -204,6 +211,9 @@ def _el(id,tp,sid,x,y,w,h,**kw):
 
 
 def _default_invoice_raw():
+    layout_path = Path(__file__).resolve().parents[3] / "layouts" / "factura_a4.json"
+    if layout_path.exists():
+        return json.loads(layout_path.read_text(encoding="utf-8"))
     return {
         "name":"Factura Electrónica — Layout por Defecto","version":"1.0","docType":"factura",
         "pageWidth":754,"pageSize":"A4",

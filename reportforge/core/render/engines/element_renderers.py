@@ -4,6 +4,7 @@ import base64
 import copy
 import math
 import re
+import subprocess
 from pathlib import Path
 
 from .advanced_engine_shared import _CHAR_PX, _PT_PX, _ROW_EVEN, _ROW_ODD, _SPECIAL, _esc
@@ -145,6 +146,18 @@ def render_barcode(engine, el, res) -> str:
         value = getattr(el, "content", "") or "RF-BARCODE"
     bc_type = (getattr(el, "barcodeType", None) or "code128").lower()
     show_text = getattr(el, "showText", True)
+    font_family = getattr(el, "barcodeFontFamily", "") or ""
+    font_size = getattr(el, "barcodeFontSize", 8) or 8
+    if font_family and _barcode_font_source(engine, el, font_family):
+        text_style = (
+            f"{style};display:flex;align-items:flex-end;justify-content:center;"
+            f"font-family:'{font_family}';font-size:{font_size}pt;"
+            f"line-height:1;color:#000;overflow:hidden"
+        )
+        return (
+            f'<div class="cr-barcode barcode-font" style="{text_style}">'
+            f'<span>{_esc(value)}</span></div>'
+        )
     svg = _render_barcode_svg(value, bc_type, el.w, el.h, show_text)
     return f'<div class="cr-barcode" style="{style}">{svg}</div>'
 
@@ -265,3 +278,40 @@ def _isrc(src) -> str:
         }.get(p.suffix.lower(), "image/png")
         return f"data:{mime};base64,{base64.b64encode(p.read_bytes()).decode()}"
     return src
+
+
+def _barcode_font_source(engine, el, family: str) -> dict | None:
+    candidates = []
+    layout_path = str(getattr(el, "barcodeFontPath", "") or getattr(engine._layout, "barcodeFontPath", "") or "")
+    env_path = ""
+    try:
+        import os
+
+        env_path = os.getenv("REPORTFORGE_BARCODE_FONT_PATH", "").strip()
+    except Exception:
+        env_path = ""
+    if layout_path:
+        candidates.append(Path(layout_path).expanduser())
+    if env_path:
+        candidates.append(Path(env_path).expanduser())
+    candidates.append(Path.home() / ".local" / "share" / "fonts" / f"{family}.ttf")
+    candidates.append(Path.home() / ".local" / "share" / "fonts" / f"{family}.otf")
+    for path in candidates:
+        if path.exists():
+            return {"kind": "path", "path": str(path)}
+    return {"kind": "local"} if _font_available(family) else None
+
+
+def _font_available(family: str) -> bool:
+    try:
+        proc = subprocess.run(
+            ["fc-match", "-f", "%{family}\n", family],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+        )
+    except Exception:
+        return False
+    out = (proc.stdout or "").strip().lower()
+    return bool(out) and family.lower() in out

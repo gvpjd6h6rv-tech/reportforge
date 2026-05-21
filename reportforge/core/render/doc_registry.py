@@ -8,10 +8,14 @@ from .doc_registry_retencion import RETENCION_FIELD_TREE, RETENCION_SAMPLE, _ret
 
 
 def _factura_layout_raw():
+    layout_path = __import__("pathlib").Path(__file__).resolve().parents[2] / "layouts" / "factura_a4.json"
+    if layout_path.exists():
+        import json
+        return json.loads(layout_path.read_text(encoding="utf-8"))
     return __import__(
         "core.render.resolvers.layout_loader",
-        fromlist=["_default_raw"]
-    )._default_raw()
+        fromlist=["_default_invoice_raw"]
+    )._default_invoice_raw()
 
 # ═════════════════════════════════════════════════════════════════
 #  REGISTRY

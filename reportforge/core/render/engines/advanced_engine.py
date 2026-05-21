@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import datetime
 import json
+import os
+import subprocess
 from itertools import groupby
 from pathlib import Path
 from typing import Any
@@ -74,6 +76,7 @@ class AdvancedHtmlEngine:
         page_width = self._layout.page_width
         dbg = ".cr-section,.cr-detail-row{outline:1px dashed rgba(255,0,0,.15)}" if self._debug else ""
         page_shadow = ".rpt-page{box-shadow:0 2px 8px rgba(0,0,0,.15);margin:10px auto;}" if getattr(self, "_preview", False) else ""
+        font_css = self._barcode_font_css()
         page_rule = "" if getattr(self, "_preview", False) else (
             f"@page{{size: {self._norm.get('pageSize','A4')} {self._norm.get('orientation','portrait')};"
             f"margin:{margins['top']}mm {margins['right']}mm {margins['bottom']}mm {margins['left']}mm;"
@@ -81,6 +84,7 @@ class AdvancedHtmlEngine:
             f"font-family:Arial,sans-serif;font-size:7pt;color:#888}}}}"
         )
         return (
+            f"{font_css}"
             f"{page_rule}"
             f"*,*::before,*::after{{box-sizing:border-box;margin:0;padding:0}}"
             f"body{{font-family:Arial,Helvetica,sans-serif;font-size:8pt;color:#000;background:#fff}}"
@@ -98,6 +102,49 @@ class AdvancedHtmlEngine:
             f"{dbg}"
             f"{page_shadow}"
         )
+
+    def _barcode_font_css(self) -> str:
+        faces = []
+        seen: set[str] = set()
+        for el in self._layout.elements:
+            family = getattr(el, "barcodeFontFamily", "") or ""
+            if not family or family in seen:
+                continue
+            seen.add(family)
+            source = self._resolve_barcode_font_source(el, family)
+            if not source:
+                continue
+            fmt = source["format"]
+            if source["kind"] == "path":
+                faces.append(
+                    f"@font-face{{font-family:'{family}';"
+                    f"src:local('{family}'),url('{source['url']}') format('{fmt}');}}"
+                )
+            else:
+                faces.append(f"@font-face{{font-family:'{family}';src:local('{family}');}}")
+        return "".join(faces)
+
+    def _resolve_barcode_font_source(self, el, family: str) -> dict[str, str] | None:
+        candidates: list[Path] = []
+        layout_path = str(getattr(el, "barcodeFontPath", "") or self._layout.__dict__.get("barcodeFontPath", "") or "")
+        env_path = os.getenv("REPORTFORGE_BARCODE_FONT_PATH", "").strip()
+        if layout_path:
+            candidates.append(Path(layout_path).expanduser())
+        if env_path:
+            candidates.append(Path(env_path).expanduser())
+        candidates.append(Path.home() / ".local" / "share" / "fonts" / f"{family}.ttf")
+        candidates.append(Path.home() / ".local" / "share" / "fonts" / f"{family}.otf")
+        candidates.append(Path("/usr/share/fonts") / f"{family}.ttf")
+        for path in candidates:
+            if path.exists():
+                return {
+                    "kind": "path",
+                    "url": path.resolve().as_uri(),
+                    "format": (getattr(el, "barcodeFontFormat", "") or "truetype").lower(),
+                }
+        if _fc_exact_family_exists(family):
+            return {"kind": "local", "format": "truetype"}
+        return None
 
     def _pages(self) -> str:
         ph_h = sum(s.height for s in self._secs("ph"))
@@ -309,3 +356,17 @@ def render_from_layout_file(data, layout_path, output_dir="output", filename=Non
     out = od / (filename or (lp.stem + ".pdf"))
     PdfGenerator().from_html_to_file(html, out)
     return out
+
+
+def _fc_exact_family_exists(family: str) -> bool:
+    try:
+        proc = subprocess.run(
+            ["fc-match", "-f", "%{family}\n", family],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+        )
+    except Exception:
+        return False
+    return (proc.stdout or "").strip() == family

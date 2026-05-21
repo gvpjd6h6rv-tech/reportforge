@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from .doc_registry_shared import _el
 
 #  1. GUÍA DE REMISIÓN
@@ -86,6 +89,9 @@ REMISION_SAMPLE = {
 }
 
 def _remision_layout_raw():
+    layout_path = Path(__file__).resolve().parents[2] / "layouts" / "guia_remision_a4.json"
+    if layout_path.exists():
+        return json.loads(layout_path.read_text(encoding="utf-8"))
     C = "#1565C0"  # azul remisión
     return {
         "name": "Guía de Remisión — Layout por Defecto",
