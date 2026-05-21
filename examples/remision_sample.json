@@ -1,0 +1,71 @@
+{
+  "meta": {
+    "doc_entry": 1234,
+    "doc_num": 1234,
+    "obj_type": "112",
+    "currency": "USD"
+  },
+  "empresa": {
+    "razon_social": "DISTRIBUIDORA EPSON ECUADOR S.A.",
+    "ruc": "0991234567001",
+    "direccion": "Av. 9 de Octubre 1234, Guayaquil",
+    "obligado_contabilidad": "SI"
+  },
+  "destinatario": {
+    "razon_social": "FERRETERÍA EL PROGRESO CIA. LTDA.",
+    "identificacion": "0992345678001",
+    "tipo_identificacion": "04",
+    "direccion": "Calle Olmedo 456 y Sucre, Quito"
+  },
+  "fiscal": {
+    "ambiente": "PRUEBAS",
+    "tipo_emision": "NORMAL",
+    "numero_documento": "006-001-000000123",
+    "numero_autorizacion": "2602202606991234567001060010010000001231234567811",
+    "fecha_autorizacion": "2025-11-19T10:00:00",
+    "clave_acceso": "2602202606991234567001060010010000001231234567811"
+  },
+  "traslado": {
+    "motivo": "VENTA",
+    "ruta": "Guayaquil - Quito",
+    "fecha_inicio_traslado": "19/11/2025",
+    "fecha_fin_traslado": "20/11/2025",
+    "placa_vehiculo": "GBA-1234",
+    "transportista_nombre": "TRANSPORTES RÁPIDOS S.A.",
+    "transportista_ruc": "0985678901001"
+  },
+  "origen": {
+    "direccion": "Av. 9 de Octubre 1234, Guayaquil - BODEGA CENTRAL",
+    "establecimiento_salida": "001"
+  },
+  "destino": {
+    "direccion": "Calle Olmedo 456 y Sucre, Quito",
+    "establecimiento_destino": "002"
+  },
+  "items": [
+    {
+      "codigo": "BCANA.12",
+      "descripcion": "CANASTILLA INC. POSTERIOR TAIWAN DINT",
+      "cantidad": 30,
+      "unidad_medida": "UN"
+    },
+    {
+      "codigo": "BEJE.18",
+      "descripcion": "EJE DEL GRUESO CICISMO FINO TAIWAN",
+      "cantidad": 6,
+      "unidad_medida": "UN"
+    },
+    {
+      "codigo": "BTUBO.62",
+      "descripcion": "TUBO 20X2 125 AV DURO TAILANDIA",
+      "cantidad": 3,
+      "unidad_medida": "UN"
+    },
+    {
+      "codigo": "BPEDA.12",
+      "descripcion": "PEDAL STD TAIWAN 3657 RECTANGULAR",
+      "cantidad": 2,
+      "unidad_medida": "PAR"
+    }
+  ]
+}

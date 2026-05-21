@@ -1,0 +1,96 @@
+{
+  "meta": {
+    "doc_entry": 20482,
+    "doc_num": 20482,
+    "obj_type": "13",
+    "currency": "USD"
+  },
+  "empresa": {
+    "razon_social": "DISTRIBUIDORA EPSON ECUADOR S.A.",
+    "nombre_comercial": "EPSON ECUADOR",
+    "ruc": "0991234567001",
+    "direccion_matriz": "Av. 9 de Octubre 1234, Guayaquil",
+    "obligado_contabilidad": "SI",
+    "agente_retencion": "NO"
+  },
+  "cliente": {
+    "razon_social": "SILVA LEON ROBERTO CARLOS",
+    "identificacion": "0923748188",
+    "direccion": "44 Y SEDALANA, Guayaquil",
+    "email": "roberto@email.com"
+  },
+  "fiscal": {
+    "ambiente": "PRUEBAS",
+    "tipo_emision": "NORMAL",
+    "numero_documento": "002-101-000020482",
+    "numero_autorizacion": "2602202601991234567001120010010000204821234567811",
+    "fecha_autorizacion": "2025-11-19T16:25:46",
+    "clave_acceso": "2602202601991234567001120010010000204821234567811"
+  },
+  "pago": {
+    "group_num": 3,
+    "forma_pago_fe": "01",
+    "plazo": null,
+    "unidad_tiempo": null,
+    "total": 124.2,
+    "status": "MAPPED",
+    "source": "AUT_BY_GROUPNUM"
+  },
+  "items": [
+    {
+      "codigo": "BCANA.12",
+      "descripcion": "CANASTILLA INC. POSTERIOR TAIWAN DINT",
+      "cantidad": 30,
+      "precio_unitario": 0.1,
+      "descuento": 0,
+      "subtotal": 3
+    },
+    {
+      "codigo": "BCAUC.06",
+      "descripcion": "CAUCHO FRENO REFORZADO TAIWAN 460 CALIPER 56mm",
+      "cantidad": 10,
+      "precio_unitario": 0.37,
+      "descuento": 0,
+      "subtotal": 3.7
+    },
+    {
+      "codigo": "BEJE.18",
+      "descripcion": "EJE DEL GRUESO CICISMO FINO TAIWAN (26x14)",
+      "cantidad": 6,
+      "precio_unitario": 0.72,
+      "descuento": 0,
+      "subtotal": 4.32
+    },
+    {
+      "codigo": "BEJE.04",
+      "descripcion": "EJE DELANTERO FINO 5/16X148 mm TAIWAN",
+      "cantidad": 6,
+      "precio_unitario": 0.63,
+      "descuento": 0,
+      "subtotal": 3.78
+    },
+    {
+      "codigo": "BEJE.02",
+      "descripcion": "EJE POSTERIOR LARGO CINCIN 3/8x168mm TAIWAN",
+      "cantidad": 6,
+      "precio_unitario": 0.82,
+      "descuento": 0,
+      "subtotal": 4.92
+    },
+    {
+      "codigo": "BPEDA.12",
+      "descripcion": "PEDAL STD TAIWAN 3657 RECTANGULAR",
+      "cantidad": 2,
+      "precio_unitario": 2.25,
+      "descuento": 0,
+      "subtotal": 4.5
+    }
+  ],
+  "totales": {
+    "subtotal_12": 24.22,
+    "subtotal_0": 0,
+    "subtotal_sin_impuestos": 24.22,
+    "iva_12": 2.91,
+    "importe_total": 27.13
+  }
+}
