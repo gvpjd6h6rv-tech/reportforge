@@ -86,7 +86,7 @@ export async function launchRuntimePage(baseUrl, options = {}) {
     consoleErrors.push(`PAGEERROR: ${err.message}`);
   });
 
-  await page.goto(baseUrl, { waitUntil: 'networkidle' });
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => typeof DS !== 'undefined' && Array.isArray(DS.elements) && DS.elements.length > 0);
   await page.waitForTimeout(800);
 
@@ -384,7 +384,7 @@ export async function runtimeState(page) {
     selection: [...DS.selection],
     boxCount: document.querySelectorAll('#handles-layer .sel-box').length,
     handleCount: document.querySelectorAll('#handles-layer .sel-handle').length,
-    previewPages: document.querySelectorAll('#preview-content .pv-page').length,
+    previewPages: document.querySelectorAll('#preview-content .preview-render-layer .rpt-page, #preview-content .preview-hit-layer .pv-page').length,
     previewClass: document.getElementById('canvas-layer')?.classList.contains('preview-mode') || false,
   }));
 }
@@ -403,6 +403,7 @@ export async function setZoom(page, zoom) {
 
 export async function enterPreview(page) {
   await page.locator('#tab-preview').click();
+  await page.waitForFunction(() => document.querySelector('#preview-content .preview-render-layer .rpt-page, #preview-content .preview-hit-layer .pv-page, #preview-content .preview-loading--error'));
   await page.waitForTimeout(350);
 }
 

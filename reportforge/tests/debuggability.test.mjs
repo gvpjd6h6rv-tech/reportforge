@@ -206,9 +206,9 @@ test('debuggability — writer conflict log documents boundaries with assertions
   }
 });
 
-test('debuggability — governance.md documents key diagnostic globals (__rfTraceLegacy, rfTrace, DebugTrace)', () => {
+test('debuggability — governance.md documents key diagnostic globals (__rfTraceLegacy, rfTrace, DebugTrace, RF_TRACE, RF_AUDIT)', () => {
   const governance = fs.readFileSync(path.join(ROOT, 'docs/governance.md'), 'utf8');
-  for (const phrase of ['__rfTraceLegacy', 'rfTrace', 'DebugTrace']) {
+  for (const phrase of ['__rfTraceLegacy', 'rfTrace', 'DebugTrace', 'RF_TRACE', 'RF_AUDIT']) {
     assert.match(governance, new RegExp(phrase),
       `governance.md must document diagnostic global: ${phrase}`);
   }

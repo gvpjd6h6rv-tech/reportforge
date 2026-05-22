@@ -33,9 +33,11 @@ const DocumentHistory = require(`${ROOT}/engines/DocumentHistory.js`);
 function makeEnv() {
   const { state, invariants } = DocumentState.createDocumentState();
   const writes = [];
+  const audits = [];
 
   // Mock RuntimeWriteLog as a global (DocumentActions checks typeof at call time)
   globalThis.RuntimeWriteLog = { recordWrite(e) { writes.push(e); } };
+  globalThis.RF_AUDIT = (entry) => audits.push(entry);
   globalThis.RenderSchedulerScope = undefined; // no phase tracking in unit tests
 
   const selectors = { getElementById: (id) => state.elements.find(e => e.id === id) || null };
@@ -44,7 +46,7 @@ function makeEnv() {
   const actions = DocumentActions.createDocumentActions(
     state, selectors, invariants, history, null,
   );
-  return { state, invariants, actions, writes };
+  return { state, invariants, actions, writes, audits };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -253,6 +255,33 @@ test('[H-02] setZoom source "UNKNOWN" → throws (source guard active)', () => {
     () => actions.setZoom(1.0, 'UNKNOWN'),
     (err) => err instanceof Error && err.message.includes('UNKNOWN'),
   );
+});
+
+test('[audit] DocumentActions emits structured audit entries with before/after and elementId', () => {
+  const { state, actions, audits } = makeEnv();
+  state.elements.push({ id: 'e1', sectionId: 's1', x: 10, y: 20, w: 30, h: 40 });
+
+  actions.setZoom(1.5, 'ZoomEngine.step');
+  actions.selectOnly('e1', 'SelectionInteraction.onElementPointerDown');
+  actions.updateElementLayout('e1', { x: 12, y: 24, w: 32, h: 44 }, 'SelectionInteraction.move');
+
+  const zoomAudit = audits.find((entry) => entry.action === 'setZoom');
+  assert.ok(zoomAudit, 'setZoom must emit audit');
+  assert.equal(zoomAudit.before, 1);
+  assert.equal(zoomAudit.after, 1.5);
+  assert.equal(zoomAudit.owner, 'designer-runtime/document-state');
+
+  const selectAudit = audits.find((entry) => entry.action === 'selectOnly');
+  assert.ok(selectAudit, 'selectOnly must emit audit');
+  assert.deepEqual(selectAudit.before, []);
+  assert.deepEqual(selectAudit.after, ['e1']);
+
+  const moveAudit = audits.find((entry) => entry.action === 'updateElementLayout');
+  assert.ok(moveAudit, 'updateElementLayout must emit audit');
+  assert.equal(moveAudit.elementId, 'e1');
+  assert.deepEqual(moveAudit.before, { id: 'e1', sectionId: 's1', x: 10, y: 20, w: 30, h: 40 });
+  assert.deepEqual(moveAudit.after, { id: 'e1', sectionId: 's1', x: 12, y: 24, w: 32, h: 44 });
+  assert.equal(moveAudit.result, 'ok');
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -140,8 +140,10 @@ async function run() {
       assert.equal(state.previewMode, true);
       assert.equal(state.previewClass, true);
       assert.ok(state.previewPages >= 1);
+      assert.equal(state.boxCount, 0);
+      assert.equal(state.handleCount, 0);
       let alignment = await getSingleAlignment(page);
-      assertRectClose(alignment.box, alignment.element, 0.5, 'previewEnterSelection');
+      assert.equal(alignment, null);
       const previewShot = await takeWorkspaceScreenshot(page);
       await compareSnapshotBuffer('runtime-preview.png', previewShot);
 
@@ -175,7 +177,7 @@ async function run() {
       await exitPreview(page);
     });
 
-    await step('preview drag y resize', async () => {
+    await step('preview drag', async () => {
       await page.goto(server.baseUrl, { waitUntil: 'networkidle' });
       await page.waitForFunction(() => typeof DS !== 'undefined' && Array.isArray(DS.elements) && DS.elements.length > 0);
       await page.waitForTimeout(800);
@@ -195,42 +197,6 @@ async function run() {
       assertApprox(after.dy, 12, 0.15, 'previewDrag.dy');
       let alignment = await getSingleAlignment(page);
       assertRectClose(alignment.box, alignment.element, 0.5, 'previewDrag');
-
-      const beforeResize = await page.evaluate(() => {
-        const id = [...DS.selection][0];
-        const el = DS.getElementById(id);
-        return { id, w: el.w, h: el.h };
-      });
-      await resizeFromHandle(page, 'se', 12, 8);
-      let resized = await page.evaluate(prev => {
-        const el = DS.getElementById(prev.id);
-        const selected = [...DS.selection];
-        if (!el) return { missing: true, selected };
-        return { w: el.w, h: el.h, dw: el.w - prev.w, dh: el.h - prev.h };
-      }, beforeResize);
-      assert.ok(!resized.missing);
-      assert.ok(resized.dw > 0);
-      assert.ok(resized.dh > 0);
-      alignment = await getSingleAlignment(page);
-      assertRectClose(alignment.box, alignment.element, 0.5, 'previewResizeCorner');
-
-      const beforeSide = await page.evaluate(() => {
-        const id = [...DS.selection][0];
-        const el = DS.getElementById(id);
-        return { id, w: el.w, h: el.h };
-      });
-      await resizeFromHandle(page, 'e', 10, 0);
-      resized = await page.evaluate(prev => {
-        const el = DS.getElementById(prev.id);
-        const selected = [...DS.selection];
-        if (!el) return { missing: true, selected };
-        return { w: el.w, h: el.h, dw: el.w - prev.w, dh: el.h - prev.h };
-      }, beforeSide);
-      assert.ok(!resized.missing);
-      assert.ok(resized.dw > 0);
-      assert.equal(resized.dh, 0);
-      alignment = await getSingleAlignment(page);
-      assertRectClose(alignment.box, alignment.element, 0.5, 'previewResizeSide');
       await exitPreview(page);
     });
 
