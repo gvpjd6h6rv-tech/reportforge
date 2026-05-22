@@ -5,6 +5,7 @@ import urllib.parse
 from reportforge_server_datasources import _post_ds_query, _post_register_ds
 from reportforge_server_http_utils import _cors_headers, _not_found
 from reportforge_server_route_barcode import _get_barcode, _post_barcode
+from reportforge_server_route_audit import _post_audit
 from reportforge_server_route_designer import _serve_designer
 from reportforge_server_route_favicon import _serve_favicon
 from reportforge_server_route_health import _get_health
@@ -49,6 +50,8 @@ def handle_post(handler):
         return _post_validate_layout(handler, body)
     if path == "/validate-formula":
         return _post_validate_formula(handler, body)
+    if path == "/rf-audit":
+        return _post_audit(handler, body)
     if path == "/tests/quick":
         return _post_tests_quick(handler, body)
     if path == "/tests/full":

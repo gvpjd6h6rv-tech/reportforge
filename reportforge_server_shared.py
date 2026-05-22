@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import datetime as _dt
+import subprocess as _subprocess
 from pathlib import Path
+from functools import lru_cache
 
 _HERE = Path(__file__).parent
 _DESIGNER_HTML = _HERE / "designer" / "crystal-reports-designer-v4.html"
@@ -40,3 +43,39 @@ _DEMO_DATA = {
                   "cantidad": 1.0, "precio_unitario": 192.86, "descuento": 0.0, "subtotal": 192.86}},
     ],
 }
+
+
+@lru_cache(maxsize=1)
+def _git_short_commit() -> str:
+    try:
+        out = _subprocess.check_output(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=_HERE,
+            stderr=_subprocess.DEVNULL,
+            text=True,
+        ).strip()
+        return out or "unknown"
+    except Exception:
+        return "unknown"
+
+
+def _fmt_ts(path: Path) -> str:
+    try:
+        dt = _dt.datetime.fromtimestamp(path.stat().st_mtime, tz=_dt.timezone.utc)
+        return dt.astimezone().isoformat(timespec="seconds")
+    except Exception:
+        return "unknown"
+
+
+def get_designer_build_info() -> dict[str, str]:
+    html_path = _DESIGNER_HTML if _DESIGNER_HTML.exists() else _DESIGNER_HTML_V3
+    zoom_js = _HERE / "engines" / "ZoomEngine.js"
+    return {
+        "commit": _git_short_commit(),
+        "assetVersion": _fmt_ts(html_path),
+        "htmlTimestamp": _fmt_ts(html_path),
+        "jsTimestamp": _fmt_ts(zoom_js),
+        "jsRoute": "/engines/ZoomEngine.js",
+        "htmlRoute": "/designer/crystal-reports-designer-v4.html" if _DESIGNER_HTML.exists() else "/designer/crystal-reports-designer-v3.html",
+        "cacheStatus": "no-store",
+    }
