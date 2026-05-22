@@ -1,0 +1,210 @@
+:host {
+  position: fixed;
+  inset: auto 12px 12px auto;
+  z-index: 9995;
+  display: none;
+  inline-size: min(420px, calc(100vw - 24px));
+  max-block-size: min(78vh, 860px);
+  color: #d9f7e0;
+  font: 12px/1.35 system-ui, sans-serif;
+  pointer-events: auto;
+}
+
+:host(.is-on) {
+  display: block;
+}
+
+.rf-debug-center {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(82, 255, 122, 0.34);
+  border-radius: 14px;
+  background: rgba(7, 14, 11, 0.94);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(10px);
+}
+
+.rf-debug-center__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: grab;
+  user-select: none;
+}
+
+.rf-debug-center__title {
+  color: #84ff9e;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.rf-debug-center__sub,
+.rf-debug-center__badge {
+  margin-top: 4px;
+  color: rgba(217, 247, 224, .74);
+  font-size: 11px;
+}
+
+.rf-debug-center__badge {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .06);
+  border: 1px solid rgba(255, 255, 255, .08);
+}
+
+.rf-debug-center__grid {
+  display: grid;
+  gap: 10px;
+}
+
+.rf-debug-center__panel {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .03);
+  border: 1px solid rgba(255, 255, 255, .06);
+}
+
+.rf-debug-center__panel h3 {
+  margin: 0;
+  color: #9fffb0;
+  font-size: 11px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.rf-debug-center-timeline {
+  display: grid;
+  gap: 8px;
+}
+
+.rf-debug-center-timeline__head {
+  display: grid;
+  gap: 8px;
+}
+
+.rf-debug-center-timeline__status {
+  color: #f4fff6;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.rf-debug-center-timeline__meta,
+.rf-debug-center-timeline__counts {
+  color: rgba(217, 247, 224, .74);
+  font-size: 10px;
+  word-break: break-word;
+}
+
+.rf-debug-center-timeline__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.rf-debug-center-timeline__actions button {
+  padding: 5px 8px;
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .05);
+  color: #f4fff6;
+  font: inherit;
+  cursor: pointer;
+}
+
+.rf-debug-center-timeline__actions button:hover {
+  border-color: rgba(132, 255, 158, .45);
+  background: rgba(132, 255, 158, .12);
+}
+
+.rf-debug-center-timeline__list {
+  display: grid;
+  gap: 8px;
+}
+
+.rf-debug-center-timeline-item {
+  display: grid;
+  gap: 3px;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, .06);
+  background: rgba(255, 255, 255, .03);
+}
+
+.rf-debug-center-timeline-item__title {
+  color: #f6fff7;
+  font-weight: 700;
+}
+
+.rf-debug-center-timeline-item__meta {
+  color: rgba(217, 247, 224, .72);
+  font-size: 10px;
+  word-break: break-word;
+}
+
+.rf-debug-center-sev-debug { border-left: 3px solid rgba(142, 207, 255, .9); }
+.rf-debug-center-sev-info { border-left: 3px solid rgba(132, 255, 158, .9); }
+.rf-debug-center-sev-warning { border-left: 3px solid rgba(255, 200, 90, .9); }
+.rf-debug-center-sev-error { border-left: 3px solid rgba(255, 101, 101, .9); }
+
+.rf-debug-center-kv {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 8px;
+  align-items: start;
+}
+
+.rf-debug-center-k {
+  color: rgba(217, 247, 224, .62);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.rf-debug-center-v {
+  color: #f4fff6;
+  font-variant-numeric: tabular-nums;
+  word-break: break-word;
+}
+
+.rf-debug-center-pre {
+  margin: 0;
+  padding: 8px;
+  border-radius: 8px;
+  overflow: auto;
+  max-block-size: 180px;
+  background: rgba(0, 0, 0, .2);
+  color: #ccefd5;
+  font-size: 10px;
+}
+
+.rf-debug-center-row {
+  display: grid;
+  gap: 3px;
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .03);
+  border: 1px solid rgba(255, 255, 255, .05);
+}
+
+.rf-debug-center-row__title {
+  color: #f6fff7;
+  font-weight: 700;
+  word-break: break-word;
+}
+
+.rf-debug-center-row__meta {
+  color: rgba(217, 247, 224, .7);
+  font-size: 10px;
+  word-break: break-word;
+}
+
+.rf-debug-center-empty {
+  color: rgba(217, 247, 224, .64);
+  font-style: italic;
+}

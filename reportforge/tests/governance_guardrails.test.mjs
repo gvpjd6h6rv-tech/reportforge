@@ -27,6 +27,10 @@ const ALLOWED_WINDOW_EXPORTS = [
   'RF_DEBUG_TRACE',
   'RF_DEBUG_TRACE_RUNTIME',
   'RF_DEBUG_TRACE_ELEMENTS',
+  'RF_TRACE',
+  'RF_AUDIT',
+  'RF_UI_TRACE',
+  'RFDebugCenter',
   'DebugTrace',
   'rfTrace',
   'makePanelDraggable',
@@ -269,6 +273,7 @@ test('monolith no longer keeps runtime globals, formula/debug, or doc-type probe
   assert.match(html, /<script src="\/engines\/FormulaEditorDialog\.js"><\/script>/);
   assert.match(html, /<script src="\/engines\/DesignerUI\.js"><\/script>/);
   assert.match(html, /<script src="\/engines\/DebugTrace\.js"><\/script>/);
+  assert.match(html, /<script src="\/engines\/RFAudit\.js"><\/script>/);
   assert.match(html, /<script src="\/engines\/DebugPanelUtils\.js"><\/script>/);
   assert.match(html, /<script src="\/engines\/DebugChannelsPanel\.js"><\/script>/);
   assert.match(html, /<script src="\/engines\/DebugTraceToggle\.js"><\/script>/);
@@ -434,10 +439,12 @@ test('engine globals are reduced to the approved window export whitelist', () =>
     path.join(ROOT, 'engines/FormulaEditorDialog.js'),
     path.join(ROOT, 'engines/DesignerUI.js'),
     path.join(ROOT, 'engines/DebugTrace.js'),
+    path.join(ROOT, 'engines/RFAudit.js'),
     path.join(ROOT, 'engines/DebugPanelUtils.js'),
     path.join(ROOT, 'engines/DebugChannelsPanel.js'),
     path.join(ROOT, 'engines/DebugTraceToggle.js'),
     path.join(ROOT, 'engines/DebugOverlay.js'),
+    path.join(ROOT, 'tools/rf-debug-center/rf-debug-center.js'),
     path.join(ROOT, 'engines/FormulaAndDebug.js'),
     path.join(ROOT, 'engines/DocTypeAndProbes.js'),
     path.join(ROOT, 'engines/GridEngine.js'),
@@ -1028,6 +1035,7 @@ test('formula split stays modular, thin, and contract-stable', () => {
     'engines/DebugChannelsPanel.js',
     'engines/DebugTraceToggle.js',
     'engines/DebugOverlay.js',
+    'tools/rf-debug-center/rf-debug-center.js',
     'engines/FormulaAndDebug.js',
     'reportforge/core/render/expressions/formula_parser.py',
     'reportforge/core/render/expressions/formula_parser_core.py',
@@ -1053,6 +1061,10 @@ test('formula split stays modular, thin, and contract-stable', () => {
     ['engines/DebugChannelsPanel.js', 220],
     ['engines/DebugTraceToggle.js', 160],
     ['engines/DebugOverlay.js', 180],
+    ['tools/rf-debug-center/rf-debug-center.js', 220],
+    ['tools/rf-debug-center/rf-debug-center-store.js', 180],
+    ['tools/rf-debug-center/rf-debug-center-view.js', 220],
+    ['tools/rf-debug-center/rf-debug-center.css', 200],
     ['engines/FormulaAndDebug.js', 40],
     ['reportforge/core/render/expressions/formula_parser.py', 120],
     ['reportforge/core/render/expressions/formula_parser_core.py', 320],
@@ -1095,10 +1107,12 @@ test('formula split stays modular, thin, and contract-stable', () => {
   const formulaEditorJs = fs.readFileSync(path.join(ROOT, 'engines/FormulaEditorDialog.js'), 'utf8');
   const designerUiJs = fs.readFileSync(path.join(ROOT, 'engines/DesignerUI.js'), 'utf8');
   const debugTraceJs = fs.readFileSync(path.join(ROOT, 'engines/DebugTrace.js'), 'utf8');
+  const rfauditJs = fs.readFileSync(path.join(ROOT, 'engines/RFAudit.js'), 'utf8');
   const debugPanelUtilsJs = fs.readFileSync(path.join(ROOT, 'engines/DebugPanelUtils.js'), 'utf8');
   const debugChannelsJs = fs.readFileSync(path.join(ROOT, 'engines/DebugChannelsPanel.js'), 'utf8');
   const debugToggleJs = fs.readFileSync(path.join(ROOT, 'engines/DebugTraceToggle.js'), 'utf8');
   const debugOverlayJs = fs.readFileSync(path.join(ROOT, 'engines/DebugOverlay.js'), 'utf8');
+  const rfDebugCenterJs = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center.js'), 'utf8');
   const formulaAndDebugJs = fs.readFileSync(path.join(ROOT, 'engines/FormulaAndDebug.js'), 'utf8');
 
   assert.match(facade, /from \.formula_parser_core import ParseError, FormulaParser/);
@@ -1119,10 +1133,14 @@ test('formula split stays modular, thin, and contract-stable', () => {
   assert.match(formulaEditorJs, /window\.FormulaEditorDialog\s*=\s*FormulaEditorDialog;/);
   assert.match(designerUiJs, /window\.DesignerUI\s*=\s*DesignerUI;/);
   assert.match(debugTraceJs, /window\.DebugTrace\s*=\s*DebugTrace;/);
+  assert.match(rfauditJs, /window\.RF_AUDIT\s*=\s*emit;/);
+  assert.match(rfauditJs, /window\.RF_TRACE\s*=\s*trace;/);
+  assert.match(rfauditJs, /window\.RF_UI_TRACE\s*=\s*uiTrace;/);
   assert.match(debugPanelUtilsJs, /window\.makePanelDraggable\s*=\s*makePanelDraggable;/);
   assert.match(debugChannelsJs, /window\.DebugChannelsPanel\s*=\s*DebugChannelsPanel;/);
   assert.match(debugToggleJs, /window\.DebugTraceToggle\s*=\s*DebugTraceToggle;/);
   assert.match(debugOverlayJs, /window\.DebugOverlay\s*=\s*DebugOverlay;/);
+  assert.match(rfDebugCenterJs, /window\.RFDebugCenter\s*=\s*center\.api;/);
   assert.doesNotMatch(formulaAndDebugJs, /window\.[A-Za-z0-9_]+\s*=/);
   assert.match(evalContext, /from \.formula_evaluator import FormulaEvaluator as EvalContext, FormulaError/);
   assert.match(fs.readFileSync(path.join(ROOT, 'reportforge/core/render/expressions/formula_eval_nodes.py'), 'utf8'), /from \.formula_eval_dispatch import eval_binop, eval_node/);
@@ -1133,6 +1151,91 @@ test('formula split stays modular, thin, and contract-stable', () => {
   assert.match(fs.readFileSync(path.join(ROOT, 'reportforge/core/render/expressions/type_coercion.py'), 'utf8'), /def truthy\(/);
   assert.doesNotMatch(evalContext, /class EvalContext/);
   assert.match(fs.readFileSync(path.join(ROOT, 'docs/architecture/formula-debug-contract.md'), 'utf8'), /FormulaEngine\.js/);
+});
+
+test('rf debug center sidecar stays isolated and documented', () => {
+  const html = fs.readFileSync(SHELL_HTML_PATH, 'utf8');
+  const ownershipMapPath = path.join(ROOT, 'tools/rf-debug-center/ownership-map.json');
+  const readme = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/README.md'), 'utf8');
+  const bootstrap = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center.js'), 'utf8');
+  const store = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-store.js'), 'utf8');
+  const view = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-view.js'), 'utf8');
+  const css = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center.css'), 'utf8');
+  const zoom = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-zoom.js'), 'utf8');
+  const map = JSON.parse(fs.readFileSync(ownershipMapPath, 'utf8'));
+  const collectExactWindowWrites = (source) => {
+    const writes = new Set();
+    const re = /window\.([A-Za-z0-9_]+)\s*=\s*[^=]/g;
+    let match;
+    while ((match = re.exec(source))) writes.add(match[1]);
+    return writes;
+  };
+
+  assert.match(html, /<script type="module" src="\/tools\/rf-debug-center\/rf-debug-center\.js"><\/script>/);
+  assert.match(readme, /\bReportForge Adapter v1\b/);
+  assert.match(readme, /core`:\s+generic debug-center logic, portable across repos/);
+  assert.match(readme, /Future portable adapters should emit a normalized event shape/);
+  assert.match(readme, /Strategic Roadmap/);
+  assert.match(readme, /`E1`\s*-\s*strategic amendment for six bug classes/);
+  assert.match(readme, /T1 Timeline/);
+  assert.match(readme, /Z1 Zoom Diagnostics/);
+  assert.match(readme, /buildZoomDiagnostics\(\)/);
+  assert.match(readme, /pauseTimeline\(\)/);
+  assert.match(readme, /copyTimelineJSON\(\)/);
+  assert.match(readme, /Loop & Freeze Engine/);
+  assert.match(readme, /Performance Engine/);
+  assert.match(readme, /Async\/Race Engine/);
+  assert.match(readme, /State & Ownership Engine/);
+  assert.match(readme, /Network\/Backend Engine/);
+  assert.match(readme, /DOM\/Visual Engine/);
+  assert.match(readme, /Representative future evidence schema/);
+  assert.match(readme, /"engine": "loop\|performance\|async\|state\|network\|dom"/);
+  assert.deepEqual([...collectExactWindowWrites(bootstrap)].sort(), ['RFDebugCenter']);
+  assert.doesNotMatch(bootstrap, /\bfetch\s*\(/, 'sidecar bootstrap must not require backend/fetch');
+  assert.match(bootstrap, /host\.id = 'rf-debug-center-root';/);
+  assert.match(css, /\.rf-debug-center/);
+  assert.doesNotMatch(css, /^(?:button|div|panel|hidden|active|warning|error)\s*\{/m, 'rf debug center css must not use bare global selectors');
+  assert.equal(map.tool, 'RF Debug Center');
+  assert.equal(map.version, 1);
+  assert.equal(map.subsystemsVersion, 1);
+  assert.ok(Array.isArray(map.subsystems) && map.subsystems.length >= 4, 'ownership map must enumerate subsystems');
+  assert.ok(map.subsystems.some((subsystem) => subsystem.name === 'timeline'), 'ownership map must include timeline subsystem');
+  assert.ok(map.subsystems.some((subsystem) => subsystem.name === 'zoom'), 'ownership map must include zoom subsystem');
+  for (const subsystem of map.subsystems) {
+    assert.ok(subsystem.name, 'subsystem.name missing');
+    assert.ok(subsystem.owner, `subsystem owner missing for ${subsystem.name}`);
+    assert.ok(subsystem.onlyWriter !== undefined, `subsystem onlyWriter missing for ${subsystem.name}`);
+    assert.ok(Array.isArray(subsystem.readers), `subsystem readers missing for ${subsystem.name}`);
+    assert.ok(Array.isArray(subsystem.forbiddenWriters), `subsystem forbiddenWriters missing for ${subsystem.name}`);
+    assert.ok(Array.isArray(subsystem.publicAPI), `subsystem publicAPI missing for ${subsystem.name}`);
+    assert.ok(Array.isArray(subsystem.invariants), `subsystem invariants missing for ${subsystem.name}`);
+  }
+  assert.equal(map.tool, 'RF Debug Center');
+  assert.equal(map.ssot.uiTrace, 'engines/RFAudit.js');
+  assert.equal(map.ssot.bootstrap, 'tools/rf-debug-center/rf-debug-center.js');
+  assert.equal(map.ssot.store, 'tools/rf-debug-center/rf-debug-center-store.js');
+  assert.equal(map.ssot.view, 'tools/rf-debug-center/rf-debug-center-view.js');
+  assert.equal(map.ssot.style, 'tools/rf-debug-center/rf-debug-center.css');
+  assert.ok(bootstrap.split('\n').length <= 220, 'rf-debug-center.js must stay <= 220 lines');
+  assert.ok(store.split('\n').length <= 180, 'rf-debug-center-store.js must stay <= 180 lines');
+  assert.ok(view.split('\n').length <= 260, 'rf-debug-center-view.js must stay <= 260 lines');
+  assert.ok(zoom.split('\n').length <= 180, 'rf-debug-center-zoom.js must stay <= 180 lines');
+  assert.ok(css.split('\n').length <= 260, 'rf-debug-center.css must stay <= 260 lines');
+  assert.match(bootstrap, /window\.RFDebugCenter\s*=\s*center\.api;/);
+  assert.doesNotMatch(store, /window\.[A-Za-z0-9_]+\s*=/);
+  assert.doesNotMatch(view, /window\.[A-Za-z0-9_]+\s*=/);
+  assert.doesNotMatch(zoom, /window\.[A-Za-z0-9_]+\s*=/);
+
+  const governance = fs.readFileSync(path.join(ROOT, 'docs/governance.md'), 'utf8');
+  assert.match(governance, /RF Debug Center Strategic Amendment/);
+  assert.match(governance, /plataforma portable sin acoplar el core a/);
+  assert.match(governance, /Loop & Freeze Engine/);
+  assert.match(governance, /Performance Engine/);
+  assert.match(governance, /Async\/Race Engine/);
+  assert.match(governance, /State & Ownership Engine/);
+  assert.match(governance, /Network\/Backend Engine/);
+  assert.match(governance, /DOM\/Visual Engine/);
+  assert.match(governance, /"engine": "loop\|performance\|async\|state\|network\|dom"/);
 });
 
 test('cr functions split stays modular, thin, and contract-stable', () => {

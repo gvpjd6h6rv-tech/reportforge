@@ -1,0 +1,74 @@
+{
+  "tool": "RF Debug Center",
+  "version": 1,
+  "subsystemsVersion": 1,
+  "ssot": {
+    "uiTrace": "engines/RFAudit.js",
+    "bootstrap": "tools/rf-debug-center/rf-debug-center.js",
+    "store": "tools/rf-debug-center/rf-debug-center-store.js",
+    "view": "tools/rf-debug-center/rf-debug-center-view.js",
+    "style": "tools/rf-debug-center/rf-debug-center.css"
+  },
+  "subsystems": [
+    {
+      "name": "ui-trace",
+      "source": "RF_UI_TRACE",
+      "owner": "runtime-observability",
+      "onlyWriter": "RF_UI_TRACE runtime producer",
+      "readers": ["tools/rf-debug-center/rf-debug-center-store.js", "tools/rf-debug-center/rf-debug-center-view.js"],
+      "forbiddenWriters": ["tools/rf-debug-center/rf-debug-center.js", "tools/rf-debug-center/rf-debug-center-view.js"],
+      "publicAPI": ["getEntries", "snapshot", "clear"],
+      "invariants": ["read-only", "no mutation from debug center", "trace source preserved"]
+    },
+    {
+      "name": "state-store",
+      "source": "rf-debug-center-store.js",
+      "owner": "debug-center",
+      "onlyWriter": "tools/rf-debug-center/rf-debug-center-store.js",
+      "readers": ["tools/rf-debug-center/rf-debug-center.js", "tools/rf-debug-center/rf-debug-center-view.js", "tools/rf-debug-center/rf-debug-center-zoom.js", "tools/rf-debug-center/diagnostics/*"],
+      "forbiddenWriters": ["tools/rf-debug-center/rf-debug-center-view.js", "tools/rf-debug-center/rf-debug-center.js"],
+      "publicAPI": ["readDebugCenterState", "formatValue"],
+      "invariants": ["single-writer", "snapshot-based", "no direct UI mutation"]
+    },
+    {
+      "name": "zoom",
+      "source": "rf-debug-center-zoom.js",
+      "owner": "debug-center",
+      "onlyWriter": "tools/rf-debug-center/rf-debug-center-store.js",
+      "readers": ["tools/rf-debug-center/rf-debug-center-store.js", "tools/rf-debug-center/rf-debug-center-view.js", "reportforge/tests/rf_debug_center_zoom.test.mjs"],
+      "forbiddenWriters": ["tools/rf-debug-center/rf-debug-center-view.js", "tools/rf-debug-center/rf-debug-center.js"],
+      "publicAPI": ["buildZoomDiagnostics"],
+      "invariants": ["read-only", "state-derived", "no mutation of RF_UI_TRACE", "no direct DOM writes"]
+    },
+    {
+      "name": "timeline",
+      "source": "rf-debug-center-store.js/timeline",
+      "owner": "debug-center",
+      "onlyWriter": "tools/rf-debug-center/rf-debug-center-store.js",
+      "readers": ["tools/rf-debug-center/rf-debug-center.js", "tools/rf-debug-center/rf-debug-center-view.js"],
+      "forbiddenWriters": ["tools/rf-debug-center/rf-debug-center-view.js", "tools/rf-debug-center/rf-debug-center.js", "RF_UI_TRACE runtime producer"],
+      "publicAPI": ["pauseDebugCenterTimeline", "resumeDebugCenterTimeline", "clearDebugCenterTimeline", "copyDebugCenterTimelineJSON", "getDebugCenterTimelineSnapshot"],
+      "invariants": ["read-only source", "internal buffer only", "no mutation of RF_UI_TRACE"]
+    },
+    {
+      "name": "view",
+      "source": "rf-debug-center-view.js",
+      "owner": "debug-center",
+      "onlyWriter": "n/a",
+      "readers": ["tools/rf-debug-center/rf-debug-center.js"],
+      "forbiddenWriters": ["tools/rf-debug-center/rf-debug-center-store.js"],
+      "publicAPI": ["mountDebugCenter", "renderDebugCenter"],
+      "invariants": ["view-only", "shadow-dom isolated", "no state mutation"]
+    },
+    {
+      "name": "style",
+      "source": "rf-debug-center.css",
+      "owner": "debug-center",
+      "onlyWriter": "n/a",
+      "readers": ["tools/rf-debug-center/rf-debug-center-view.js"],
+      "forbiddenWriters": ["global stylesheet", "designer shell styles"],
+      "publicAPI": ["rf-debug-center namespace"],
+      "invariants": ["isolated-css", "no global selectors", "shadow-root safe"]
+    }
+  ]
+}
