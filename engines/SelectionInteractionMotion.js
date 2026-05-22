@@ -18,7 +18,6 @@ const SelectionInteractionMotion = (() => {
     d.moved = true;
     const dx = pos.x - d.startX;
     const dy = pos.y - d.startY;
-    const zoom = RF.Geometry.zoom();
     d.startPositions.forEach(orig => {
       const el = SelectionState.getElementById(orig.id); if (!el) return;
       const rawAbsX = orig.x + dx;
@@ -37,20 +36,16 @@ const SelectionInteractionMotion = (() => {
       const div = document.querySelector(`.cr-element[data-id="${orig.id}"]`);
       if (div) {
         div.classList.add('dragging');
-        const _mp = RF.Geometry.modelToView(el.x, el.y);
-        div.style.left = _mp.x + 'px';
-        div.style.top = _mp.y + 'px';
-        const snappedAbsY = SelectionState.getSectionTop(el.sectionId) + el.y;
-        div.style.transform = `translate(${((rawAbsX - el.x) * zoom).toFixed(3)}px, ${((rawAbsY - snappedAbsY) * zoom).toFixed(3)}px)`;
+        div.style.left = el.x + 'px';
+        div.style.top = el.y + 'px';
+        div.style.transform = `translate(${(rawAbsX - el.x).toFixed(3)}px, ${(rawAbsY - (SelectionState.getSectionTop(el.sectionId) + el.y)).toFixed(3)}px)`;
       }
       if (DS.previewMode) {
         document.querySelectorAll(`.pv-el[data-origin-id="${orig.id}"]`).forEach(pv => {
           pv.classList.add('dragging');
-          const _pp = RF.Geometry.rectToView(el);
-          pv.style.left = _pp.left + 'px';
-          pv.style.top = _pp.top + 'px';
-          const snappedAbsY = SelectionState.getSectionTop(el.sectionId) + el.y;
-          pv.style.transform = `translate(${((rawAbsX - el.x) * zoom).toFixed(3)}px, ${((rawAbsY - snappedAbsY) * zoom).toFixed(3)}px)`;
+          pv.style.left = el.x + 'px';
+          pv.style.top = el.y + 'px';
+          pv.style.transform = `translate(${(rawAbsX - el.x).toFixed(3)}px, ${(rawAbsY - (SelectionState.getSectionTop(el.sectionId) + el.y)).toFixed(3)}px)`;
         });
       }
     });
@@ -82,11 +77,10 @@ const SelectionInteractionMotion = (() => {
     _canonicalCanvasWriter().updateElementPosition(d.elId);
     if (DS.previewMode) {
       document.querySelectorAll(`.pv-el[data-origin-id="${d.elId}"]`).forEach(pv => {
-        const _pp = RF.Geometry.rectToView(el);
-        pv.style.left = _pp.left + 'px';
-        pv.style.top = _pp.top + 'px';
-        pv.style.width = _pp.width + 'px';
-        pv.style.height = _pp.height + 'px';
+        pv.style.left = el.x + 'px';
+        pv.style.top = el.y + 'px';
+        pv.style.width = el.w + 'px';
+        pv.style.height = el.h + 'px';
       });
     }
     engine.renderHandles();
@@ -108,7 +102,12 @@ const SelectionInteractionMotion = (() => {
     rb.style.height = band.height + 'px';
     SelectionState.clearSelectionState();
     DS.elements.forEach(el => {
-      const rect = CanvasGeometry.elementViewRect(el, SelectionState.getSectionTop(el.sectionId), RF.Geometry.zoom());
+      const rect = {
+        left: el.x,
+        top: SelectionState.getSectionTop(el.sectionId) + el.y,
+        width: el.w,
+        height: el.h,
+      };
       if (rect && SelectionGeometry.rectOverlapsBand(rect, band)) SelectionState.addSelection(el.id);
     });
     engine.renderHandles();

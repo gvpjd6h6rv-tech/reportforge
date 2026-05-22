@@ -27,10 +27,10 @@
       return { ready: false, width: 0, height: 0, minHeight: 0, maxHeight: 0 };
     }
 
-    const height = DS.sections.reduce((s, sec) => s + Math.round(RF.Geometry.scale(sec.height)), 0);
+    const height = DS.sections.reduce((s, sec) => s + Math.round(sec.height), 0);
     return {
       ready: true,
-      width: Math.round(RF.Geometry.scale(CFG.PAGE_W)),
+      width: Math.round(CFG.PAGE_W),
       height,
       minHeight: 0,
       maxHeight: height,
@@ -94,8 +94,8 @@
 
   function getMetrics() {
     return {
-      scaledW: RF.Geometry.scale(CFG.PAGE_W),
-      scaledH: RF.Geometry.scale(typeof DS !== 'undefined' ? DS.getTotalHeight() : 0),
+      scaledW: CFG.PAGE_W,
+      scaledH: typeof DS !== 'undefined' ? DS.getTotalHeight() : 0,
       modelW: CFG.PAGE_W,
       modelH: typeof DS !== 'undefined' ? DS.getTotalHeight() : 0,
       zoom: RF.Geometry.zoom(),

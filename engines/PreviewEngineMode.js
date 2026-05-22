@@ -3,6 +3,19 @@
 (function initPreviewEngineMode(global) {
   let _sc = { x: 0, y: 0 };
   let _active = false;
+  let _selectionVisible = false;
+
+  function enableSelectionOverlay() {
+    _selectionVisible = true;
+  }
+
+  function resetSelectionOverlay() {
+    _selectionVisible = false;
+  }
+
+  function isSelectionOverlayVisible() {
+    return _selectionVisible;
+  }
 
   function show() {
     const t0 = performance.now();
@@ -22,10 +35,12 @@
     } else {
       applyPreviewChrome();
     }
+    _active = true;
+    resetSelectionOverlay();
+    global.PreviewEngineRenderer.clear?.();
     global.PreviewEngineRenderer.refresh();
     if (typeof PreviewZoomEngine !== 'undefined') PreviewZoomEngine.set(DS.previewZoom || 1.0);
     if (typeof ZoomWidget !== 'undefined') ZoomWidget.sync();
-    _active = true;
     console.debug(`[PreviewEngineV19] ON in ${(performance.now() - t0).toFixed(1)}ms`);
   }
 
@@ -49,6 +64,8 @@
     } else {
       applyDesignChrome();
     }
+    global.PreviewEngineRenderer.clear?.();
+    resetSelectionOverlay();
     if (typeof ZoomWidget !== 'undefined') ZoomWidget.sync();
     if (typeof OverlayEngine !== 'undefined') OverlayEngine.render();
     _active = false;
@@ -57,5 +74,13 @@
 
   function toggle() { _active ? hide() : show(); }
 
-  global.PreviewEngineMode = { show, hide, toggle, isActive: () => _active };
+  global.PreviewEngineMode = {
+    show,
+    hide,
+    toggle,
+    isActive: () => _active,
+    enableSelectionOverlay,
+    resetSelectionOverlay,
+    isSelectionOverlayVisible,
+  };
 })(window);

@@ -1,36 +1,34 @@
 'use strict';
 
 const SelectionOverlay = (() => {
+  function _uiSnapshot(focus = null) {
+    if (typeof window.RF_UI_TRACE?.snapshot !== 'function') return null;
+    return window.RF_UI_TRACE.snapshot({ focus });
+  }
+
+  function _uiTrace(event, detail = {}) {
+    if (typeof window.RF_UI_TRACE !== 'function') return null;
+    return window.RF_UI_TRACE(event, detail);
+  }
+
   function previewRect(el) {
-    const pvEl = document.querySelector(`.pv-el[data-origin-id="${el.id}"]`);
-    if (!pvEl) return null;
-    const pR = pvEl.getBoundingClientRect();
-    const cR = RF.Geometry.canvasRect();
+    const secTop = SelectionState.getSectionTop(el.sectionId);
     return {
-      left: pR.left - cR.left,
-      top: pR.top - cR.top,
-      width: pR.width,
-      height: pR.height,
+      left: el.x,
+      top: secTop + el.y,
+      width: el.w,
+      height: el.h,
     };
   }
 
   function selectionRect(el) {
-    if (DS.previewMode) {
-      const pvRect = previewRect(el);
-      if (pvRect) return pvRect;
-    }
-    const draggingDiv = document.querySelector(`.cr-element[data-id="${el.id}"]`);
-    if (draggingDiv && draggingDiv.classList.contains('dragging')) {
-      const dR = draggingDiv.getBoundingClientRect();
-      const cR = RF.Geometry.canvasRect();
-      return {
-        left: dR.left - cR.left,
-        top: dR.top - cR.top,
-        width: dR.width,
-        height: dR.height,
-      };
-    }
-    return CanvasGeometry.elementViewRect(el, SelectionState.getSectionTop(el.sectionId), RF.Geometry.zoom());
+    if (DS.previewMode) return previewRect(el);
+    return {
+      left: el.x,
+      top: SelectionState.getSectionTop(el.sectionId) + el.y,
+      width: el.w,
+      height: el.h,
+    };
   }
 
   function appendSelectionGuide(layer, rect, axis, edge) {
@@ -40,17 +38,17 @@ const SelectionOverlay = (() => {
     guide.style.position = 'absolute';
     guide.style.pointerEvents = 'none';
     guide.style.zIndex = '27';
-    guide.style.background = 'rgba(0, 0, 0, 0.55)';
+    guide.style.background = 'rgba(255, 32, 32, 0.9)';
     if (axis === 'h') {
       guide.style.left = '0px';
       guide.style.width = '100%';
       guide.style.top = `${Math.round(edge)}px`;
-      guide.style.height = '1px';
+      guide.style.height = '2px';
     } else {
       guide.style.top = '0px';
       guide.style.height = '100%';
       guide.style.left = `${Math.round(edge)}px`;
-      guide.style.width = '1px';
+      guide.style.width = '2px';
     }
     layer.appendChild(guide);
   }
@@ -67,6 +65,7 @@ const SelectionOverlay = (() => {
 
   function renderHandles(engine) {
     SelectionEngineContracts.assertSelectionState('SelectionEngine.renderHandles.selection');
+    const beforeUI = _uiSnapshot('#handles-layer');
     if (typeof RenderScheduler !== 'undefined' && !RenderScheduler.allowsDomWrite()) {
       RenderScheduler.handles(() => engine.renderHandles(), 'SelectionEngine.renderHandles');
       return;
@@ -99,7 +98,29 @@ const SelectionOverlay = (() => {
         renderSelectionIds: [...renderSelectionIds],
       });
     }
-    if (branch === 'none') return;
+    if (branch === 'none') {
+      _uiTrace('select', {
+        phase: 'after',
+        before: beforeUI,
+        after: _uiSnapshot('#handles-layer'),
+        event: DS.previewMode ? 'preview-select-none' : 'design-select-none',
+        source: 'SelectionOverlay.renderHandles',
+        selection: [],
+        previewMode: !!DS.previewMode,
+        focus: '#handles-layer',
+      });
+      return;
+    }
+    const previewOverlayVisible = !DS.previewMode
+      || typeof PreviewEngineMode === 'undefined'
+      || typeof PreviewEngineMode.isSelectionOverlayVisible !== 'function'
+      || PreviewEngineMode.isSelectionOverlayVisible();
+    if (DS.previewMode && !previewOverlayVisible) {
+      engine.updateSelectionInfo();
+      return;
+    }
+    const showGuides = !DS.previewMode
+      || !!(engine && engine._drag && (engine._drag.type === 'move' || engine._drag.type === 'resize'));
     if (branch === 'single') {
       const id = renderSelectionIds[0];
       const el = SelectionState.getElementById(id); if (!el) return;
@@ -116,7 +137,7 @@ const SelectionOverlay = (() => {
       selBox.style.setProperty('--sel-w', absW + 'px');
       selBox.style.setProperty('--sel-h', absH + 'px');
       layer.appendChild(selBox);
-      renderSelectionGuides(layer, [rect]);
+      if (showGuides) renderSelectionGuides(layer, [rect]);
       positions.forEach(({ pos, cx, cy }) => {
         const h = document.createElement('div');
         h.className = 'sel-handle';
@@ -162,11 +183,24 @@ const SelectionOverlay = (() => {
         outline.appendChild(item);
       });
     }
+    _uiTrace('select', {
+      phase: 'after',
+      before: beforeUI,
+      after: _uiSnapshot('#handles-layer .sel-box'),
+      event: DS.previewMode ? 'preview-select' : 'design-select',
+      source: 'SelectionOverlay.renderHandles',
+      selection: [...SelectionState.selectedIds()],
+      previewMode: !!DS.previewMode,
+      focus: '#handles-layer .sel-box',
+    });
     engine.updateSelectionInfo();
   }
 
   function clearSelection(engine) {
     SelectionState.clearSelectionState();
+    if (DS.previewMode && typeof PreviewEngineMode !== 'undefined' && typeof PreviewEngineMode.resetSelectionOverlay === 'function') {
+      PreviewEngineMode.resetSelectionOverlay();
+    }
     engine.renderHandles();
     PropertiesEngine.render();
     FormatEngine.updateToolbar();

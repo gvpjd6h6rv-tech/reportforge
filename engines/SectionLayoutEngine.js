@@ -1,9 +1,8 @@
 /**
  * SectionLayoutEngine — ReportForge v19 Phase 3
  * ─────────────────────────────────────────────────────────────────
- * Manages the view-space rendering of section containers.
- * Sections store model-space heights (section.height).
- * This engine converts to view space and applies to DOM.
+ * Manages the model-space rendering of section containers.
+ * The canvas root is zoom-transformed, so section DOM stays in model units.
  *
  * Architecture rule:
  *   section.height   → MODEL SPACE (never changes with zoom)
@@ -38,10 +37,10 @@ const SectionLayoutEngine = (() => {
       return { ready: false, pageWidth: 0, totalHeight: 0, sections: [] };
     }
 
-    const pageWidth = Math.round(RF.Geometry.scale(CFG.PAGE_W));
+    const pageWidth = Math.round(CFG.PAGE_W);
     let top = 0;
     const sections = DS.sections.map(sec => {
-      const height = Math.round(RF.Geometry.scale(sec.height));
+      const height = Math.round(sec.height);
       const band = {
         id: sec.id,
         top: Math.round(top),
@@ -102,7 +101,7 @@ const SectionLayoutEngine = (() => {
 
   return {
     update()     {
-      const contract = _computeLayoutContract();
+    const contract = _computeLayoutContract();
       _trace('update-schedule', {
         sectionsCount: contract.sections.length,
         totalHeight: contract.totalHeight,
@@ -125,7 +124,7 @@ const SectionLayoutEngine = (() => {
       if (typeof DS === 'undefined') return { y: 0, h: 0 };
       let y = 0;
       for (const sec of DS.sections) {
-        const h = RF.Geometry.scale(sec.height);
+        const h = sec.height;
         if (sec.id === sectionId) return { y, h };
         y += h;
       }
@@ -134,7 +133,7 @@ const SectionLayoutEngine = (() => {
 
     getTotalViewHeight() {
       if (typeof DS === 'undefined') return 0;
-      return DS.sections.reduce((s, sec) => s + RF.Geometry.scale(sec.height), 0);
+      return DS.sections.reduce((s, sec) => s + sec.height, 0);
     },
 
     getLayoutContract() {

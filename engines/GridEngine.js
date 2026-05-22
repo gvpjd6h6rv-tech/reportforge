@@ -4,7 +4,7 @@
  * Manages the visual grid overlay.
  *
  * Grid base size is defined in MODEL SPACE (document units).
- * Visual grid size = RF.Geometry.scale(GRID_BASE_MODEL).
+ * Visual grid size tracks model-space units and is transformed by the zoomed canvas root.
  *
  * Architecture rule:
  *   background-size is always computed via RF.Geometry.scale().
@@ -44,7 +44,7 @@ window.GridEngine = (() => {
     const overlay = document.getElementById('grid-overlay');
     if (!overlay) return;
 
-    const gridPx = RF.Geometry.scale(GRID_BASE_MODEL);
+    const gridPx = GRID_BASE_MODEL;
 
     if (!_visible || gridPx < MIN_GRID_PX) {
       overlay.classList.add('hidden');
@@ -90,7 +90,7 @@ window.GridEngine = (() => {
      * Return current grid size in view-space px.
      * Useful for snap calculations.
      */
-    getGridPx() { return RF.Geometry.scale(GRID_BASE_MODEL); },
+    getGridPx() { return GRID_BASE_MODEL; },
   };
 })();
 

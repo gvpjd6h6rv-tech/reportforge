@@ -31,7 +31,7 @@
       handleFontSizeChange(parseInt(e.target.value));
     });
     document.getElementById('tb-zoom')?.addEventListener('change', (e) => {
-      handleZoomSelection(parseFloat(e.target.value));
+      handleZoomSelection(parseFloat(e.target.value), 'toolbar-select');
     });
   }
 

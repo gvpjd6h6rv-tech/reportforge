@@ -121,12 +121,11 @@ const DragEngine = (() => {
         }
         DS.updateElementLayout(orig.id, patch, 'DragEngine.move');
 
-        // Update DOM via RF.Geometry
+        // Update DOM in model space; the canvas root provides the zoom transform.
         const div = document.querySelector(`.cr-element[data-id="${orig.id}"]`);
         if (div) {
-          const p = RF.Geometry.modelToView(el.x, el.y);
-          div.style.left = p.x + 'px';
-          div.style.top  = p.y + 'px';
+          div.style.left = el.x + 'px';
+          div.style.top  = el.y + 'px';
           div.classList.add('dragging');
         }
       });
@@ -151,11 +150,10 @@ const DragEngine = (() => {
       DS.updateElementLayout(el.id, { x, y, w, h }, 'DragEngine.resize');
       const div = document.querySelector(`.cr-element[data-id="${el.id}"]`);
       if (div) {
-        const vp = RF.Geometry.modelToView(el.x, el.y);
-        div.style.left   = vp.x + 'px';
-        div.style.top    = vp.y + 'px';
-        div.style.width  = RF.Geometry.scale(el.w) + 'px';
-        div.style.height = RF.Geometry.scale(el.h) + 'px';
+        div.style.left   = el.x + 'px';
+        div.style.top    = el.y + 'px';
+        div.style.width  = el.w + 'px';
+        div.style.height = el.h + 'px';
       }
     });
 

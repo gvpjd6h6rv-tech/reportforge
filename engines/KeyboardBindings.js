@@ -110,10 +110,10 @@ const KeyboardBindings = (() => {
         });
       });
 
-      registry.register('ctrl+=', () => { if (typeof DesignZoomEngine !== 'undefined') DesignZoomEngine.zoomIn(); });
-      registry.register('ctrl++', () => { if (typeof DesignZoomEngine !== 'undefined') DesignZoomEngine.zoomIn(); });
-      registry.register('ctrl+-', () => { if (typeof DesignZoomEngine !== 'undefined') DesignZoomEngine.zoomOut(); });
-      registry.register('ctrl+0', () => { if (typeof DesignZoomEngine !== 'undefined') DesignZoomEngine.set(1.0); });
+      registry.register('ctrl+=', () => { if (typeof DesignZoomEngine !== 'undefined') DesignZoomEngine.zoomIn(undefined, undefined, { event: 'keyboard-plus', fn: 'KeyboardBindings.ctrl+=' }); });
+      registry.register('ctrl++', () => { if (typeof DesignZoomEngine !== 'undefined') DesignZoomEngine.zoomIn(undefined, undefined, { event: 'keyboard-plus', fn: 'KeyboardBindings.ctrl++' }); });
+      registry.register('ctrl+-', () => { if (typeof DesignZoomEngine !== 'undefined') DesignZoomEngine.zoomOut(undefined, undefined, { event: 'keyboard-minus', fn: 'KeyboardBindings.ctrl+-' }); });
+      registry.register('ctrl+0', () => { if (typeof DesignZoomEngine !== 'undefined') DesignZoomEngine.set(1.0, undefined, undefined, { event: 'keyboard-reset', fn: 'KeyboardBindings.ctrl+0' }); });
 
       registry.register('ctrl+g', () => { if (typeof GridEngine !== 'undefined') GridEngine.toggle(); });
       registry.register('ctrl+;', () => { if (typeof SnapState !== 'undefined') SnapState.toggle(); });

@@ -133,10 +133,10 @@ const KeyboardEngine = (() => {
     });
 
     // ── Zoom ─────────────────────────────────────────────────────
-    _register('ctrl+=',       () => { if (typeof DesignZoomEngine !== 'undefined') DesignZoomEngine.zoomIn(); });
-    _register('ctrl++',       () => { if (typeof DesignZoomEngine !== 'undefined') DesignZoomEngine.zoomIn(); });
-    _register('ctrl+-',       () => { if (typeof DesignZoomEngine !== 'undefined') DesignZoomEngine.zoomOut(); });
-    _register('ctrl+0',       () => { if (typeof DesignZoomEngine !== 'undefined') DesignZoomEngine.set(1.0); });
+    _register('ctrl+=',       () => { if (typeof DesignZoomEngine !== 'undefined') DesignZoomEngine.zoomIn(undefined, undefined, { event: 'keyboard-plus', fn: 'KeyboardEngine.ctrl+=' }); });
+    _register('ctrl++',       () => { if (typeof DesignZoomEngine !== 'undefined') DesignZoomEngine.zoomIn(undefined, undefined, { event: 'keyboard-plus', fn: 'KeyboardEngine.ctrl++' }); });
+    _register('ctrl+-',       () => { if (typeof DesignZoomEngine !== 'undefined') DesignZoomEngine.zoomOut(undefined, undefined, { event: 'keyboard-minus', fn: 'KeyboardEngine.ctrl+-' }); });
+    _register('ctrl+0',       () => { if (typeof DesignZoomEngine !== 'undefined') DesignZoomEngine.set(1.0, undefined, undefined, { event: 'keyboard-reset', fn: 'KeyboardEngine.ctrl+0' }); });
 
     // ── Grid / Snap toggles ───────────────────────────────────────
     _register('ctrl+g', () => { if (typeof GridEngine !== 'undefined') GridEngine.toggle(); });

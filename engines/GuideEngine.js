@@ -6,7 +6,7 @@
  *
  * Architecture:
  *   Guide positions received in MODEL SPACE from AlignmentEngine.
- *   Converted to view space for display: RF.Geometry.scale(modelPos)
+ *   Rendered in model space and transformed with the canvas root.
  */
 'use strict';
 
@@ -39,8 +39,7 @@ const GuideEngine = (() => {
     const color = type === 'spacing' ? GUIDE_COLOR_S : GUIDE_COLOR;
 
     if (axis === 'x') {
-      // Vertical line at x = scale(modelPos)
-      const vx = RF.Geometry.scale(modelPos);
+      const vx = modelPos;
       div.style.cssText = [
         'position:absolute',
         `left:${vx}px`,
@@ -50,8 +49,7 @@ const GuideEngine = (() => {
         'pointer-events:none',
       ].join(';');
     } else {
-      // Horizontal line at y = scale(modelPos)
-      const vy = RF.Geometry.scale(modelPos);
+      const vy = modelPos;
       div.style.cssText = [
         'position:absolute',
         'left:0', 'right:0',

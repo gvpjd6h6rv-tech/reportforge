@@ -15,14 +15,13 @@
     div.dataset.id = el.id;
     div.dataset.type = el.type;
 
-    const p = RF.Geometry.modelToView(el.x, el.y);
-    div.style.left = `${p.x}px`;
-    div.style.top = `${p.y}px`;
-    div.style.width = `${RF.Geometry.scale(el.w)}px`;
-    div.style.height = `${RF.Geometry.scale(el.h)}px`;
+    div.style.left = `${el.x}px`;
+    div.style.top = `${el.y}px`;
+    div.style.width = `${el.w}px`;
+    div.style.height = `${el.h}px`;
 
     div.style.fontFamily = el.fontFamily || 'Arial';
-    div.style.fontSize = `${RF.Geometry.scale(el.fontSize * 96 / 72)}px`;
+    div.style.fontSize = `${el.fontSize * 96 / 72}px`;
     div.style.fontWeight = el.bold ? 'bold' : 'normal';
     div.style.fontStyle = el.italic ? 'italic' : 'normal';
     div.style.textDecoration = el.underline ? 'underline' : 'none';
@@ -86,12 +85,30 @@
       span.className = 'el-content';
       div.appendChild(span);
     } else if (el.type === 'image') {
-      div.style.background = '#F9F9F9';
-      div.style.border = '1px dashed #999';
-      const span = document.createElement('span');
-      span.className = 'el-content';
-      span.textContent = el.imageSrc ? '🖼' : '⬚ imagen';
-      div.appendChild(span);
+      const src = el.src || el.imageSrc || '';
+      if (src) {
+        div.style.background = 'transparent';
+        div.style.border = 'none';
+        const img = document.createElement('img');
+        img.className = 'el-content';
+        img.alt = el.content || '';
+        img.src = src;
+        img.style.cssText = [
+          'display:block',
+          'width:100%',
+          'height:100%',
+          `object-fit:${el.srcFit || el.imageFit || 'contain'}`,
+          'pointer-events:none',
+        ].join(';');
+        div.appendChild(img);
+      } else {
+        div.style.background = '#F9F9F9';
+        div.style.border = '1px dashed #999';
+        const span = document.createElement('span');
+        span.className = 'el-content';
+        span.textContent = '⬚ imagen';
+        div.appendChild(span);
+      }
     }
 
     const SE = (typeof EngineRegistry !== 'undefined' && EngineRegistry.get('SelectionEngine'))
@@ -130,13 +147,12 @@
     const el = typeof DS !== 'undefined' ? DS.getElementById(id) : null;
     if (!el) return;
     C.assertLayoutContract(el, 'CanvasLayoutEngine.updateElement');
-    const p = RF.Geometry.modelToView(el.x, el.y);
-    div.style.left = `${p.x}px`;
-    div.style.top = `${p.y}px`;
-    div.style.width = `${RF.Geometry.scale(el.w)}px`;
-    div.style.height = `${RF.Geometry.scale(el.h)}px`;
+    div.style.left = `${el.x}px`;
+    div.style.top = `${el.y}px`;
+    div.style.width = `${el.w}px`;
+    div.style.height = `${el.h}px`;
     div.style.fontFamily = el.fontFamily || 'Arial';
-    div.style.fontSize = `${RF.Geometry.scale(el.fontSize * 96 / 72)}px`;
+    div.style.fontSize = `${el.fontSize * 96 / 72}px`;
     div.style.fontWeight = el.bold ? 'bold' : 'normal';
     div.style.fontStyle = el.italic ? 'italic' : 'normal';
     div.style.textDecoration = el.underline ? 'underline' : 'none';
@@ -156,6 +172,16 @@
           : (el.fieldPath ? `{${el.fieldPath}}` : '');
       }
       else if (el.type === 'text') span.textContent = el.content || '';
+      else if (el.type === 'image') {
+        const img = div.querySelector('img.el-content');
+        if (img) {
+          img.src = el.src || el.imageSrc || '';
+          img.alt = el.content || '';
+          img.style.objectFit = el.srcFit || el.imageFit || 'contain';
+        } else {
+          span.textContent = '⬚ imagen';
+        }
+      }
     }
     if (typeof DS !== 'undefined')
       div.classList.toggle('selected', (C.assertSelectionState('CanvasLayoutEngine.updateElement.selection'), DS.selection.has(id)));
@@ -168,11 +194,10 @@
     if (!el) return;
     C.assertLayoutContract(el, 'CanvasLayoutEngine.updateElementPosition');
     C.assertZoomContract('CanvasLayoutEngine.updateElementPosition');
-    const p = RF.Geometry.modelToView(el.x, el.y);
-    div.style.left = `${p.x}px`;
-    div.style.top = `${p.y}px`;
-    div.style.width = `${RF.Geometry.scale(el.w)}px`;
-    div.style.height = `${RF.Geometry.scale(el.h)}px`;
+    div.style.left = `${el.x}px`;
+    div.style.top = `${el.y}px`;
+    div.style.width = `${el.w}px`;
+    div.style.height = `${el.h}px`;
   }
 
   global.CanvasLayoutElements = { buildElementDiv, renderElement, renderAll, updateElement, updateElementPosition };

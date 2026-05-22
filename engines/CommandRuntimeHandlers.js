@@ -42,8 +42,8 @@
       case 'same-height': CommandEngine.sameHeight(); break;
       case 'bring-front': CommandEngine.bringFront(); break;
       case 'send-back': CommandEngine.sendBack(); break;
-      case 'zoom-in': ZoomEngine.step(1); break;
-      case 'zoom-out': ZoomEngine.step(-1); break;
+      case 'zoom-in': ZoomEngine.step(1, 'plus'); break;
+      case 'zoom-out': ZoomEngine.step(-1, 'minus'); break;
       case 'zoom-100': ZoomEngine.set(1.0); break;
       case 'preview': _canonicalPreviewWriter().toggle(); break;
       case 'bring-forward': CommandEngine.bringForward && CommandEngine.bringForward(); break;
@@ -148,8 +148,8 @@
     _canonicalPreviewWriter().hide();
   }
 
-  function handleZoomSelection(value) {
-    ZoomEngine.set(parseFloat(value) / 100);
+  function handleZoomSelection(value, source = 'toolbar-select') {
+    ZoomEngine.set(parseFloat(value) / 100, undefined, undefined, { event: source, fn: 'CommandRuntimeHandlers.handleZoomSelection' });
   }
 
   function handleFormatAction(format) {

@@ -20,7 +20,7 @@ const SectionEngine = {
     if (typeof RenderScheduler !== 'undefined') {
       RenderScheduler.flushSync(() => {
         this.container.innerHTML='';
-        this.container.style.width = RF.Geometry.scale(CFG.PAGE_W) + 'px';
+        this.container.style.width = CFG.PAGE_W + 'px';
         const activeSectionIds = new Set((typeof DS !== 'undefined' && DS.getSelectedElements)
           ? DS.getSelectedElements().map((el) => el.sectionId)
           : []);
@@ -29,9 +29,9 @@ const SectionEngine = {
           div.className='cr-section';
           div.dataset.sectionId = sec.id;
           div.dataset.stype = sec.stype;
-          div.style.height = RF.Geometry.scale(sec.height) + 'px';
+          div.style.height = sec.height + 'px';
           div.style.position='relative';
-          div.style.width = RF.Geometry.scale(CFG.PAGE_W) + 'px';
+          div.style.width = CFG.PAGE_W + 'px';
           if (activeSectionIds.has(sec.id)) {
             div.style.boxShadow = 'inset 0 0 0 2px rgba(11, 98, 214, 0.6)';
           }
@@ -50,7 +50,7 @@ const SectionEngine = {
       }, 'SectionEngine.render');
     } else {
       this.container.innerHTML='';
-      this.container.style.width = RF.Geometry.scale(CFG.PAGE_W) + 'px';
+      this.container.style.width = CFG.PAGE_W + 'px';
       const activeSectionIds = new Set((typeof DS !== 'undefined' && DS.getSelectedElements)
         ? DS.getSelectedElements().map((el) => el.sectionId)
         : []);
@@ -59,9 +59,9 @@ const SectionEngine = {
         div.className='cr-section';
         div.dataset.sectionId = sec.id;
         div.dataset.stype = sec.stype;
-        div.style.height = RF.Geometry.scale(sec.height) + 'px';
+        div.style.height = sec.height + 'px';
         div.style.position='relative';
-        div.style.width = RF.Geometry.scale(CFG.PAGE_W) + 'px';
+        div.style.width = CFG.PAGE_W + 'px';
         if (activeSectionIds.has(sec.id)) {
           div.style.boxShadow = 'inset 0 0 0 2px rgba(11, 98, 214, 0.6)';
         }

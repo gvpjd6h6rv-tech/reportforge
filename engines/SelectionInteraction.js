@@ -49,6 +49,9 @@ const SelectionInteraction = (() => {
     } else {
       SelectionState.addSelection(id);
     }
+    if (DS.previewMode && typeof PreviewEngineMode !== 'undefined' && typeof PreviewEngineMode.enableSelectionOverlay === 'function') {
+      PreviewEngineMode.enableSelectionOverlay();
+    }
     engine.renderHandles();
     PropertiesEngine.render();
     FormatEngine.updateToolbar();
@@ -193,7 +196,6 @@ const SelectionInteraction = (() => {
     d.moved = true;
     const dx = pos.x - d.startX;
     const dy = pos.y - d.startY;
-    const zoom = RF.Geometry.zoom();
     d.startPositions.forEach(orig => {
       const el = SelectionState.getElementById(orig.id); if (!el) return;
       const sectionBounds = _sectionBounds(orig.sectionId);
@@ -206,26 +208,24 @@ const SelectionInteraction = (() => {
       const div = document.querySelector(`.cr-element[data-id="${orig.id}"]`);
       if (div) {
         div.classList.add('dragging');
-        const _mp = RF.Geometry.modelToView(el.x, el.y);
-        div.style.left = _mp.x + 'px';
-        div.style.top = _mp.y + 'px';
+        div.style.left = el.x + 'px';
+        div.style.top = el.y + 'px';
         const snappedAbsX = el.x;
         const snappedAbsY = sectionBounds.top + el.y;
         const rawAbsX = orig.x + dx;
         const rawAbsY = orig.sectionTop + orig.y + dy;
-        div.style.transform = `translate(${((rawAbsX - snappedAbsX) * zoom).toFixed(3)}px, ${((rawAbsY - snappedAbsY) * zoom).toFixed(3)}px)`;
+        div.style.transform = `translate(${(rawAbsX - snappedAbsX).toFixed(3)}px, ${(rawAbsY - snappedAbsY).toFixed(3)}px)`;
       }
       if (DS.previewMode) {
         document.querySelectorAll(`.pv-el[data-origin-id="${orig.id}"]`).forEach(pv => {
           pv.classList.add('dragging');
-          const _pp = RF.Geometry.rectToView(el);
-          pv.style.left = _pp.left + 'px';
-          pv.style.top = _pp.top + 'px';
+          pv.style.left = el.x + 'px';
+          pv.style.top = el.y + 'px';
           const snappedAbsX = el.x;
           const snappedAbsY = sectionBounds.top + el.y;
           const rawAbsX = orig.x + dx;
           const rawAbsY = orig.sectionTop + orig.y + dy;
-          pv.style.transform = `translate(${((rawAbsX - snappedAbsX) * zoom).toFixed(3)}px, ${((rawAbsY - snappedAbsY) * zoom).toFixed(3)}px)`;
+          pv.style.transform = `translate(${(rawAbsX - snappedAbsX).toFixed(3)}px, ${(rawAbsY - snappedAbsY).toFixed(3)}px)`;
         });
       }
     });
@@ -262,11 +262,10 @@ const SelectionInteraction = (() => {
     _canonicalCanvasWriter().updateElementPosition(d.elId);
     if (DS.previewMode) {
       document.querySelectorAll(`.pv-el[data-origin-id="${d.elId}"]`).forEach(pv => {
-        const _pp = RF.Geometry.rectToView(el);
-        pv.style.left = _pp.left + 'px';
-        pv.style.top = _pp.top + 'px';
-        pv.style.width = _pp.width + 'px';
-        pv.style.height = _pp.height + 'px';
+        pv.style.left = el.x + 'px';
+        pv.style.top = el.y + 'px';
+        pv.style.width = el.w + 'px';
+        pv.style.height = el.h + 'px';
       });
     }
     engine.renderHandles();
@@ -288,7 +287,12 @@ const SelectionInteraction = (() => {
     rb.style.height = band.height + 'px';
     SelectionState.clearSelectionState();
     DS.elements.forEach(el => {
-      const rect = CanvasGeometry.elementViewRect(el, SelectionState.getSectionTop(el.sectionId), RF.Geometry.zoom());
+      const rect = {
+        left: el.x,
+        top: SelectionState.getSectionTop(el.sectionId) + el.y,
+        width: el.w,
+        height: el.h,
+      };
       if (rect && SelectionGeometry.rectOverlapsBand(rect, band)) SelectionState.addSelection(el.id);
     });
     engine.renderHandles();
@@ -316,6 +320,9 @@ const SelectionInteraction = (() => {
     }
     if (!isCancel && d.type === 'insert') InsertEngine.onMouseUp(e);
     engine._drag = null;
+    if (!isCancel && (d.type === 'move' || d.type === 'resize')) {
+      engine.renderHandles();
+    }
   }
 
   return {

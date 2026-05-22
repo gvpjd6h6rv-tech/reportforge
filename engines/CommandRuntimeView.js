@@ -12,7 +12,7 @@
     const availH = ws.clientHeight - lay.rulerHeight - 32;
     const scaleW = availW / CFG.PAGE_W;
     const scaleH = availH / Math.max(totalH, 100);
-    DesignZoomEngine.setFree(Math.min(scaleW, scaleH));
+    DesignZoomEngine.setFree(Math.min(scaleW, scaleH), undefined, undefined, { event: 'fit-page', fn: 'CommandRuntimeView.zoomFitPage' });
     setStatus('Ajustar página');
   }
 
@@ -21,7 +21,7 @@
     if (!ws) return;
     const lay = computeLayout();
     const availW = ws.clientWidth - lay.rulerWidth - 32;
-    DesignZoomEngine.setFree(availW / CFG.PAGE_W);
+    DesignZoomEngine.setFree(availW / CFG.PAGE_W, undefined, undefined, { event: 'fit-width', fn: 'CommandRuntimeView.zoomFitWidth' });
     setStatus('Ajustar ancho');
   }
 

@@ -27,14 +27,14 @@
       .filter((e) => e.sectionId === sec.id)
       .map((el) => global.PreviewEngineData.renderInstanceElement(el, rowData, rootData, rowIndex))
       .join('');
-    return `<div class="pv-section${cls}" data-section-id="${sec.id}" style="height:${RF.Geometry.scale(sec.height)}px;width:${RF.Geometry.scale(CFG.PAGE_W)}px"${ri}>${inner}</div>`;
+    return `<div class="pv-section${cls}" data-section-id="${sec.id}" style="height:${sec.height}px;width:${CFG.PAGE_W}px"${ri}>${inner}</div>`;
   }
 
   function renderSectionData(sec, itemData, altRow, rootData) {
     const els = DS.elements.filter((e) => e.sectionId === sec.id);
     const inner = els.map((el) => global.PreviewEngineData.renderElement(el, itemData, rootData)).join('');
     const bg = altRow ? 'background:#FAFAF8' : '';
-    return `<div class="pv-section" style="position:relative;height:${RF.Geometry.scale(sec.height)}px;width:${RF.Geometry.scale(CFG.PAGE_W)}px;${bg};border-bottom:1px solid #EEE;overflow:hidden">${inner}</div>`;
+    return `<div class="pv-section" style="position:relative;height:${sec.height}px;width:${CFG.PAGE_W}px;${bg};border-bottom:1px solid #EEE;overflow:hidden">${inner}</div>`;
   }
 
   function renderElement(el, itemData, rootData) {
@@ -48,8 +48,8 @@
       value = el.content || '';
     }
 
-    const r = RF.Geometry.rectToView(el);
-    const fs = RF.Geometry.scale(el.fontSize * 96 / 72);
+    const r = { left: el.x, top: el.sectionId ? (DS.getSectionTop(el.sectionId) + el.y) : el.y, width: el.w, height: el.h };
+    const fs = el.fontSize * 96 / 72;
     const st = [
       `position:absolute`, `left:${r.left}px`, `top:${r.top}px`,
       `width:${r.width}px`, `height:${r.height}px`,
@@ -64,7 +64,7 @@
     if (el.type === 'line') {
       const lc = el.borderColor === 'transparent' ? '#000' : el.borderColor;
       const mid = Math.max(r.height / 2, 1);
-      return `<div style="${st};background:transparent"><svg style="overflow:visible" width="${r.width}" height="${Math.max(r.height, 2)}"><line x1="0" y1="${mid}" x2="${r.width}" y2="${mid}" stroke="${lc}" stroke-width="${RF.Geometry.scale(el.lineWidth || 1)}"/></svg></div>`;
+      return `<div style="${st};background:transparent"><svg style="overflow:visible" width="${r.width}" height="${Math.max(r.height, 2)}"><line x1="0" y1="${mid}" x2="${r.width}" y2="${mid}" stroke="${lc}" stroke-width="${el.lineWidth || 1}"/></svg></div>`;
     }
     if (el.type === 'rect') {
       const bg = el.bgColor === 'transparent' ? 'transparent' : el.bgColor;
@@ -88,8 +88,8 @@
       value = el.content || '';
     }
     const ri = rowIndex !== null ? ` data-row-index="${rowIndex}"` : '';
-    const r = RF.Geometry.rectToView(el);
-    const fs = RF.Geometry.scale(el.fontSize * 96 / 72);
+    const r = { left: el.x, top: el.sectionId ? (DS.getSectionTop(el.sectionId) + el.y) : el.y, width: el.w, height: el.h };
+    const fs = el.fontSize * 96 / 72;
     const st = [
       `position:absolute`, `left:${r.left}px`, `top:${r.top}px`,
       `width:${r.width}px`, `height:${r.height}px`,
@@ -108,8 +108,8 @@
     const items = data.items || [];
     const pageW = CFG.PAGE_W;
     const pageH = 1122;
-    const scaledPageW = RF.Geometry.scale(pageW);
-    const scaledPageH = RF.Geometry.scale(pageH);
+    const scaledPageW = pageW;
+    const scaledPageH = pageH;
     let html = '', currentPageH = 0, pageNum = 1, pageContent = '';
 
     const openPage = () => { pageContent = ''; currentPageH = 0; };
@@ -125,8 +125,8 @@
     const headerSecs = DS.sections.filter((s) => s.stype === 'rh' || s.stype === 'ph');
     const footerSecs = DS.sections.filter((s) => s.stype === 'pf' || s.stype === 'rf');
     const usableH = scaledPageH
-      - headerSecs.reduce((a, s) => a + RF.Geometry.scale(s.height), 0)
-      - footerSecs.reduce((a, s) => a + RF.Geometry.scale(s.height), 0);
+      - headerSecs.reduce((a, s) => a + s.height, 0)
+      - footerSecs.reduce((a, s) => a + s.height, 0);
     const detailSecs = DS.sections.filter((s) => s.iterates);
 
     for (const sec of headerSecs) addBand(renderBand(sec, null, false, data, null), sec.height);

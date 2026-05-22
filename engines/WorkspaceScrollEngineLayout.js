@@ -15,19 +15,19 @@ const WorkspaceScrollEngineLayout = (() => {
       ? SectionLayoutEngine.getLayoutContract()
       : null;
     const fallbackTotalH = (typeof DS !== 'undefined')
-      ? Math.round(RF.Geometry.scale(DS.getTotalHeight()))
+      ? Math.round(DS.getTotalHeight() * RF.Geometry.zoom())
       : 0;
     return {
       ready: !!(canvasContract || sectionContract || typeof DS !== 'undefined'),
       scaledW: canvasContract && canvasContract.ready !== false
-        ? canvasContract.width
+        ? Math.round(canvasContract.width * RF.Geometry.zoom())
         : sectionContract && sectionContract.ready !== false
-          ? sectionContract.pageWidth
-          : Math.round(RF.Geometry.scale(CFG.PAGE_W)),
+          ? Math.round(sectionContract.pageWidth * RF.Geometry.zoom())
+          : Math.round(CFG.PAGE_W * RF.Geometry.zoom()),
       scaledH: canvasContract && canvasContract.ready !== false
-        ? canvasContract.height
+        ? Math.round(canvasContract.height * RF.Geometry.zoom())
         : sectionContract && sectionContract.ready !== false
-          ? sectionContract.totalHeight
+          ? Math.round(sectionContract.totalHeight * RF.Geometry.zoom())
           : fallbackTotalH,
       padding: SCROLL_PADDING,
     };
