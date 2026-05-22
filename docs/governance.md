@@ -89,6 +89,10 @@ Whitelist actual de `window.* =` permitidos:
 - `RF_DEBUG_TRACE`
 - `RF_DEBUG_TRACE_RUNTIME`
 - `RF_DEBUG_TRACE_ELEMENTS`
+- `RF_TRACE`
+- `RF_AUDIT`
+- `RF_UI_TRACE`
+- `RFDebugCenter`
 - `DebugTrace`
 - `rfTrace`
 - `makePanelDraggable`
@@ -152,3 +156,59 @@ Ejemplo de toolbar:
 
 Ese es el patrón permitido.  
 Cualquier ruta paralela debe considerarse sospechosa hasta que el gate la apruebe explícitamente.
+
+## RF Debug Center Strategic Amendment
+
+RF Debug Center sigue siendo un sidecar de ReportForge hoy, pero su contrato
+está preparado para evolucionar a una plataforma portable sin acoplar el core a
+internals de ReportForge.
+
+Reglas permanentes:
+
+- el core debe permanecer genérico
+- el adapter de ReportForge concentra cualquier conocimiento específico de RF
+- los futuros motores se diseñan como unidades separadas de observabilidad
+- ningún motor futuro debe depender directamente de `ZoomEngine`,
+  `PreviewEngineRenderer`, `GlobalEventHandlers` o cualquier otro interno de RF
+  salvo en el borde del adapter correspondiente
+
+Motores futuros aprobados:
+
+- `Loop & Freeze Engine`
+- `Performance Engine`
+- `Async/Race Engine`
+- `State & Ownership Engine`
+- `Network/Backend Engine`
+- `DOM/Visual Engine`
+
+Contrato canónico de evidencia:
+
+```json
+{
+  "timestamp": "...",
+  "project": "reportforge",
+  "engine": "loop|performance|async|state|network|dom",
+  "module": "...",
+  "source": "...",
+  "action": "...",
+  "severity": "debug|info|warning|error",
+  "eventId": "...",
+  "transactionId": "...",
+  "before": {},
+  "after": {},
+  "state": {},
+  "dom": {},
+  "request": {},
+  "response": {},
+  "durationMs": 0,
+  "ownerExpected": "...",
+  "writerActual": "...",
+  "invariant": "...",
+  "result": "...",
+  "error": null
+}
+```
+
+La implementación actual sigue siendo `ReportForge Adapter v1`. Los adapters
+futuros para `sap_b1_linux` y `autolab` siguen en backlog hasta su
+implementación explícita.

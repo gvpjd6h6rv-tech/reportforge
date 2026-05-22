@@ -259,6 +259,8 @@
     margin-inline: auto;
     background: #fff;
     min-height: 100%;
+    position: relative;
+    padding: 0;
   }
   /* preview-layer.visible: superseded by renderMode */
   #preview-content {
@@ -268,5 +270,31 @@
     font-size: 8pt;
     color: #000;
   }
+  #preview-content .preview-loading {
+    padding: 24px;
+    text-align: center;
+    color: #666;
+  }
+  #preview-content .preview-loading--error {
+    color: #b00020;
+  }
+  #preview-content .preview-render-layer,
+  #preview-content .preview-hit-layer {
+    width: 100%;
+    box-sizing: border-box;
+    margin-inline: auto;
+    padding: 32px 40px;
+    min-height: 100%;
+  }
+  #preview-content .preview-hit-layer {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: auto;
+    z-index: 2;
+  }
+  #preview-content .preview-render-layer {
+    position: relative;
+    z-index: 1;
+  }
 }
-

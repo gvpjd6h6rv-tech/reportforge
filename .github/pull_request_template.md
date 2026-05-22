@@ -1,4 +1,4 @@
-<!-- Mirror of .github/pull_request_template.md. Keep synchronized. -->
+<!-- Canonical debugging template. Keep synchronized with .github/PULL_REQUEST_TEMPLATE.md for GitHub compatibility. -->
 
 ## Baseline A
 

@@ -16,6 +16,52 @@
   .zw-pct:hover{color:var(--rf-accent)}
   .zw-sep{width:1px;height:12px;background:var(--rf-border-mid);margin:0 2px}
   .zw-mode{font-size:9px;font-weight:500;color:var(--rf-accent);letter-spacing:.04em;text-transform:uppercase;padding:0 2px}
+  #rf-build-debug{
+    position:fixed;
+    right:8px;
+    bottom:54px;
+    z-index:var(--rf-z-toast);
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    padding:6px 8px;
+    max-width:340px;
+    background:rgba(248,244,229,.95);
+    border:1px solid var(--rf-border-mid);
+    border-radius:var(--rf-radius-sm);
+    box-shadow:1px 1px 4px rgba(0,0,0,.18);
+    font-family:var(--rf-font-ui);
+    font-size:10px;
+    line-height:1.2;
+    color:var(--rf-fg);
+    user-select:text;
+  }
+  .rf-build-debug__row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .rf-build-debug__label{font-size:9px;font-weight:700;letter-spacing:.06em;color:var(--rf-accent)}
+  .rf-build-debug__value{padding:1px 4px;border-radius:3px;background:rgba(255,255,255,.7);border:1px solid rgba(0,0,0,.08);font-family:var(--rf-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);white-space:nowrap}
+  #rf-zoom-live-debug{
+    position:fixed;
+    right:8px;
+    bottom:144px;
+    z-index:var(--rf-z-toast);
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    padding:6px 8px;
+    width:220px;
+    background:rgba(236,242,255,.97);
+    border:1px solid #9bb2e8;
+    border-radius:var(--rf-radius-sm);
+    box-shadow:1px 1px 4px rgba(0,0,0,.18);
+    font-family:var(--rf-font-ui);
+    font-size:10px;
+    line-height:1.2;
+    color:var(--rf-fg);
+    user-select:text;
+  }
+  .rf-zoom-live-debug__row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .rf-zoom-live-debug__label{font-size:9px;font-weight:700;letter-spacing:.06em;color:#2554b8;min-width:44px}
+  .rf-zoom-live-debug__value{padding:1px 4px;border-radius:3px;background:rgba(255,255,255,.8);border:1px solid rgba(0,0,0,.08);font-family:var(--rf-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis}
   /* body[data-render-mode] pointer rules: managed by renderMode CSS above */
   /* Preview: elements draggable (Crystal Reports allows drag in preview) */
   body[data-mode="preview"] .cr-element{cursor:pointer!important;pointer-events:all!important}
@@ -30,7 +76,7 @@
    * ═══════════════════════════════════════════════════════════════ */
   #canvas-layer.preview-mode #grid-overlay          { display: none !important; }
   #canvas-layer.preview-mode #guides-layer          { display: none !important; }
-  #canvas-layer.preview-mode #handles-layer         { display: block !important; z-index: 60 !important; }
+  #canvas-layer.preview-mode #handles-layer         { display: block !important; opacity: 1 !important; pointer-events: none !important; z-index: 60 !important; }
   #canvas-layer.preview-mode #selection-layer       { display: none !important; }
   #canvas-layer.preview-mode #rubber-band           { display: none !important; }
   #canvas-layer.preview-mode .section-resize-handle { display: none !important; }
@@ -39,6 +85,7 @@
   #canvas-layer.preview-mode .cr-element            { cursor: pointer !important; }
   #canvas-layer.preview-mode .cr-element:hover:not(.selected) { outline: none !important; }
   #canvas-layer.preview-mode .cr-element.selected   { border-color: transparent !important; }
+  #canvas-layer.preview-mode #labels-layer          { display: none !important; }
   /* Show rendered preview content, hide raw sections */
   #canvas-layer.preview-mode #sections-layer        { display: none !important; }
   #canvas-layer.preview-mode #preview-layer         { display: block !important; }
@@ -56,6 +103,14 @@
   .pv-page-break span{padding:0 8px}
   .pv-el{position:absolute;overflow:hidden;box-sizing:border-box;cursor:pointer;user-select:text}
   .pv-el:hover{outline:1px solid rgba(0,102,204,.4);z-index:2}
+  .preview-render-layer{position:relative;z-index:1}
+  .preview-hit-layer{
+    position:absolute;
+    inset:0;
+    opacity:0;
+    pointer-events:auto;
+    z-index:2;
+  }
   /* Corner markers: all 4 corners via ::before (top-left+top-right) and ::after (bottom-left+bottom-right) using box-shadow */
   /* Idle corner markers — reuse legacy 4-corner DOM only when element is not selected */
   .el-corner {
