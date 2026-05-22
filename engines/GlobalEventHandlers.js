@@ -54,7 +54,11 @@
       if (!e.ctrlKey) return;
       e.preventDefault();
       const wheelFactor = e.deltaY < 0 ? 1.10 : 1 / 1.10;
-      DesignZoomEngine.setFree(DS.zoom * wheelFactor, e.clientX, e.clientY);
+      if (DS.previewMode && typeof PreviewZoomEngine !== 'undefined') {
+        PreviewZoomEngine.set((DS.previewZoom || 1) * wheelFactor, { event: 'wheel', fn: 'GlobalEventHandlers.wheel' });
+      } else {
+        DesignZoomEngine.setFree(DS.zoom * wheelFactor, e.clientX, e.clientY, { event: 'wheel', fn: 'GlobalEventHandlers.wheel' });
+      }
     }, { passive: false });
 
     ZoomWidget.init();

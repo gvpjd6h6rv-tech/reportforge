@@ -13,6 +13,49 @@ function _canonicalPreviewWriter(){
 const ZOOM_STEPS=[0.25,0.5,0.75,1.0,1.5,2.0,3.0,4.0];
 function _snapZoom(z){return ZOOM_STEPS.reduce((a,b)=>Math.abs(b-z)<Math.abs(a-z)?b:a,ZOOM_STEPS[0]);}
 
+function _zoomDebugMeta() {
+  if (!window.__RF_ZOOM_DEBUG_META) {
+    window.__RF_ZOOM_DEBUG_META = { lastEvent: 'init', lastFunction: 'boot' };
+  }
+  return window.__RF_ZOOM_DEBUG_META;
+}
+
+function _refreshZoomDebugPanel() {
+  if (typeof window.RF_REFRESH_ZOOM_DEBUG_PANEL === 'function') {
+    window.RF_REFRESH_ZOOM_DEBUG_PANEL();
+  }
+}
+
+function _uiSnapshot(focus = null) {
+  if (typeof window.RF_UI_TRACE?.snapshot !== 'function') return null;
+  return window.RF_UI_TRACE.snapshot({ focus });
+}
+
+function _uiTrace(event, detail = {}) {
+  if (typeof window.RF_UI_TRACE !== 'function') return null;
+  return window.RF_UI_TRACE(event, detail);
+}
+
+function _commitZoomDebug({ zoom, sliderValue, pctText, tbValue, assetVersion, commit, event, fn }) {
+  const meta = _zoomDebugMeta();
+  if (event) meta.lastEvent = event;
+  if (fn) meta.lastFunction = fn;
+  window.RF_DEBUG_ZOOM = {
+    zoom,
+    sliderValue,
+    pctText,
+    tbValue,
+    assetVersion: assetVersion || '',
+    commit: commit || '',
+    lastEvent: meta.lastEvent,
+    lastFunction: meta.lastFunction,
+  };
+  _refreshZoomDebugPanel();
+  if (typeof window.RF_REFRESH_BUILD_DEBUG === 'function') {
+    window.RF_REFRESH_BUILD_DEBUG();
+  }
+}
+
 function computeLayout() {
   const rulerWidth  = CFG.RULER_W;
   const rulerHeight = CFG.RULER_H;
@@ -39,13 +82,14 @@ function applyLayout() {
 }
 
 const DesignZoomEngine={
-  _apply(z, anchorClientX, anchorClientY){
+  _apply(z, anchorClientX, anchorClientY, meta = {}){
     const PAGE_W = CFG.PAGE_W;
     const ws = document.getElementById('workspace');
     const vp = document.getElementById('viewport');
     const cl = document.getElementById('canvas-layer');
     if (!vp || !cl) return;
     const oldZ = DS.zoom;
+    const beforeUI = _uiSnapshot('#zw-slider');
     if (ws && oldZ !== z) {
       const ratio = z / oldZ;
       if (anchorClientX !== undefined) {
@@ -61,14 +105,16 @@ const DesignZoomEngine={
         ws.scrollTop  = (cy + ws.scrollTop)  * ratio - cy;
       }
     }
-    DS.setZoom(z, 'DesignZoomEngine._apply');
+    DS.setZoom(z, meta.fn || 'DesignZoomEngine._apply');
     const applyZoomChrome = () => {
       vp.style.transform       = 'none';
       vp.style.transformOrigin = '';
       vp.style.marginBottom    = CFG.RULER_H + 'px';
       vp.style.display = 'block';
       vp.style.width   = (PAGE_W * z) + 'px';
-      cl.style.transform = '';
+      cl.style.transform = `scale(${z})`;
+      cl.style.transformOrigin = 'top left';
+      cl.style.transformBox = 'border-box';
       cl.style.setProperty('--geo-zoom', z);
     };
     if (typeof RenderScheduler !== 'undefined') {
@@ -76,72 +122,159 @@ const DesignZoomEngine={
     } else {
       applyZoomChrome();
     }
-    ZoomWidget.sync();
+    ZoomWidget.sync({
+      event: meta.event || 'programmatic',
+      fn: meta.fn || 'DesignZoomEngine._apply',
+    });
+    const afterUI = _uiSnapshot('#zw-slider');
+    _uiTrace('zoom', {
+      phase: 'after',
+      event: meta.event || 'programmatic',
+      fn: meta.fn || 'DesignZoomEngine._apply',
+      source: 'DesignZoomEngine._apply',
+      before: beforeUI,
+      after: afterUI,
+      dsZoomBefore: oldZ,
+      dsZoomAfter: DS.zoom,
+      focus: '#zw-slider',
+    });
     const pct = Math.round(z * 100) + '%';
     const sel = document.getElementById('tb-zoom');
     if (sel) { for (let o of sel.options) if (o.text === pct) { o.selected = true; break; } }
   },
-  set(z, anchorClientX, anchorClientY){
+  set(z, anchorClientX, anchorClientY, meta = {}){
     z = Math.max(0.01, Math.min(64.0, parseFloat(z)));
-    this._apply(z, anchorClientX, anchorClientY);
+    this._apply(z, anchorClientX, anchorClientY, meta);
   },
-  setFree(z, anchorClientX, anchorClientY){
+  setFree(z, anchorClientX, anchorClientY, meta = {}){
     z = Math.max(0.01, Math.min(64.0, parseFloat(z)));
-    this._apply(z, anchorClientX, anchorClientY);
+    this._apply(z, anchorClientX, anchorClientY, meta);
   },
   get(){ return DS.zoom; },
-  zoomIn(ax,ay){ const i=ZOOM_STEPS.indexOf(_snapZoom(DS.zoom)); if(i<ZOOM_STEPS.length-1) this.set(ZOOM_STEPS[i+1],ax,ay); },
-  zoomOut(ax,ay){ const i=ZOOM_STEPS.indexOf(_snapZoom(DS.zoom)); if(i>0) this.set(ZOOM_STEPS[i-1],ax,ay); },
-  reset(){ this.set(1.0); },
+  zoomIn(ax,ay,meta = {}){ const i=ZOOM_STEPS.indexOf(_snapZoom(DS.zoom)); if(i<ZOOM_STEPS.length-1) this.set(ZOOM_STEPS[i+1],ax,ay,{ ...meta, event: meta.event || 'plus', fn: meta.fn || 'DesignZoomEngine.zoomIn' }); },
+  zoomOut(ax,ay,meta = {}){ const i=ZOOM_STEPS.indexOf(_snapZoom(DS.zoom)); if(i>0) this.set(ZOOM_STEPS[i-1],ax,ay,{ ...meta, event: meta.event || 'minus', fn: meta.fn || 'DesignZoomEngine.zoomOut' }); },
+  reset(meta = {}){ this.set(1.0, undefined, undefined, { ...meta, event: meta.event || 'reset', fn: meta.fn || 'DesignZoomEngine.reset' }); },
 };
 
 const PreviewZoomEngine={
-  set(z){
+  set(z, meta = {}){
     z=Math.max(0.01,Math.min(64.0,parseFloat(z)));
+    const beforeUI = _uiSnapshot('#zw-slider');
+    _uiTrace('zoom', {
+      phase: 'before',
+      event: meta.event || 'programmatic',
+      fn: meta.fn || 'PreviewZoomEngine.set',
+      source: 'PreviewZoomEngine.set',
+      before: beforeUI,
+      after: null,
+      dsZoomBefore: DS.zoom,
+      dsZoomAfter: DS.previewZoom || 1.0,
+      focus: '#zw-slider',
+    });
     DS.previewZoom=z;
-    if(DS.previewMode) DesignZoomEngine._apply(z);
+    if(DS.previewMode) DesignZoomEngine._apply(z, undefined, undefined, { ...meta, fn: meta.fn || 'PreviewZoomEngine.set' });
     const pv=document.getElementById('preview-content');
     if(pv){ pv.style.zoom=''; pv.style.transform=''; }
-    ZoomWidget.sync();
+    ZoomWidget.sync({
+      event: meta.event || 'preview-zoom',
+      fn: meta.fn || 'PreviewZoomEngine.set',
+    });
+    const afterUI = _uiSnapshot('#zw-slider');
+    _uiTrace('zoom', {
+      phase: 'after',
+      event: meta.event || 'preview-zoom',
+      fn: meta.fn || 'PreviewZoomEngine.set',
+      source: 'PreviewZoomEngine.set',
+      before: beforeUI,
+      after: afterUI,
+      dsZoomBefore: DS.zoom,
+      dsZoomAfter: DS.previewZoom || 1.0,
+      focus: '#zw-slider',
+    });
   },
   get(){return DS.previewZoom||1.0;},
-  zoomIn(){const i=ZOOM_STEPS.findIndex(s=>Math.abs(s-(DS.previewZoom||1))<0.01);if(i<ZOOM_STEPS.length-1)this.set(ZOOM_STEPS[i+1]);},
-  zoomOut(){const i=ZOOM_STEPS.findIndex(s=>Math.abs(s-(DS.previewZoom||1))<0.01);if(i>0)this.set(ZOOM_STEPS[i-1]);},
-  reset(){this.set(1.0);},
+  zoomIn(meta = {}){const i=ZOOM_STEPS.findIndex(s=>Math.abs(s-(DS.previewZoom||1))<0.01);if(i<ZOOM_STEPS.length-1)this.set(ZOOM_STEPS[i+1], { ...meta, event: meta.event || 'plus', fn: meta.fn || 'PreviewZoomEngine.zoomIn' });},
+  zoomOut(meta = {}){const i=ZOOM_STEPS.findIndex(s=>Math.abs(s-(DS.previewZoom||1))<0.01);if(i>0)this.set(ZOOM_STEPS[i-1], { ...meta, event: meta.event || 'minus', fn: meta.fn || 'PreviewZoomEngine.zoomOut' });},
+  reset(meta = {}){this.set(1.0, { ...meta, event: meta.event || 'reset', fn: meta.fn || 'PreviewZoomEngine.reset' });},
 };
 
 const ZoomWidget={
   init(){
-    document.getElementById('zw-in').addEventListener('click',()=>this._eng().zoomIn());
-    document.getElementById('zw-out').addEventListener('click',()=>this._eng().zoomOut());
-    document.getElementById('zw-pct').addEventListener('dblclick',()=>this._eng().reset());
+    document.getElementById('zw-in').addEventListener('click',()=>this._eng().zoomIn(undefined, undefined, { event: 'plus', fn: 'ZoomWidget.init#zw-in' }));
+    document.getElementById('zw-out').addEventListener('click',()=>this._eng().zoomOut(undefined, undefined, { event: 'minus', fn: 'ZoomWidget.init#zw-out' }));
+    document.getElementById('zw-pct').addEventListener('dblclick',()=>this._eng().reset({ event: 'reset', fn: 'ZoomWidget.init#zw-pct' }));
     const slider=document.getElementById('zw-slider');
     if(slider){
       slider.addEventListener('input',()=>{
-        this._eng().set(parseFloat(slider.value)/100);
+        this._eng().set(parseFloat(slider.value)/100, { event: 'slider', fn: 'ZoomWidget.init#zw-slider' });
       });
     }
     this.sync();
   },
   _eng(){return DS.previewMode?PreviewZoomEngine:DesignZoomEngine;},
-  sync(){
+  _syncZoomSelect(sel, pct){
+    if (!sel) return;
+    const exact = [...sel.options].find((o) => o.value === pct || o.text === pct || o.textContent === pct);
+    const dynamicAttr = 'data-rf-dynamic-zoom';
+    const oldDynamic = sel.querySelector(`option[${dynamicAttr}="true"]`);
+    if (exact) {
+      if (oldDynamic) oldDynamic.remove();
+      exact.selected = true;
+      sel.value = exact.value;
+      return;
+    }
+    let dynamic = oldDynamic;
+    if (!dynamic) {
+      dynamic = document.createElement('option');
+      dynamic.setAttribute(dynamicAttr, 'true');
+      sel.insertBefore(dynamic, sel.firstChild);
+    }
+    dynamic.value = pct;
+    dynamic.textContent = pct;
+    dynamic.selected = true;
+    sel.value = pct;
+  },
+  sync(meta = {}){
     const z=DS.previewMode?(DS.previewZoom||1.0):DS.zoom;
     const pct=Math.round(z*100)+'%';
     const el=document.getElementById('zw-pct');const ml=document.getElementById('zw-mode');
     const zi=document.getElementById('zw-in');const zo=document.getElementById('zw-out');
     const sl=document.getElementById('zw-slider');
+    const sel=document.getElementById('tb-zoom');
     if(el)el.textContent=pct;
     if(ml)ml.textContent=DS.previewMode?'PREVIEW':'DISEÑO';
     const sb=document.getElementById('sb-zoom');if(sb)sb.textContent=pct;
     if(zi)zi.disabled=(z>=4.0);if(zo)zo.disabled=(z<=0.25);
-    if(sl)sl.value=Math.round(z*100);
+    if(sl){
+      sl.step = DS.previewMode ? '1' : '25';
+      sl.value = Math.round(z*100);
+    }
+    this._syncZoomSelect(sel, pct);
+    const sliderValue = sl ? sl.value : '';
+    const pctText = el ? el.textContent : '';
+    const tb = document.getElementById('tb-zoom');
+    const build = window.RF_BUILD_INFO || {};
+    const metaState = _zoomDebugMeta();
+    const prior = window.RF_DEBUG_ZOOM || {};
+    const event = meta.event || prior.lastEvent || metaState.lastEvent || 'programmatic';
+    const fn = meta.fn || prior.lastFunction || metaState.lastFunction || 'ZoomWidget.sync';
+    _commitZoomDebug({
+      zoom: z,
+      sliderValue,
+      pctText,
+      tbValue: tb?.value || '',
+      assetVersion: build.assetVersion || '',
+      commit: build.commit || '',
+      event,
+      fn,
+    });
   },
 };
 
 const ZoomEngine={
   set(z){DesignZoomEngine.set(z);},
   get(){return DesignZoomEngine.get();},
-  step(d){d>0?DesignZoomEngine.zoomIn():DesignZoomEngine.zoomOut();}
+  step(d, source = 'step'){d>0?DesignZoomEngine.zoomIn(undefined, undefined, { event: source, fn: 'ZoomEngine.step' }):DesignZoomEngine.zoomOut(undefined, undefined, { event: source, fn: 'ZoomEngine.step' });}
 };
 
 const ZoomEngineV19 = (() => {
@@ -155,16 +288,16 @@ const ZoomEngineV19 = (() => {
     STEPS: ZOOM_STEPS,
     set(z, anchorX, anchorY) {
       const snapped = Math.max(0.25, Math.min(4.0, _snapZoom(parseFloat(z))));
-      DesignZoomEngine.set(snapped, anchorX, anchorY);
+      DesignZoomEngine.set(snapped, anchorX, anchorY, { event: 'programmatic', fn: 'ZoomEngineV19.set' });
       _notify(snapped);
     },
     setFree(z, anchorX, anchorY) {
       const clamped = Math.max(0.25, Math.min(4.0, parseFloat(z)));
-      DesignZoomEngine.setFree(clamped, anchorX, anchorY);
+      DesignZoomEngine.setFree(clamped, anchorX, anchorY, { event: 'programmatic', fn: 'ZoomEngineV19.setFree' });
       _notify(clamped);
     },
-    zoomIn(ax, ay)  { DesignZoomEngine.zoomIn(ax, ay);  _notify(RF.Geometry.zoom()); },
-    zoomOut(ax, ay) { DesignZoomEngine.zoomOut(ax, ay); _notify(RF.Geometry.zoom()); },
+    zoomIn(ax, ay)  { DesignZoomEngine.zoomIn(ax, ay, { event: 'plus', fn: 'ZoomEngineV19.zoomIn' });  _notify(RF.Geometry.zoom()); },
+    zoomOut(ax, ay) { DesignZoomEngine.zoomOut(ax, ay, { event: 'minus', fn: 'ZoomEngineV19.zoomOut' }); _notify(RF.Geometry.zoom()); },
     reset()         { this.set(1.0); },
     get zoom() { return RF.Geometry.zoom(); },
     fitWidth() {
