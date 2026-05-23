@@ -3,11 +3,14 @@
 const _DEBUG_OVERLAY_CSS = `
   :host {
     position: fixed;
-    inset-inline-end: 10px;
-    inset-block-end: 26px;
+    left: 10px;
+    bottom: 26px;
+    right: auto;
+    top: auto;
     z-index: 9010;
     min-inline-size: 180px;
     max-inline-size: 220px;
+    max-block-size: min(52dvh, calc(100dvb - 40px));
     padding: 8px 10px;
     display: none;
     flex-direction: column;
@@ -23,6 +26,7 @@ const _DEBUG_OVERLAY_CSS = `
     -webkit-user-select: none;
     backdrop-filter: blur(4px);
     box-sizing: border-box;
+    overflow: hidden;
   }
   :host(.is-on) { display: flex; }
   #rf-debug-overlay-head {
@@ -37,11 +41,24 @@ const _DEBUG_OVERLAY_CSS = `
     cursor: grab;
   }
   #rf-debug-overlay-head.is-dragging { cursor: grabbing; }
+  #rf-debug-overlay-head button {
+    appearance: none;
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(255,255,255,.06);
+    color: inherit;
+    border-radius: 999px;
+    padding: 2px 6px;
+    font: inherit;
+    cursor: pointer;
+  }
   #rf-debug-overlay-layers {
     display: grid;
     grid-template-columns: 1fr;
     gap: 4px;
+    max-block-size: calc(52dvh - 44px);
+    overflow: auto;
   }
+  :host([data-collapsed="true"]) #rf-debug-overlay-layers { display: none; }
   .rf-debug-layer {
     display: grid;
     grid-template-columns: 1fr auto;
@@ -109,7 +126,7 @@ const DebugOverlay = {
 
     const head = document.createElement('div');
     head.id = 'rf-debug-overlay-head';
-    head.innerHTML = '<span>runtime layers</span><span id="rf-debug-overlay-frame">f:0</span>';
+    head.innerHTML = '<span>runtime layers</span><span><button type="button" id="rf-debug-overlay-collapse" title="collapse">-</button><span id="rf-debug-overlay-frame">f:0</span></span>';
     shadow.appendChild(head);
 
     const layersEl = document.createElement('div');
@@ -123,10 +140,16 @@ const DebugOverlay = {
     });
     shadow.appendChild(layersEl);
 
-    makePanelDraggable(host, head, 'RF_DEBUG_OVERLAY_POS', {
-      left: Math.max(8, window.innerWidth - 240),
-      top:  Math.max(8, window.innerHeight - 220),
+    this._draggable = makePanelDraggable(host, head, 'RF_DEBUG_OVERLAY_POS', {
+      left: 12,
+      top: Math.max(64, window.innerHeight - 260),
     });
+    const collapse = shadow.getElementById('rf-debug-overlay-collapse');
+    if (collapse) {
+      collapse.addEventListener('click', () => {
+        host.dataset.collapsed = host.dataset.collapsed === 'true' ? 'false' : 'true';
+      });
+    }
 
     return host;
   },
@@ -134,6 +157,7 @@ const DebugOverlay = {
   syncVisibility() {
     const host = this._ensure();
     host.classList.toggle('is-on', window.RF_DEBUG_TRACE === true);
+    if (window.RF_DEBUG_TRACE === true) window.requestAnimationFrame(() => this._draggable?.clamp?.());
   },
 
   _snapshot() {
@@ -145,6 +169,7 @@ const DebugOverlay = {
     const host = this._ensure();
     if (window.RF_DEBUG_TRACE !== true) { host.classList.remove('is-on'); return; }
     host.classList.add('is-on');
+    host.dataset.collapsed ||= 'false';
 
     const shadow = this._shadow;
     if (!shadow) return;
@@ -166,6 +191,7 @@ const DebugOverlay = {
       const meta = row.querySelector('.rf-debug-layer-meta');
       if (meta) meta.textContent = `${item.count || 0}${item.reason ? ` · ${item.reason}` : ''}`;
     });
+    window.requestAnimationFrame(() => this._draggable?.clamp?.());
   },
 
   init() {

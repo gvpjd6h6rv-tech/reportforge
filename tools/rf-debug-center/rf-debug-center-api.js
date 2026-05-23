@@ -77,7 +77,7 @@ export function createDebugCenterApi() {
   const state = {
     enabled: false, activation: 'disabled', host: null, shadow: null, timer: null,
     lastModel: null, ownership: OWNERSHIP_MAP, bundle: { status: 'idle', message: 'idle', filename: null, updatedAt: null },
-    bundlePreview: null, actions: null,
+    bundlePreview: null, actions: null, draggable: null,
   };
   function applyModel() {
     state.lastModel = readDebugCenterState({ enabled: state.enabled, activation: state.activation, bundle: state.bundle });
@@ -95,9 +95,37 @@ export function createDebugCenterApi() {
     state.host = host;
     state.shadow = mountDebugCenter(host);
     const head = state.shadow.getElementById('rf-debug-center-head');
-    if (head && typeof window.makePanelDraggable === 'function') window.makePanelDraggable(host, head, 'RF_DEBUG_CENTER_POS', { left: Math.max(12, window.innerWidth - 460), top: Math.max(12, window.innerHeight - 320) });
+    if (head && typeof window.makePanelDraggable === 'function') {
+      state.draggable = window.makePanelDraggable(host, head, 'RF_DEBUG_CENTER_POS', { left: Math.max(12, window.innerWidth - 460), top: 72 });
+    }
+    syncHostLayout();
     host.classList.add('is-on');
     return host;
+  }
+  function syncHostLayout() {
+    if (!state.host) return null;
+    const hud = typeof window.syncDebugHudStack === 'function' ? window.syncDebugHudStack() : null;
+    const viewportHeight = Math.max(0, window.innerHeight || document.documentElement.clientHeight || 0);
+    const reservedBottom = hud?.zoom?.top != null ? Math.max(188, Math.max(0, Math.floor(viewportHeight - hud.zoom.top))) : 188;
+    const maxHeight = Math.max(0, viewportHeight - 72 - reservedBottom - 16);
+    state.host.style.blockSize = `${maxHeight}px`;
+    state.host.style.maxBlockSize = `${maxHeight}px`;
+    return { maxHeight, reservedBottom };
+  }
+  function resetPosition() {
+    if (state.draggable?.reset) {
+      const next = state.draggable.reset();
+      syncHostLayout();
+      return next;
+    }
+    if (!state.host) return null;
+    try { localStorage.removeItem('RF_DEBUG_CENTER_POS'); } catch (_) {}
+    state.host.style.left = `${Math.max(12, window.innerWidth - 460)}px`;
+    state.host.style.top = '72px';
+    state.host.style.right = 'auto';
+    state.host.style.bottom = 'auto';
+    syncHostLayout();
+    return { left: state.host.offsetLeft, top: state.host.offsetTop };
   }
   function start() {
     if (state.enabled) return true;
@@ -106,6 +134,7 @@ export function createDebugCenterApi() {
     state.enabled = true;
     state.activation = activation;
     ensureHost();
+    syncHostLayout();
     installPerformanceObservers(window);
     installNetworkObserver(window);
     if (!state.timer) state.timer = window.setInterval(() => { if (state.enabled) applyModel(); }, 150);
@@ -117,11 +146,11 @@ export function createDebugCenterApi() {
     uninstallPerformanceObservers(window);
     uninstallNetworkObserver(window);
     if (state.timer) { window.clearInterval(state.timer); state.timer = null; }
-    if (state.host) { state.host.classList.remove('is-on'); state.host.remove(); state.host = null; state.shadow = null; }
+    if (state.host) { state.host.classList.remove('is-on'); state.host.remove(); state.host = null; state.shadow = null; state.draggable = null; }
     return true;
   }
   function toggle(force) { return typeof force === 'boolean' ? (force ? start() : stop()) : (state.enabled ? stop() : start()); }
-  function refresh() { if (!state.enabled) return applyModel(); return applyModel(); }
+  function refresh() { if (!state.enabled) return applyModel(); syncHostLayout(); return applyModel(); }
   function pauseTimeline() { pauseDebugCenterTimeline(); return applyModel(); }
   function resumeTimeline() { resumeDebugCenterTimeline(); return applyModel(); }
   function clearTimeline() { clearDebugCenterTimeline(); return applyModel(); }
@@ -161,6 +190,7 @@ export function createDebugCenterApi() {
     get activation() { return state.activation; },
     get state() { return state.lastModel || applyModel(); },
     start, stop, toggle, refresh, refreshTimeline: refresh, getState: () => (state.lastModel || applyModel()),
+    resetPosition,
     pauseTimeline, resumeTimeline, clearTimeline, copyTimelineJSON,
   refreshLoopFreeze, clearLoopFreeze, copyLoopFreezeJSON,
   refreshPerformance, clearPerformance, copyPerformanceJSON,
@@ -173,7 +203,8 @@ export function createDebugCenterApi() {
   buildBundle, exportBundle, copyBundleJSON,
   };
   Object.defineProperty(api, 'ownership', { enumerable: true, get() { return state.ownership; } });
-  state.actions = { refreshTimeline: refresh, refresh, pauseTimeline, resumeTimeline, clearTimeline, copyTimelineJSON, refreshLoopFreeze, clearLoopFreeze, copyLoopFreezeJSON, refreshPerformance, clearPerformance, copyPerformanceJSON, refreshAsyncRace, clearAsyncRace, copyAsyncRaceJSON: copyAsyncRaceJSONPublic, refreshNetwork: () => { refreshDebugCenterNetwork(window.RF_UI_TRACE, state.bundle, state.enabled); return applyModel(); }, clearNetwork: () => { clearDebugCenterNetwork(); return applyModel(); }, copyNetworkJSON: copyDebugCenterNetworkJSON, refreshWarnings: () => refreshDebugCenterWarnings(window.RF_UI_TRACE, state.bundle), clearWarnings: clearDebugCenterWarnings, copyWarningsJSON: copyDebugCenterWarningsJSON, buildBundle, exportBundle, copyBundleJSON };
+  state.actions = { refreshTimeline: refresh, refresh, resetPosition, pauseTimeline, resumeTimeline, clearTimeline, copyTimelineJSON, refreshLoopFreeze, clearLoopFreeze, copyLoopFreezeJSON, refreshPerformance, clearPerformance, copyPerformanceJSON, refreshAsyncRace, clearAsyncRace, copyAsyncRaceJSON: copyAsyncRaceJSONPublic, refreshNetwork: () => { refreshDebugCenterNetwork(window.RF_UI_TRACE, state.bundle, state.enabled); return applyModel(); }, clearNetwork: () => { clearDebugCenterNetwork(); return applyModel(); }, copyNetworkJSON: copyDebugCenterNetworkJSON, refreshWarnings: () => refreshDebugCenterWarnings(window.RF_UI_TRACE, state.bundle), clearWarnings: clearDebugCenterWarnings, copyWarningsJSON: copyDebugCenterWarningsJSON, buildBundle, exportBundle, copyBundleJSON };
+  window.addEventListener('resize', () => { syncHostLayout(); });
   applySelectionApi(api, state, applyModel); applyRenderPreviewApi(api, state, applyModel); applyVisualEvidenceApi(api, state, applyModel); applyDomScannerApi(api, state, applyModel); applyCausalIntelligenceApi(api, state, applyModel);
   return { state, api };
 }

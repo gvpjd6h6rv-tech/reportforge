@@ -1,10 +1,10 @@
 :host {
   position: fixed;
-  inset: auto 12px 12px auto;
+  inset: 72px 12px auto auto;
   z-index: 9995;
   display: none;
   inline-size: min(420px, calc(100vw - 24px));
-  max-block-size: min(78vh, 860px);
+  max-block-size: min(60dvh, calc(100dvb - 188px));
   color: #d9f7e0;
   font: 12px/1.35 system-ui, sans-serif;
   pointer-events: auto;
@@ -15,7 +15,8 @@
 }
 
 .rf-debug-center {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
   padding: 12px;
   border: 1px solid rgba(82, 255, 122, 0.34);
@@ -23,15 +24,29 @@
   background: rgba(7, 14, 11, 0.94);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(10px);
+  block-size: 100%;
+  min-block-size: 0;
+  overflow: hidden;
 }
 
 .rf-debug-center__head {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
+  flex: 0 0 auto;
   cursor: grab;
   user-select: none;
+}
+
+.rf-debug-center__head.is-dragging {
+  cursor: grabbing;
+}
+
+.rf-debug-center__head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .rf-debug-center__title {
@@ -49,6 +64,10 @@
   font-size: 11px;
 }
 
+.rf-debug-center__sub {
+  margin-top: 2px;
+}
+
 .rf-debug-center__badge {
   padding: 4px 8px;
   border-radius: 999px;
@@ -56,9 +75,29 @@
   border: 1px solid rgba(255, 255, 255, .08);
 }
 
+.rf-debug-center button {
+  padding: 5px 8px;
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .05);
+  color: #f4fff6;
+  font: inherit;
+  cursor: pointer;
+}
+
+.rf-debug-center button:hover {
+  border-color: rgba(132, 255, 158, .45);
+  background: rgba(132, 255, 158, .12);
+}
+
 .rf-debug-center__grid {
   display: grid;
+  flex: 1 1 auto;
   gap: 10px;
+  min-block-size: 0;
+  overflow: auto;
+  padding-inline-end: 2px;
+  scrollbar-gutter: stable;
 }
 
 .rf-debug-center__panel {
@@ -109,12 +148,6 @@
 
 .rf-debug-center-timeline__actions button {
   padding: 5px 8px;
-  border: 1px solid rgba(255, 255, 255, .08);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, .05);
-  color: #f4fff6;
-  font: inherit;
-  cursor: pointer;
 }
 
 .rf-debug-center-timeline__actions button:hover {

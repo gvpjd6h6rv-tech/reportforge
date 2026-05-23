@@ -33,7 +33,10 @@ export function mountDebugCenter(host) {
   shell.innerHTML = `
     <header class="rf-debug-center__head" id="rf-debug-center-head">
       <div><div class="rf-debug-center__title">RF Debug Center</div><div class="rf-debug-center__sub" id="rf-debug-center-sub">waiting for RF_UI_TRACE</div></div>
-      <div class="rf-debug-center__badge" id="rf-debug-center-badge">inactive</div>
+      <div class="rf-debug-center__head-actions">
+        <button type="button" id="rf-debug-center-reset" title="Reset panel position">Reset</button>
+        <div class="rf-debug-center__badge" id="rf-debug-center-badge">inactive</div>
+      </div>
     </header>
     <div class="rf-debug-center__grid">
       <section class="rf-debug-center__panel"><h3>Live</h3><div id="rf-debug-center-live"></div></section>
@@ -60,6 +63,8 @@ export function mountDebugCenter(host) {
 
 export function renderDebugCenter(shadow, state, actions = {}) {
   renderDebugCenterSections(shadow, state, actions);
+  const reset = shadow.getElementById('rf-debug-center-reset');
+  if (reset) reset.onclick = typeof actions.resetPosition === 'function' ? () => actions.resetPosition() : null;
   renderSelectionPanel(shadow, state.selection || {}, actions);
   renderDomScannerPanel(shadow, state.domScanner || {}, actions);
   renderCausalIntelligencePanel(shadow, state.causalIntelligence || {}, actions);
