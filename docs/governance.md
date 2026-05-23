@@ -212,3 +212,51 @@ Contrato canónico de evidencia:
 La implementación actual sigue siendo `ReportForge Adapter v1`. Los adapters
 futuros para `sap_b1_linux` y `autolab` siguen en backlog hasta su
 implementación explícita.
+
+Roadmap completado:
+
+- `H1` hardening base — LISTO
+- `E1` strategic amendment — LISTO
+- `T1` timeline RF_UI_TRACE — LISTO
+- `Z1` zoom diagnostics — LISTO
+- `D1` DOM/visual base — LISTO
+- `B1` debug bundle export — LISTO
+- `W1` live warnings — LISTO
+- `L1` loop & freeze engine — LISTO
+- `P1` performance engine — LISTO
+- `A1` async/race engine — LISTO
+- `N1` network/backend engine — LISTO
+- `S1` selection/drag/resize engine — LISTO
+- `R1` render/preview engine — LISTO
+- `V1` visual evidence / screenshots — LISTO
+- `F1` final hardening — LISTO
+- `PORT0` adapter boundary / core contract — LISTO
+- `SAP0` discovery sap_b1_linux — LISTO
+- `SAP1` adapter mínimo sap_b1_linux read-only — LISTO
+- `SAP2` runtime bridge sap_b1_linux instalación controlada — LISTO
+- `SAP3` repro controlada bug UDF con bundle de evidencia — LISTO
+- `Z2` DOM scanner adversarial sandbox — BACKLOG, NOT READY
+
+- `SAP4` parche mínimo UDF_CHILD_STALE + CREATE_MODE_DIRTY — LISTO
+
+Siguiente fase: `SAP5` — Verificación en entorno real con bundle post-parche.
+
+## PORT0 — Adapter Boundary
+
+El contrato canónico del adapter vive en:
+
+- `tools/rf-debug-center/adapters/debug-center-adapter-contract.js`
+
+Cualquier adapter futuro debe:
+
+1. exponer `id`, `name`, `project`, `version`
+2. implementar `getTraceSource`, `getOwnershipMap`, `getEnvironment`, `normalizeEvent`
+3. no escribir `window.*`
+4. no mutar `RF_UI_TRACE`, `DS`, ni el DOM
+5. pasar `validateAdapter()` con `{ valid: true, errors: [] }`
+
+El adapter de ReportForge v1 vive en:
+
+- `tools/rf-debug-center/adapters/reportforge/reportforge-adapter.js`
+
+Los adapters de `sap_b1_linux` y `autolab` permanecen en backlog.

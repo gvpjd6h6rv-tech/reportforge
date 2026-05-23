@@ -1,10 +1,14 @@
 'use strict';
-
-import { buildZoomDiagnostics } from './rf-debug-center-zoom.js';
-
+import { buildZoomDiagnostics } from './rf-debug-center-zoom.js'; import { clearLoopFreezeSnapshot, copyLoopFreezeJSON, getLoopFreezeSnapshot, refreshLoopFreezeSnapshot } from './rf-debug-center-loop-freeze.js';
+import { getVisualEvidenceSnapshot } from './rf-debug-center-visual-evidence.js';
+import { getAsyncRaceSnapshot, refreshAsyncRaceSnapshot } from './rf-debug-center-async-race.js';
+import { clearNetworkSnapshot, copyNetworkJSON, getNetworkSnapshot, refreshNetworkSnapshot } from './rf-debug-center-network.js';
+import { getPerformanceSnapshot, refreshPerformanceSnapshot } from './rf-debug-center-performance.js';
+import { clearSelectionSnapshot, copySelectionJSON, getSelectionSnapshot, refreshSelectionSnapshot } from './rf-debug-center-selection.js';
+import { clearRenderPreviewSnapshot, copyRenderPreviewJSON, getRenderPreviewSnapshot, refreshRenderPreviewSnapshot } from './rf-debug-center-render-preview.js';
+import { buildWarningsSnapshot } from './rf-debug-center-warnings.js';
+import { clone, compareSnapshots, normalizeSeverity, normalizeSnapshot, safeObject, stringify } from './rf-debug-center-state-utils.js';
 const MAX_RECENT = 12;
-const TIMELINE_SEVERITIES = ['debug', 'info', 'warning', 'error'];
-
 const timelineState = {
   paused: false,
   cursor: 0,
@@ -16,42 +20,9 @@ const timelineState = {
   counts: { debug: 0, info: 0, warning: 0, error: 0 },
   total: 0,
   lastEvent: null,
+  warningsPaused: false,
+  warnings: { status: 'unknown', total: 0, counts: { info: 0, warning: 0, error: 0 }, warnings: [], sourceState: 'absent', traceState: 'absent' },
 };
-
-function stringify(value) {
-  if (value == null) return '—';
-  if (typeof value === 'string') return value;
-  try { return JSON.stringify(value); } catch (_) { return String(value); }
-}
-
-function clone(value) {
-  if (value == null || typeof value !== 'object') return value;
-  try { return JSON.parse(JSON.stringify(value)); } catch (_) { return Array.isArray(value) ? value.slice() : { ...value }; }
-}
-
-function summarizeElement(node) {
-  if (!node) return null;
-  return { tag: node.tag || node.tagName || null, id: node.id || null, className: node.className || null, datasetId: node.datasetId || node.dataset?.id || null, datasetOriginId: node.datasetOriginId || node.dataset?.originId || null, datasetPos: node.datasetPos || node.dataset?.pos || null };
-}
-
-function normalizeSnapshot(snapshot) {
-  if (!snapshot) return null;
-  return { dsZoom: snapshot.dsZoom ?? null, sliderValue: snapshot.sliderValue ?? null, pctText: snapshot.pctText ?? null, sliderRect: snapshot.sliderRect ?? null, sliderStyle: snapshot.sliderStyle ?? null, pctStyle: snapshot.pctStyle ?? null, focusRect: snapshot.focusRect ?? null, focusStyle: snapshot.focusStyle ?? null, visibleElement: summarizeElement(snapshot.visibleElement) };
-}
-
-function compareSnapshots(before, eventDom, live) {
-  if (!eventDom && !live) return { ok: true, mismatches: [], summary: 'idle' };
-  const keys = ['dsZoom', 'sliderValue', 'pctText'];
-  const mismatches = [];
-  for (const key of keys) if (stringify(eventDom?.[key]) !== stringify(live?.[key])) mismatches.push(key);
-  return { ok: mismatches.length === 0, mismatches, summary: mismatches.length ? `diverged: ${mismatches.join(', ')}` : 'synced', before: normalizeSnapshot(before), after: normalizeSnapshot(eventDom), live: normalizeSnapshot(live) };
-}
-
-function readUiEntries(traceApi) {
-  if (!traceApi || typeof traceApi.getEntries !== 'function') return [];
-  try { return traceApi.getEntries().filter((entry) => entry && entry.kind === 'ui'); } catch (_) { return []; }
-}
-
 function inspectTraceApi(traceApi) {
   if (!traceApi) return { state: 'absent', entries: [], count: 0, error: null };
   if (typeof traceApi.getEntries !== 'function') return { state: 'invalid', entries: [], count: 0, error: 'missing getEntries()' };
@@ -63,16 +34,6 @@ function inspectTraceApi(traceApi) {
     return { state: 'invalid', entries: [], count: 0, error: error?.message || String(error) };
   }
 }
-
-function normalizeSeverity(value) {
-  const severity = String(value || 'info').toLowerCase();
-  return TIMELINE_SEVERITIES.includes(severity) ? severity : 'info';
-}
-
-function safeObject(value) {
-  return value && typeof value === 'object' && !Array.isArray(value) ? clone(value) : null;
-}
-
 function normalizeTimelineEntry(entry, index) {
   return {
     timestamp: entry?.timestamp ?? null,
@@ -149,7 +110,7 @@ function resumeTimeline() { timelineState.paused = false; return timelineState; 
 function getTimelineSnapshot() { return { paused: timelineState.paused, sourceState: timelineState.sourceState, sourceCount: timelineState.sourceCount, lastSyncAt: timelineState.lastSyncAt, lastError: timelineState.lastError, total: timelineState.total, counts: { ...timelineState.counts }, lastEvent: clone(timelineState.lastEvent), recent: timelineState.entries.slice(-MAX_RECENT).map(clone), entries: timelineState.entries.map(clone) }; }
 function copyTimelineJSON() { return JSON.stringify(getTimelineSnapshot(), null, 2); }
 
-export function readDebugCenterState({ traceApi = window.RF_UI_TRACE, enabled = false, activation = 'disabled' } = {}) {
+export function readDebugCenterState({ traceApi = window.RF_UI_TRACE, enabled = false, activation = 'disabled', bundle = null } = {}) {
   syncTimeline(traceApi);
   const timeline = getTimelineSnapshot();
   const last = timeline.lastEvent || null;
@@ -158,13 +119,31 @@ export function readDebugCenterState({ traceApi = window.RF_UI_TRACE, enabled = 
   const build = window.RF_BUILD_INFO || null;
   const debugZoom = window.RF_DEBUG_ZOOM || null;
   const zoom = buildZoomDiagnostics({ ds: typeof DS !== 'undefined' ? DS : null, traceApi, timeline, doc: document });
-  return { enabled: Boolean(enabled), activation, build, debugZoom, last, live: normalizeSnapshot(live), divergence, zoom, timeline, recent: timeline.recent };
+  const selection = refreshSelectionSnapshot({ ds: typeof DS !== 'undefined' ? DS : null, doc: document, timeline, traceState: timeline.sourceState, bundle, ownership: window.RFDebugCenter?.ownership || null });
+  const asyncRace = refreshAsyncRaceSnapshot({ timeline, traceState: timeline.sourceState, bundle, active: Boolean(enabled) });
+  const network = refreshNetworkSnapshot({ traceState: timeline.sourceState, timeline, asyncRace, bundle, active: Boolean(enabled) });
+  const loopFreeze = refreshLoopFreezeSnapshot({ timeline, traceState: timeline.sourceState, bundle, warnings: timelineState.warnings, active: Boolean(enabled) });
+  const performance = refreshPerformanceSnapshot({ timeline, network, loopFreeze, asyncRace, warnings: timelineState.warnings, bundle, active: Boolean(enabled), traceState: timeline.sourceState, win: window });
+  const renderPreview = refreshRenderPreviewSnapshot({ ds: typeof DS !== 'undefined' ? DS : null, doc: document, timeline, network, performance, asyncRace, loopFreeze, bundle, traceState: timeline.sourceState, active: Boolean(enabled) });
+  if (!timelineState.warningsPaused) timelineState.warnings = buildWarningsSnapshot({ traceState: timeline.sourceState, timeline, zoom, renderPreview, asyncRace, loopFreeze, network, performance, selection, visualEvidence: getVisualEvidenceSnapshot(), dom: { status: zoom.status || 'unknown', findings: zoom.divergences?.map((code) => ({ code })) || [], owners: zoom.suggestedOwner ? [zoom.suggestedOwner] : [] }, bundle, ownership: window.RFDebugCenter?.ownership || null, active: Boolean(enabled) });
+  return { enabled: Boolean(enabled), activation, build, debugZoom, last, live: normalizeSnapshot(live), divergence, zoom, timeline, selection, renderPreview, asyncRace, loopFreeze, network, performance, warnings: timelineState.warnings, recent: timeline.recent, visualEvidence: getVisualEvidenceSnapshot() };
 }
 
-export function pauseDebugCenterTimeline() { return pauseTimeline(); }
-export function resumeDebugCenterTimeline() { return resumeTimeline(); }
-export function clearDebugCenterTimeline(traceApi = window.RF_UI_TRACE) { return clearTimeline(traceApi); }
-export function copyDebugCenterTimelineJSON() { return copyTimelineJSON(); }
-export function getDebugCenterTimelineSnapshot() { return getTimelineSnapshot(); }
-
+export function pauseDebugCenterTimeline() { return pauseTimeline(); } export function resumeDebugCenterTimeline() { return resumeTimeline(); }
+export function clearDebugCenterTimeline(traceApi = window.RF_UI_TRACE) { return clearTimeline(traceApi); } export function copyDebugCenterTimelineJSON() { return copyTimelineJSON(); } export function getDebugCenterTimelineSnapshot() { return getTimelineSnapshot(); }
+export function refreshDebugCenterWarnings(traceApi = window.RF_UI_TRACE, bundle = null) { timelineState.warningsPaused = false; const timeline = getTimelineSnapshot(); const selection = refreshSelectionSnapshot({ ds: typeof DS !== 'undefined' ? DS : null, doc: document, timeline, traceState: timeline.sourceState, bundle, ownership: window.RFDebugCenter?.ownership || null }); const asyncRace = refreshAsyncRaceSnapshot({ timeline, traceState: timeline.sourceState, bundle, active: true }); const loopFreeze = refreshLoopFreezeSnapshot({ timeline, traceState: timeline.sourceState, bundle, warnings: timelineState.warnings, active: true }); const network = getNetworkSnapshot(); const performance = refreshPerformanceSnapshot({ timeline, network, loopFreeze, asyncRace, warnings: timelineState.warnings, bundle, active: true, traceState: timeline.sourceState, win: window }); const renderPreview = refreshRenderPreviewSnapshot({ ds: typeof DS !== 'undefined' ? DS : null, doc: document, timeline, network, performance, asyncRace, loopFreeze, bundle, traceState: timeline.sourceState, active: true }); return timelineState.warnings = buildWarningsSnapshot({ traceState: timelineState.sourceState, timeline, zoom: buildZoomDiagnostics({ ds: typeof DS !== 'undefined' ? DS : null, traceApi, timeline, doc: document }), renderPreview, asyncRace, loopFreeze, network, performance, selection, dom: null, bundle, ownership: window.RFDebugCenter?.ownership || null, active: true }); }
+export function clearDebugCenterWarnings() { timelineState.warningsPaused = true; return timelineState.warnings = { status: 'unknown', total: 0, counts: { info: 0, warning: 0, error: 0 }, warnings: [], sourceState: timelineState.sourceState, traceState: timelineState.sourceState }; } export function copyDebugCenterWarningsJSON() { return JSON.stringify(timelineState.warnings, null, 2); }
+export function refreshDebugCenterSelection(traceApi = window.RF_UI_TRACE, bundle = null) { syncTimeline(traceApi); return refreshSelectionSnapshot({ ds: typeof DS !== 'undefined' ? DS : null, doc: document, timeline: getTimelineSnapshot(), traceState: timelineState.sourceState, bundle, ownership: window.RFDebugCenter?.ownership || null }); } export function clearDebugCenterSelection() { return clearSelectionSnapshot(); } export function copyDebugCenterSelectionJSON() { return copySelectionJSON(); } export function getDebugCenterSelectionSnapshot() { return getSelectionSnapshot(); }
+export function refreshDebugCenterRenderPreview(traceApi = window.RF_UI_TRACE, bundle = null, active = false) { syncTimeline(traceApi); const timeline = getTimelineSnapshot(); const asyncRace = getAsyncRaceSnapshot(); const loopFreeze = getLoopFreezeSnapshot(); const network = getNetworkSnapshot(); const performance = getPerformanceSnapshot(); return refreshRenderPreviewSnapshot({ ds: typeof DS !== 'undefined' ? DS : null, doc: document, timeline, network, performance, asyncRace, loopFreeze, bundle, traceState: timeline.sourceState, active }); }
+export function clearDebugCenterRenderPreview() { return clearRenderPreviewSnapshot(); }
+export function copyDebugCenterRenderPreviewJSON() { return copyRenderPreviewJSON(); }
+export function getDebugCenterRenderPreviewSnapshot() { return getRenderPreviewSnapshot(); }
+export function refreshDebugCenterLoopFreeze(traceApi = window.RF_UI_TRACE, bundle = null) { syncTimeline(traceApi); return refreshLoopFreezeSnapshot({ timeline: getTimelineSnapshot(), traceState: timelineState.sourceState, bundle, warnings: timelineState.warnings, active: true }); }
+export function clearDebugCenterLoopFreeze() { return clearLoopFreezeSnapshot(); }
+export function copyDebugCenterLoopFreezeJSON() { return copyLoopFreezeJSON(); }
+export function getDebugCenterLoopFreezeSnapshot() { return getLoopFreezeSnapshot(); }
+export function refreshDebugCenterNetwork(traceApi = window.RF_UI_TRACE, bundle = null, active = false) { syncTimeline(traceApi); const timeline = getTimelineSnapshot(); const asyncRace = refreshAsyncRaceSnapshot({ timeline, traceState: timeline.sourceState, bundle, active }); return refreshNetworkSnapshot({ traceState: timeline.sourceState, timeline, asyncRace, bundle, active }); }
+export function clearDebugCenterNetwork() { return clearNetworkSnapshot(); }
+export function copyDebugCenterNetworkJSON() { return copyNetworkJSON(); }
+export function getDebugCenterNetworkSnapshot() { return getNetworkSnapshot(); }
 export function formatValue(value) { return stringify(value); }

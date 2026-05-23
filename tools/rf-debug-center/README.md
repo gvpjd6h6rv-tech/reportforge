@@ -31,9 +31,17 @@ Roadmap:
 - `A1` - async / race engine
 - `N1` - network / backend engine
 - `S1` - selection / drag / resize engine
-- `R1` - render / preview engine
-- `V1` - visual evidence / screenshots
-- `F1` - final hardening
+- `R1` - render / preview engine, `LISTO`
+- `V1` - visual evidence / screenshots, `LISTO`
+- `F1` - final hardening, `LISTO`
+- `PORT0` - adapter boundary / core contract, `LISTO`
+- `SAP0` - discovery sap_b1_linux architecture, `LISTO`
+- `SAP1` - adapter mínimo sap_b1_linux read-only, `LISTO`
+- `SAP2` - runtime bridge sap_b1_linux instalación controlada, `LISTO`
+
+Backlog notes:
+
+- `Z2` - DOM scanner adversarial sandbox, `NOT READY` until browser validation is completed. Keep it out of the real repo until that validation passes.
 
 Planned engine families:
 
@@ -108,6 +116,278 @@ Public Z1 contract:
 
 - `buildZoomDiagnostics()`
 - `state.zoom` inside the sidecar snapshot
+
+## B1 Debug Bundle Export
+
+`B1` exports a portable JSON bundle for humans and tools. The bundle is built
+from the current sidecar snapshot and is read-only with respect to ReportForge.
+
+Public bundle actions:
+
+- `buildBundle()`
+- `exportBundle()`
+- `copyBundleJSON()`
+
+Bundle contents include:
+
+- metadata and environment
+- session state
+- timeline snapshot
+- zoom diagnostics
+- DOM / visual snapshot
+- ownership map
+- governance/roadmap summary
+- redacted evidence trace
+
+The bundle is sanitized before export:
+
+- sensitive keys are redacted
+- long strings are truncated
+- large arrays are capped
+- circular references are normalized
+
+Bundle filenames use the pattern:
+
+- `rf-debug-bundle-YYYYMMDD-HHMMSS.json`
+
+## W1 Live Warnings
+
+`W1` turns the current evidence surfaces into compact, deduplicated warnings.
+It is still read-only and does not mutate `RF_UI_TRACE`, `DS`, or the bundle
+sources.
+
+Public warnings actions:
+
+- `refreshWarnings()`
+- `clearWarnings()`
+- `copyWarningsJSON()`
+
+Warnings are evidence-driven. A warning only appears when a rule can cite
+existing snapshots from:
+
+- Timeline
+- Zoom Diagnostics
+- DOM / visual diagnostics
+- Bundle state
+- Ownership map
+- `RF_UI_TRACE` status
+
+The initial rule set includes:
+
+- `RF_UI_TRACE_ABSENT`
+- `RF_UI_TRACE_INVALID`
+- `TIMELINE_EMPTY_WHILE_ACTIVE`
+- `ZOOM_DIVERGENCE`
+- `DOM_DIVERGENCE`
+- `OWNERSHIP_MAP_MISSING`
+- `BUNDLE_EXPORT_ERROR`
+- `SOURCE_PAUSED`
+
+Warnings carry:
+
+- `ruleId`
+- `severity`
+- `title`
+- `message`
+- `evidence`
+- `suggestedOwner`
+- `status`
+
+The warnings panel deduplicates by fingerprint and keeps the evidence compact.
+`clearWarnings()` only clears the sidecar's internal warning snapshot; it does
+not clear `RF_UI_TRACE`.
+
+## L1 Loop & Freeze Engine
+
+`L1` analyzes the existing timeline snapshot for loop, storm, and freeze-risk
+signals. It stays read-only and never installs invasive listeners or mutates
+`RF_UI_TRACE`, `DS`, or the DOM.
+
+Public loop-freeze actions:
+
+- `refreshLoopFreeze()`
+- `clearLoopFreeze()`
+- `copyLoopFreezeJSON()`
+
+The loop-freeze snapshot is derived from:
+
+- timeline entries and timestamps
+- `RF_UI_TRACE` source state
+- last known activity
+- bundle and warnings context when available
+
+The initial rule set includes:
+
+- `EVENT_STORM`
+- `REPEATED_HANDLER`
+- `POSSIBLE_LOOP_PATTERN`
+- `HEARTBEAT_GAP`
+
+## A1 Async / Race Engine
+
+`A1` analyzes the timeline for async order problems using `transactionId`,
+`requestId`, `renderId`, `stateRevision`, `mode`, and document identifiers when
+they exist. It is read-only and does not intercept fetch or mutate runtime
+state.
+
+Public async-race actions:
+
+- `refreshAsyncRace()`
+- `clearAsyncRace()`
+- `copyAsyncRaceJSON()`
+
+The initial rule set includes:
+
+- `OUT_OF_ORDER_RESPONSE`
+- `STALE_WRITE_AFTER_MODE_CHANGE`
+- `RENDER_AFTER_NEWER_RENDER`
+- `STATE_REVISION_REGRESSION`
+- `LATE_ASYNC_ERROR`
+- `MISSING_END_EVENT`
+- `DUPLICATE_ACTIVE_TRANSACTION`
+- `TIMELINE_GROWTH_SPIKE`
+
+The snapshot reports:
+
+- `status`
+- `heartbeat`
+- `eventStorms`
+- `repeatedHandlers`
+- `possibleLoops`
+- `lastEvents`
+- `risk`
+- `evidence`
+- `suggestedOwner`
+
+`clearLoopFreeze()` only clears the sidecar's internal loop-freeze snapshot; it
+does not clear `RF_UI_TRACE` or the timeline source.
+
+## N1 Network / Backend Engine
+
+`N1` observes fetch/XHR only while the sidecar is active. It is passthrough
+only: request arguments, headers, payloads, responses, blobs, and PDFs are not
+modified. When a body or response is safe to summarize, the engine stores a
+redacted snapshot; otherwise it records metadata only.
+
+The implementation is split between:
+
+- `rf-debug-center-network-core.js` for snapshot/state assembly
+- `rf-debug-center-network.js` for fetch/XHR installation and passthrough
+
+Public network actions:
+
+- `refreshNetwork()`
+- `clearNetwork()`
+- `copyNetworkJSON()`
+- `state.network` inside the sidecar snapshot
+
+Captured network evidence includes:
+
+- requestId / transactionId
+- method, sanitized URL path, and query keys
+- status, ok flag, content type, and duration
+- safe request / response summaries
+- slow, failed, or leaked requests
+- redaction markers for sensitive fields
+
+The initial warning signals can be derived from:
+
+- failed requests
+- slow requests
+- active request leaks
+- applied redactions
+- observer-disabled / partial observer state
+
+## P1 Performance Engine
+
+`P1` measures the runtime cost of what the sidecar already observes. It does
+not monkey-patch application handlers or timers. Instead it samples the
+existing evidence surfaces and optional browser performance hooks when the side
+bar is active.
+
+Public performance actions:
+
+- `refreshPerformance()`
+- `clearPerformance()`
+- `copyPerformanceJSON()`
+- `state.performance` inside the sidecar snapshot
+
+The performance snapshot combines:
+
+- event duration from the Timeline
+- event rate over a 5s window
+- slow or leaking network requests
+- long tasks from `PerformanceObserver` when available
+- frame gaps from `requestAnimationFrame` when available
+- correlations from `Loop & Freeze` and `Async/Race`
+
+Initial thresholds:
+
+- slow event: `>= 100ms`
+- slow request: `>= 1000ms`
+- frame gap: `>= 250ms`
+- long task: `>= 50ms`
+- event rate: `> 12 events/sec` within the sample window
+
+The snapshot stays read-only and is capped so it can be exported safely in the
+debug bundle without turning the sidecar into a profiler.
+
+## S1 Selection / Drag / Resize Engine
+
+`S1` inspects the current selection and the visible selection overlay without
+changing selection state, dragging, resizing, or DOM layout. It compares the
+selected model element against the rendered selection box, handles, guides, and
+section bounds when those signals exist.
+
+Public selection actions:
+
+- `refreshSelection()`
+- `clearSelection()`
+- `copySelectionJSON()`
+- `state.selection` inside the sidecar snapshot
+
+The selection snapshot is read-only and can report:
+
+- selected ids, element id, and element type
+- selection box / handles / guides visibility
+- selected DOM rect and overlay rect
+- drag and resize before/after evidence from the timeline
+- section bounds and out-of-section drift
+- visibility and hit-test clues for the selected element
+
+The initial findings include:
+
+- `SELECTED_ELEMENT_MISSING`
+- `SELECTION_BOX_MISSING`
+- `HANDLES_MISSING`
+- `MODEL_DOM_POSITION_DRIFT`
+- `MODEL_DOM_SIZE_DRIFT`
+- `ELEMENT_OUT_OF_SECTION`
+- `SELECTED_ELEMENT_HIDDEN`
+- `DRAG_WITHOUT_MODEL_UPDATE`
+- `RESIZE_WITHOUT_DOM_UPDATE`
+
+## R1 Render / Preview Engine
+
+`R1` inspects the preview lifecycle and preview DOM without calling
+`PreviewEngineRenderer` or changing preview state. It correlates the preview
+surface with safe network, performance, and async evidence already collected by
+the sidecar.
+
+Public render/preview actions:
+
+- `refreshRenderPreview()`
+- `clearRenderPreview()`
+- `copyRenderPreviewJSON()`
+
+The render/preview snapshot can report:
+
+- preview mode / lifecycle
+- preview root, content, page count, visibility, transform, and scale
+- preview / render / audit / export request summaries
+- out-of-order render and missing-end evidence from `A1`
+- slow render and long-task correlations from `P1`
+- preview DOM emptiness or design-canvas leakage when evidence exists
 
 ## Design Goal
 
@@ -222,6 +502,86 @@ Requirements:
 - public API list
 - invariants
 
+## V1 Visual Evidence / Screenshots
+
+Visual Evidence provides safe, controlled visual capture from within RF Debug Center.
+
+### Capabilities detected at runtime
+
+- `canCapture` — html2canvas present
+- `canBlob` / `canUrl` / `canDownload` — export support
+- `canClipboardImg` — clipboard image write support
+
+Falls back to `metadata-only` when capture library is unavailable. No external library is loaded — uses `window.html2canvas` only if already present in the host page.
+
+### Capture targets
+
+- `debug-panel` — the debug center root element
+- `preview` — `#preview-layer` / `#preview-content`
+- `document` — `#canvas-layer`
+- `selection` — `.selection-overlay` / `[data-selection-active]`
+- `toolbar` — `#toolbar` / `.toolbar`
+- `viewport` — metadata-only (full page dimensions)
+- `full-page` — metadata-only (safe fallback)
+
+### Evidence record schema
+
+```json
+{
+  "id": "ve-...",
+  "timestamp": "...",
+  "target": "preview|selection|debug-panel|toolbar|viewport|full-page|unknown",
+  "status": "captured|skipped|failed|metadata-only",
+  "mimeType": "image/png",
+  "width": 0,
+  "height": 0,
+  "bytes": 0,
+  "selector": "...",
+  "reason": null,
+  "dataUrl": null,
+  "metadata": {},
+  "redactions": []
+}
+```
+
+### API
+
+- `captureVisualEvidence(target)` — capture a target and record evidence
+- `clearVisualEvidence()` — clear all evidence records
+- `copyVisualEvidenceJSON()` — copy evidence snapshot as JSON
+- `getVisualEvidenceSnapshot()` — read current snapshot
+- `getState().visualEvidence` — access via store state
+
+### Security and privacy
+
+- No capture of cookies, tokens, headers, or backend payloads.
+- `input[type=password]` detected → `VISUAL_PASSWORD_INPUT_PRESENT` redaction applied.
+- `dataUrl` excluded from bundle by default (metadata only in bundle).
+- Max dataUrl: 512KB. Exceeding this falls back to `metadata-only`.
+- No external network calls. No OCR. No server upload.
+
+### Findings emitted
+
+| Code | Severity | Trigger |
+|---|---|---|
+| `VISUAL_CAPTURE_UNSUPPORTED` | info | No capture library available |
+| `VISUAL_TARGET_MISSING` | warning | Target selector not found |
+| `VISUAL_TARGET_HIDDEN` | warning | Target exists but not visible |
+| `VISUAL_CAPTURE_TOO_LARGE` | warning | dataUrl exceeds 512KB |
+| `VISUAL_METADATA_ONLY` | info | Async capture initiated, metadata returned |
+| `VISUAL_CAPTURE_FAILED` | error | Exception during capture |
+| `VISUAL_PASSWORD_INPUT_PRESENT` | warning | Password input inside target |
+| `VISUAL_EVIDENCE_RISK` | warning | W1 warning: one or more captures failed |
+
+### No-mutation contract
+
+- Does not write to `RF_UI_TRACE`.
+- Does not write to `DS`.
+- Does not move DOM nodes.
+- Does not change productivo styles.
+- Does not trigger render or preview.
+- Does not change zoom or scroll.
+
 ## Future Engine Scope
 
 The next engines must stay decoupled from ReportForge internals by design:
@@ -240,6 +600,26 @@ The next engines must stay decoupled from ReportForge internals by design:
   - real DOM visibility, geometry, computed style, elementFromPoint, divergence
 
 These are roadmap contracts only. They are not implemented in this phase.
+
+## PORT0 — Adapter Boundary / Core Contract
+
+`PORT0` creates the formal separation between the generic debug center core and
+the ReportForge-specific adapter. It does not change runtime behavior.
+
+Files created:
+
+- `adapters/debug-center-adapter-contract.js` — canonical contract, `validateAdapter()`, `normalizeEventShape()`
+- `adapters/reportforge/reportforge-adapter.js` — ReportForge adapter v1
+- `adapters/reportforge/reportforge-adapter-metadata.js` — static metadata (selectors, paths, flags)
+
+Contract summary:
+
+- Required adapter fields: `id`, `name`, `project`, `version`
+- Required methods: `getTraceSource`, `getOwnershipMap`, `getEnvironment`, `normalizeEvent`
+- Canonical event schema: timestamp, source, action, severity + optional fields
+- `validateReportforgeAdapter()` verifies compliance — returns `{ valid: true, errors: [] }`
+
+Wiring of `reportforgeAdapter` into the runtime store/API is deferred to PORT1.
 
 ## Non-Goals
 

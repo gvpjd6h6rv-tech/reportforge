@@ -1158,10 +1158,35 @@ test('rf debug center sidecar stays isolated and documented', () => {
   const ownershipMapPath = path.join(ROOT, 'tools/rf-debug-center/ownership-map.json');
   const readme = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/README.md'), 'utf8');
   const bootstrap = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center.js'), 'utf8');
+  const api = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-api.js'), 'utf8');
+  const apiSelection = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-api-selection.js'), 'utf8');
   const store = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-store.js'), 'utf8');
   const view = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-view.js'), 'utf8');
+  const viewSections = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-view-sections.js'), 'utf8');
+  const selection = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-selection.js'), 'utf8');
+  const selectionView = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-selection-view.js'), 'utf8');
+  const renderPreview = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-render-preview.js'), 'utf8');
+  const renderPreviewView = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-render-preview-view.js'), 'utf8');
+  const apiRenderPreview = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-api-render-preview.js'), 'utf8');
+  const bundle = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-bundle.js'), 'utf8');
+  const safeJson = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-safe-json.js'), 'utf8');
+  const loopFreeze = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-loop-freeze.js'), 'utf8');
+  const loopFreezeView = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-loop-freeze-view.js'), 'utf8');
+  const asyncRace = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-async-race.js'), 'utf8');
+  const asyncRaceView = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-async-race-view.js'), 'utf8');
+  const performance = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-performance.js'), 'utf8');
+  const performanceView = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-performance-view.js'), 'utf8');
+  const networkCore = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-network-core.js'), 'utf8');
+  const network = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-network.js'), 'utf8');
+  const networkView = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-network-view.js'), 'utf8');
+  const warnings = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-warnings.js'), 'utf8');
+  const warningsView = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-warnings-view.js'), 'utf8');
+  const visualEvidence = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-visual-evidence.js'), 'utf8');
+  const visualEvidenceView = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-visual-evidence-view.js'), 'utf8');
+  const apiVisualEvidence = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-api-visual-evidence.js'), 'utf8');
   const css = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center.css'), 'utf8');
   const zoom = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-zoom.js'), 'utf8');
+  const windowWritePattern = /window\.[A-Za-z0-9_]+\s*=(?!=)/;
   const map = JSON.parse(fs.readFileSync(ownershipMapPath, 'utf8'));
   const collectExactWindowWrites = (source) => {
     const writes = new Set();
@@ -1179,9 +1204,43 @@ test('rf debug center sidecar stays isolated and documented', () => {
   assert.match(readme, /`E1`\s*-\s*strategic amendment for six bug classes/);
   assert.match(readme, /T1 Timeline/);
   assert.match(readme, /Z1 Zoom Diagnostics/);
+  assert.match(readme, /B1 Debug Bundle Export/);
+  assert.match(readme, /W1 Live Warnings/);
+  assert.match(readme, /Z2` - DOM scanner adversarial sandbox, `NOT READY`/);
   assert.match(readme, /buildZoomDiagnostics\(\)/);
   assert.match(readme, /pauseTimeline\(\)/);
   assert.match(readme, /copyTimelineJSON\(\)/);
+  assert.match(readme, /buildBundle\(\)/);
+  assert.match(readme, /exportBundle\(\)/);
+  assert.match(readme, /copyBundleJSON\(\)/);
+  assert.match(readme, /refreshWarnings\(\)/);
+  assert.match(readme, /clearWarnings\(\)/);
+  assert.match(readme, /copyWarningsJSON\(\)/);
+  assert.match(readme, /L1 Loop & Freeze Engine/);
+  assert.match(readme, /refreshLoopFreeze\(\)/);
+  assert.match(readme, /clearLoopFreeze\(\)/);
+  assert.match(readme, /copyLoopFreezeJSON\(\)/);
+  assert.match(readme, /A1 Async \/ Race Engine/);
+  assert.match(readme, /refreshAsyncRace\(\)/);
+  assert.match(readme, /clearAsyncRace\(\)/);
+  assert.match(readme, /copyAsyncRaceJSON\(\)/);
+  assert.match(readme, /N1 Network \/ Backend Engine/);
+  assert.match(readme, /refreshNetwork\(\)/);
+  assert.match(readme, /clearNetwork\(\)/);
+  assert.match(readme, /copyNetworkJSON\(\)/);
+  assert.match(readme, /P1 Performance Engine/);
+  assert.match(readme, /refreshPerformance\(\)/);
+  assert.match(readme, /clearPerformance\(\)/);
+  assert.match(readme, /copyPerformanceJSON\(\)/);
+  assert.match(readme, /S1 Selection \/ Drag \/ Resize Engine/);
+  assert.match(readme, /refreshSelection\(\)/);
+  assert.match(readme, /clearSelection\(\)/);
+  assert.match(readme, /copySelectionJSON\(\)/);
+  assert.match(readme, /slow event: `>= 100ms`/);
+  assert.match(readme, /slow request: `>= 1000ms`/);
+  assert.match(readme, /frame gap: `>= 250ms`/);
+  assert.match(readme, /long task: `>= 50ms`/);
+  assert.match(readme, /event rate: `> 12 events\/sec`/);
   assert.match(readme, /Loop & Freeze Engine/);
   assert.match(readme, /Performance Engine/);
   assert.match(readme, /Async\/Race Engine/);
@@ -1192,7 +1251,8 @@ test('rf debug center sidecar stays isolated and documented', () => {
   assert.match(readme, /"engine": "loop\|performance\|async\|state\|network\|dom"/);
   assert.deepEqual([...collectExactWindowWrites(bootstrap)].sort(), ['RFDebugCenter']);
   assert.doesNotMatch(bootstrap, /\bfetch\s*\(/, 'sidecar bootstrap must not require backend/fetch');
-  assert.match(bootstrap, /host\.id = 'rf-debug-center-root';/);
+  assert.match(api, /host\.id = 'rf-debug-center-root';/);
+  assert.match(api, /loopFreeze/);
   assert.match(css, /\.rf-debug-center/);
   assert.doesNotMatch(css, /^(?:button|div|panel|hidden|active|warning|error)\s*\{/m, 'rf debug center css must not use bare global selectors');
   assert.equal(map.tool, 'RF Debug Center');
@@ -1201,6 +1261,15 @@ test('rf debug center sidecar stays isolated and documented', () => {
   assert.ok(Array.isArray(map.subsystems) && map.subsystems.length >= 4, 'ownership map must enumerate subsystems');
   assert.ok(map.subsystems.some((subsystem) => subsystem.name === 'timeline'), 'ownership map must include timeline subsystem');
   assert.ok(map.subsystems.some((subsystem) => subsystem.name === 'zoom'), 'ownership map must include zoom subsystem');
+  assert.ok(map.subsystems.some((subsystem) => subsystem.name === 'loopFreeze'), 'ownership map must include loopFreeze subsystem');
+  assert.ok(map.subsystems.some((subsystem) => subsystem.name === 'asyncRace'), 'ownership map must include asyncRace subsystem');
+  assert.ok(map.subsystems.some((subsystem) => subsystem.name === 'performance'), 'ownership map must include performance subsystem');
+  assert.ok(map.subsystems.some((subsystem) => subsystem.name === 'selection'), 'ownership map must include selection subsystem');
+  assert.ok(map.subsystems.some((subsystem) => subsystem.name === 'renderPreview'), 'ownership map must include renderPreview subsystem');
+  assert.ok(map.subsystems.some((subsystem) => subsystem.name === 'network'), 'ownership map must include network subsystem');
+  assert.ok(map.subsystems.some((subsystem) => subsystem.name === 'bundle'), 'ownership map must include bundle subsystem');
+  assert.ok(map.subsystems.some((subsystem) => subsystem.name === 'warnings'), 'ownership map must include warnings subsystem');
+  assert.ok(map.subsystems.some((subsystem) => subsystem.name === 'visualEvidence'), 'ownership map must include visualEvidence subsystem');
   for (const subsystem of map.subsystems) {
     assert.ok(subsystem.name, 'subsystem.name missing');
     assert.ok(subsystem.owner, `subsystem owner missing for ${subsystem.name}`);
@@ -1213,23 +1282,88 @@ test('rf debug center sidecar stays isolated and documented', () => {
   assert.equal(map.tool, 'RF Debug Center');
   assert.equal(map.ssot.uiTrace, 'engines/RFAudit.js');
   assert.equal(map.ssot.bootstrap, 'tools/rf-debug-center/rf-debug-center.js');
+  assert.equal(map.ssot.api, 'tools/rf-debug-center/rf-debug-center-api.js');
   assert.equal(map.ssot.store, 'tools/rf-debug-center/rf-debug-center-store.js');
   assert.equal(map.ssot.view, 'tools/rf-debug-center/rf-debug-center-view.js');
+  assert.equal(map.ssot.viewSections, 'tools/rf-debug-center/rf-debug-center-view-sections.js');
+  assert.equal(map.ssot.loopFreezeView, 'tools/rf-debug-center/rf-debug-center-loop-freeze-view.js');
+  assert.equal(map.ssot.asyncRaceView, 'tools/rf-debug-center/rf-debug-center-async-race-view.js');
+  assert.equal(map.ssot.performanceView, 'tools/rf-debug-center/rf-debug-center-performance-view.js');
+  assert.equal(map.ssot.renderPreviewView, 'tools/rf-debug-center/rf-debug-center-render-preview-view.js');
+  assert.equal(map.ssot.networkView, 'tools/rf-debug-center/rf-debug-center-network-view.js');
+  assert.equal(map.ssot.safeJson, 'tools/rf-debug-center/rf-debug-center-safe-json.js');
+  assert.equal(map.ssot.loopFreeze, 'tools/rf-debug-center/rf-debug-center-loop-freeze.js');
+  assert.equal(map.ssot.asyncRace, 'tools/rf-debug-center/rf-debug-center-async-race.js');
+  assert.equal(map.ssot.performance, 'tools/rf-debug-center/rf-debug-center-performance.js');
+  assert.equal(map.ssot.selection, 'tools/rf-debug-center/rf-debug-center-selection.js');
+  assert.equal(map.ssot.renderPreview, 'tools/rf-debug-center/rf-debug-center-render-preview.js');
+  assert.equal(map.ssot.network, 'tools/rf-debug-center/rf-debug-center-network.js');
   assert.equal(map.ssot.style, 'tools/rf-debug-center/rf-debug-center.css');
-  assert.ok(bootstrap.split('\n').length <= 220, 'rf-debug-center.js must stay <= 220 lines');
-  assert.ok(store.split('\n').length <= 180, 'rf-debug-center-store.js must stay <= 180 lines');
-  assert.ok(view.split('\n').length <= 260, 'rf-debug-center-view.js must stay <= 260 lines');
+  assert.ok(bootstrap.split('\n').length <= 180, 'rf-debug-center.js must stay <= 180 lines');
+  assert.ok(api.split('\n').length <= 180, 'rf-debug-center-api.js must stay <= 180 lines');
+  assert.ok(store.split('\n').length <= 150, 'rf-debug-center-store.js must stay <= 150 lines');
+  assert.ok(view.split('\n').length <= 220, 'rf-debug-center-view.js must stay <= 220 lines');
+  assert.ok(viewSections.split('\n').length <= 220, 'rf-debug-center-view-sections.js must stay <= 220 lines');
+  assert.ok(bundle.split('\n').length <= 160, 'rf-debug-center-bundle.js must stay <= 160 lines');
+  assert.ok(loopFreeze.split('\n').length <= 180, 'rf-debug-center-loop-freeze.js must stay <= 180 lines');
+  assert.ok(loopFreezeView.split('\n').length <= 100, 'rf-debug-center-loop-freeze-view.js must stay <= 100 lines');
+  assert.ok(asyncRace.split('\n').length <= 180, 'rf-debug-center-async-race.js must stay <= 180 lines');
+  assert.ok(asyncRaceView.split('\n').length <= 100, 'rf-debug-center-async-race-view.js must stay <= 100 lines');
+  assert.ok(performance.split('\n').length <= 180, 'rf-debug-center-performance.js must stay <= 180 lines');
+  assert.ok(performanceView.split('\n').length <= 100, 'rf-debug-center-performance-view.js must stay <= 100 lines');
+  assert.ok(selection.split('\n').length <= 180, 'rf-debug-center-selection.js must stay <= 180 lines');
+  assert.ok(selectionView.split('\n').length <= 100, 'rf-debug-center-selection-view.js must stay <= 100 lines');
+  assert.ok(renderPreview.split('\n').length <= 180, 'rf-debug-center-render-preview.js must stay <= 180 lines');
+  assert.ok(renderPreviewView.split('\n').length <= 100, 'rf-debug-center-render-preview-view.js must stay <= 100 lines');
+  assert.ok(apiRenderPreview.split('\n').length <= 180, 'rf-debug-center-api-render-preview.js must stay <= 180 lines');
+  assert.ok(apiSelection.split('\n').length <= 180, 'rf-debug-center-api-selection.js must stay <= 180 lines');
+  assert.ok(network.split('\n').length <= 180, 'rf-debug-center-network.js must stay <= 180 lines');
+  assert.ok(networkView.split('\n').length <= 100, 'rf-debug-center-network-view.js must stay <= 100 lines');
+  assert.ok(networkCore.split('\n').length <= 180, 'rf-debug-center-network-core.js must stay <= 180 lines');
+  assert.ok(safeJson.split('\n').length <= 180, 'rf-debug-center-safe-json.js must stay <= 180 lines');
+  assert.ok(warnings.split('\n').length <= 180, 'rf-debug-center-warnings.js must stay <= 180 lines');
+  assert.ok(warningsView.split('\n').length <= 260, 'rf-debug-center-warnings-view.js must stay <= 260 lines');
+  assert.ok(visualEvidence.split('\n').length <= 180, 'rf-debug-center-visual-evidence.js must stay <= 180 lines');
+  assert.ok(visualEvidenceView.split('\n').length <= 100, 'rf-debug-center-visual-evidence-view.js must stay <= 100 lines');
+  assert.ok(apiVisualEvidence.split('\n').length <= 80, 'rf-debug-center-api-visual-evidence.js must stay <= 80 lines');
   assert.ok(zoom.split('\n').length <= 180, 'rf-debug-center-zoom.js must stay <= 180 lines');
   assert.ok(css.split('\n').length <= 260, 'rf-debug-center.css must stay <= 260 lines');
   assert.match(bootstrap, /window\.RFDebugCenter\s*=\s*center\.api;/);
-  assert.doesNotMatch(store, /window\.[A-Za-z0-9_]+\s*=/);
-  assert.doesNotMatch(view, /window\.[A-Za-z0-9_]+\s*=/);
-  assert.doesNotMatch(zoom, /window\.[A-Za-z0-9_]+\s*=/);
+  assert.match(api, /export function createDebugCenterApi\(\)/);
+  assert.match(api, /host\.id = 'rf-debug-center-root';/);
+  assert.match(api, /buildBundle/);
+  assert.match(api, /exportBundle/);
+  assert.match(api, /copyBundleJSON/);
+  assert.doesNotMatch(store, windowWritePattern);
+  assert.doesNotMatch(view, windowWritePattern);
+  assert.doesNotMatch(bundle, windowWritePattern);
+  assert.doesNotMatch(api, windowWritePattern);
+  assert.doesNotMatch(loopFreeze, windowWritePattern);
+  assert.doesNotMatch(loopFreezeView, windowWritePattern);
+  assert.doesNotMatch(asyncRace, windowWritePattern);
+  assert.doesNotMatch(asyncRaceView, windowWritePattern);
+  assert.doesNotMatch(performance, windowWritePattern);
+  assert.doesNotMatch(performanceView, windowWritePattern);
+  assert.doesNotMatch(renderPreview, windowWritePattern);
+  assert.doesNotMatch(renderPreviewView, windowWritePattern);
+  assert.doesNotMatch(apiRenderPreview, windowWritePattern);
+  assert.doesNotMatch(networkCore, windowWritePattern);
+  assert.doesNotMatch(network, windowWritePattern);
+  assert.doesNotMatch(networkView, windowWritePattern);
+  assert.doesNotMatch(warnings, windowWritePattern);
+  assert.doesNotMatch(warningsView, windowWritePattern);
+  assert.doesNotMatch(visualEvidence, windowWritePattern);
+  assert.doesNotMatch(visualEvidenceView, windowWritePattern);
+  assert.doesNotMatch(apiVisualEvidence, windowWritePattern);
+  assert.doesNotMatch(viewSections, windowWritePattern);
+  assert.doesNotMatch(safeJson, windowWritePattern);
+  assert.doesNotMatch(zoom, windowWritePattern);
 
   const governance = fs.readFileSync(path.join(ROOT, 'docs/governance.md'), 'utf8');
   assert.match(governance, /RF Debug Center Strategic Amendment/);
   assert.match(governance, /plataforma portable sin acoplar el core a/);
   assert.match(governance, /Loop & Freeze Engine/);
+  assert.match(governance, /Async\/Race Engine/);
   assert.match(governance, /Performance Engine/);
   assert.match(governance, /Async\/Race Engine/);
   assert.match(governance, /State & Ownership Engine/);
@@ -1589,4 +1723,24 @@ test('grid stability — only GridEngine writes to #grid-overlay', () => {
 
   assert.deepEqual(violations, [],
     `#grid-overlay written outside its sole owner GridEngine.js: ${violations.join(', ')}`);
+});
+
+// ── #26 PORT0 adapter boundary ────────────────────────────────────────────────
+// Adapter files must not write to window.* and must stay within line limits.
+
+test('PORT0 adapter boundary — no window writes and line limits', () => {
+  const adapterFiles = [
+    ['tools/rf-debug-center/adapters/debug-center-adapter-contract.js', 120],
+    ['tools/rf-debug-center/adapters/reportforge/reportforge-adapter.js', 160],
+    ['tools/rf-debug-center/adapters/reportforge/reportforge-adapter-metadata.js', 100],
+    ['tools/rf-debug-center/adapters/sap-b1-linux/sap-b1-linux-adapter.js', 160],
+    ['tools/rf-debug-center/adapters/sap-b1-linux/sap-b1-linux-adapter-metadata.js', 100],
+  ];
+  const windowWrite = /window\.[A-Za-z0-9_]+\s*=(?!=)/;
+  for (const [relPath, limit] of adapterFiles) {
+    const src = fs.readFileSync(path.join(ROOT, relPath), 'utf8');
+    assert.doesNotMatch(src, windowWrite, `${relPath} must not write to window.*`);
+    const lines = src.split('\n').length;
+    assert.ok(lines <= limit, `${relPath} has ${lines} lines, exceeds limit ${limit}`);
+  }
 });
