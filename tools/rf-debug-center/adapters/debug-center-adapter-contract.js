@@ -14,6 +14,7 @@ export const ADAPTER_CONTRACT = Object.freeze({
   ]),
   optionalMethods: Object.freeze([
     'getDomSelectors',
+    'getDomTargets',
     'getNetworkPaths',
     'getActivationFlags',
     'dispose',

@@ -41,7 +41,7 @@ Roadmap:
 
 Backlog notes:
 
-- `Z2` - DOM scanner adversarial sandbox, `NOT READY` until browser validation is completed. Keep it out of the real repo until that validation passes.
+- `Z2` - DOM scanner adversarial advanced, `LISTO`
 
 Planned engine families:
 
@@ -116,6 +116,50 @@ Public Z1 contract:
 
 - `buildZoomDiagnostics()`
 - `state.zoom` inside the sidecar snapshot
+
+## Z2 DOM Scanner
+
+`Z2` is the read-only adversarial DOM scanner. It inspects the live
+ReportForge DOM and reports structural, visibility, and interaction problems
+without mutating `DS`, DOM nodes, or `RF_UI_TRACE`.
+
+Snapshot shape:
+
+- `status`: `ok`, `info`, `warning`, `error`, `unknown`
+- `summary`: targets scanned, findings, critical/warning counts, duplicates,
+  blocked targets, hidden targets
+- `targets`: resolved target snapshots with geometry, computed style, and
+  `elementFromPoint` evidence
+- `findings`: normalized rule records with `ruleId`, severity, selector, and
+  evidence
+- `evidence`: compact deduplicated evidence strings
+
+Common finding families:
+
+- duplicate IDs and duplicate target selectors
+- missing, hidden, zero-size, or interactive-hidden targets
+- pointer-events conflicts
+- `elementFromPoint` mismatches
+- overlay blocking and stacking-context risk
+- overflow clipping
+- preview/design overlap or empty preview content
+- orphaned controls
+
+Public Z2 contract:
+
+- `buildDomScanner()`
+- `refreshDomScanner()`
+- `clearDomScanner()`
+- `copyDomScannerJSON()`
+- `state.domScanner` inside the sidecar snapshot
+
+The scanner is purely diagnostic:
+
+- it does not install listeners
+- it does not mutate `DS`
+- it does not mutate `RF_UI_TRACE`
+- it does not change DOM structure
+- it can be cleared by the sidecar API without touching product DOM
 
 ## B1 Debug Bundle Export
 

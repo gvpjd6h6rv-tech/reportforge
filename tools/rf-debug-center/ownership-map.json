@@ -21,6 +21,9 @@
     "asyncRace": "tools/rf-debug-center/rf-debug-center-async-race.js",
     "performance": "tools/rf-debug-center/rf-debug-center-performance.js",
     "selection": "tools/rf-debug-center/rf-debug-center-selection.js",
+    "domScanner": "tools/rf-debug-center/rf-debug-center-dom-scanner.js",
+    "domScannerView": "tools/rf-debug-center/rf-debug-center-dom-scanner-view.js",
+    "apiDomScanner": "tools/rf-debug-center/rf-debug-center-api-dom-scanner.js",
     "network": "tools/rf-debug-center/rf-debug-center-network.js",
     "visualEvidence": "tools/rf-debug-center/rf-debug-center-visual-evidence.js",
     "visualEvidenceView": "tools/rf-debug-center/rf-debug-center-visual-evidence-view.js",
@@ -146,6 +149,16 @@
       "forbiddenWriters": ["tools/rf-debug-center/rf-debug-center-view.js", "tools/rf-debug-center/rf-debug-center.js"],
       "publicAPI": ["buildNetworkSnapshot", "refreshNetworkSnapshot", "clearNetworkSnapshot", "copyNetworkJSON", "installNetworkObserver", "uninstallNetworkObserver"],
       "invariants": ["passthrough perfect", "sanitized evidence", "no payload mutation", "no response mutation", "no fetch interception when inactive"]
+    },
+    {
+      "name": "domScanner",
+      "source": "rf-debug-center-dom-scanner.js",
+      "owner": "debug-center",
+      "onlyWriter": "tools/rf-debug-center/rf-debug-center-store.js",
+      "readers": ["tools/rf-debug-center/rf-debug-center-store.js", "tools/rf-debug-center/rf-debug-center-view.js", "tools/rf-debug-center/rf-debug-center-dom-scanner-view.js", "tools/rf-debug-center/rf-debug-center-bundle.js", "tools/rf-debug-center/rf-debug-center-warnings.js", "reportforge/tests/rf_debug_center_dom_scanner.test.mjs"],
+      "forbiddenWriters": ["tools/rf-debug-center/rf-debug-center-view.js", "tools/rf-debug-center/rf-debug-center.js"],
+      "publicAPI": ["buildDomScanner", "refreshDebugCenterDomScanner", "clearDebugCenterDomScanner", "copyDebugCenterDomScannerJSON"],
+      "invariants": ["read-only", "state-derived", "no mutation of DS", "no mutation of RF_UI_TRACE", "no direct DOM writes"]
     },
     {
       "name": "view",

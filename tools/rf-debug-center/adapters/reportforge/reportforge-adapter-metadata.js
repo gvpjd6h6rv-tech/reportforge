@@ -15,13 +15,17 @@ export const REPORTFORGE_ADAPTER_METADATA = Object.freeze({
   domSelectors: Object.freeze({
     root: '#rf-debug-center-root',
     app: '#app',
+    workspace: '#workspace',
     previewLayer: '#preview-layer',
     previewContent: '#preview-content',
     canvasLayer: '#canvas-layer',
     zoomSlider: '#zw-slider',
     zoomPercent: '#zw-pct',
     zoomToolbar: '#tb-zoom',
-    workspace: '#workspace',
+    selectionLayer: '#handles-layer',
+    selectionBox: '#handles-layer .sel-box',
+    selectionHandles: '#handles-layer .sel-handle',
+    selectionGuides: '#handles-layer .selection-guide',
   }),
   networkPaths: Object.freeze([
     '/designer-preview',
@@ -37,6 +41,7 @@ export const REPORTFORGE_ADAPTER_METADATA = Object.freeze({
   capabilities: Object.freeze([
     'timeline',
     'zoom',
+    'domScanner',
     'selection',
     'renderPreview',
     'asyncRace',

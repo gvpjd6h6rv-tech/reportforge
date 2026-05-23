@@ -103,6 +103,13 @@ test('14. validateReportforgeAdapter reporta valid: true', () => {
   assert.equal(result.valid, true, `validation errors: ${result.errors.join(', ')}`);
 });
 
+test('14a. reportforgeAdapter expone getDomTargets', () => {
+  assert.equal(typeof reportforgeAdapter.getDomTargets, 'function');
+  const targets = reportforgeAdapter.getDomTargets();
+  assert.ok(Array.isArray(targets));
+  assert.ok(targets.some((item) => item.selector === '#zw-slider'));
+});
+
 // ── 6. No globals / no window writes ─────────────────────────────────────────
 
 test('15. los archivos del adapter no escriben window.*', () => {

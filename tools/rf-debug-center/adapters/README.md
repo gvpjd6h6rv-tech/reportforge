@@ -20,6 +20,7 @@ adapters/
 - `ADAPTER_CONTRACT` — frozen object with required fields, required methods, capabilities list, and canonical event schema
 - `validateAdapter(adapter)` — checks an adapter object against the contract. Returns `{ valid, errors }`. Does not throw.
 - `normalizeEventShape(raw)` — converts any raw event to the canonical schema. Missing fields get safe defaults. Does not mutate input.
+- Optional adapter methods may include `getDomSelectors()`, `getDomTargets()`, `getNetworkPaths()`, `getActivationFlags()`, and `dispose()`.
 
 ### Required adapter fields
 

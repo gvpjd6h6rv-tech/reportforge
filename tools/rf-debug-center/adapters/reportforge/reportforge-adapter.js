@@ -37,6 +37,27 @@ function getDomSelectors() {
   return META.domSelectors;
 }
 
+function target(id, selector, label, required = 'always', interactive = false, ownerExpected = null, containerSelector = null) {
+  return { id, selector, label, required, interactive, ownerExpected, containerSelector, unique: true };
+}
+
+function getDomTargets() {
+  const s = META.domSelectors;
+  return [
+    target('debug-center-root', s.root, 'debug center root', 'always', false, 'tools/rf-debug-center/rf-debug-center.js'),
+    target('workspace', s.workspace, 'workspace', 'always', false, 'designer/crystal-reports-designer-v4.html'),
+    target('canvas-layer', s.canvasLayer, 'canvas layer', 'design', false, 'engines/PreviewEngineRenderer.js', s.workspace),
+    target('preview-layer', s.previewLayer, 'preview layer', 'preview', false, 'engines/PreviewEngineRenderer.js', s.workspace),
+    target('preview-content', s.previewContent, 'preview content', 'preview', false, 'engines/PreviewEngineRenderer.js', s.previewLayer),
+    target('tb-zoom', s.zoomToolbar, 'zoom toolbar', 'always', false, 'engines/ZoomEngine.js'),
+    target('zw-slider', s.zoomSlider, 'zoom slider', 'always', true, 'engines/ZoomEngine.js', s.zoomToolbar),
+    target('zw-pct', s.zoomPercent, 'zoom percent', 'always', false, 'engines/ZoomEngine.js', s.zoomToolbar),
+    target('selection-box', s.selectionBox, 'selection box', 'active', false, 'engines/SelectionOverlay.js', s.selectionLayer),
+    target('selection-handles', s.selectionHandles, 'selection handles', 'active', true, 'engines/SelectionOverlay.js', s.selectionLayer),
+    target('selection-guides', s.selectionGuides, 'selection guides', 'active', false, 'engines/SelectionOverlay.js', s.selectionLayer),
+  ];
+}
+
 function getNetworkPaths() {
   return META.networkPaths;
 }
@@ -73,6 +94,7 @@ export const reportforgeAdapter = Object.freeze({
   getOwnershipMap,
   getEnvironment,
   getDomSelectors,
+  getDomTargets,
   getNetworkPaths,
   getActivationFlags,
   normalizeEvent,

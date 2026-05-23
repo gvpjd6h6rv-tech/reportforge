@@ -1186,6 +1186,9 @@ test('rf debug center sidecar stays isolated and documented', () => {
   const apiVisualEvidence = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-api-visual-evidence.js'), 'utf8');
   const css = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center.css'), 'utf8');
   const zoom = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-zoom.js'), 'utf8');
+  const domScanner = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-dom-scanner.js'), 'utf8');
+  const domScannerView = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-dom-scanner-view.js'), 'utf8');
+  const apiDomScanner = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-api-dom-scanner.js'), 'utf8');
   const windowWritePattern = /window\.[A-Za-z0-9_]+\s*=(?!=)/;
   const map = JSON.parse(fs.readFileSync(ownershipMapPath, 'utf8'));
   const collectExactWindowWrites = (source) => {
@@ -1206,7 +1209,10 @@ test('rf debug center sidecar stays isolated and documented', () => {
   assert.match(readme, /Z1 Zoom Diagnostics/);
   assert.match(readme, /B1 Debug Bundle Export/);
   assert.match(readme, /W1 Live Warnings/);
-  assert.match(readme, /Z2` - DOM scanner adversarial sandbox, `NOT READY`/);
+  assert.match(readme, /Z2` - DOM scanner adversarial advanced, `LISTO`/);
+  assert.match(readme, /refreshDomScanner\(\)/);
+  assert.match(readme, /clearDomScanner\(\)/);
+  assert.match(readme, /copyDomScannerJSON\(\)/);
   assert.match(readme, /buildZoomDiagnostics\(\)/);
   assert.match(readme, /pauseTimeline\(\)/);
   assert.match(readme, /copyTimelineJSON\(\)/);
@@ -1327,6 +1333,9 @@ test('rf debug center sidecar stays isolated and documented', () => {
   assert.ok(visualEvidenceView.split('\n').length <= 100, 'rf-debug-center-visual-evidence-view.js must stay <= 100 lines');
   assert.ok(apiVisualEvidence.split('\n').length <= 80, 'rf-debug-center-api-visual-evidence.js must stay <= 80 lines');
   assert.ok(zoom.split('\n').length <= 180, 'rf-debug-center-zoom.js must stay <= 180 lines');
+  assert.ok(domScanner.split('\n').length <= 180, 'rf-debug-center-dom-scanner.js must stay <= 180 lines');
+  assert.ok(domScannerView.split('\n').length <= 100, 'rf-debug-center-dom-scanner-view.js must stay <= 100 lines');
+  assert.ok(apiDomScanner.split('\n').length <= 80, 'rf-debug-center-api-dom-scanner.js must stay <= 80 lines');
   assert.ok(css.split('\n').length <= 260, 'rf-debug-center.css must stay <= 260 lines');
   assert.match(bootstrap, /window\.RFDebugCenter\s*=\s*center\.api;/);
   assert.match(api, /export function createDebugCenterApi\(\)/);

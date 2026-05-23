@@ -34,6 +34,9 @@ test('rf debug center warnings classify evidence and dedupe', () => {
   const dom = buildWarningsSnapshot({ traceState: 'present', timeline: { paused: false, total: 1 }, dom: { status: 'error', findings: [{ code: 'duplicate-id' }], owners: ['designer/crystal-reports-designer-v4.html'] }, ownership: { tool: 'RF Debug Center' } });
   assert.equal(dom.warnings[0].ruleId, 'DOM_DIVERGENCE');
 
+  const domScanner = buildWarningsSnapshot({ traceState: 'present', timeline: { paused: false, total: 1 }, domScanner: { status: 'warning', findings: [{ ruleId: 'DOM_TARGET_HIDDEN', selector: '#zw-slider' }], suggestedOwner: 'engines/ZoomEngine.js' }, ownership: { tool: 'RF Debug Center' } });
+  assert.equal(domScanner.warnings.some((item) => item.ruleId === 'DOM_SCANNER_RISK'), true);
+
   const ownership = buildWarningsSnapshot({ traceState: 'present', timeline: { paused: false, total: 1 }, ownership: null });
   assert.equal(ownership.warnings[0].ruleId, 'OWNERSHIP_MAP_MISSING');
 

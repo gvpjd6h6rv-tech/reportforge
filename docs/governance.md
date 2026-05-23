@@ -235,7 +235,7 @@ Roadmap completado:
 - `SAP1` adapter mínimo sap_b1_linux read-only — LISTO
 - `SAP2` runtime bridge sap_b1_linux instalación controlada — LISTO
 - `SAP3` repro controlada bug UDF con bundle de evidencia — LISTO
-- `Z2` DOM scanner adversarial sandbox — BACKLOG, NOT READY
+- `Z2` DOM scanner adversarial advanced — LISTO
 
 - `SAP4` parche mínimo UDF_CHILD_STALE + CREATE_MODE_DIRTY — LISTO
 
