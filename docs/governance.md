@@ -230,6 +230,7 @@ Roadmap completado:
 - `R1` render/preview engine — LISTO
 - `V1` visual evidence / screenshots — LISTO
 - `F1` final hardening — LISTO
+- `X1` causal intelligence / invariant engine — LISTO
 - `PORT0` adapter boundary / core contract — LISTO
 - `SAP0` discovery sap_b1_linux — LISTO
 - `SAP1` adapter mínimo sap_b1_linux read-only — LISTO

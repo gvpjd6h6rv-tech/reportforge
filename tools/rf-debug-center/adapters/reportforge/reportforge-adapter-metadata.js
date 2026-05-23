@@ -49,6 +49,7 @@ export const REPORTFORGE_ADAPTER_METADATA = Object.freeze({
     'network',
     'performance',
     'warnings',
+    'causalIntelligence',
     'visualEvidence',
     'bundle',
   ]),

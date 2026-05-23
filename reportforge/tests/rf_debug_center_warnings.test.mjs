@@ -37,6 +37,12 @@ test('rf debug center warnings classify evidence and dedupe', () => {
   const domScanner = buildWarningsSnapshot({ traceState: 'present', timeline: { paused: false, total: 1 }, domScanner: { status: 'warning', findings: [{ ruleId: 'DOM_TARGET_HIDDEN', selector: '#zw-slider' }], suggestedOwner: 'engines/ZoomEngine.js' }, ownership: { tool: 'RF Debug Center' } });
   assert.equal(domScanner.warnings.some((item) => item.ruleId === 'DOM_SCANNER_RISK'), true);
 
+  const causalBug = buildWarningsSnapshot({ traceState: 'present', timeline: { paused: false, total: 1 }, causalIntelligence: { status: 'warning', summary: { bugsSuspected: 1, critical: 0, warnings: 1, unknown: 0, evidenceChains: 1 }, diagnoses: [{ bugFamily: 'ui-dom', invariant: 'DOM_BLOCKED_BUT_CONTROL_INTERACTIVE', ownerExpected: 'engines/ZoomEngine.js', evidence: ['DOM_TARGET_HIDDEN'] }], unknowns: [] }, ownership: { tool: 'RF Debug Center' } });
+  assert.equal(causalBug.warnings.some((item) => item.ruleId === 'CAUSAL_BUG_SUSPECTED'), true);
+
+  const causalUnknown = buildWarningsSnapshot({ traceState: 'present', timeline: { paused: false, total: 1 }, causalIntelligence: { status: 'info', summary: { bugsSuspected: 0, critical: 0, warnings: 0, unknown: 1, evidenceChains: 0 }, diagnoses: [], unknowns: [{ id: 'unknown:1', message: 'UNKNOWN / INSUFFICIENT_EVIDENCE: gap' }] }, ownership: { tool: 'RF Debug Center' } });
+  assert.equal(causalUnknown.warnings.some((item) => item.ruleId === 'CAUSAL_UNKNOWN_EVIDENCE_GAP'), true);
+
   const ownership = buildWarningsSnapshot({ traceState: 'present', timeline: { paused: false, total: 1 }, ownership: null });
   assert.equal(ownership.warnings[0].ruleId, 'OWNERSHIP_MAP_MISSING');
 

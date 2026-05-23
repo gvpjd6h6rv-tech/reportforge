@@ -34,6 +34,7 @@ Roadmap:
 - `R1` - render / preview engine, `LISTO`
 - `V1` - visual evidence / screenshots, `LISTO`
 - `F1` - final hardening, `LISTO`
+- `X1` - causal intelligence / invariant engine, `LISTO`
 - `PORT0` - adapter boundary / core contract, `LISTO`
 - `SAP0` - discovery sap_b1_linux architecture, `LISTO`
 - `SAP1` - adapter mínimo sap_b1_linux read-only, `LISTO`
@@ -240,6 +241,33 @@ Warnings carry:
 The warnings panel deduplicates by fingerprint and keeps the evidence compact.
 `clearWarnings()` only clears the sidecar's internal warning snapshot; it does
 not clear `RF_UI_TRACE`.
+
+## X1 Causal Intelligence
+
+`X1` correlates the existing sidecar snapshots into causal diagnoses and
+invariant checks. It does not inspect product state directly when a snapshot is
+already available, and it never mutates `DS`, `RF_UI_TRACE`, or the DOM.
+
+Public causal-intelligence actions:
+
+- `refreshCausalIntelligence()`
+- `clearCausalIntelligence()`
+- `copyCausalIntelligenceJSON()`
+
+The causal snapshot includes:
+
+- `diagnoses` with bug family, layer, owner expected, writer actual, and
+  confidence
+- `evidenceChains` built from timestamp and selector/request/render correlation
+- `invariants` and ownership violations
+- `unknowns` when evidence is insufficient
+
+The engine is intentionally conservative:
+
+- it reports `UNKNOWN / INSUFFICIENT_EVIDENCE` when the chain is incomplete
+- it never invents a culprit
+- it never suggests a patch before evidence is enough
+- it requires at least two independent sources before claiming high confidence
 
 ## L1 Loop & Freeze Engine
 

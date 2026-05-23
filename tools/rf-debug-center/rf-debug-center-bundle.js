@@ -80,13 +80,13 @@ function flags(win) {
   try { local = win?.localStorage?.getItem('RF_DEBUG_CENTER') === '1'; } catch (_) {}
   return { query: search.get('rfDebugCenter') === '1' || search.has('rfDebugCenter'), localStorage: local, debugTrace: win?.RF_DEBUG_TRACE === true };
 }
-function buildGovernance() { return { roadmap: ['H1 LISTO', 'E1 LISTO', 'T1 LISTO', 'Z1 LISTO', 'D1 LISTO', 'B1 LISTO', 'W1 LISTO', 'L1 LISTO', 'P1 LISTO', 'A1 LISTO', 'N1 LISTO', 'S1 LISTO', 'R1 LISTO', 'V1 LISTO', 'F1 LISTO', 'Z2 LISTO'], backlog: ['Z2 sandbox histórico superado'], roadmapLevels: ['L1', 'P1', 'A1', 'N1', 'S1', 'R1', 'V1', 'F1'] }; }
+function buildGovernance() { return { roadmap: ['H1 LISTO', 'E1 LISTO', 'T1 LISTO', 'Z1 LISTO', 'D1 LISTO', 'B1 LISTO', 'W1 LISTO', 'L1 LISTO', 'P1 LISTO', 'A1 LISTO', 'N1 LISTO', 'S1 LISTO', 'R1 LISTO', 'V1 LISTO', 'F1 LISTO', 'Z2 LISTO', 'X1 LISTO'], backlog: ['Z2 sandbox histórico superado'], roadmapLevels: ['L1', 'P1', 'A1', 'N1', 'S1', 'R1', 'V1', 'F1'] }; }
 export function buildDebugBundle({ state = null, traceApi = null, doc = typeof document !== 'undefined' ? document : null, win = typeof window !== 'undefined' ? window : null, ownership = null } = {}) {
   const build = win?.RF_BUILD_INFO || null;
   const zoom = sanitize(state?.zoom || null);
   const timeline = sanitize(state?.timeline || null);
   const selection = sanitize(state?.selection || null);
-  const dom = sanitize(state?.dom || criticalDom(doc)); const domScanner = sanitize(state?.domScanner || null);
+  const dom = sanitize(state?.dom || criticalDom(doc)); const domScanner = sanitize(state?.domScanner || null); const causalIntelligence = sanitize(state?.causalIntelligence || null);
   const trace = traceSummary(traceApi || win?.RF_UI_TRACE || null);
   const ownershipSnapshot = sanitize(ownership || win?.RFDebugCenter?.ownership || null);
   const session = {
@@ -125,7 +125,7 @@ export function buildDebugBundle({ state = null, traceApi = null, doc = typeof d
     loopFreeze: sanitize(state?.loopFreeze || null),
     network: sanitize(state?.network || null),
     performance: sanitize(state?.performance || null),
-    dom, domScanner,
+    dom, domScanner, causalIntelligence,
     warnings: sanitize(state?.warnings || null),
     visualEvidence: sanitize(state?.visualEvidence ? { status: state.visualEvidence.status, total: state.visualEvidence.total, lastCaptureAt: state.visualEvidence.lastCaptureAt, capabilities: state.visualEvidence.capabilities, records: (state.visualEvidence.records || []).map((r) => ({ ...r, dataUrl: null })) } : null),
     ownership: ownershipSnapshot,

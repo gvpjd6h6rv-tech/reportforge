@@ -1189,6 +1189,9 @@ test('rf debug center sidecar stays isolated and documented', () => {
   const domScanner = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-dom-scanner.js'), 'utf8');
   const domScannerView = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-dom-scanner-view.js'), 'utf8');
   const apiDomScanner = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-api-dom-scanner.js'), 'utf8');
+  const causalIntelligence = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-causal-intelligence.js'), 'utf8');
+  const causalIntelligenceView = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-causal-intelligence-view.js'), 'utf8');
+  const apiCausalIntelligence = fs.readFileSync(path.join(ROOT, 'tools/rf-debug-center/rf-debug-center-api-causal-intelligence.js'), 'utf8');
   const windowWritePattern = /window\.[A-Za-z0-9_]+\s*=(?!=)/;
   const map = JSON.parse(fs.readFileSync(ownershipMapPath, 'utf8'));
   const collectExactWindowWrites = (source) => {
@@ -1210,9 +1213,13 @@ test('rf debug center sidecar stays isolated and documented', () => {
   assert.match(readme, /B1 Debug Bundle Export/);
   assert.match(readme, /W1 Live Warnings/);
   assert.match(readme, /Z2` - DOM scanner adversarial advanced, `LISTO`/);
+  assert.match(readme, /X1` - causal intelligence \/ invariant engine, `LISTO`/);
   assert.match(readme, /refreshDomScanner\(\)/);
   assert.match(readme, /clearDomScanner\(\)/);
   assert.match(readme, /copyDomScannerJSON\(\)/);
+  assert.match(readme, /refreshCausalIntelligence\(\)/);
+  assert.match(readme, /clearCausalIntelligence\(\)/);
+  assert.match(readme, /copyCausalIntelligenceJSON\(\)/);
   assert.match(readme, /buildZoomDiagnostics\(\)/);
   assert.match(readme, /pauseTimeline\(\)/);
   assert.match(readme, /copyTimelineJSON\(\)/);
@@ -1276,6 +1283,7 @@ test('rf debug center sidecar stays isolated and documented', () => {
   assert.ok(map.subsystems.some((subsystem) => subsystem.name === 'bundle'), 'ownership map must include bundle subsystem');
   assert.ok(map.subsystems.some((subsystem) => subsystem.name === 'warnings'), 'ownership map must include warnings subsystem');
   assert.ok(map.subsystems.some((subsystem) => subsystem.name === 'visualEvidence'), 'ownership map must include visualEvidence subsystem');
+  assert.ok(map.subsystems.some((subsystem) => subsystem.name === 'causalIntelligence'), 'ownership map must include causalIntelligence subsystem');
   for (const subsystem of map.subsystems) {
     assert.ok(subsystem.name, 'subsystem.name missing');
     assert.ok(subsystem.owner, `subsystem owner missing for ${subsystem.name}`);
@@ -1304,6 +1312,9 @@ test('rf debug center sidecar stays isolated and documented', () => {
   assert.equal(map.ssot.selection, 'tools/rf-debug-center/rf-debug-center-selection.js');
   assert.equal(map.ssot.renderPreview, 'tools/rf-debug-center/rf-debug-center-render-preview.js');
   assert.equal(map.ssot.network, 'tools/rf-debug-center/rf-debug-center-network.js');
+  assert.equal(map.ssot.causalIntelligence, 'tools/rf-debug-center/rf-debug-center-causal-intelligence.js');
+  assert.equal(map.ssot.causalIntelligenceView, 'tools/rf-debug-center/rf-debug-center-causal-intelligence-view.js');
+  assert.equal(map.ssot.apiCausalIntelligence, 'tools/rf-debug-center/rf-debug-center-api-causal-intelligence.js');
   assert.equal(map.ssot.style, 'tools/rf-debug-center/rf-debug-center.css');
   assert.ok(bootstrap.split('\n').length <= 180, 'rf-debug-center.js must stay <= 180 lines');
   assert.ok(api.split('\n').length <= 180, 'rf-debug-center-api.js must stay <= 180 lines');
@@ -1336,6 +1347,9 @@ test('rf debug center sidecar stays isolated and documented', () => {
   assert.ok(domScanner.split('\n').length <= 180, 'rf-debug-center-dom-scanner.js must stay <= 180 lines');
   assert.ok(domScannerView.split('\n').length <= 100, 'rf-debug-center-dom-scanner-view.js must stay <= 100 lines');
   assert.ok(apiDomScanner.split('\n').length <= 80, 'rf-debug-center-api-dom-scanner.js must stay <= 80 lines');
+  assert.ok(causalIntelligence.split('\n').length <= 180, 'rf-debug-center-causal-intelligence.js must stay <= 180 lines');
+  assert.ok(causalIntelligenceView.split('\n').length <= 100, 'rf-debug-center-causal-intelligence-view.js must stay <= 100 lines');
+  assert.ok(apiCausalIntelligence.split('\n').length <= 80, 'rf-debug-center-api-causal-intelligence.js must stay <= 80 lines');
   assert.ok(css.split('\n').length <= 260, 'rf-debug-center.css must stay <= 260 lines');
   assert.match(bootstrap, /window\.RFDebugCenter\s*=\s*center\.api;/);
   assert.match(api, /export function createDebugCenterApi\(\)/);
@@ -1364,6 +1378,9 @@ test('rf debug center sidecar stays isolated and documented', () => {
   assert.doesNotMatch(visualEvidence, windowWritePattern);
   assert.doesNotMatch(visualEvidenceView, windowWritePattern);
   assert.doesNotMatch(apiVisualEvidence, windowWritePattern);
+  assert.doesNotMatch(causalIntelligence, windowWritePattern);
+  assert.doesNotMatch(causalIntelligenceView, windowWritePattern);
+  assert.doesNotMatch(apiCausalIntelligence, windowWritePattern);
   assert.doesNotMatch(viewSections, windowWritePattern);
   assert.doesNotMatch(safeJson, windowWritePattern);
   assert.doesNotMatch(zoom, windowWritePattern);
@@ -1378,6 +1395,7 @@ test('rf debug center sidecar stays isolated and documented', () => {
   assert.match(governance, /State & Ownership Engine/);
   assert.match(governance, /Network\/Backend Engine/);
   assert.match(governance, /DOM\/Visual Engine/);
+  assert.match(governance, /X1.*LISTO/);
   assert.match(governance, /"engine": "loop\|performance\|async\|state\|network\|dom"/);
 });
 

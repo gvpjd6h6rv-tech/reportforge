@@ -5,6 +5,7 @@ import { renderNetworkPanel } from './rf-debug-center-network-view.js';
 import { renderLoopFreezePanel } from './rf-debug-center-loop-freeze-view.js';
 import { renderSelectionPanel } from './rf-debug-center-selection-view.js';
 import { renderDomScannerPanel } from './rf-debug-center-dom-scanner-view.js';
+import { renderCausalIntelligencePanel } from './rf-debug-center-causal-intelligence-view.js';
 import { renderRenderPreviewPanel } from './rf-debug-center-render-preview-view.js';
 import { renderWarningsPanel } from './rf-debug-center-warnings-view.js';
 import { renderVisualEvidencePanel } from './rf-debug-center-visual-evidence-view.js';
@@ -44,6 +45,7 @@ export function mountDebugCenter(host) {
       <section class="rf-debug-center__panel" id="rf-debug-center-async-race-panel"></section>
       <section class="rf-debug-center__panel" id="rf-debug-center-loop-freeze-panel"></section>
       <section class="rf-debug-center__panel" id="rf-debug-center-dom-scanner-panel"></section>
+      <section class="rf-debug-center__panel" id="rf-debug-center-causal-intelligence-panel"></section>
       <section class="rf-debug-center__panel"><h3>Ownership</h3><div id="rf-debug-center-ownership"></div></section>
       <section class="rf-debug-center__panel"><h3>Bundle</h3><div class="rf-debug-center-bundle"><div class="rf-debug-center-bundle__status" id="rf-debug-center-bundle-status">idle</div><div class="rf-debug-center-bundle__meta" id="rf-debug-center-bundle-meta"></div><div class="rf-debug-center-bundle__actions"><button type="button" id="rf-debug-center-bundle-export">Export Bundle</button><button type="button" id="rf-debug-center-bundle-copy">Copy Bundle JSON</button></div><div id="rf-debug-center-bundle-body"></div></div></section>
       <section class="rf-debug-center__panel" id="rf-debug-center-performance-panel"></section>
@@ -60,6 +62,7 @@ export function renderDebugCenter(shadow, state, actions = {}) {
   renderDebugCenterSections(shadow, state, actions);
   renderSelectionPanel(shadow, state.selection || {}, actions);
   renderDomScannerPanel(shadow, state.domScanner || {}, actions);
+  renderCausalIntelligencePanel(shadow, state.causalIntelligence || {}, actions);
   renderRenderPreviewPanel(shadow, state.renderPreview || {}, actions);
   renderAsyncRacePanel(shadow, state.asyncRace || {}, actions);
   renderPerformancePanel(shadow, state.performance || {}, actions);
