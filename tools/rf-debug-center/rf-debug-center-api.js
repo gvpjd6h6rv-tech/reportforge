@@ -27,6 +27,7 @@ import { installNetworkObserver, uninstallNetworkObserver } from './rf-debug-cen
 import { applySelectionApi } from './rf-debug-center-api-selection.js'; import { applyRenderPreviewApi } from './rf-debug-center-api-render-preview.js';
 import { applyVisualEvidenceApi } from './rf-debug-center-api-visual-evidence.js'; import { applyDomScannerApi } from './rf-debug-center-api-dom-scanner.js'; import { applyCausalIntelligenceApi } from './rf-debug-center-api-causal-intelligence.js';
 import { mountDebugCenter, renderDebugCenter } from './rf-debug-center-view.js';
+import { createDetachedDebugCenterWindow } from './rf-debug-center-detached-window.js';
 const OWNERSHIP_MAP = Object.freeze({
   tool: 'RF Debug Center',
   version: 1,
@@ -77,7 +78,7 @@ export function createDebugCenterApi() {
   const state = {
     enabled: false, activation: 'disabled', host: null, shadow: null, timer: null,
     lastModel: null, ownership: OWNERSHIP_MAP, bundle: { status: 'idle', message: 'idle', filename: null, updatedAt: null },
-    bundlePreview: null, actions: null, draggable: null,
+    bundlePreview: null, actions: null, draggable: null, detachedWindow: null,
   };
   function applyModel() {
     state.lastModel = readDebugCenterState({ enabled: state.enabled, activation: state.activation, bundle: state.bundle });
@@ -87,6 +88,7 @@ export function createDebugCenterApi() {
     if (state.shadow) renderDebugCenter(state.shadow, state.lastModel, state.actions || {});
     return state.lastModel;
   }
+  function currentModel() { return state.lastModel || applyModel(); }
   function ensureHost() {
     if (state.host) return state.host;
     const host = document.createElement('div');
@@ -139,6 +141,7 @@ export function createDebugCenterApi() {
     installNetworkObserver(window);
     if (!state.timer) state.timer = window.setInterval(() => { if (state.enabled) applyModel(); }, 150);
     applyModel();
+    state.detachedWindow?.sync();
     return true;
   }
   function stop() {
@@ -146,11 +149,12 @@ export function createDebugCenterApi() {
     uninstallPerformanceObservers(window);
     uninstallNetworkObserver(window);
     if (state.timer) { window.clearInterval(state.timer); state.timer = null; }
+    state.detachedWindow?.close();
     if (state.host) { state.host.classList.remove('is-on'); state.host.remove(); state.host = null; state.shadow = null; state.draggable = null; }
     return true;
   }
   function toggle(force) { return typeof force === 'boolean' ? (force ? start() : stop()) : (state.enabled ? stop() : start()); }
-  function refresh() { if (!state.enabled) return applyModel(); syncHostLayout(); return applyModel(); }
+  function refresh() { if (!state.enabled) return applyModel(); syncHostLayout(); const model = applyModel(); state.detachedWindow?.sync(); return model; }
   function pauseTimeline() { pauseDebugCenterTimeline(); return applyModel(); }
   function resumeTimeline() { resumeDebugCenterTimeline(); return applyModel(); }
   function clearTimeline() { clearDebugCenterTimeline(); return applyModel(); }
@@ -176,6 +180,7 @@ export function createDebugCenterApi() {
     const result = exportDebugBundle(bundle, { doc: document, win: window, filename: createBundleFilename(new Date(bundle.generatedAt)) });
     state.bundle = { status: result.ok ? 'exported' : 'error', message: result.ok ? 'exported' : (result.error || 'export failed'), filename: result.filename || null, updatedAt: bundle.generatedAt };
     applyModel();
+    state.detachedWindow?.sync();
     return result;
   }
   async function copyBundleJSON() {
@@ -183,8 +188,14 @@ export function createDebugCenterApi() {
     const json = await copyDebugBundleJSON(bundle, { win: window });
     state.bundle = { status: 'copied', message: 'copied', filename: null, updatedAt: bundle.generatedAt };
     applyModel();
+    state.detachedWindow?.sync();
     return json;
   }
+  state.detachedWindow = createDetachedDebugCenterWindow(window, {
+    getState: currentModel,
+    buildBundle,
+    copyBundleJSON,
+  });
   const api = {
     get enabled() { return state.enabled; },
     get activation() { return state.activation; },
@@ -198,12 +209,16 @@ export function createDebugCenterApi() {
   refreshNetwork: () => { refreshDebugCenterNetwork(window.RF_UI_TRACE, state.bundle, state.enabled); return applyModel(); },
   clearNetwork: () => { clearDebugCenterNetwork(); return applyModel(); },
   copyNetworkJSON: copyDebugCenterNetworkJSON,
-  refreshWarnings: () => refreshDebugCenterWarnings(window.RF_UI_TRACE, state.bundle),
-  clearWarnings: clearDebugCenterWarnings, copyWarningsJSON: copyDebugCenterWarningsJSON,
-  buildBundle, exportBundle, copyBundleJSON,
+    refreshWarnings: () => refreshDebugCenterWarnings(window.RF_UI_TRACE, state.bundle),
+    clearWarnings: clearDebugCenterWarnings, copyWarningsJSON: copyDebugCenterWarningsJSON,
+    buildBundle, exportBundle, copyBundleJSON,
+    openDetachedWindow: () => state.detachedWindow.open(),
+    closeDetachedWindow: () => state.detachedWindow.close(),
+    syncDetachedWindow: () => state.detachedWindow.sync(),
+    getDetachedWindowState: () => state.detachedWindow.getState(),
   };
   Object.defineProperty(api, 'ownership', { enumerable: true, get() { return state.ownership; } });
-  state.actions = { refreshTimeline: refresh, refresh, resetPosition, pauseTimeline, resumeTimeline, clearTimeline, copyTimelineJSON, refreshLoopFreeze, clearLoopFreeze, copyLoopFreezeJSON, refreshPerformance, clearPerformance, copyPerformanceJSON, refreshAsyncRace, clearAsyncRace, copyAsyncRaceJSON: copyAsyncRaceJSONPublic, refreshNetwork: () => { refreshDebugCenterNetwork(window.RF_UI_TRACE, state.bundle, state.enabled); return applyModel(); }, clearNetwork: () => { clearDebugCenterNetwork(); return applyModel(); }, copyNetworkJSON: copyDebugCenterNetworkJSON, refreshWarnings: () => refreshDebugCenterWarnings(window.RF_UI_TRACE, state.bundle), clearWarnings: clearDebugCenterWarnings, copyWarningsJSON: copyDebugCenterWarningsJSON, buildBundle, exportBundle, copyBundleJSON };
+  state.actions = { refreshTimeline: refresh, refresh, resetPosition, pauseTimeline, resumeTimeline, clearTimeline, copyTimelineJSON, refreshLoopFreeze, clearLoopFreeze, copyLoopFreezeJSON, refreshPerformance, clearPerformance, copyPerformanceJSON, refreshAsyncRace, clearAsyncRace, copyAsyncRaceJSON: copyAsyncRaceJSONPublic, refreshNetwork: () => { refreshDebugCenterNetwork(window.RF_UI_TRACE, state.bundle, state.enabled); return applyModel(); }, clearNetwork: () => { clearDebugCenterNetwork(); return applyModel(); }, copyNetworkJSON: copyDebugCenterNetworkJSON, refreshWarnings: () => refreshDebugCenterWarnings(window.RF_UI_TRACE, state.bundle), clearWarnings: clearDebugCenterWarnings, copyWarningsJSON: copyDebugCenterWarningsJSON, buildBundle, exportBundle, copyBundleJSON, openDetachedWindow: () => state.detachedWindow.open(), closeDetachedWindow: () => state.detachedWindow.close(), syncDetachedWindow: () => state.detachedWindow.sync(), getDetachedWindowState: () => state.detachedWindow.getState() };
   window.addEventListener('resize', () => { syncHostLayout(); });
   applySelectionApi(api, state, applyModel); applyRenderPreviewApi(api, state, applyModel); applyVisualEvidenceApi(api, state, applyModel); applyDomScannerApi(api, state, applyModel); applyCausalIntelligenceApi(api, state, applyModel);
   return { state, api };
