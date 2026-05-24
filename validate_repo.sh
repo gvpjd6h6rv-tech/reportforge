@@ -81,9 +81,12 @@ hdr "Python Unit Tests"
 
 if [[ "$QUICK" != "--quick" ]]; then
   cd "$ROOT"
+  set +e
   TEST_OUT=$(python3 -m unittest discover -s reportforge/tests -p "test_*.py" 2>&1)
+  TEST_EXIT=$?
+  set -e
   TEST_SUMMARY=$(echo "$TEST_OUT" | tail -3)
-  if echo "$TEST_SUMMARY" | grep -qE "^OK"; then
+  if [[ "$TEST_EXIT" -eq 0 ]] && echo "$TEST_SUMMARY" | grep -qE "^OK"; then
     TOTAL=$(echo "$TEST_SUMMARY" | grep -oE "Ran [0-9]+" | awk '{print $2}')
     SKIP_CNT=$(echo "$TEST_SUMMARY" | grep -oE "skipped=[0-9]+" | grep -oE "[0-9]+")
     ok "Unit tests: ${TOTAL:-?} passed${SKIP_CNT:+, $SKIP_CNT skipped}"
@@ -91,7 +94,7 @@ if [[ "$QUICK" != "--quick" ]]; then
     FAIL_CNT=$(echo "$TEST_SUMMARY" | grep -oE "failures=[0-9]+" | grep -oE "[0-9]+")
     ERR_CNT=$(echo "$TEST_SUMMARY" | grep -oE "errors=[0-9]+" | grep -oE "[0-9]+")
     fail "Unit tests" "failures=${FAIL_CNT:-0} errors=${ERR_CNT:-0}"
-    echo "$TEST_OUT" | grep -E "^(FAIL|ERROR):" | head -10
+    echo "$TEST_OUT" | grep -E "^(FAIL|ERROR):" | head -10 || true
   fi
 else
   skip "Unit tests (--quick mode)"
