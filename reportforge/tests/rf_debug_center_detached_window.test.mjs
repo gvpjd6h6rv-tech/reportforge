@@ -42,6 +42,24 @@ test('rf debug center detached window opens a real browser window contract', { t
     }));
     assert.equal(surface.buttonExists, true);
     assert.deepEqual(surface.api, { open: true, close: true, sync: true, state: true });
+    const visualDoctorLive = await page.evaluate(() => {
+      const model = window.RFDebugCenter?.getState?.()?.visualDoctor;
+      return {
+        exists: !!model,
+        schema: model?.schema || null,
+        safety: model?.safety || null,
+        counts: model?.counts || null,
+        status: window.RFDebugCenter?.getState?.()?.visualDoctorStatus || null,
+      };
+    });
+    assert.equal(visualDoctorLive.exists, true);
+    assert.equal(visualDoctorLive.schema, 'rf-debug-visual-doctor/v1');
+    assert.equal(visualDoctorLive.safety?.readOnly, true);
+    assert.equal(visualDoctorLive.safety?.writesFiles, false);
+    assert.equal(visualDoctorLive.safety?.autopatch, false);
+    assert.equal(typeof visualDoctorLive.counts?.selectors, 'number');
+    assert.equal(visualDoctorLive.status?.available, true);
+
     assert.equal(surface.uniqueGlobal, true);
 
     const baseline = await page.evaluate(() => ({
