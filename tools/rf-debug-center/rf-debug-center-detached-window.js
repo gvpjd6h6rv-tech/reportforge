@@ -283,6 +283,109 @@ function buildDashboard(data) {
     </section>`;
 }
 
+
+function pickVisualDoctorModel(data) {
+  return (
+    data.raw?.visualDoctor ||
+    data.raw?.rfVisualDoctor ||
+    data.raw?.visualEvidence?.visualDoctor ||
+    data.raw?.visualEvidence ||
+    null
+  );
+}
+
+function visualCount(model, key) {
+  const value = model?.[key];
+  if (Array.isArray(value)) return value.length;
+  if (Array.isArray(value?.items)) return value.items.length;
+  if (Array.isArray(value?.entries)) return value.entries.length;
+  if (Array.isArray(value?.findings)) return value.findings.length;
+  return 0;
+}
+
+function buildVisualDoctorTab(data) {
+  const model = pickVisualDoctorModel(data);
+  const hasModel = !!model && typeof model === 'object' && Object.keys(model).length > 0;
+  const counts = {
+    selectors: visualCount(model, 'selectors'),
+    snapshots: visualCount(model, 'snapshots'),
+    findings: visualCount(model, 'findings'),
+    baseline: visualCount(model, 'baselineResults'),
+    components: visualCount(model, 'components'),
+  };
+
+  const safety = model?.safety || {
+    readOnly: true,
+    embedsScreenshots: false,
+    writesFiles: false,
+    autopatch: false,
+  };
+
+  const status = hasModel ? 'live model available' : 'core installed / no live model yet';
+  const findingPreview = Array.isArray(model?.findings) && model.findings.length
+    ? model.findings.slice(0, 8).map((finding) => `
+      <div class="rf-visual-finding">
+        <b>${esc(finding.type || finding.kind || 'VISUAL_FINDING')}</b>
+        <span>${esc(finding.severity || 'CANDIDATE')}</span>
+        <small>${esc(finding.affectedElement || finding.selector || finding.affectedLabel || 'unknown')}</small>
+      </div>
+    `).join('')
+    : '<div class="rf-empty">No visual findings loaded in detached model.</div>';
+
+  return `
+    <section class="rf-visual-grid">
+      <section class="panel rf-visual-hero">
+        <h2>RF VISUAL DOCTOR CSS</h2>
+        <p class="rf-muted">Visual diagnostics, CSSOM evidence, safe forensic bundle and runtime-only repair path.</p>
+        <div class="rf-pill-grid">
+          <span class="${hasModel ? 'ok' : 'off'}">${esc(status)}</span>
+          <span>schema: ${esc(model?.schema || 'rf-debug-visual-doctor/v1')}</span>
+        </div>
+        <div class="rf-two">
+          ${row('selectors', counts.selectors, 'cyan')}
+          ${row('snapshots', counts.snapshots, 'cyan')}
+          ${row('components', counts.components, 'cyan')}
+          ${row('findings', counts.findings, counts.findings ? 'orange' : 'green')}
+          ${row('baseline sections', counts.baseline, counts.baseline ? 'yellow' : 'cyan')}
+          ${row('generated', model?.generatedAt || 'pending', 'cyan')}
+        </div>
+      </section>
+
+      <section class="panel rf-visual-guard">
+        <h2>VISUAL REGRESSION GUARD</h2>
+        <div class="rf-guard-steps">
+          <div><b>1</b><span>Baseline por pantalla</span></div>
+          <div><b>2</b><span>Comparación nueva corrida vs baseline</span></div>
+          <div><b>3</b><span>Histórico por commit/browser/viewport</span></div>
+          <div><b>4</b><span>Ranking de regresiones</span></div>
+          <div><b>5</b><span>Artifact JSON seguro</span></div>
+        </div>
+      </section>
+
+      <section class="panel rf-visual-safety">
+        <h2>SAFETY CONTRACT</h2>
+        <div class="rf-list">
+          ${row('read only', safety.readOnly !== false ? 'yes' : 'no', safety.readOnly !== false ? 'green' : 'orange')}
+          ${row('embeds screenshots', safety.embedsScreenshots ? 'yes' : 'no', safety.embedsScreenshots ? 'orange' : 'green')}
+          ${row('writes files', safety.writesFiles ? 'yes' : 'no', safety.writesFiles ? 'orange' : 'green')}
+          ${row('autopatch', safety.autopatch ? 'yes' : 'no', safety.autopatch ? 'orange' : 'green')}
+          ${row('rollback required', 'VD3', 'yellow')}
+        </div>
+      </section>
+
+      <section class="panel rf-visual-findings">
+        <h2>FINDINGS PREVIEW</h2>
+        ${findingPreview}
+      </section>
+
+      <section class="panel raw-panel rf-visual-json">
+        <h2>VISUAL MODEL JSON</h2>
+        <pre>${esc(safeJson(model || { status }))}</pre>
+      </section>
+    </section>`;
+}
+
+
 function buildHtml(payload) {
   const data = normalizeModel(payload.model, payload.bundle);
   const tabs = [
@@ -648,7 +751,7 @@ footer{
       ${tabSection('Performance', `<section class="panel raw-panel"><h2>PERFORMANCE</h2><pre>${esc(safeJson(data.raw?.performance || {}))}</pre></section>`)}
       ${tabSection('Render', `<section class="panel raw-panel"><h2>RENDER</h2><pre>${esc(safeJson(data.raw?.renderPreview || {}))}</pre></section>`)}
       ${tabSection('Selection', `<section class="panel raw-panel"><h2>SELECTION</h2><pre>${esc(safeJson(data.raw?.selection || {}))}</pre></section>`)}
-      ${tabSection('Visual', `<section class="panel raw-panel"><h2>VISUAL</h2><pre>${esc(safeJson(data.raw?.visualEvidence || {}))}</pre></section>`)}
+      ${tabSection('Visual', buildVisualDoctorTab(data))}
     </main>
   </div>
 
