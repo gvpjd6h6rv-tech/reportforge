@@ -294,6 +294,10 @@ function pickVisualDoctorModel(data) {
   );
 }
 
+function pickVisualDoctorPreview(data) {
+  return data.raw?.visualDoctorPreview || null;
+}
+
 function visualCount(model, key) {
   const value = model?.[key];
   if (Array.isArray(value)) return value.length;
@@ -320,6 +324,9 @@ function buildVisualDoctorTab(data) {
     writesFiles: false,
     autopatch: false,
   };
+  const preview = pickVisualDoctorPreview(data);
+  const previewStatus = preview?.status || 'idle';
+  const previewSummary = preview?.summary || 'no runtime preview yet';
 
   const status = hasModel ? 'live model available' : 'core installed / no live model yet';
   const findingPreview = Array.isArray(model?.findings) && model.findings.length
@@ -360,6 +367,16 @@ function buildVisualDoctorTab(data) {
           <div><b>4</b><span>Ranking de regresiones</span></div>
           <div><b>5</b><span>Artifact JSON seguro</span></div>
         </div>
+      </section>
+
+      <section class="panel rf-visual-preview">
+        <h2>RUNTIME PREVIEW</h2>
+        <div class="rf-list">
+          ${row('status', previewStatus, previewStatus === 'simulated' ? 'green' : 'yellow')}
+          ${row('rollback', preview?.result?.rolledBack ? 'ok' : 'pending', preview?.result?.rolledBack ? 'green' : 'yellow')}
+          ${row('summary', previewSummary, 'cyan')}
+        </div>
+        <button class="act refresh" data-act="visual-preview">RUN RUNTIME PREVIEW</button>
       </section>
 
       <section class="panel rf-visual-safety">
@@ -774,6 +791,10 @@ footer{
     if (btn.dataset.act === 'refresh') api.syncDetachedWindow?.();
     if (btn.dataset.act === 'copy') {
       try { await api.copyBundleJSON?.(); } catch (_) {}
+      api.syncDetachedWindow?.();
+    }
+    if (btn.dataset.act === 'visual-preview') {
+      try { api.runVisualDoctorRuntimePreview?.(); } catch (_) {}
       api.syncDetachedWindow?.();
     }
     if (btn.dataset.act === 'close') api.closeDetachedWindow?.();
