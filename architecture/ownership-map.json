@@ -64,7 +64,9 @@
       "requiredPatterns": [
         "RF VISUAL DOCTOR CSS",
         "VISUAL REGRESSION GUARD",
-        "SAFETY CONTRACT"
+        "SAFETY CONTRACT",
+        "data-act=\"visual-preview\"",
+        "runVisualDoctorRuntimePreview"
       ]
     },
     {

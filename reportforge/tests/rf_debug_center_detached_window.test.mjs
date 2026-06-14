@@ -183,6 +183,9 @@ test('rf debug center detached window opens a real browser window contract', { t
     assert.ok(opened.writes[0]?.includes('RF VISUAL DOCTOR CSS'));
     assert.ok(opened.writes[0]?.includes('VISUAL REGRESSION GUARD'));
     assert.ok(opened.writes[0]?.includes('SAFETY CONTRACT'));
+    assert.ok(opened.writes[0]?.includes('RUNTIME PREVIEW'));
+    assert.ok(opened.writes[0]?.includes('data-act="visual-preview"'));
+    assert.ok(opened.writes[0]?.includes('RUN RUNTIME PREVIEW'));
     assert.deepEqual(opened.ds, baseline.ds);
     assert.equal(opened.traceLength, baseline.traceLength);
     assert.equal(opened.fetchCalls, 0);
