@@ -73,6 +73,55 @@ _PAYLOAD = {
 }
 
 
+def _apply_current_invoice_aliases(data: dict) -> dict:
+    """Keep the legacy nested golden payload and add current flat layout aliases."""
+    empresa = data["empresa"]
+    cliente = data["cliente"]
+    fiscal = data["fiscal"]
+    totales = data["totales"]
+
+    data.update({
+        "empresa_razon_social": empresa["razon_social"],
+        "empresa_ruc": empresa["ruc"],
+        "empresa_direccion_matriz": empresa["direccion_matriz"],
+        "empresa_direccion_sucursal": empresa.get("direccion_sucursal", empresa["direccion_matriz"]),
+        "empresa_obligado_contabilidad": empresa.get("obligado_contabilidad", ""),
+        "empresa_agente_retencion": empresa.get("agente_retencion", ""),
+        "empresa_telefono": empresa.get("telefono", ""),
+        "empresa_correo": empresa.get("correo", ""),
+
+        "cliente_razon_social": cliente["razon_social"],
+        "cliente_nombre": cliente["razon_social"],
+        "cliente_identificacion": cliente["identificacion"],
+        "cliente_ruc": cliente["identificacion"],
+        "cliente_direccion": cliente["direccion"],
+        "cliente_email": cliente.get("email", ""),
+
+        "fiscal_ambiente": fiscal["ambiente"],
+        "fiscal_emision": fiscal["tipo_emision"],
+        "fiscal_tipo_emision": fiscal["tipo_emision"],
+        "fiscal_numero_documento": fiscal["numero_documento"],
+        "fiscal_numero_autorizacion": fiscal.get("numero_autorizacion", ""),
+        "fiscal_fecha_autorizacion": fiscal["fecha_autorizacion"],
+        "fiscal_clave_acceso": fiscal.get("clave_acceso", ""),
+
+        "totales_subtotal_15": totales["subtotal"],
+        "totales_subtotal_iva_0": 0.00,
+        "totales_subtotal_no_objeto_iva": 0.00,
+        "totales_subtotal_exento_iva": 0.00,
+        "totales_subtotal_sin_impuestos": totales["subtotal"],
+        "totales_descuento_total": totales["descuento"],
+        "totales_valor_ice": 0.00,
+        "totales_iva_15": totales["iva_12"],
+        "totales_propina": 0.00,
+        "totales_valor_total": totales["total"],
+    })
+    return data
+
+
+_apply_current_invoice_aliases(_PAYLOAD)
+
+
 def _render_html() -> str:
     resolver = FieldResolver(_PAYLOAD)
     layout = default_invoice_layout()
