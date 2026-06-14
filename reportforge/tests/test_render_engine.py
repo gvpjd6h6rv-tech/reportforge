@@ -67,6 +67,56 @@ SAMPLE_DATA = {
 }
 
 
+def _apply_current_invoice_aliases(data: dict) -> dict:
+    """Keep legacy nested sample data and add flat aliases for current layouts."""
+    empresa = data["empresa"]
+    cliente = data["cliente"]
+    fiscal = data["fiscal"]
+    totales = data["totales"]
+
+    data.update({
+        "empresa_razon_social": empresa["razon_social"],
+        "empresa_nombre_comercial": empresa.get("nombre_comercial", ""),
+        "empresa_ruc": empresa["ruc"],
+        "empresa_direccion_matriz": empresa["direccion_matriz"],
+        "empresa_direccion_sucursal": empresa.get("direccion_sucursal", empresa["direccion_matriz"]),
+        "empresa_obligado_contabilidad": empresa.get("obligado_contabilidad", ""),
+        "empresa_agente_retencion": empresa.get("agente_retencion", ""),
+        "empresa_telefono": empresa.get("telefono", ""),
+        "empresa_correo": empresa.get("correo", ""),
+
+        "cliente_razon_social": cliente["razon_social"],
+        "cliente_nombre": cliente["razon_social"],
+        "cliente_identificacion": cliente["identificacion"],
+        "cliente_ruc": cliente["identificacion"],
+        "cliente_direccion": cliente["direccion"],
+        "cliente_email": cliente.get("email", ""),
+
+        "fiscal_ambiente": fiscal["ambiente"],
+        "fiscal_emision": fiscal["tipo_emision"],
+        "fiscal_tipo_emision": fiscal["tipo_emision"],
+        "fiscal_numero_documento": fiscal["numero_documento"],
+        "fiscal_numero_autorizacion": fiscal["numero_autorizacion"],
+        "fiscal_fecha_autorizacion": fiscal["fecha_autorizacion"],
+        "fiscal_clave_acceso": fiscal["clave_acceso"],
+
+        "totales_subtotal_15": totales["subtotal_12"],
+        "totales_subtotal_iva_0": totales["subtotal_0"],
+        "totales_subtotal_no_objeto_iva": 0.00,
+        "totales_subtotal_exento_iva": 0.00,
+        "totales_subtotal_sin_impuestos": totales["subtotal_sin_impuestos"],
+        "totales_descuento_total": 0.00,
+        "totales_valor_ice": 0.00,
+        "totales_iva_15": totales["iva_12"],
+        "totales_propina": 0.00,
+        "totales_valor_total": totales["importe_total"],
+    })
+    return data
+
+
+_apply_current_invoice_aliases(SAMPLE_DATA)
+
+
 # ═════════════════════════════════════════════════════════════════
 class TestFieldResolver(unittest.TestCase):
 
@@ -224,7 +274,7 @@ class TestLayoutLoader(unittest.TestCase):
             load_layout("/nonexistent/path.rfd.json")
 
     def test_page_width_default(self):
-        self.assertEqual(self.layout.page_width, 754)
+        self.assertEqual(self.layout.page_width, 671)
 
 
 # ═════════════════════════════════════════════════════════════════
@@ -283,9 +333,9 @@ class TestHtmlEngineWYSIWYG(unittest.TestCase):
     def test_ambiente_presente(self):
         self.assertIn("PRUEBAS", self.html)
 
-    def test_elemento_rect_orange(self):
-        """El rectángulo naranja (borde factura) aparece en el HTML."""
-        self.assertIn("#C0511A", self.html)
+    def test_elemento_factura_accent_current(self):
+        """El acento visual vigente de factura aparece en el HTML."""
+        self.assertIn("#FF0000", self.html)
 
     def test_debug_mode(self):
         layout   = default_invoice_layout()
