@@ -28,6 +28,7 @@ import { applySelectionApi } from './rf-debug-center-api-selection.js'; import {
 import { applyVisualEvidenceApi } from './rf-debug-center-api-visual-evidence.js'; import { applyDomScannerApi } from './rf-debug-center-api-dom-scanner.js'; import { applyCausalIntelligenceApi } from './rf-debug-center-api-causal-intelligence.js';
 import { mountDebugCenter, renderDebugCenter } from './rf-debug-center-view.js';
 import { createDetachedDebugCenterWindow } from './rf-debug-center-detached-window.js';
+import { runRfVisualDoctor } from './visual-doctor/visual_doctor_registry.js';
 const OWNERSHIP_MAP = Object.freeze({
   tool: 'RF Debug Center',
   version: 1,
@@ -79,12 +80,40 @@ export function createDebugCenterApi() {
     enabled: false, activation: 'disabled', host: null, shadow: null, timer: null,
     lastModel: null, ownership: OWNERSHIP_MAP, bundle: { status: 'idle', message: 'idle', filename: null, updatedAt: null },
     bundlePreview: null, actions: null, draggable: null, detachedWindow: null,
+    visualDoctor: { model: null, error: null, updatedAt: null },
   };
+  function refreshVisualDoctorModel(force = false) {
+    const now = Date.now();
+    const previous = state.visualDoctor?.model || null;
+    const previousAt = Number(state.visualDoctor?.updatedAt || 0);
+    if (!force && previous && now - previousAt < 1200) return previous;
+
+    try {
+      const model = runRfVisualDoctor({ window, document });
+      state.visualDoctor = { model, error: null, updatedAt: now };
+      return model;
+    } catch (error) {
+      state.visualDoctor = {
+        model: previous,
+        error: String(error?.message || error || 'visual doctor failed'),
+        updatedAt: now,
+      };
+      return previous;
+    }
+  }
+
   function applyModel() {
     state.lastModel = readDebugCenterState({ enabled: state.enabled, activation: state.activation, bundle: state.bundle });
     state.lastModel.ownership = state.ownership;
     state.lastModel.bundle = state.bundle;
     state.lastModel.bundlePreview = state.bundlePreview;
+    state.lastModel.visualDoctor = refreshVisualDoctorModel(false);
+    state.lastModel.rfVisualDoctor = state.lastModel.visualDoctor;
+    state.lastModel.visualDoctorStatus = {
+      available: !!state.lastModel.visualDoctor,
+      error: state.visualDoctor?.error || null,
+      updatedAt: state.visualDoctor?.updatedAt || null,
+    };
     if (state.shadow) renderDebugCenter(state.shadow, state.lastModel, state.actions || {});
     return state.lastModel;
   }
