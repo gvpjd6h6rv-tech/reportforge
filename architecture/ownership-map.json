@@ -1,0 +1,316 @@
+{
+  "schema": "rf-architecture-ownership/v1",
+  "policy": {
+    "oneFileOneResponsibility": true,
+    "oneOwnerPerFile": true,
+    "oneGuardOneRule": true,
+    "noDebugCenterEngineInsideUi": true
+  },
+  "rules": [
+    {
+      "path": "tools/rf-debug-center/rf-debug-center-api.js",
+      "owner": "debug-center-api",
+      "responsibility": "Public Debug Center API and module wiring only.",
+      "maxLines": 310,
+      "maxDecisionPoints": 95,
+      "forbiddenPatterns": [
+        "./visual-doctor/",
+        "runRfVisualDoctor",
+        "simulateCssFixInDom",
+        "buildSafeCssSimulationPlan",
+        "function refreshVisualDoctorModel",
+        "function runVisualDoctorRuntimePreview"
+      ],
+      "requiredPatterns": [
+        "applyVisualDoctorApi(api, state, applyModel)",
+        "decorateVisualDoctorModel(state.lastModel, state)"
+      ]
+    },
+    {
+      "path": "tools/rf-debug-center/rf-debug-center-api-visual-doctor.js",
+      "owner": "visual-doctor-api",
+      "responsibility": "Visual Doctor state decoration and runtime-only preview API.",
+      "maxLines": 220,
+      "maxDecisionPoints": 70,
+      "forbiddenPatterns": [
+        "renderDebugCenter",
+        "window.open",
+        "document.write",
+        "fetch(",
+        "XMLHttpRequest"
+      ],
+      "requiredPatterns": [
+        "export function applyVisualDoctorApi",
+        "export function decorateVisualDoctorModel",
+        "export function runVisualDoctorRuntimePreview",
+        "runtimeOnly: true",
+        "writesFiles: false",
+        "rollbackRequired: true",
+        "autopatch: false"
+      ]
+    },
+    {
+      "path": "tools/rf-debug-center/rf-debug-center-detached-window.js",
+      "owner": "debug-center-detached-ui",
+      "responsibility": "Detached browser-window UI rendering and UI event wiring only.",
+      "maxLines": 940,
+      "maxDecisionPoints": 300,
+      "forbiddenPatterns": [
+        "./visual-doctor/",
+        "runRfVisualDoctor",
+        "simulateCssFixInDom",
+        "buildSafeCssSimulationPlan"
+      ],
+      "requiredPatterns": [
+        "RF VISUAL DOCTOR CSS",
+        "VISUAL REGRESSION GUARD",
+        "SAFETY CONTRACT"
+      ]
+    },
+    {
+      "path": "tools/rf-debug-center/visual-doctor",
+      "owner": "visual-doctor-core",
+      "responsibility": "Pure Visual Doctor engine modules.",
+      "maxLinesPerFile": 280,
+      "maxDecisionPointsPerFile": 105,
+      "forbiddenPatterns": [
+        "rf-debug-center-api",
+        "rf-debug-center-detached-window",
+        "window.open",
+        "document.write",
+        "fetch(",
+        "XMLHttpRequest"
+      ],
+      "requiredFiles": [
+        "visual_doctor_registry.js",
+        "visual_fix_simulator.js",
+        "visual_forensic_bundle.js",
+        "visual_lab_artifact_contract.js"
+      ]
+    },
+    {
+      "path": "audit/architecture/load_ownership_map.mjs",
+      "owner": "architecture-map-loader",
+      "responsibility": "Load and validate ownership-map schema only.",
+      "maxLines": 35,
+      "maxDecisionPoints": 8,
+      "forbiddenPatterns": [
+        "process.exit",
+        "console.log",
+        "runOwnershipGuard"
+      ],
+      "requiredPatterns": [
+        "export function loadOwnershipMap",
+        "rf-architecture-ownership/v1"
+      ]
+    },
+    {
+      "path": "audit/architecture/list_js_files.mjs",
+      "owner": "architecture-target-expander",
+      "responsibility": "Expand one file or directory path into JS file targets only.",
+      "maxLines": 35,
+      "maxDecisionPoints": 8,
+      "forbiddenPatterns": [
+        "process.exit",
+        "console.log",
+        "runOwnershipGuard"
+      ],
+      "requiredPatterns": [
+        "export function listJsFiles"
+      ]
+    },
+    {
+      "path": "audit/architecture/count_lines.mjs",
+      "owner": "architecture-line-counter",
+      "responsibility": "Count text lines only.",
+      "maxLines": 20,
+      "maxDecisionPoints": 4,
+      "forbiddenPatterns": [
+        "fs.",
+        "process.exit",
+        "console.log",
+        "runOwnershipGuard"
+      ],
+      "requiredPatterns": [
+        "export function countLines"
+      ]
+    },
+    {
+      "path": "audit/architecture/count_decision_points.mjs",
+      "owner": "architecture-decision-counter",
+      "responsibility": "Count approximate decision points only.",
+      "maxLines": 25,
+      "maxDecisionPoints": 14,
+      "forbiddenPatterns": [
+        "fs.readFileSync",
+        "process.exit",
+        "console.log",
+        "runOwnershipGuard"
+      ],
+      "requiredPatterns": [
+        "export function countDecisionPoints"
+      ]
+    },
+    {
+      "path": "audit/architecture/check_max_lines.mjs",
+      "owner": "architecture-check-max-lines",
+      "responsibility": "Check line budget only.",
+      "maxLines": 45,
+      "maxDecisionPoints": 14,
+      "forbiddenPatterns": [
+        "process.exit",
+        "console.log",
+        "runOwnershipGuard"
+      ],
+      "requiredPatterns": [
+        "export function checkMaxLines",
+        "countLines"
+      ]
+    },
+    {
+      "path": "audit/architecture/check_decision_budget.mjs",
+      "owner": "architecture-check-decision-budget",
+      "responsibility": "Check decision-point budget only.",
+      "maxLines": 45,
+      "maxDecisionPoints": 14,
+      "forbiddenPatterns": [
+        "process.exit",
+        "console.log",
+        "runOwnershipGuard"
+      ],
+      "requiredPatterns": [
+        "export function checkDecisionBudget",
+        "countDecisionPoints"
+      ]
+    },
+    {
+      "path": "audit/architecture/check_forbidden_patterns.mjs",
+      "owner": "architecture-check-forbidden-patterns",
+      "responsibility": "Check forbidden text patterns only.",
+      "maxLines": 45,
+      "maxDecisionPoints": 16,
+      "forbiddenPatterns": [
+        "process.exit",
+        "console.log",
+        "runOwnershipGuard"
+      ],
+      "requiredPatterns": [
+        "export function checkForbiddenPatterns",
+        "text.includes(pattern)"
+      ]
+    },
+    {
+      "path": "audit/architecture/check_required_patterns.mjs",
+      "owner": "architecture-check-required-patterns",
+      "responsibility": "Check required text patterns only.",
+      "maxLines": 40,
+      "maxDecisionPoints": 12,
+      "forbiddenPatterns": [
+        "process.exit",
+        "console.log",
+        "runOwnershipGuard"
+      ],
+      "requiredPatterns": [
+        "export function checkRequiredPatterns"
+      ]
+    },
+    {
+      "path": "audit/architecture/check_required_files.mjs",
+      "owner": "architecture-check-required-files",
+      "responsibility": "Check required files only.",
+      "maxLines": 40,
+      "maxDecisionPoints": 12,
+      "forbiddenPatterns": [
+        "process.exit",
+        "console.log",
+        "runOwnershipGuard"
+      ],
+      "requiredPatterns": [
+        "export function checkRequiredFiles"
+      ]
+    },
+    {
+      "path": "audit/architecture/run_ownership_guard.mjs",
+      "owner": "architecture-guard-runner",
+      "responsibility": "Orchestrate architecture checks only.",
+      "maxLines": 55,
+      "maxDecisionPoints": 10,
+      "forbiddenPatterns": [
+        "fs.readFileSync",
+        "text.includes",
+        "countLines",
+        "countDecisionPoints",
+        "process.exit",
+        "console.log"
+      ],
+      "requiredPatterns": [
+        "export function runOwnershipGuard",
+        "const CHECKS"
+      ]
+    },
+    {
+      "path": "audit/architecture_guard.mjs",
+      "owner": "architecture-guard-cli",
+      "responsibility": "CLI entrypoint and report output only.",
+      "maxLines": 35,
+      "maxDecisionPoints": 8,
+      "forbiddenPatterns": [
+        "fs.readFileSync",
+        "text.includes",
+        "countLines",
+        "countDecisionPoints"
+      ],
+      "requiredPatterns": [
+        "runOwnershipGuard",
+        "process.exit(1)"
+      ]
+    },
+    {
+      "path": "reportforge/tests/architecture_ownership_guard_cli.test.mjs",
+      "owner": "architecture-guard-cli-test",
+      "responsibility": "Test architecture guard CLI output only.",
+      "maxLines": 35,
+      "maxDecisionPoints": 6,
+      "forbiddenPatterns": [
+        "rf_debug_center",
+        "visual_doctor_core"
+      ],
+      "requiredPatterns": [
+        "audit/architecture_guard.mjs",
+        "ARCHITECTURE_GUARD_OK"
+      ]
+    },
+    {
+      "path": "reportforge/tests/architecture_ownership_map_policy.test.mjs",
+      "owner": "architecture-map-policy-test",
+      "responsibility": "Test ownership-map policy flags only.",
+      "maxLines": 35,
+      "maxDecisionPoints": 6,
+      "forbiddenPatterns": [
+        "execFileSync",
+        "rf_debug_center",
+        "visual_doctor_core"
+      ],
+      "requiredPatterns": [
+        "oneFileOneResponsibility",
+        "oneGuardOneRule"
+      ]
+    },
+    {
+      "path": "reportforge/tests/architecture_ownership_guard_self_ownership.test.mjs",
+      "owner": "architecture-guard-self-ownership-test",
+      "responsibility": "Test that architecture guard files are explicitly owned only.",
+      "maxLines": 60,
+      "maxDecisionPoints": 14,
+      "forbiddenPatterns": [
+        "execFileSync",
+        "rf_debug_center",
+        "visual_doctor_core"
+      ],
+      "requiredPatterns": [
+        "audit/architecture_guard.mjs",
+        "audit/architecture"
+      ]
+    }
+  ]
+}

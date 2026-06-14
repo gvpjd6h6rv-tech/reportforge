@@ -37,11 +37,12 @@ test('rf debug center detached window opens a real browser window contract', { t
         close: typeof window.RFDebugCenter?.closeDetachedWindow === 'function',
         sync: typeof window.RFDebugCenter?.syncDetachedWindow === 'function',
         state: typeof window.RFDebugCenter?.getDetachedWindowState === 'function',
+        preview: typeof window.RFDebugCenter?.runVisualDoctorRuntimePreview === 'function',
       },
       uniqueGlobal: typeof window.RFDebugCenterDetached === 'undefined',
     }));
     assert.equal(surface.buttonExists, true);
-    assert.deepEqual(surface.api, { open: true, close: true, sync: true, state: true });
+    assert.deepEqual(surface.api, { open: true, close: true, sync: true, state: true, preview: true });
     const visualDoctorLive = await page.evaluate(() => {
       const model = window.RFDebugCenter?.getState?.()?.visualDoctor;
       return {
@@ -59,6 +60,52 @@ test('rf debug center detached window opens a real browser window contract', { t
     assert.equal(visualDoctorLive.safety?.autopatch, false);
     assert.equal(typeof visualDoctorLive.counts?.selectors, 'number');
     assert.equal(visualDoctorLive.status?.available, true);
+
+    const runtimePreview = await page.evaluate(() => {
+      const baseStyle = document.createElement('style');
+      baseStyle.textContent = '#rf-vd4-runtime-preview-probe { height:20px; width:20px; display:block; overflow:hidden; }';
+      document.head.appendChild(baseStyle);
+      const probe = document.createElement('div');
+      probe.id = 'rf-vd4-runtime-preview-probe';
+      document.body.appendChild(probe);
+      const preview = window.RFDebugCenter.runVisualDoctorRuntimePreview({
+        selector: '#rf-vd4-runtime-preview-probe',
+        expectedHeight: 77,
+      });
+      const afterRollbackHeight = Math.round(probe.getBoundingClientRect().height);
+      const simulationStylesLeft = document.querySelectorAll('style[data-visual-doctor-simulation]').length;
+      const statePreview = window.RFDebugCenter.getState?.()?.visualDoctorPreview || null;
+      probe.remove();
+      baseStyle.remove();
+      return {
+        schema: preview?.schema || null,
+        status: preview?.status || null,
+        applied: preview?.result?.applied,
+        rolledBack: preview?.result?.rolledBack,
+        beforeHeight: preview?.result?.before?.height,
+        afterHeight: preview?.result?.after?.height,
+        afterRollbackHeight,
+        simulationStylesLeft,
+        runtimeOnly: preview?.safety?.runtimeOnly,
+        writesFiles: preview?.safety?.writesFiles,
+        rollbackRequired: preview?.safety?.rollbackRequired,
+        autopatch: preview?.safety?.autopatch,
+        stateSchema: statePreview?.schema || null,
+      };
+    });
+    assert.equal(runtimePreview.schema, 'rf-debug-visual-doctor-preview/v1');
+    assert.equal(runtimePreview.status, 'simulated');
+    assert.equal(runtimePreview.applied, true);
+    assert.equal(runtimePreview.rolledBack, true);
+    assert.equal(runtimePreview.beforeHeight, 20);
+    assert.equal(runtimePreview.afterHeight, 77);
+    assert.equal(runtimePreview.afterRollbackHeight, 20);
+    assert.equal(runtimePreview.simulationStylesLeft, 0);
+    assert.equal(runtimePreview.runtimeOnly, true);
+    assert.equal(runtimePreview.writesFiles, false);
+    assert.equal(runtimePreview.rollbackRequired, true);
+    assert.equal(runtimePreview.autopatch, false);
+    assert.equal(runtimePreview.stateSchema, 'rf-debug-visual-doctor-preview/v1');
 
     assert.equal(surface.uniqueGlobal, true);
 
