@@ -17,6 +17,39 @@ const MAX_RATIO_DELTA = Number(process.env.RF_PREVIEW_A4_RATIO_TOLERANCE || 0.03
 const MIN_WORKSPACE_WIDTH = Number(process.env.RF_PREVIEW_MIN_WORKSPACE_WIDTH || 1100);
 
 
+
+
+async function clearRulerCursorAndWait(page) {
+  await page.evaluate(() => {
+    try { window.RulerEngine?.clearCursor?.(); } catch (_err) {}
+  });
+  await page.evaluate(() => new Promise((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(resolve));
+  }));
+}
+
+function assertRulerAlignment(g) {
+  expect(
+    Math.abs(g.derived.rulerHLeftDeltaPx),
+    `${g.tag}: horizontal ruler must start exactly at A4 left. Delta=${g.derived.rulerHLeftDeltaPx}px`
+  ).toBeLessThanOrEqual(1);
+
+  expect(
+    Math.abs(g.derived.rulerHWidthDeltaPx),
+    `${g.tag}: horizontal ruler width must match A4 width. Delta=${g.derived.rulerHWidthDeltaPx}px`
+  ).toBeLessThanOrEqual(1);
+
+  expect(
+    Math.abs(g.derived.rulerVTopDeltaPx),
+    `${g.tag}: vertical ruler must start exactly at A4 top. Delta=${g.derived.rulerVTopDeltaPx}px`
+  ).toBeLessThanOrEqual(1);
+
+  expect(
+    Math.abs(g.derived.rulerVHeightDeltaPx),
+    `${g.tag}: vertical ruler height must match A4 height. Delta=${g.derived.rulerVHeightDeltaPx}px`
+  ).toBeLessThanOrEqual(1);
+}
+
 async function collectPreviewGeometry(page, tag) {
   const geometry = await page.evaluate((label) => {
     const pick = (sel) => {
@@ -51,6 +84,14 @@ async function collectPreviewGeometry(page, tag) {
       };
     };
 
+    const pickFirst = (selectors) => {
+      for (const sel of selectors) {
+        const picked = pick(sel);
+        if (picked.found) return picked;
+      }
+      return { sel: selectors.join(', '), found: false };
+    };
+
     const workspace = pick('#workspace');
     const pageRect = pick('#preview-content .preview-render-layer .rpt-page');
     const expectedPageLeft = workspace.found && pageRect.found
@@ -77,13 +118,17 @@ async function collectPreviewGeometry(page, tag) {
         renderLayer: pick('#preview-content .preview-render-layer'),
         rptPage: pageRect,
         hitLayer: pick('#preview-content .preview-hit-layer'),
-        rulerH: pick('#ruler-h'),
-        rulerV: pick('#ruler-v'),
+        rulerH: pickFirst(['#ruler-h-canvas', '#ruler-h-inner', '#h-ruler', '#ruler-h-row', '#ruler-h']),
+        rulerV: pickFirst(['#ruler-v-inner', '#ruler-v', '#v-ruler']),
       },
       derived: {
         expectedPageLeft: expectedPageLeft === null ? null : +expectedPageLeft.toFixed(2),
         centerDeltaPx: expectedPageLeft === null ? null : +(pageRect.left - expectedPageLeft).toFixed(2),
         pageRatio: pageRect.found ? +(pageRect.height / pageRect.width).toFixed(4) : null,
+        rulerHLeftDeltaPx: pageRect.found ? +(pickFirst(['#ruler-h-canvas', '#ruler-h-inner', '#h-ruler', '#ruler-h-row', '#ruler-h']).left - pageRect.left).toFixed(2) : null,
+        rulerHWidthDeltaPx: pageRect.found ? +(pickFirst(['#ruler-h-canvas', '#ruler-h-inner', '#h-ruler', '#ruler-h-row', '#ruler-h']).width - pageRect.width).toFixed(2) : null,
+        rulerVTopDeltaPx: pageRect.found ? +(pickFirst(['#ruler-v-inner', '#ruler-v', '#v-ruler']).top - pageRect.top).toFixed(2) : null,
+        rulerVHeightDeltaPx: pageRect.found ? +(pickFirst(['#ruler-v-inner', '#ruler-v', '#v-ruler']).height - pageRect.height).toFixed(2) : null,
       },
     };
   }, tag);
@@ -182,6 +227,29 @@ test('LIVE: Preview CR parity geometry at 100%', async ({ page }) => {
     `canvas stage must be at least as tall as the A4 page. stage=${g.rects.canvasLayer.height} page=${g.rects.rptPage.height}`
   ).toBeGreaterThanOrEqual(g.rects.rptPage.height);
 
+  expect(g.rects.rulerH.found, 'horizontal ruler must be detected using the real RF DOM selector').toBe(true);
+  expect(g.rects.rulerV.found, 'vertical ruler must be detected using the real RF DOM selector').toBe(true);
+
+  expect(
+    Math.abs(g.derived.rulerHLeftDeltaPx),
+    `horizontal ruler must start exactly at A4 left. Delta=${g.derived.rulerHLeftDeltaPx}px`
+  ).toBeLessThanOrEqual(1);
+
+  expect(
+    Math.abs(g.derived.rulerHWidthDeltaPx),
+    `horizontal ruler must have exactly A4 width. Delta=${g.derived.rulerHWidthDeltaPx}px`
+  ).toBeLessThanOrEqual(1);
+
+  expect(
+    Math.abs(g.derived.rulerVTopDeltaPx),
+    `vertical ruler must start exactly at A4 top. Delta=${g.derived.rulerVTopDeltaPx}px`
+  ).toBeLessThanOrEqual(1);
+
+  expect(
+    Math.abs(g.derived.rulerVHeightDeltaPx),
+    `vertical ruler must have exactly A4 height. Delta=${g.derived.rulerVHeightDeltaPx}px`
+  ).toBeLessThanOrEqual(1);
+
   console.log('RF-PREVIEW-BROWSER-ERRORS', JSON.stringify(browserErrors));
   console.log('RF-PREVIEW-HTTP-ERRORS', JSON.stringify(httpErrors));
 
@@ -195,6 +263,104 @@ test('LIVE: Preview CR parity geometry at 100%', async ({ page }) => {
   });
 
   await page.waitForTimeout(500);
+
+  await page.mouse.move(900, 520);
+  await page.waitForTimeout(200);
+
+  async function uiPreviewZoomUntil(targetZoom, tag) {
+    const targetPct = String(Math.round(targetZoom * 100));
+
+    const slider = page.locator('#zw-slider');
+    await expect(slider, `${tag}: #zw-slider must exist`).toBeVisible();
+
+    await slider.evaluate((el, value) => {
+      el.value = value;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    }, targetPct);
+
+    await page.waitForTimeout(700);
+
+    const actualZoom = await page.evaluate(() => Number(window.DS?.previewZoom || window.DS?.zoom || 1));
+    expect(
+      Math.abs(actualZoom - targetZoom),
+      `${tag}: UI slider path must reach zoom. actual=${actualZoom} target=${targetZoom}`
+    ).toBeLessThanOrEqual(0.04);
+
+    const geometry = await collectPreviewGeometry(page, tag);
+    console.log(`RF-PREVIEW-GEOMETRY[${tag}]`, JSON.stringify(geometry, null, 2));
+
+    assertRulerAlignment(geometry);
+
+    return geometry;
+  }
+
+  await uiPreviewZoomUntil(0.75, 'preview-075-after-ui-slider-zoom-no-mouse');
+  await uiPreviewZoomUntil(1, 'preview-100-after-ui-slider-unzoom-no-mouse');
+
+  await clearRulerCursorAndWait(page);
+
+  const rulerBeforeMouseRepair = {
+    h: await page.locator('#ruler-h-canvas').screenshot(),
+    v: await page.locator('#ruler-v-inner').screenshot(),
+  };
+
+  const beforeMouseRepairGeometry = await collectPreviewGeometry(page, 'preview-rulers-before-mouse-repair');
+  console.log('RF-PREVIEW-GEOMETRY[preview-rulers-before-mouse-repair]', JSON.stringify(beforeMouseRepairGeometry, null, 2));
+  assertRulerAlignment(beforeMouseRepairGeometry);
+
+  await page.mouse.move(520, 250);
+  await page.mouse.move(900, 420);
+  await page.mouse.move(1180, 650);
+  await page.mouse.move(640, 300);
+  await page.waitForTimeout(300);
+
+  await clearRulerCursorAndWait(page);
+
+  const rulerAfterMouseRepair = {
+    h: await page.locator('#ruler-h-canvas').screenshot(),
+    v: await page.locator('#ruler-v-inner').screenshot(),
+  };
+
+  const afterMouseRepairGeometry = await collectPreviewGeometry(page, 'preview-rulers-after-mouse-repair');
+  console.log('RF-PREVIEW-GEOMETRY[preview-rulers-after-mouse-repair]', JSON.stringify(afterMouseRepairGeometry, null, 2));
+  assertRulerAlignment(afterMouseRepairGeometry);
+
+  expect(
+    Buffer.compare(rulerBeforeMouseRepair.h, rulerAfterMouseRepair.h),
+    'rulerH bitmap must NOT change after mouse movement once transient cursor is cleared'
+  ).toBe(0);
+
+  expect(
+    Buffer.compare(rulerBeforeMouseRepair.v, rulerAfterMouseRepair.v),
+    'rulerV bitmap must NOT change after mouse movement once transient cursor is cleared'
+  ).toBe(0);
+
+  const afterMouseMove = await collectPreviewGeometry(page, 'preview-100-after-mousemove-rulers');
+  console.log('RF-PREVIEW-GEOMETRY[preview-100-after-mousemove-rulers]', JSON.stringify(afterMouseMove, null, 2));
+
+  expect(afterMouseMove.rects.rulerH.found, 'horizontal ruler must be detected after mouse movement').toBe(true);
+  expect(afterMouseMove.rects.rulerV.found, 'vertical ruler must be detected after mouse movement').toBe(true);
+
+  expect(
+    Math.abs(afterMouseMove.derived.rulerHLeftDeltaPx),
+    `horizontal ruler must not oscillate after mouse movement. Delta=${afterMouseMove.derived.rulerHLeftDeltaPx}px`
+  ).toBeLessThanOrEqual(1);
+
+  expect(
+    Math.abs(afterMouseMove.derived.rulerHWidthDeltaPx),
+    `horizontal ruler must keep A4 width after mouse movement. Delta=${afterMouseMove.derived.rulerHWidthDeltaPx}px`
+  ).toBeLessThanOrEqual(1);
+
+  expect(
+    Math.abs(afterMouseMove.derived.rulerVTopDeltaPx),
+    `vertical ruler must stay aligned after mouse movement. Delta=${afterMouseMove.derived.rulerVTopDeltaPx}px`
+  ).toBeLessThanOrEqual(1);
+
+  expect(
+    Math.abs(afterMouseMove.derived.rulerVHeightDeltaPx),
+    `vertical ruler must keep A4 height after mouse movement. Delta=${afterMouseMove.derived.rulerVHeightDeltaPx}px`
+  ).toBeLessThanOrEqual(1);
 
   const afterScroll = await collectPreviewGeometry(page, 'preview-100-after-manual-scroll-y');
 
@@ -222,6 +388,29 @@ test('LIVE: Preview CR parity geometry at 100%', async ({ page }) => {
     afterScroll.rects.canvasLayer.height,
     `canvas stage must still cover A4 after manual scroll. stage=${afterScroll.rects.canvasLayer.height} page=${afterScroll.rects.rptPage.height}`
   ).toBeGreaterThanOrEqual(afterScroll.rects.rptPage.height);
+
+  expect(afterScroll.rects.rulerH.found, 'horizontal ruler must be detected after manual scroll').toBe(true);
+  expect(afterScroll.rects.rulerV.found, 'vertical ruler must be detected after manual scroll').toBe(true);
+
+  expect(
+    Math.abs(afterScroll.derived.rulerHLeftDeltaPx),
+    `horizontal ruler must remain aligned to A4 left after manual scroll. Delta=${afterScroll.derived.rulerHLeftDeltaPx}px`
+  ).toBeLessThanOrEqual(1);
+
+  expect(
+    Math.abs(afterScroll.derived.rulerHWidthDeltaPx),
+    `horizontal ruler must keep A4 width after manual scroll. Delta=${afterScroll.derived.rulerHWidthDeltaPx}px`
+  ).toBeLessThanOrEqual(1);
+
+  expect(
+    Math.abs(afterScroll.derived.rulerVTopDeltaPx),
+    `vertical ruler must remain aligned to A4 top after manual scroll. Delta=${afterScroll.derived.rulerVTopDeltaPx}px`
+  ).toBeLessThanOrEqual(1);
+
+  expect(
+    Math.abs(afterScroll.derived.rulerVHeightDeltaPx),
+    `vertical ruler must keep A4 height after manual scroll. Delta=${afterScroll.derived.rulerVHeightDeltaPx}px`
+  ).toBeLessThanOrEqual(1);
 
   expect.soft(browserErrors, 'browser errors during live smoke after manual scroll').toEqual([]);
   expect.soft(httpErrors, 'HTTP errors during live smoke after manual scroll').toEqual([]);

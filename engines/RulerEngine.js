@@ -41,6 +41,11 @@ window.RulerEngine = (() => {
 
   // ── Helpers ──────────────────────────────────────────────────────
 
+  function _previewPageRect() {
+    const page = document.querySelector('#preview-content .preview-render-layer .rpt-page');
+    return page ? page.getBoundingClientRect() : null;
+  }
+
   /** Choose major tick step based on current zoom */
   function _tickStep() {
     const z = RF.Geometry.zoom();
@@ -70,16 +75,42 @@ window.RulerEngine = (() => {
     const cl     = document.getElementById('canvas-layer');
     if (!canvas || !ws || !cl) return;
 
-    const cssW = ws.clientWidth;
+    const pageR = _previewPageRect();
+    const hCanvasBox = document.getElementById('ruler-h-canvas');
+    const hRow = document.getElementById('ruler-h-row');
+    const hCorner = document.getElementById('ruler-corner');
+
+    const cssW = pageR ? Math.round(pageR.width) : ws.clientWidth;
     const cssH = H_RULER_H;
+
+    if (pageR && hCanvasBox && hRow && hCorner) {
+      const rowR = hRow.getBoundingClientRect();
+      const cornerR = hCorner.getBoundingClientRect();
+      const stableBaseLeft = rowR.left + cornerR.width;
+      const left = Math.round((pageR.left - stableBaseLeft) * 100) / 100;
+
+      hCanvasBox.style.position = 'relative';
+      hCanvasBox.style.left = `${left}px`;
+      hCanvasBox.style.width = `${cssW}px`;
+      hCanvasBox.style.minWidth = `${cssW}px`;
+      hCanvasBox.style.maxWidth = `${cssW}px`;
+      hCanvasBox.style.flex = `0 0 ${cssW}px`;
+      hCanvasBox.style.overflow = 'hidden';
+
+      canvas.style.left = '0px';
+      canvas.style.width = `${cssW}px`;
+      canvas.style.minWidth = `${cssW}px`;
+      canvas.style.maxWidth = `${cssW}px`;
+    }
+
     const ctx  = _setupCanvas(canvas, cssW, cssH);
 
-    // Canvas left offset relative to workspace (live BCR — one read, cached)
+    // Canvas left offset relative to its own A4-aligned box in preview.
     RF.Geometry.invalidate();
     const clR = cl.getBoundingClientRect();
     const wsR = ws.getBoundingClientRect();
-    const offX   = Math.round(clR.left - wsR.left);
-    const canvasW = Math.round(clR.width);
+    const offX   = pageR ? 0 : Math.round(clR.left - wsR.left);
+    const canvasW = pageR ? cssW : Math.round(clR.width);
 
     // ── Background ─────────────────────────────────────────────────
     ctx.fillStyle = '#C0C0C0';
@@ -141,11 +172,17 @@ window.RulerEngine = (() => {
     const cl     = document.getElementById('canvas-layer');
     if (!canvas || !cl) return;
 
-    // Position canvas top relative to canvas-layer top
-    const vTop = RF.Geometry.rulerVTop();
+    const pageR = _previewPageRect();
+
+    // Position canvas top relative to vertical ruler container.
+    const rulerV = document.getElementById('ruler-v');
+    const rulerVR = rulerV?.getBoundingClientRect?.();
+    const vTop = pageR && rulerVR
+      ? Math.round((pageR.top - rulerVR.top) * 100) / 100
+      : RF.Geometry.rulerVTop();
     canvas.style.top = vTop + 'px';
 
-    const cssH = Math.round(cl.getBoundingClientRect().height);
+    const cssH = pageR ? Math.round(pageR.height) : Math.round(cl.getBoundingClientRect().height);
     const cssW = V_TOTAL_W;
     const ctx  = _setupCanvas(canvas, cssW, cssH);
 
