@@ -58,6 +58,37 @@
     return layer;
   }
 
+  function _preparePreviewLayerGeometry(content, renderLayer, hitLayer) {
+    content.style.position = 'relative';
+
+    renderLayer.style.position = 'relative';
+    renderLayer.style.zIndex = '1';
+
+    hitLayer.style.position = 'absolute';
+    hitLayer.style.left = '0px';
+    hitLayer.style.top = '0px';
+    hitLayer.style.width = '100%';
+    hitLayer.style.height = '0px';
+    hitLayer.style.overflow = 'visible';
+    hitLayer.style.pointerEvents = 'auto';
+    hitLayer.style.zIndex = '2';
+    hitLayer.style.transformOrigin = 'top left';
+  }
+
+  function _alignHitLayerToRenderedPage(content, hitLayer, firstPage) {
+    if (!firstPage) {
+      hitLayer.style.transform = '';
+      return;
+    }
+
+    const contentRect = content.getBoundingClientRect();
+    const pageRect = firstPage.getBoundingClientRect();
+    const offsetX = pageRect.left - contentRect.left;
+    const offsetY = pageRect.top - contentRect.top;
+
+    hitLayer.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+  }
+
   function _applyCleanHtml(html, content, data) {
     const doc = new DOMParser().parseFromString(html, 'text/html');
     const styles = [...doc.head.querySelectorAll('style')].map((node) => node.textContent || '').join('\n');
@@ -70,18 +101,11 @@
     const hitLayer = _ensureLayer(content, 'preview-hit-layer');
     renderLayer.innerHTML = doc.body.innerHTML;
     hitLayer.innerHTML = global.PreviewEngineData.renderWithData(data);
+
+    _preparePreviewLayerGeometry(content, renderLayer, hitLayer);
+
     const firstPage = renderLayer.querySelector('.rpt-page');
-    if (firstPage) {
-      const contentRect = content.getBoundingClientRect();
-      const pageRect = firstPage.getBoundingClientRect();
-      const offsetX = pageRect.left - contentRect.left;
-      const offsetY = pageRect.top - contentRect.top;
-      hitLayer.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
-      hitLayer.style.transformOrigin = 'top left';
-    } else {
-      hitLayer.style.transform = '';
-      hitLayer.style.transformOrigin = '';
-    }
+    _alignHitLayerToRenderedPage(content, hitLayer, firstPage);
   }
 
   function clear() {
