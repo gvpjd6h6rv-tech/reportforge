@@ -11,6 +11,59 @@ const SelectionOverlay = (() => {
     return window.RF_UI_TRACE(event, detail);
   }
 
+  function _clearLayerChildren(layer) {
+    if (!layer) return;
+    while (layer.firstChild) layer.removeChild(layer.firstChild);
+  }
+
+  function _ensurePreviewSelectionLayer() {
+    if (typeof document === 'undefined') return null;
+    const hitLayer = document.querySelector('#preview-content .preview-hit-layer');
+    if (!hitLayer) return null;
+
+    let layer = hitLayer.querySelector('.preview-selection-layer');
+    if (!layer) {
+      layer = document.createElement('div');
+      layer.className = 'preview-selection-layer';
+      layer.dataset.selectionLayer = 'preview';
+      hitLayer.appendChild(layer);
+    }
+
+    layer.style.position = 'absolute';
+    layer.style.left = '0px';
+    layer.style.top = '0px';
+    layer.style.width = '100%';
+    layer.style.height = '0px';
+    layer.style.overflow = 'visible';
+    layer.style.pointerEvents = 'none';
+    layer.style.zIndex = '9999';
+    layer.style.transform = 'none';
+    layer.style.transformOrigin = 'top left';
+
+    return layer;
+  }
+
+  function _resolveSelectionLayer() {
+    if (typeof DS !== 'undefined' && DS.previewMode) {
+      return _ensurePreviewSelectionLayer() || document.getElementById('handles-layer');
+    }
+    return document.getElementById('handles-layer');
+  }
+
+  function _clearInactiveSelectionLayers(activeLayer) {
+    if (typeof document === 'undefined') return;
+
+    const designLayer = document.getElementById('handles-layer');
+    if (designLayer && designLayer !== activeLayer) {
+      _clearLayerChildren(designLayer);
+    }
+
+    const previewLayer = document.querySelector('#preview-content .preview-hit-layer .preview-selection-layer');
+    if (previewLayer && previewLayer !== activeLayer) {
+      _clearLayerChildren(previewLayer);
+    }
+  }
+
   function _findPreviewHitElement(el) {
     if (!el || typeof document === 'undefined') return null;
     const id = String(el.id || '');
@@ -120,8 +173,10 @@ const SelectionOverlay = (() => {
     }
 
     RF.Geometry.invalidate();
-    const layer = document.getElementById('handles-layer');
-    while (layer.firstChild) layer.removeChild(layer.firstChild);
+    const layer = _resolveSelectionLayer();
+    if (!layer) return;
+    _clearInactiveSelectionLayers(layer);
+    _clearLayerChildren(layer);
     document.querySelectorAll('.cr-element').forEach(d => {
       d.classList.toggle('selected', SelectionState.isSelected(d.dataset.id));
     });

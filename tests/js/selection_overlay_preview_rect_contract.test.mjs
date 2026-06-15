@@ -15,22 +15,24 @@ const selectedElement = {
 class FakeNode {
   constructor(rect = null) {
     this.children = [];
+    this.parentNode = null;
     this.firstChild = null;
     this.className = '';
     this.dataset = {};
+    this._rect = rect;
     this.style = {
       values: {},
       setProperty(name, value) {
         this.values[name] = value;
       },
     };
-    this._rect = rect;
     this.classList = {
       toggle: () => undefined,
     };
   }
 
   appendChild(child) {
+    child.parentNode = this;
     this.children.push(child);
     this.firstChild = this.children[0] || null;
     return child;
@@ -38,16 +40,30 @@ class FakeNode {
 
   removeChild(child) {
     this.children = this.children.filter((item) => item !== child);
+    child.parentNode = null;
     this.firstChild = this.children[0] || null;
     return child;
   }
 
+  querySelector(selector) {
+    if (selector === '.preview-selection-layer') {
+      return this.children.find((child) => child.className === 'preview-selection-layer') || null;
+    }
+    return null;
+  }
+
   getBoundingClientRect() {
-    return this._rect || { left: 0, top: 0, width: 0, height: 0 };
+    if (this._rect) return this._rect;
+    if (this.className === 'preview-selection-layer' && this.parentNode) {
+      return this.parentNode.getBoundingClientRect();
+    }
+    return { left: 0, top: 0, width: 0, height: 0, right: 0, bottom: 0 };
   }
 }
 
-const handlesLayer = new FakeNode({ left: 100, top: 50, width: 800, height: 1000 });
+const handlesLayer = new FakeNode({ left: 999, top: 999, width: 800, height: 1000 });
+const hitLayer = new FakeNode({ left: 100, top: 50, width: 800, height: 0 });
+
 const previewNode = new FakeNode({ left: 150, top: 90, width: 200, height: 100 });
 previewNode.dataset.originId = selectedId;
 
@@ -56,9 +72,16 @@ global.document = {
     if (id === 'handles-layer') return handlesLayer;
     return null;
   },
+  querySelector(selector) {
+    if (selector === '#preview-content .preview-hit-layer') return hitLayer;
+    if (selector === '#preview-content .preview-hit-layer .preview-selection-layer') {
+      return hitLayer.querySelector('.preview-selection-layer');
+    }
+    return null;
+  },
   querySelectorAll(selector) {
     if (selector.includes('preview-hit-layer')) return [previewNode];
-    if (selector === '.cr-element') return [];
+    if (selector === '.cr-element') return [previewNode];
     if (selector === '.cr-section') return [];
     return [];
   },
@@ -115,8 +138,13 @@ const engine = {
 
 SelectionOverlay.renderHandles(engine);
 
-assert.equal(handlesLayer.children.length, 1);
-const box = handlesLayer.children[0];
+const previewSelectionLayer = hitLayer.querySelector('.preview-selection-layer');
+
+assert.ok(previewSelectionLayer, 'preview-selection-layer debe existir dentro de preview-hit-layer');
+assert.equal(handlesLayer.children.length, 0, 'en preview no debe dibujar selección en handles-layer');
+assert.equal(previewSelectionLayer.children.length, 1);
+
+const box = previewSelectionLayer.children[0];
 
 assert.equal(box.className, 'sel-box');
 assert.equal(box.style.values['--sel-x'], '25px');
