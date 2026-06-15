@@ -46,10 +46,17 @@ class FakeNode {
   }
 
   querySelector(selector) {
-    if (selector === '.preview-selection-layer') {
+    if (selector === ':scope > .preview-selection-layer' || selector === '.preview-selection-layer') {
       return this.children.find((child) => child.className === 'preview-selection-layer') || null;
     }
     return null;
+  }
+
+  querySelectorAll(selector) {
+    if (selector.includes('.preview-selection-layer')) {
+      return this.children.filter((child) => child.className === 'preview-selection-layer');
+    }
+    return [];
   }
 
   getBoundingClientRect() {
@@ -62,10 +69,21 @@ class FakeNode {
 }
 
 const handlesLayer = new FakeNode({ left: 999, top: 999, width: 800, height: 1000 });
-const hitLayer = new FakeNode({ left: 100, top: 50, width: 800, height: 0 });
 
-const previewNode = new FakeNode({ left: 150, top: 90, width: 200, height: 100 });
+const previewContent = new FakeNode({ left: 100, top: 50, width: 800, height: 0 });
+const hitLayer = new FakeNode({ left: 120, top: 80, width: 800, height: 0 });
+hitLayer.style.transform = 'translate(10px, 15px)';
+hitLayer.style.transformOrigin = 'top left';
+hitLayer.style.opacity = '0';
+previewContent.appendChild(hitLayer);
+
+const previewNode = new FakeNode({ left: 170, top: 120, width: 200, height: 100 });
 previewNode.dataset.originId = selectedId;
+
+global.getComputedStyle = (node) => ({
+  transform: node?.style?.transform || 'none',
+  transformOrigin: node?.style?.transformOrigin || 'top left',
+});
 
 global.document = {
   getElementById(id) {
@@ -73,13 +91,23 @@ global.document = {
     return null;
   },
   querySelector(selector) {
+    if (selector === '#preview-content') return previewContent;
     if (selector === '#preview-content .preview-hit-layer') return hitLayer;
+    if (selector === '#preview-content > .preview-selection-layer') {
+      return previewContent.querySelector(':scope > .preview-selection-layer');
+    }
     if (selector === '#preview-content .preview-hit-layer .preview-selection-layer') {
       return hitLayer.querySelector('.preview-selection-layer');
     }
     return null;
   },
   querySelectorAll(selector) {
+    if (selector.includes('.preview-selection-layer')) {
+      return [
+        ...previewContent.children.filter((child) => child.className === 'preview-selection-layer'),
+        ...hitLayer.children.filter((child) => child.className === 'preview-selection-layer'),
+      ];
+    }
     if (selector.includes('preview-hit-layer')) return [previewNode];
     if (selector === '.cr-element') return [previewNode];
     if (selector === '.cr-section') return [];
@@ -114,6 +142,7 @@ global.SelectionState = {
   selectedElementsFromIds: () => [selectedElement],
   getElementById: () => selectedElement,
   getSectionTop: () => 0,
+  isSelected: (id) => id === selectedId,
 };
 
 global.SelectionHitTest = {
@@ -138,11 +167,19 @@ const engine = {
 
 SelectionOverlay.renderHandles(engine);
 
-const previewSelectionLayer = hitLayer.querySelector('.preview-selection-layer');
+const previewSelectionLayer = previewContent.querySelector(':scope > .preview-selection-layer');
+const forbiddenChildLayer = hitLayer.querySelector('.preview-selection-layer');
 
-assert.ok(previewSelectionLayer, 'preview-selection-layer debe existir dentro de preview-hit-layer');
+assert.ok(previewSelectionLayer, 'preview-selection-layer debe existir como hijo directo de preview-content');
+assert.equal(forbiddenChildLayer, null, 'preview-selection-layer no debe vivir dentro de preview-hit-layer opacity:0');
 assert.equal(handlesLayer.children.length, 0, 'en preview no debe dibujar selección en handles-layer');
 assert.equal(previewSelectionLayer.children.length, 1);
+
+assert.equal(previewSelectionLayer.style.opacity, '1');
+assert.equal(previewSelectionLayer.style.visibility, 'visible');
+assert.equal(previewSelectionLayer.style.display, 'block');
+assert.equal(previewSelectionLayer.style.transform, hitLayer.style.transform);
+assert.equal(previewSelectionLayer.style.transformOrigin, 'top left');
 
 const box = previewSelectionLayer.children[0];
 

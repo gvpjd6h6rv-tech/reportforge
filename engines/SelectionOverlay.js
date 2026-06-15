@@ -18,16 +18,23 @@ const SelectionOverlay = (() => {
 
   function _ensurePreviewSelectionLayer() {
     if (typeof document === 'undefined') return null;
-    const hitLayer = document.querySelector('#preview-content .preview-hit-layer');
-    if (!hitLayer) return null;
 
-    let layer = hitLayer.querySelector('.preview-selection-layer');
+    const content = document.querySelector('#preview-content');
+    const hitLayer = document.querySelector('#preview-content .preview-hit-layer');
+    if (!content || !hitLayer) return null;
+
+    // The hit layer is intentionally transparent for hit-testing.
+    // Selection chrome must be a visible sibling, not a child, otherwise
+    // it inherits opacity:0 and disappears in Preview.
+    let layer = content.querySelector(':scope > .preview-selection-layer');
     if (!layer) {
       layer = document.createElement('div');
       layer.className = 'preview-selection-layer';
       layer.dataset.selectionLayer = 'preview';
-      hitLayer.appendChild(layer);
+      content.appendChild(layer);
     }
+
+    content.style.position = 'relative';
 
     layer.style.position = 'absolute';
     layer.style.left = '0px';
@@ -37,8 +44,11 @@ const SelectionOverlay = (() => {
     layer.style.overflow = 'visible';
     layer.style.pointerEvents = 'none';
     layer.style.zIndex = '9999';
-    layer.style.transform = 'none';
-    layer.style.transformOrigin = 'top left';
+    layer.style.opacity = '1';
+    layer.style.visibility = 'visible';
+    layer.style.display = 'block';
+    layer.style.transform = hitLayer.style.transform || getComputedStyle(hitLayer).transform || 'none';
+    layer.style.transformOrigin = hitLayer.style.transformOrigin || 'top left';
 
     return layer;
   }
@@ -58,10 +68,14 @@ const SelectionOverlay = (() => {
       _clearLayerChildren(designLayer);
     }
 
-    const previewLayer = document.querySelector('#preview-content .preview-hit-layer .preview-selection-layer');
-    if (previewLayer && previewLayer !== activeLayer) {
-      _clearLayerChildren(previewLayer);
-    }
+    const previewLayers = document.querySelectorAll(
+      '#preview-content > .preview-selection-layer, #preview-content .preview-hit-layer .preview-selection-layer'
+    );
+    previewLayers.forEach((previewLayer) => {
+      if (previewLayer && previewLayer !== activeLayer) {
+        _clearLayerChildren(previewLayer);
+      }
+    });
   }
 
   function _findPreviewHitElement(el) {
