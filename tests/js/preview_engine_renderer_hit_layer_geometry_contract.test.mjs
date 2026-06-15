@@ -97,7 +97,7 @@ const sandbox = {
     text: async () => '<html><head><style></style></head><body><div class="rpt-page"></div></body></html>',
   }),
   DS: {
-    zoom: 1,
+    zoom: 2,
     previewMode: true,
     _sampleData: {},
     layout: {},
@@ -144,6 +144,6 @@ assert.equal(hitLayer.style.width, '100%');
 assert.equal(hitLayer.style.height, '0px');
 assert.equal(hitLayer.style.overflow, 'visible');
 assert.equal(hitLayer.style.transformOrigin, 'top left');
-assert.equal(hitLayer.style.transform, 'translate(30px, 50px)');
+assert.equal(hitLayer.style.transform, 'translate(15px, 25px)');
 
 console.log('preview engine hit-layer geometry contract: PASS');

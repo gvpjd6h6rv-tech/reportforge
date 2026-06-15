@@ -75,6 +75,18 @@
     hitLayer.style.transformOrigin = 'top left';
   }
 
+  function _previewLayerZoom() {
+    if (typeof RF !== 'undefined' && RF.Geometry && typeof RF.Geometry.zoom === 'function') {
+      const z = Number(RF.Geometry.zoom());
+      if (Number.isFinite(z) && z > 0) return z;
+    }
+    if (typeof DS !== 'undefined') {
+      const z = Number(DS.zoom);
+      if (Number.isFinite(z) && z > 0) return z;
+    }
+    return 1;
+  }
+
   function _alignHitLayerToRenderedPage(content, hitLayer, firstPage) {
     if (!firstPage) {
       hitLayer.style.transform = '';
@@ -83,8 +95,9 @@
 
     const contentRect = content.getBoundingClientRect();
     const pageRect = firstPage.getBoundingClientRect();
-    const offsetX = pageRect.left - contentRect.left;
-    const offsetY = pageRect.top - contentRect.top;
+    const zoom = _previewLayerZoom();
+    const offsetX = (pageRect.left - contentRect.left) / zoom;
+    const offsetY = (pageRect.top - contentRect.top) / zoom;
 
     hitLayer.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
   }
