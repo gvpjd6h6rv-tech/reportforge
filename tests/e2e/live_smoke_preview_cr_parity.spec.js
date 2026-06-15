@@ -106,10 +106,25 @@ async function enterPreview(page) {
 test('LIVE: Preview CR parity geometry at 100%', async ({ page }) => {
   test.setTimeout(90000);
 
-  const errors = [];
-  page.on('pageerror', (err) => errors.push(`PAGEERROR: ${err.message}`));
+  const browserErrors = [];
+  const httpErrors = [];
+
+  page.on('pageerror', (err) => browserErrors.push(`PAGEERROR: ${err.message}`));
+
   page.on('console', (msg) => {
-    if (msg.type() === 'error') errors.push(`console.error: ${msg.text().slice(0, 300)}`);
+    if (msg.type() !== 'error') return;
+    const text = msg.text().slice(0, 300);
+    const isGenericResource404 = /Failed to load resource: the server responded with a status of 404/i.test(text);
+    if (!isGenericResource404) browserErrors.push(`console.error: ${text}`);
+  });
+
+  page.on('response', (response) => {
+    const status = response.status();
+    if (status < 400) return;
+
+    const url = response.url();
+    const isBenignFavicon404 = status === 404 && /\/favicon\.ico(?:[?#].*)?$/.test(url);
+    if (!isBenignFavicon404) httpErrors.push(`${status}: ${url}`);
   });
 
   await enterPreview(page);
@@ -145,5 +160,9 @@ test('LIVE: Preview CR parity geometry at 100%', async ({ page }) => {
     `A4 page must be horizontally centered in workspace. Delta=${g.derived.centerDeltaPx}px`
   ).toBeLessThanOrEqual(MAX_CENTER_DELTA_PX);
 
-  expect.soft(errors, 'browser errors during live smoke').toEqual([]);
+  console.log('RF-PREVIEW-BROWSER-ERRORS', JSON.stringify(browserErrors));
+  console.log('RF-PREVIEW-HTTP-ERRORS', JSON.stringify(httpErrors));
+
+  expect.soft(browserErrors, 'browser errors during live smoke').toEqual([]);
+  expect.soft(httpErrors, 'HTTP errors during live smoke').toEqual([]);
 });
