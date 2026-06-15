@@ -208,6 +208,10 @@
 
     const firstPage = renderLayer.querySelector('.rpt-page');
     _alignHitLayerToRenderedPage(content, hitLayer, firstPage);
+
+    if (typeof global.RulerEngine?.renderSync === 'function') {
+      global.RulerEngine.renderSync();
+    }
   }
 
   function clear() {
