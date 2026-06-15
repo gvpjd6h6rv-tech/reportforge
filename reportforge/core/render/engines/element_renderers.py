@@ -266,18 +266,46 @@ def _format_value(engine, value, fmt) -> str:
 def _isrc(src) -> str:
     if src.startswith(("data:", "http://", "https://", "//")):
         return src
-    p = Path(src)
-    if p.exists():
-        mime = {
-            ".png": "image/png",
-            ".jpg": "image/jpeg",
-            ".jpeg": "image/jpeg",
-            ".gif": "image/gif",
-            ".svg": "image/svg+xml",
-            ".webp": "image/webp",
-        }.get(p.suffix.lower(), "image/png")
-        return f"data:{mime};base64,{base64.b64encode(p.read_bytes()).decode()}"
+
+    for p in _image_src_candidates(src):
+        if p.exists() and p.is_file():
+            mime = {
+                ".png": "image/png",
+                ".jpg": "image/jpeg",
+                ".jpeg": "image/jpeg",
+                ".gif": "image/gif",
+                ".svg": "image/svg+xml",
+                ".webp": "image/webp",
+            }.get(p.suffix.lower(), "image/png")
+            return f"data:{mime};base64,{base64.b64encode(p.read_bytes()).decode()}"
+
     return src
+
+
+def _image_src_candidates(src: str) -> list[Path]:
+    raw = Path(src).expanduser()
+    if raw.is_absolute():
+        return [raw]
+
+    here = Path(__file__).resolve()
+    repo_root = here.parents[4]
+    package_root = here.parents[3]
+
+    candidates = [
+        raw,
+        Path.cwd() / raw,
+        repo_root / raw,
+        package_root / raw,
+    ]
+
+    unique = []
+    seen = set()
+    for candidate in candidates:
+        key = str(candidate)
+        if key not in seen:
+            unique.append(candidate)
+            seen.add(key)
+    return unique
 
 
 def _barcode_font_source(engine, el, family: str) -> dict | None:
