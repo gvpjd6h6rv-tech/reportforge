@@ -152,4 +152,14 @@ assert.equal(box.style.values['--sel-y'], '20px');
 assert.equal(box.style.values['--sel-w'], '100px');
 assert.equal(box.style.values['--sel-h'], '50px');
 
+assert.equal(box.style.position, 'absolute');
+assert.equal(box.style.left, '25px');
+assert.equal(box.style.top, '20px');
+assert.equal(box.style.width, '100px');
+assert.equal(box.style.height, '50px');
+assert.equal(box.style.boxSizing, 'border-box');
+assert.equal(box.style.border, '1px solid var(--cr-sel-bdr, #0066CC)');
+assert.equal(box.style.background, 'transparent');
+assert.equal(box.style.pointerEvents, 'none');
+
 console.log('selection overlay preview rect contract: PASS');

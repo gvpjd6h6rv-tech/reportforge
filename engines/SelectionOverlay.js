@@ -129,6 +129,24 @@ const SelectionOverlay = (() => {
     };
   }
 
+  function _styleSelectionBox(box, rect) {
+    box.style.setProperty('--sel-x', rect.left + 'px');
+    box.style.setProperty('--sel-y', rect.top + 'px');
+    box.style.setProperty('--sel-w', rect.width + 'px');
+    box.style.setProperty('--sel-h', rect.height + 'px');
+
+    box.style.position = 'absolute';
+    box.style.left = rect.left + 'px';
+    box.style.top = rect.top + 'px';
+    box.style.width = rect.width + 'px';
+    box.style.height = rect.height + 'px';
+    box.style.boxSizing = 'border-box';
+    box.style.border = '1px solid var(--cr-sel-bdr, #0066CC)';
+    box.style.background = 'transparent';
+    box.style.pointerEvents = 'none';
+    box.style.zIndex = '40';
+  }
+
   function appendSelectionGuide(layer, rect, axis, edge) {
     const guide = document.createElement('div');
     guide.className = `selection-guide selection-guide-${axis}`;
@@ -232,10 +250,7 @@ const SelectionOverlay = (() => {
       const positions = SelectionGeometry.selectionHandles(rect);
       const selBox = document.createElement('div');
       selBox.className = 'sel-box';
-      selBox.style.setProperty('--sel-x', absX + 'px');
-      selBox.style.setProperty('--sel-y', absY + 'px');
-      selBox.style.setProperty('--sel-w', absW + 'px');
-      selBox.style.setProperty('--sel-h', absH + 'px');
+      _styleSelectionBox(selBox, { left: absX, top: absY, width: absW, height: absH });
       layer.appendChild(selBox);
       if (showGuides) renderSelectionGuides(layer, [rect]);
       positions.forEach(({ pos, cx, cy }) => {
