@@ -3,6 +3,9 @@ import { existsSync } from 'node:fs';
 
 const browser = process.env.RF_BROWSER || 'chrome';
 const headless = process.env.RF_HEADED === '1' ? false : true;
+const viewportWidth = Number(process.env.RF_VIEWPORT_WIDTH || 1650);
+const viewportHeight = Number(process.env.RF_VIEWPORT_HEIGHT || 900);
+
 
 function firstExisting(paths) {
   return paths.find((p) => p && existsSync(p)) || null;
@@ -56,11 +59,11 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     headless,
-    viewport: { width: 1920, height: 1080 },
+    viewport: { width: viewportWidth, height: viewportHeight },
     launchOptions: {
       executablePath,
       headless,
-      args: browser === 'chrome' ? ['--start-maximized'] : [],
+      args: browser === 'chrome' ? [`--window-size=${viewportWidth},${viewportHeight}`] : [],
     },
   },
   projects: [
@@ -69,6 +72,12 @@ export default defineConfig({
       use: {
         ...(browser === 'firefox' ? devices['Desktop Firefox'] : devices['Desktop Chrome']),
         browserName: browser === 'firefox' ? 'firefox' : 'chromium',
+        viewport: { width: viewportWidth, height: viewportHeight },
+        launchOptions: {
+          executablePath,
+          headless,
+          args: browser === 'chrome' ? [`--window-size=${viewportWidth},${viewportHeight}`] : [],
+        },
       },
     },
   ],
