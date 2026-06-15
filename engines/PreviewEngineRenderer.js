@@ -58,6 +58,17 @@
     return layer;
   }
 
+  function _previewPageWidth() {
+    const pageW = Number(CFG?.PAGE_W);
+    return Number.isFinite(pageW) && pageW > 0 ? pageW : 754;
+  }
+
+  function _previewPageHeight(pageW = _previewPageWidth()) {
+    const pageH = Number(CFG?.PAGE_H);
+    if (Number.isFinite(pageH) && pageH > 0) return pageH;
+    return Math.round(pageW * Math.SQRT2);
+  }
+
   function _preparePreviewLayerGeometry(content, renderLayer, hitLayer) {
     content.style.position = 'relative';
 
@@ -93,6 +104,14 @@
       return;
     }
 
+    const pageW = _previewPageWidth();
+    const pageH = _previewPageHeight(pageW);
+    firstPage.style.width = `${pageW}px`;
+    firstPage.style.height = `${pageH}px`;
+    firstPage.style.minHeight = `${pageH}px`;
+    firstPage.style.boxSizing = 'border-box';
+    firstPage.style.backgroundColor = '#fff';
+
     const contentRect = content.getBoundingClientRect();
     const pageRect = firstPage.getBoundingClientRect();
     const zoom = _previewLayerZoom();
@@ -123,7 +142,10 @@
 
   function clear() {
     const content = document.getElementById('preview-content');
-    if (content) content.replaceChildren();
+    if (content) {
+      content.replaceChildren();
+      content.style.minHeight = '';
+    }
     document.getElementById(PREVIEW_STYLE_ID)?.remove();
   }
 
@@ -135,8 +157,9 @@
     if (!content) return;
     const beforeUI = _uiSnapshot('#preview-content');
     const payload = _buildPayload();
-    const scaledW = CFG.PAGE_W;
+    const scaledW = _previewPageWidth();
     content.style.width = scaledW + 'px';
+    content.style.minHeight = _previewPageHeight(scaledW) + 'px';
     content.style.maxWidth = 'none';
     content.replaceChildren();
     const loading = document.createElement('div');
