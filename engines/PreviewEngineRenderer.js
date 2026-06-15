@@ -69,7 +69,75 @@
     return Math.round(pageW * Math.SQRT2);
   }
 
+  function _workspaceViewportWidth() {
+    const workspace = document.getElementById('workspace');
+    if (!workspace) return _previewPageWidth();
+    const rect = workspace.getBoundingClientRect();
+    const width = Number(rect.width || workspace.clientWidth || 0);
+    return Number.isFinite(width) && width > 0 ? width : _previewPageWidth();
+  }
+
+  function _previewStageHeight(content) {
+    const pageH = _previewPageHeight(_previewPageWidth());
+    const contentStyle = content ? getComputedStyle(content) : null;
+    const paddingTop = Number.parseFloat(contentStyle?.paddingTop || '0') || 0;
+    const paddingBottom = Number.parseFloat(contentStyle?.paddingBottom || '0') || 0;
+    return Math.ceil(pageH + paddingTop + paddingBottom);
+  }
+
+  function _preparePreviewStageWidth(content = null) {
+    const stageW = Math.max(_previewPageWidth(), _workspaceViewportWidth());
+    const stageH = _previewStageHeight(content);
+    for (const id of ['canvas-layer', 'preview-layer']) {
+      const layer = document.getElementById(id);
+      if (!layer) continue;
+      layer.style.width = `${stageW}px`;
+      layer.style.minHeight = `${stageH}px`;
+      layer.style.height = `${stageH}px`;
+      layer.style.maxWidth = 'none';
+      layer.style.overflow = 'visible';
+      layer.style.backgroundColor = 'transparent';
+    }
+  }
+
+  function _resetPreviewStageWidth() {
+    for (const id of ['canvas-layer', 'preview-layer']) {
+      const layer = document.getElementById(id);
+      if (!layer) continue;
+      layer.style.width = '';
+      layer.style.minHeight = '';
+      layer.style.height = '';
+      layer.style.maxWidth = '';
+      layer.style.overflow = '';
+      layer.style.backgroundColor = '';
+    }
+  }
+
+  function _centerPreviewPageInWorkspace(content, firstPage) {
+    const workspace = document.getElementById('workspace');
+    const stage = document.getElementById('preview-layer') || document.getElementById('canvas-layer');
+    if (!workspace || !stage || !content || !firstPage) return;
+
+    _preparePreviewStageWidth(content);
+
+    const workspaceRect = workspace.getBoundingClientRect();
+    const stageRect = stage.getBoundingClientRect();
+    const pageRect = firstPage.getBoundingClientRect();
+    const contentStyle = getComputedStyle(content);
+    const paddingLeft = Number.parseFloat(contentStyle.paddingLeft) || 0;
+
+    const targetPageLeftInWorkspace = Math.max(0, (workspaceRect.width - pageRect.width) / 2);
+    const stageLeftInWorkspace = stageRect.left - workspaceRect.left;
+    const contentMarginLeft = Math.max(0, targetPageLeftInWorkspace - stageLeftInWorkspace - paddingLeft);
+
+    content.style.marginLeft = `${Math.round(contentMarginLeft * 100) / 100}px`;
+    content.style.marginRight = '0px';
+    content.style.backgroundColor = 'transparent';
+  }
+
   function _preparePreviewLayerGeometry(content, renderLayer, hitLayer) {
+    _preparePreviewStageWidth(content);
+
     content.style.position = 'relative';
 
     renderLayer.style.position = 'relative';
@@ -112,6 +180,8 @@
     firstPage.style.boxSizing = 'border-box';
     firstPage.style.backgroundColor = '#fff';
 
+    _centerPreviewPageInWorkspace(content, firstPage);
+
     const contentRect = content.getBoundingClientRect();
     const pageRect = firstPage.getBoundingClientRect();
     const zoom = _previewLayerZoom();
@@ -145,7 +215,11 @@
     if (content) {
       content.replaceChildren();
       content.style.minHeight = '';
+      content.style.marginLeft = '';
+      content.style.marginRight = '';
+      content.style.backgroundColor = '';
     }
+    _resetPreviewStageWidth();
     document.getElementById(PREVIEW_STYLE_ID)?.remove();
   }
 
@@ -161,6 +235,8 @@
     content.style.width = scaledW + 'px';
     content.style.minHeight = _previewPageHeight(scaledW) + 'px';
     content.style.maxWidth = 'none';
+    content.style.backgroundColor = 'transparent';
+    _preparePreviewStageWidth(content);
     content.replaceChildren();
     const loading = document.createElement('div');
     loading.className = 'preview-loading';

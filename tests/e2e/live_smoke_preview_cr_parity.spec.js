@@ -14,6 +14,8 @@ import { test, expect } from '@playwright/test';
 const A4_RATIO = Math.SQRT2;
 const MAX_CENTER_DELTA_PX = Number(process.env.RF_PREVIEW_CENTER_TOLERANCE_PX || 12);
 const MAX_RATIO_DELTA = Number(process.env.RF_PREVIEW_A4_RATIO_TOLERANCE || 0.03);
+const MIN_WORKSPACE_WIDTH = Number(process.env.RF_PREVIEW_MIN_WORKSPACE_WIDTH || 1100);
+
 
 async function collectPreviewGeometry(page, tag) {
   const geometry = await page.evaluate((label) => {
@@ -40,6 +42,12 @@ async function collectPreviewGeometry(page, tag) {
         paddingLeft: cs.paddingLeft,
         paddingTop: cs.paddingTop,
         backgroundColor: cs.backgroundColor,
+      scrollTop: +(Number(el.scrollTop || 0).toFixed(2)),
+      scrollLeft: +(Number(el.scrollLeft || 0).toFixed(2)),
+      clientHeight: +(Number(el.clientHeight || 0).toFixed(2)),
+      scrollHeight: +(Number(el.scrollHeight || 0).toFixed(2)),
+      clientWidth: +(Number(el.clientWidth || 0).toFixed(2)),
+      scrollWidth: +(Number(el.scrollWidth || 0).toFixed(2)),
       };
     };
 
@@ -143,6 +151,10 @@ test('LIVE: Preview CR parity geometry at 100%', async ({ page }) => {
   expect(g.meta.DS_zoom, 'Preview zoom must be 100%').toBe(1);
 
   expect(g.rects.workspace.found, '#workspace must exist').toBe(true);
+  expect(
+    g.rects.workspace.width,
+    `live smoke must run with a wide CR-like workspace. Actual=${g.rects.workspace.width}`
+  ).toBeGreaterThanOrEqual(MIN_WORKSPACE_WIDTH);
   expect(g.rects.previewContent.found, '#preview-content must exist').toBe(true);
   expect(g.rects.renderLayer.found, '.preview-render-layer must exist').toBe(true);
   expect(g.rects.rptPage.found, '.rpt-page must exist').toBe(true);
@@ -160,9 +172,57 @@ test('LIVE: Preview CR parity geometry at 100%', async ({ page }) => {
     `A4 page must be horizontally centered in workspace. Delta=${g.derived.centerDeltaPx}px`
   ).toBeLessThanOrEqual(MAX_CENTER_DELTA_PX);
 
+  expect(
+    g.rects.previewLayer.height,
+    `preview stage must be at least as tall as the A4 page. stage=${g.rects.previewLayer.height} page=${g.rects.rptPage.height}`
+  ).toBeGreaterThanOrEqual(g.rects.rptPage.height);
+
+  expect(
+    g.rects.canvasLayer.height,
+    `canvas stage must be at least as tall as the A4 page. stage=${g.rects.canvasLayer.height} page=${g.rects.rptPage.height}`
+  ).toBeGreaterThanOrEqual(g.rects.rptPage.height);
+
   console.log('RF-PREVIEW-BROWSER-ERRORS', JSON.stringify(browserErrors));
   console.log('RF-PREVIEW-HTTP-ERRORS', JSON.stringify(httpErrors));
 
   expect.soft(browserErrors, 'browser errors during live smoke').toEqual([]);
-  expect.soft(httpErrors, 'HTTP errors during live smoke').toEqual([]);
+  await page.evaluate(() => {
+    const workspace = document.getElementById('workspace');
+    if (!workspace) return;
+    const maxScrollTop = Math.max(0, workspace.scrollHeight - workspace.clientHeight);
+    workspace.scrollTop = Math.min(420, maxScrollTop);
+    workspace.dispatchEvent(new Event('scroll', { bubbles: true }));
+  });
+
+  await page.waitForTimeout(500);
+
+  const afterScroll = await collectPreviewGeometry(page, 'preview-100-after-manual-scroll-y');
+
+  expect(
+    afterScroll.rects.workspace.scrollTop,
+    `manual scroll smoke must actually move workspace.scrollTop. Actual=${afterScroll.rects.workspace.scrollTop}`
+  ).toBeGreaterThan(0);
+
+  expect(
+    Math.abs(afterScroll.derived.centerDeltaPx),
+    `A4 page must remain horizontally centered after manual vertical scroll. Delta=${afterScroll.derived.centerDeltaPx}px`
+  ).toBeLessThanOrEqual(MAX_CENTER_DELTA_PX);
+
+  expect(
+    Math.abs(afterScroll.derived.pageRatio - A4_RATIO),
+    `A4 ratio must survive manual vertical scroll. Actual=${afterScroll.derived.pageRatio}`
+  ).toBeLessThanOrEqual(MAX_RATIO_DELTA);
+
+  expect(
+    afterScroll.rects.previewLayer.height,
+    `preview stage must still cover A4 after manual scroll. stage=${afterScroll.rects.previewLayer.height} page=${afterScroll.rects.rptPage.height}`
+  ).toBeGreaterThanOrEqual(afterScroll.rects.rptPage.height);
+
+  expect(
+    afterScroll.rects.canvasLayer.height,
+    `canvas stage must still cover A4 after manual scroll. stage=${afterScroll.rects.canvasLayer.height} page=${afterScroll.rects.rptPage.height}`
+  ).toBeGreaterThanOrEqual(afterScroll.rects.rptPage.height);
+
+  expect.soft(browserErrors, 'browser errors during live smoke after manual scroll').toEqual([]);
+  expect.soft(httpErrors, 'HTTP errors during live smoke after manual scroll').toEqual([]);
 });
