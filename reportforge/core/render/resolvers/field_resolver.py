@@ -215,12 +215,71 @@ def format_value(value: Any, fmt: Optional[str]) -> str:
 
 # Aliases for backward-compat with test_advanced_engine imports
 _format_value = format_value
-def _traverse(path, obj, default=''):
+
+_ALIAS_PREFIXES = (
+    "forma_pago",
+    "empresa",
+    "fiscal",
+    "cliente",
+    "totales",
+    "fecha",
+    "guia",
+)
+_MISSING = object()
+
+
+def _field_path_aliases(path: str) -> tuple[str, ...]:
+    """Return compatible flat/nested aliases for invoice-style field paths.
+
+    Resolution priority stays outside this helper:
+    the requested path is always resolved first.
+    """
+    if not isinstance(path, str) or not path:
+        return ()
+
+    aliases: list[str] = []
+
+    if "." in path:
+        prefix, _, rest = path.partition(".")
+        if prefix in _ALIAS_PREFIXES and rest:
+            aliases.append(f"{prefix}_{rest}")
+    else:
+        for prefix in _ALIAS_PREFIXES:
+            marker = f"{prefix}_"
+            if path.startswith(marker):
+                aliases.append(f"{prefix}.{path[len(marker):]}")
+                break
+
+    return tuple(dict.fromkeys(aliases))
+
+
+def _traverse_raw(path: str, obj):
+    if not isinstance(obj, dict):
+        return _MISSING
+
+    if path in obj:
+        return obj[path]
+
     current = obj
-    for k in path.split('.'):
+    for k in path.split("."):
         if isinstance(current, dict):
-            if k not in current: return default
+            if k not in current:
+                return _MISSING
             current = current[k]
-        else: return default
-    return default if current is None else current
+        else:
+            return _MISSING
+    return current
+
+
+def _traverse(path, obj, default=""):
+    value = _traverse_raw(path, obj)
+    if value is not _MISSING:
+        return default if value is None else value
+
+    for alias in _field_path_aliases(path):
+        value = _traverse_raw(alias, obj)
+        if value is not _MISSING:
+            return default if value is None else value
+
+    return default
 
