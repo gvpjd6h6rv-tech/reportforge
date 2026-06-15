@@ -313,6 +313,186 @@
         "audit/architecture_guard.mjs",
         "audit/architecture"
       ]
+    },
+    {
+      "path": "tools/rf-debug-center/rf-debug-center-api-visual-doctor.js",
+      "owner": "visual-doctor-api-wiring",
+      "responsibility": "Wire Visual Doctor model and preview owners into Debug Center API only.",
+      "maxLines": 45,
+      "maxDecisionPoints": 14,
+      "forbiddenPatterns": [
+        "./visual-doctor/",
+        "runRfVisualDoctor",
+        "simulateCssFixInDom",
+        "buildSafeCssSimulationPlan",
+        "function refreshLiveVisualDoctorModel",
+        "function runVisualDoctorRuntimePreview(state"
+      ],
+      "requiredPatterns": [
+        "export function applyVisualDoctorApi",
+        "export function decorateVisualDoctorModel",
+        "decorateLiveVisualDoctorModel",
+        "decorateVisualDoctorPreviewModel"
+      ]
+    },
+    {
+      "path": "tools/rf-debug-center/rf-debug-center-visual-doctor-model.js",
+      "owner": "visual-doctor-live-model",
+      "responsibility": "Refresh and decorate live Visual Doctor model only.",
+      "maxLines": 80,
+      "maxDecisionPoints": 24,
+      "forbiddenPatterns": [
+        "simulateCssFixInDom",
+        "buildSafeCssSimulationPlan",
+        "runVisualDoctorRuntimePreview",
+        "data-act",
+        "document.write",
+        "window.open"
+      ],
+      "requiredPatterns": [
+        "runRfVisualDoctor",
+        "export function decorateLiveVisualDoctorModel",
+        "export function refreshLiveVisualDoctorModel"
+      ]
+    },
+    {
+      "path": "tools/rf-debug-center/rf-debug-center-visual-doctor-preview.js",
+      "owner": "visual-doctor-runtime-preview",
+      "responsibility": "Runtime-only Visual Doctor preview simulation and rollback state only.",
+      "maxLines": 120,
+      "maxDecisionPoints": 38,
+      "forbiddenPatterns": [
+        "runRfVisualDoctor",
+        "RF VISUAL DOCTOR CSS",
+        "document.write",
+        "window.open"
+      ],
+      "requiredPatterns": [
+        "export function runVisualDoctorRuntimePreview",
+        "buildVisualDoctorPreviewInput",
+        "buildSafeCssSimulationPlan",
+        "simulateCssFixInDom",
+        "runtimeOnly: true",
+        "writesFiles: false",
+        "rollbackRequired: true",
+        "autopatch: false"
+      ]
+    },
+    {
+      "path": "tools/rf-debug-center/rf-debug-center-detached-window.js",
+      "owner": "debug-center-detached-shell",
+      "responsibility": "Detached browser-window shell, tab composition, and event dispatch only.",
+      "maxLines": 560,
+      "maxDecisionPoints": 190,
+      "forbiddenPatterns": [
+        "./visual-doctor/",
+        ".headbtn{",
+        ".rf-bars",
+        ".rf-gauge",
+        "RF VISUAL DOCTOR CSS",
+        "addEventListener('click'",
+        "buildSafeCssSimulationPlan",
+        "const openerApi =",
+        "document.querySelectorAll('.nav-btn')",
+        "function buildVisualDoctorTab",
+        "runRfVisualDoctor",
+        "simulateCssFixInDom"
+      ],
+      "requiredPatterns": [
+        "DETACHED_DEBUG_CENTER_CLIENT_SCRIPT",
+        "DETACHED_DEBUG_CENTER_STYLES",
+        "buildDetachedVisualDoctorTab(data, { esc, row, safeJson })"
+      ]
+    },
+    {
+      "path": "tools/rf-debug-center/rf-debug-center-detached-visual-tab.js",
+      "owner": "debug-center-detached-visual-tab",
+      "responsibility": "Render detached Visual Doctor tab HTML only.",
+      "maxLines": 160,
+      "maxDecisionPoints": 50,
+      "forbiddenPatterns": [
+        "./visual-doctor/",
+        "runRfVisualDoctor",
+        "simulateCssFixInDom",
+        "buildSafeCssSimulationPlan",
+        "window.open",
+        "document.write",
+        "addEventListener"
+      ],
+      "requiredPatterns": [
+        "export function buildDetachedVisualDoctorTab",
+        "RF VISUAL DOCTOR CSS",
+        "data-act=\"visual-preview\"",
+        "RUN RUNTIME PREVIEW"
+      ]
+    },
+    {
+      "path": "tools/rf-debug-center/rf-debug-center-visual-doctor-preview-input.js",
+      "owner": "visual-doctor-preview-input",
+      "responsibility": "Build runtime preview input only.",
+      "maxLines": 60,
+      "maxDecisionPoints": 18,
+      "forbiddenPatterns": [
+        "simulateCssFixInDom",
+        "buildSafeCssSimulationPlan",
+        "summarizeSimulationResult",
+        "runRfVisualDoctor",
+        "document.write",
+        "window.open",
+        "state.detachedWindow",
+        "applyModel"
+      ],
+      "requiredPatterns": [
+        "export function buildVisualDoctorPreviewInput",
+        "defaultDiagnosis",
+        "defaultRecipe"
+      ]
+    },
+    {
+      "path": "tools/rf-debug-center/rf-debug-center-detached-styles.js",
+      "owner": "debug-center-detached-styles",
+      "responsibility": "Detached Debug Center CSS only.",
+      "maxLines": 12,
+      "maxDecisionPoints": 0,
+      "forbiddenPatterns": [
+        "addEventListener",
+        "window.open(",
+        "document.write",
+        "function ",
+        "runRfVisualDoctor",
+        "simulateCssFixInDom",
+        "buildSafeCssSimulationPlan"
+      ],
+      "requiredPatterns": [
+        "export const DETACHED_DEBUG_CENTER_STYLES",
+        ".app",
+        ".rf-actions",
+        ".raw-panel"
+      ]
+    },
+    {
+      "path": "tools/rf-debug-center/rf-debug-center-detached-client-script.js",
+      "owner": "debug-center-detached-client-script",
+      "responsibility": "Detached Debug Center browser-side tab/action event dispatcher only.",
+      "maxLines": 35,
+      "maxDecisionPoints": 14,
+      "forbiddenPatterns": [
+        "window.open(",
+        "document.write",
+        "RF VISUAL DOCTOR CSS",
+        "buildHtml",
+        "./visual-doctor/",
+        "simulateCssFixInDom",
+        "buildSafeCssSimulationPlan",
+        "runRfVisualDoctor"
+      ],
+      "requiredPatterns": [
+        "export const DETACHED_DEBUG_CENTER_CLIENT_SCRIPT",
+        "querySelectorAll",
+        "data-act",
+        "api.runVisualDoctorRuntimePreview",
+        "api.syncDetachedWindow"
+      ]
     }
   ]
 }
