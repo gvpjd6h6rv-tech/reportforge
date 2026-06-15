@@ -26,7 +26,9 @@
     "test:parity:blocking": "node --test reportforge/tests/user_parity/fast_interaction_smoke_user_parity.test.mjs && node --test reportforge/tests/user_parity/resize_smoke_user_parity.test.mjs && node --test reportforge/tests/user_parity/zoom_extremes_smoke_user_parity.test.mjs && node --test reportforge/tests/user_parity/content_edit_smoke_user_parity.test.mjs && node --test reportforge/tests/user_parity/template_smoke_user_parity.test.mjs && node --test reportforge/tests/user_parity/session_replay_user_parity.test.mjs",
     "test:parity:extended": "node --test reportforge/tests/user_parity/clipboard_design_preview_parity.test.mjs && node --test reportforge/tests/user_parity/clipboard_visible_composition_user_parity.test.mjs && node --test reportforge/tests/user_parity/multiselect_drag_user_parity.test.mjs && node --test reportforge/tests/user_parity/multiselect_frame_glitch_user_parity.test.mjs && node --test reportforge/tests/user_parity/preview_clipping_user_parity.test.mjs && node --test reportforge/tests/user_parity/selection_handle_stacking_user_parity.test.mjs && node --test reportforge/tests/user_parity/undo_redo_user_parity.test.mjs && node --test reportforge/tests/user_parity/undo_redo_mixed_history_user_parity.test.mjs && node --test reportforge/tests/user_parity/visual_golden_user_parity.test.mjs && node --test reportforge/tests/user_parity/flaky_detection_user_parity.test.mjs",
     "baselines:runtime": "node reportforge/tests/update_runtime_baselines.mjs",
-    "tests:menu": "./tests-menu.sh"
+    "tests:menu": "./tests-menu.sh",
+    "test:preview:live:guard": "node tests/js/preview_live_smoke_guardrail_contract.test.mjs",
+    "test:preview:live": "RF_BROWSER=chrome RF_HEADED=1 RF_VIEWPORT_WIDTH=1650 RF_VIEWPORT_HEIGHT=900 npx playwright test tests/e2e/live_smoke_preview_cr_parity.spec.js -c pw.rf-live.config.mjs --reporter=line"
   },
   "dependencies": {
     "playwright": "1.58.2"
