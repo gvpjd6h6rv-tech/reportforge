@@ -247,7 +247,14 @@ const SelectionOverlay = (() => {
       || typeof PreviewEngineMode === 'undefined'
       || typeof PreviewEngineMode.isSelectionOverlayVisible !== 'function'
       || PreviewEngineMode.isSelectionOverlayVisible();
-    if (DS.previewMode && !previewOverlayVisible) {
+    const hasPreviewSelection = DS.previewMode && renderSelectionIds.length > 0;
+    if (hasPreviewSelection
+        && !previewOverlayVisible
+        && typeof PreviewEngineMode !== 'undefined'
+        && typeof PreviewEngineMode.enableSelectionOverlay === 'function') {
+      PreviewEngineMode.enableSelectionOverlay();
+    }
+    if (DS.previewMode && !previewOverlayVisible && !hasPreviewSelection) {
       engine.updateSelectionInfo();
       return;
     }

@@ -153,8 +153,13 @@ global.SelectionGeometry = {
   selectionHandles: () => [],
 };
 
+let previewOverlayEnabled = false;
+
 global.PreviewEngineMode = {
-  isSelectionOverlayVisible: () => true,
+  enableSelectionOverlay: () => {
+    previewOverlayEnabled = true;
+  },
+  isSelectionOverlayVisible: () => false,
 };
 
 const { default: SelectionOverlayModule } = await import('../../engines/SelectionOverlay.js');
@@ -166,6 +171,12 @@ const engine = {
 };
 
 SelectionOverlay.renderHandles(engine);
+
+assert.equal(
+  previewOverlayEnabled,
+  true,
+  'una selección en Preview debe habilitar el overlay aunque inicialmente esté oculto'
+);
 
 const previewSelectionLayer = previewContent.querySelector(':scope > .preview-selection-layer');
 const forbiddenChildLayer = hitLayer.querySelector('.preview-selection-layer');
