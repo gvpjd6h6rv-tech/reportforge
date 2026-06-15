@@ -11,7 +11,39 @@ const SelectionOverlay = (() => {
     return window.RF_UI_TRACE(event, detail);
   }
 
-  function previewRect(el) {
+  function _findPreviewHitElement(el) {
+    if (!el || typeof document === 'undefined') return null;
+    const id = String(el.id || '');
+    const nodes = document.querySelectorAll(
+      '#preview-content .preview-hit-layer .pv-el, #preview-content .preview-hit-layer .cr-element'
+    );
+    return [...nodes].find((node) => {
+      const ds = node && node.dataset ? node.dataset : {};
+      return ds.originId === id || ds.id === id;
+    }) || null;
+  }
+
+  function _domRectRelativeToLayer(node, layer) {
+    if (!node || !layer) return null;
+    if (typeof node.getBoundingClientRect !== 'function') return null;
+    if (typeof layer.getBoundingClientRect !== 'function') return null;
+
+    const nodeRect = node.getBoundingClientRect();
+    const layerRect = layer.getBoundingClientRect();
+
+    return {
+      left: nodeRect.left - layerRect.left,
+      top: nodeRect.top - layerRect.top,
+      width: nodeRect.width,
+      height: nodeRect.height,
+    };
+  }
+
+  function previewRect(el, layer = null) {
+    const previewNode = _findPreviewHitElement(el);
+    const domRect = _domRectRelativeToLayer(previewNode, layer);
+    if (domRect) return domRect;
+
     const secTop = SelectionState.getSectionTop(el.sectionId);
     return {
       left: el.x,
@@ -21,8 +53,8 @@ const SelectionOverlay = (() => {
     };
   }
 
-  function selectionRect(el) {
-    if (DS.previewMode) return previewRect(el);
+  function selectionRect(el, layer = null) {
+    if (DS.previewMode) return previewRect(el, layer);
     return {
       left: el.x,
       top: SelectionState.getSectionTop(el.sectionId) + el.y,
@@ -125,7 +157,7 @@ const SelectionOverlay = (() => {
       const id = renderSelectionIds[0];
       const el = SelectionState.getElementById(id); if (!el) return;
       SelectionEngineContracts.assertLayoutContract(el, 'SelectionEngine.renderHandles.layout');
-      const rect = selectionRect(el);
+      const rect = selectionRect(el, layer);
       SelectionEngineContracts.assertRectShape(rect, 'SelectionEngine.renderHandles.rect');
       SelectionEngineContracts.assertZoomContract('SelectionEngine.renderHandles.zoom');
       const absX = rect.left, absY = rect.top, absW = rect.width, absH = rect.height;
@@ -149,7 +181,7 @@ const SelectionOverlay = (() => {
       });
     } else {
       const viewRects = selectedElements
-        .map(selectionRect)
+        .map((item) => selectionRect(item, layer))
         .filter(Boolean);
       const bounds = SelectionGeometry.selectionBoundsFromRects(viewRects);
       if (!bounds) return;
