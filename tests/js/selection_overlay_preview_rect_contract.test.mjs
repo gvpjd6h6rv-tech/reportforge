@@ -69,11 +69,13 @@ global.document = {
 
 global.DS = {
   previewMode: true,
+  zoom: 2,
 };
 
 global.RF = {
   Geometry: {
     invalidate: () => undefined,
+    zoom: () => 2,
   },
 };
 
@@ -117,9 +119,9 @@ assert.equal(handlesLayer.children.length, 1);
 const box = handlesLayer.children[0];
 
 assert.equal(box.className, 'sel-box');
-assert.equal(box.style.values['--sel-x'], '50px');
-assert.equal(box.style.values['--sel-y'], '40px');
-assert.equal(box.style.values['--sel-w'], '200px');
-assert.equal(box.style.values['--sel-h'], '100px');
+assert.equal(box.style.values['--sel-x'], '25px');
+assert.equal(box.style.values['--sel-y'], '20px');
+assert.equal(box.style.values['--sel-w'], '100px');
+assert.equal(box.style.values['--sel-h'], '50px');
 
 console.log('selection overlay preview rect contract: PASS');

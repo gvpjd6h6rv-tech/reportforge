@@ -23,6 +23,18 @@ const SelectionOverlay = (() => {
     }) || null;
   }
 
+  function _selectionOverlayZoom() {
+    if (typeof RF !== 'undefined' && RF.Geometry && typeof RF.Geometry.zoom === 'function') {
+      const z = Number(RF.Geometry.zoom());
+      if (Number.isFinite(z) && z > 0) return z;
+    }
+    if (typeof DS !== 'undefined') {
+      const z = Number(DS.zoom);
+      if (Number.isFinite(z) && z > 0) return z;
+    }
+    return 1;
+  }
+
   function _domRectRelativeToLayer(node, layer) {
     if (!node || !layer) return null;
     if (typeof node.getBoundingClientRect !== 'function') return null;
@@ -30,12 +42,13 @@ const SelectionOverlay = (() => {
 
     const nodeRect = node.getBoundingClientRect();
     const layerRect = layer.getBoundingClientRect();
+    const zoom = _selectionOverlayZoom();
 
     return {
-      left: nodeRect.left - layerRect.left,
-      top: nodeRect.top - layerRect.top,
-      width: nodeRect.width,
-      height: nodeRect.height,
+      left: (nodeRect.left - layerRect.left) / zoom,
+      top: (nodeRect.top - layerRect.top) / zoom,
+      width: nodeRect.width / zoom,
+      height: nodeRect.height / zoom,
     };
   }
 
