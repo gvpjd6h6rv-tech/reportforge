@@ -61,8 +61,8 @@ class FakeNode {
 
   getBoundingClientRect() {
     if (this._rect) return this._rect;
-    if (this.className === 'preview-selection-layer' && this.parentNode) {
-      return this.parentNode.getBoundingClientRect();
+    if (this.className === 'preview-selection-layer') {
+      return hitLayer.getBoundingClientRect();
     }
     return { left: 0, top: 0, width: 0, height: 0, right: 0, bottom: 0 };
   }
