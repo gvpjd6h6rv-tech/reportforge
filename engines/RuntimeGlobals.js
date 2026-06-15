@@ -246,10 +246,47 @@ window.FIELD_TREE = {
 
 window.SAMPLE_DATA = {
   meta:{doc_entry:20482,doc_num:20482,obj_type:'13',currency:'USD'},
+
+  empresa_razon_social:'DISTRIBUIDORA EPSON ECUADOR S.A.',
+  empresa_ruc:'0991234567001',
+  empresa_direccion_matriz:'Av. 9 de Octubre 1234 y Malecón, Guayaquil',
+  empresa_direccion_sucursal:'Cdla. Alborada Mz. 12 Vs. 4, Guayaquil',
+  empresa_obligado_contabilidad:'SI',
+  empresa_agente_retencion:'NO',
+
+  cliente_razon_social:'SILVA LEON ROBERTO CARLOS',
+  cliente_identificacion:'0923748188',
+  cliente_telefono:'S/N',
+  cliente_email:'roberto.silva@email.com',
+  cliente_direccion:'44 Y SEDALANA, Guayaquil',
+
+  fiscal_numero_documento:'002-101-000020482',
+  fiscal_numero_autorizacion:'2602202601991234567001120010010000204821234567811',
+  fiscal_clave_acceso:'2602202601991234567001120010010000204821234567811',
+  fiscal_fecha_autorizacion:'2025-11-19T16:25:46',
+  fiscal_ambiente:'PRUEBAS',
+  fiscal_emision:'NORMAL',
+
+  forma_pago_descripcion:'01',
+  forma_pago_valor:33.85,
+  forma_pago_plazo:'',
+  forma_pago_tiempo:'',
+
+  totales_subtotal_15:29.43,
+  totales_subtotal_iva_0:0,
+  totales_subtotal_no_objeto_iva:0,
+  totales_subtotal_exento_iva:0,
+  totales_subtotal_sin_impuestos:29.43,
+  totales_descuento_total:0,
+  totales_valor_ice:0,
+  totales_iva_15:4.42,
+  totales_propina:0,
+  totales_valor_total:33.85,
+
   empresa:{razon_social:'DISTRIBUIDORA EPSON ECUADOR S.A.',nombre_comercial:'EPSON ECUADOR',ruc:'0991234567001',direccion_matriz:'Av. 9 de Octubre 1234 y Malecón, Guayaquil',direccion_sucursal:'Cdla. Alborada Mz. 12 Vs. 4, Guayaquil',obligado_contabilidad:'SI',agente_retencion:'NO'},
-  cliente:{razon_social:'SILVA LEON ROBERTO CARLOS',identificacion:'0923748188',direccion:'44 Y SEDALANA, Guayaquil',email:'roberto.silva@email.com'},
-  fiscal:{ambiente:'PRUEBAS',tipo_emision:'NORMAL',numero_documento:'002-101-000020482',numero_autorizacion:'2602202601991234567001120010010000204821234567811',fecha_autorizacion:'2025-11-19T16:25:46',clave_acceso:'2602202601991234567001120010010000204821234567811'},
-  pago:{group_num:3,forma_pago_fe:'01',plazo:null,unidad_tiempo:null,total:33.85,status:'MAPPED',source:'AUT_BY_GROUPNUM'},
+  cliente:{razon_social:'SILVA LEON ROBERTO CARLOS',identificacion:'0923748188',telefono:'S/N',direccion:'44 Y SEDALANA, Guayaquil',email:'roberto.silva@email.com'},
+  fiscal:{ambiente:'PRUEBAS',tipo_emision:'NORMAL',emision:'NORMAL',numero_documento:'002-101-000020482',numero_autorizacion:'2602202601991234567001120010010000204821234567811',fecha_autorizacion:'2025-11-19T16:25:46',clave_acceso:'2602202601991234567001120010010000204821234567811'},
+  pago:{group_num:3,forma_pago_fe:'01',descripcion:'01',plazo:'',unidad_tiempo:'',tiempo:'',total:33.85,status:'MAPPED',source:'AUT_BY_GROUPNUM'},
   items:[
     {codigo:'BCANA.12',descripcion:'CANASTILLA INC. POSTERIOR TAIWAN DINT',cantidad:30,precio_unitario:0.10,descuento:0,subtotal:3.00},
     {codigo:'BCAUC.06',descripcion:'CAUCHO FRENO REFORZADO TAIWAN 460 CALIPER',cantidad:10,precio_unitario:0.37,descuento:0,subtotal:3.70},

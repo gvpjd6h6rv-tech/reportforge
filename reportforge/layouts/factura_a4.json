@@ -106,7 +106,7 @@
     {"id": "rf-pay-title", "type": "text", "sectionId": "s-rf", "x": 11, "y": 4, "w": 160, "h": 14, "content": "Forma de Pago", "fontSize": 9, "bold": true},
     {"id": "rf-pay-v", "type": "text", "sectionId": "s-rf", "x": 333, "y": 4, "w": 44, "h": 14, "content": "Valor", "fontSize": 8, "bold": true, "align": "center"},
     {"id": "rf-pay-line", "type": "line", "sectionId": "s-rf", "x": 9, "y": 18, "w": 376, "h": 1, "borderColor": "#111111", "borderWidth": 1},
-    {"id": "rf-pay-desc", "type": "field", "sectionId": "s-rf", "x": 11, "y": 23, "w": 267, "h": 14, "fieldPath": "forma_pago_descripcion", "fontSize": 7},
+    {"id": "rf-pay-desc", "type": "field", "sectionId": "s-rf", "x": 11, "y": 23, "w": 267, "h": 14, "fieldPath": "forma_pago_descripcion", "fieldFmt": "forma_pago", "fontSize": 7},
     {"id": "rf-pay-val", "type": "field", "sectionId": "s-rf", "x": 320, "y": 23, "w": 53, "h": 14, "fieldPath": "forma_pago_valor", "fieldFmt": "currency", "fontSize": 7, "align": "right"},
     {"id": "rf-pay-plazo", "type": "field", "sectionId": "s-rf", "x": 271, "y": 23, "w": 48, "h": 14, "fieldPath": "forma_pago_plazo", "fontSize": 7, "align": "center"},
     {"id": "rf-pay-tiempo", "type": "field", "sectionId": "s-rf", "x": 377, "y": 23, "w": 1, "h": 14, "fieldPath": "forma_pago_tiempo", "fontSize": 7},
