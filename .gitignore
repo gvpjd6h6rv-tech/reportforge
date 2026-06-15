@@ -31,3 +31,4 @@ out/
 audit/rf_e2r_snapshot.json
 test-results/
 playwright-report/
+.rf-live-smoke-logs/
