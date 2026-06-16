@@ -37,27 +37,38 @@
     };
   }
 
-  function _applyCLSize() {
+  function _applyCLSize(options = {}) {
+    const { force = false, restoreDesignChrome = false, source = 'CanvasLayoutEngine' } = options;
     const cl = document.getElementById('canvas-layer');
     if (!cl || typeof DS === 'undefined') return;
     const contract = _computeLayoutContract();
     const signature = JSON.stringify(contract);
-    if (_lastCanvasSignature === signature) return;
+    if (!force && _lastCanvasSignature === signature) return;
     _lastCanvasSignature = signature;
     _trace('updateSync-apply', {
+      source,
+      force,
+      restoreDesignChrome,
       width: contract.width,
       height: contract.height,
       minHeight: contract.minHeight,
       maxHeight: contract.maxHeight,
     });
+
+    if (restoreDesignChrome) {
+      cl.style.maxWidth = '';
+      cl.style.overflow = '';
+      cl.style.backgroundColor = '';
+    }
+
     const nextWidth = _px(contract.width);
     const nextHeight = _px(contract.height);
     const nextMinHeight = _px(contract.minHeight);
     const nextMaxHeight = _px(contract.maxHeight);
-    if (cl.style.width !== nextWidth) cl.style.width = nextWidth;
-    if (cl.style.minHeight !== nextMinHeight) cl.style.minHeight = nextMinHeight;
-    if (cl.style.height !== nextHeight) cl.style.height = nextHeight;
-    if (cl.style.maxHeight !== nextMaxHeight) cl.style.maxHeight = nextMaxHeight;
+    if (force || cl.style.width !== nextWidth) cl.style.width = nextWidth;
+    if (force || cl.style.minHeight !== nextMinHeight) cl.style.minHeight = nextMinHeight;
+    if (force || cl.style.height !== nextHeight) cl.style.height = nextHeight;
+    if (force || cl.style.maxHeight !== nextMaxHeight) cl.style.maxHeight = nextMaxHeight;
   }
 
   function _scheduleSize() {
@@ -92,6 +103,14 @@
     _applyCLSize();
   }
 
+  function restoreDesignGeometry(source = 'CanvasLayoutSize.restoreDesignGeometry') {
+    _applyCLSize({
+      force: true,
+      restoreDesignChrome: true,
+      source,
+    });
+  }
+
   function getMetrics() {
     return {
       scaledW: CFG.PAGE_W,
@@ -111,6 +130,7 @@
     updateSync,
     getMetrics,
     getLayoutContract,
+    restoreDesignGeometry,
     applyCLSize: _applyCLSize,
     scheduleSize: _scheduleSize,
   };
