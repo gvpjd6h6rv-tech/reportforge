@@ -17,7 +17,7 @@
     "rf:e2r:html": "node scripts/rf_e2r_dashboard.mjs --html",
     "test:engine-core": "node audit/engine_core_contracts_guard.mjs",
     "test:canvas-layout": "node --test reportforge/tests/canvas_layout_element.test.mjs && node --test reportforge/tests/canvas_layout_section.test.mjs && node audit/canvas_layout_guard.mjs",
-    "test:commands": "node --test reportforge/tests/command_runtime_selection.test.mjs && node audit/command_runtime_guard.mjs",
+    "test:commands": "node --test reportforge/tests/command_runtime_selection.test.mjs && node --test reportforge/tests/command_runtime_file_open_reentry_guard.test.mjs && node audit/command_runtime_guard.mjs",
     "test:geometry": "node --test reportforge/tests/geometry_core.test.mjs && node --test reportforge/tests/geometry_core_extended.test.mjs && node --test reportforge/tests/canvas_geometry.test.mjs && node audit/geometry_core_guard.mjs",
     "test:history": "node --test reportforge/tests/history_state.test.mjs && node audit/history_state_guard.mjs",
     "test:scheduler": "node --test reportforge/tests/render_scheduler_observability.test.mjs && node audit/render_scheduler_observability_guard.mjs",

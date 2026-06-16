@@ -11,6 +11,30 @@
     margins: null,
   };
 
+  const OPEN_PICKER_REENTRY_MS = 900;
+  let _openLayoutPickerActive = false;
+  let _openLayoutPickerBlockedUntil = 0;
+  let _openLayoutPickerInput = null;
+
+  function _isOpenLayoutPickerBlocked() {
+    return _openLayoutPickerActive || Date.now() < _openLayoutPickerBlockedUntil;
+  }
+
+  function _resetOpenLayoutPicker(input) {
+    if (_openLayoutPickerInput === input) _openLayoutPickerInput = null;
+    _openLayoutPickerActive = false;
+    _openLayoutPickerBlockedUntil = Date.now() + OPEN_PICKER_REENTRY_MS;
+    input?.remove();
+  }
+
+  function _releaseOpenLayoutPickerOnFocus(input) {
+    window.setTimeout(() => {
+      if (_openLayoutPickerInput !== input) return;
+      if (input.files && input.files.length > 0) return;
+      _resetOpenLayoutPicker(input);
+    }, 250);
+  }
+
   function _cloneSection(section) {
     return { ...section };
   }
@@ -173,12 +197,21 @@
   }
 
   function load() {
+    if (_isOpenLayoutPickerBlocked()) return false;
+
     document.getElementById('rf-open-layout-file')?.remove();
     const input = document.createElement('input');
     input.id = 'rf-open-layout-file';
     input.type = 'file';
     input.accept = '.json,application/json';
     input.style.display = 'none';
+
+    _openLayoutPickerActive = true;
+    _openLayoutPickerInput = input;
+
+    const releaseOnFocus = () => _releaseOpenLayoutPickerOnFocus(input);
+    window.addEventListener('focus', releaseOnFocus, { once: true });
+
     input.addEventListener('change', async (e) => {
       const file = e.target.files && e.target.files[0];
       if (!file) return;
@@ -199,12 +232,23 @@
       } catch (error) {
         alert(`Error al cargar: ${error.message}`);
       } finally {
-        input.remove();
+        window.removeEventListener('focus', releaseOnFocus);
+        _resetOpenLayoutPicker(input);
       }
     }, { once: true });
+
     document.body.appendChild(input);
     input.value = '';
-    input.click();
+
+    try {
+      input.click();
+    } catch (error) {
+      window.removeEventListener('focus', releaseOnFocus);
+      _resetOpenLayoutPicker(input);
+      throw error;
+    }
+
+    return true;
   }
 
   function exportJSON() {
