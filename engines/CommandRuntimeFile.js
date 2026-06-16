@@ -15,6 +15,7 @@
   let _openLayoutPickerActive = false;
   let _openLayoutPickerBlockedUntil = 0;
   let _openLayoutPickerInput = null;
+  let _currentLayoutFileHandle = null;
 
   function _isOpenLayoutPickerBlocked() {
     return _openLayoutPickerActive || Date.now() < _openLayoutPickerBlockedUntil;
@@ -145,6 +146,70 @@
     });
   }
 
+  function _applyLoadedLayout(layout, file, fileHandle = null, statusMessage = null) {
+    _currentLayout = {
+      ..._currentLayout,
+      ...layout,
+      name: layout.name || file.name.replace(/\.json$/i, ''),
+      version: layout.version || _currentLayout.version,
+      docType: layout.docType || null,
+      margins: layout.margins && typeof layout.margins === 'object' ? { ...layout.margins } : _currentLayout.margins,
+    };
+    _currentLayoutFileHandle = fileHandle;
+    _refreshEditor(_currentLayout);
+    setStatus(statusMessage || `✓ Abierto: ${file.name}`);
+  }
+
+  async function _loadFileIntoEditor(file, fileHandle = null) {
+    const text = await _readFileAsText(file);
+    const parsed = JSON.parse(text);
+    const layout = _normalizeLayout(parsed);
+    _applyLoadedLayout(layout, file, fileHandle, `✓ Abierto: ${file.name}`);
+  }
+
+  async function _ensureWritablePermission(fileHandle) {
+    if (!fileHandle) return false;
+    if (typeof fileHandle.queryPermission !== 'function') return true;
+
+    const options = { mode: 'readwrite' };
+    const current = await fileHandle.queryPermission(options);
+    if (current === 'granted') return true;
+    if (typeof fileHandle.requestPermission !== 'function') return false;
+
+    return await fileHandle.requestPermission(options) === 'granted';
+  }
+
+  async function _writeTextToFileHandle(fileHandle, text) {
+    const writable = await fileHandle.createWritable();
+    try {
+      await writable.write(text);
+    } finally {
+      await writable.close();
+    }
+  }
+
+  async function _loadWithFileSystemPicker() {
+    try {
+      const [fileHandle] = await window.showOpenFilePicker({
+        multiple: false,
+        types: [{
+          description: 'ReportForge JSON',
+          accept: { 'application/json': ['.json'] },
+        }],
+      });
+
+      if (!fileHandle) return;
+      const file = await fileHandle.getFile();
+      await _loadFileIntoEditor(file, fileHandle);
+    } catch (error) {
+      if (error && error.name !== 'AbortError') {
+        alert(`Error al cargar: ${error.message}`);
+      }
+    } finally {
+      _resetOpenLayoutPicker(null);
+    }
+  }
+
   function _slugifyName(name) {
     return String(name || 'reporte')
       .replace(/\.json$/i, '')
@@ -183,21 +248,46 @@
     return JSON.stringify(payload, null, 2);
   }
 
-  function save() {
+  async function save() {
+    if (_currentLayoutFileHandle && typeof _currentLayoutFileHandle.createWritable === 'function') {
+      try {
+        const allowed = await _ensureWritablePermission(_currentLayoutFileHandle);
+        if (!allowed) {
+          setStatus('Guardado cancelado');
+          return false;
+        }
+
+        await _writeTextToFileHandle(_currentLayoutFileHandle, toJSON());
+        setStatus(`✓ Guardado: ${_currentLayoutFileHandle.name || _currentLayout.name || 'reporte'}`);
+        return true;
+      } catch (error) {
+        alert(`No se pudo guardar el archivo abierto: ${error.message}`);
+        return false;
+      }
+    }
+
     const name = prompt('Nombre del reporte:', _currentLayout.name || 'Factura Electrónica') || 'reporte';
     const safe = _slugifyName(name);
     const key = `rfd_${safe}`;
     try {
       localStorage.setItem(key, toJSON());
       setStatus(`✓ Guardado: ${safe}`);
+      return true;
     } catch (error) {
       alert('No se pudo guardar en localStorage. Descarga el JSON en su lugar.');
       exportJSON();
+      return false;
     }
   }
 
   function load() {
     if (_isOpenLayoutPickerBlocked()) return false;
+
+    if (typeof window.showOpenFilePicker === 'function') {
+      _openLayoutPickerActive = true;
+      _loadWithFileSystemPicker();
+      return true;
+    }
 
     document.getElementById('rf-open-layout-file')?.remove();
     const input = document.createElement('input');
@@ -216,19 +306,7 @@
       const file = e.target.files && e.target.files[0];
       if (!file) return;
       try {
-        const text = await _readFileAsText(file);
-        const parsed = JSON.parse(text);
-        const layout = _normalizeLayout(parsed);
-        _currentLayout = {
-          ..._currentLayout,
-          ...layout,
-          name: layout.name || file.name.replace(/\.json$/i, ''),
-          version: layout.version || _currentLayout.version,
-          docType: layout.docType || null,
-          margins: layout.margins && typeof layout.margins === 'object' ? { ...layout.margins } : _currentLayout.margins,
-        };
-        _refreshEditor(_currentLayout);
-        setStatus(`✓ Abierto: ${file.name}`);
+        await _loadFileIntoEditor(file, null);
       } catch (error) {
         alert(`Error al cargar: ${error.message}`);
       } finally {
@@ -288,16 +366,7 @@
       .then((text) => {
         const parsed = JSON.parse(text);
         const layout = _normalizeLayout(parsed);
-        _currentLayout = {
-          ..._currentLayout,
-          ...layout,
-          name: layout.name || file.name.replace(/\.json$/i, ''),
-          version: layout.version || _currentLayout.version,
-          docType: layout.docType || null,
-          margins: layout.margins && typeof layout.margins === 'object' ? { ...layout.margins } : _currentLayout.margins,
-        };
-        _refreshEditor(_currentLayout);
-        setStatus('✓ Diseño importado');
+        _applyLoadedLayout(layout, file, null, '✓ Diseño importado');
       })
       .catch((err) => {
         alert(`Error: ${err.message}`);
