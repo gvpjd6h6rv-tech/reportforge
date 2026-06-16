@@ -3,6 +3,14 @@
 (function initPreviewEngineData(global) {
   const C = global.PreviewEngineContracts;
 
+  function _marginMm(side) {
+    try {
+      if (typeof DS !== 'undefined' && DS.margins && Number.isFinite(DS.margins[side])) return DS.margins[side];
+      if (typeof CFG !== 'undefined' && CFG.margins && Number.isFinite(CFG.margins[side])) return CFG.margins[side];
+    } catch (_e) { /* fall through */ }
+    return 0;
+  }
+
   function _resolveField(path, data, itemData) {
     if (!path) return '';
     const src = (path.startsWith('items.') || path.startsWith('item.')) && itemData ? itemData : data;
@@ -27,7 +35,7 @@
       .filter((e) => e.sectionId === sec.id)
       .map((el) => global.PreviewEngineData.renderInstanceElement(el, rowData, rootData, rowIndex))
       .join('');
-    return `<div class="pv-section${cls}" data-section-id="${sec.id}" style="height:${sec.height}px;width:${CFG.PAGE_W}px"${ri}>${inner}</div>`;
+    return `<div class="pv-section${cls}" data-section-id="${sec.id}" style="position:relative;height:${sec.height}px;width:${CFG.PAGE_W}px;border-bottom:1px solid #DDD;box-sizing:border-box"${ri}>${inner}</div>`;
   }
 
   function renderSectionData(sec, itemData, altRow, rootData) {
@@ -48,7 +56,7 @@
       value = el.content || '';
     }
 
-    const r = { left: el.x, top: el.sectionId ? (DS.getSectionTop(el.sectionId) + el.y) : el.y, width: el.w, height: el.h };
+    const r = { left: el.x, top: el.y, width: el.w, height: el.h };
     const fs = el.fontSize * 96 / 72;
     const st = [
       `position:absolute`, `left:${r.left}px`, `top:${r.top}px`,
@@ -88,7 +96,7 @@
       value = el.content || '';
     }
     const ri = rowIndex !== null ? ` data-row-index="${rowIndex}"` : '';
-    const r = { left: el.x, top: el.sectionId ? (DS.getSectionTop(el.sectionId) + el.y) : el.y, width: el.w, height: el.h };
+    const r = { left: el.x, top: el.y, width: el.w, height: el.h };
     const fs = el.fontSize * 96 / 72;
     const st = [
       `position:absolute`, `left:${r.left}px`, `top:${r.top}px`,
@@ -104,49 +112,89 @@
     return `<div class="pv-el cr-element" data-id="${el.id}" data-origin-id="${el.id}" data-type="${el.type}"${ri} style="${st}">${corners}${value}</div>`;
   }
 
+  // Mirror of advanced_engine.element_renderers._calc_h / calc_row_height.
+  // Keeps hit-layer row heights identical to render-layer so pagination matches.
+  const _PT_PX = 1.333, _CHAR_PX = 0.6;
+  function _calcElH(el, value) {
+    if (!value) return el.h;
+    const cw = Math.max(1, Math.trunc(el.w / Math.max(0.01, el.fontSize * _PT_PX * _CHAR_PX)));
+    const lh = Math.trunc(el.fontSize * _PT_PX * 1.4);
+    const txt = String(value).replace(/<[^>]+>/g, '');
+    return Math.max(el.h, Math.max(1, Math.ceil(txt.length / cw)) * lh + 4);
+  }
+  function _rowHeight(sec, rowData, data) {
+    const base = Math.round(Number(sec.height) || 0);
+    let extra = 0;
+    for (const el of DS.elements.filter((e) => e.sectionId === sec.id)) {
+      if (!el.canGrow) continue;
+      let value = '';
+      if (el.type === 'field' && el.fieldPath) {
+        const raw = _resolveField(el.fieldPath, data, rowData);
+        value = _formatValue(raw, el.fieldFmt);
+      } else { value = el.content || ''; }
+      extra = Math.max(extra, _calcElH(el, String(value)) - el.h);
+    }
+    return base + extra;
+  }
+
   function renderWithData(data) {
     const items = data.items || [];
     const pageW = CFG.PAGE_W;
-    const pageH = 1122;
-    const scaledPageW = pageW;
-    const scaledPageH = pageH;
-    let html = '', currentPageH = 0, pageNum = 1, pageContent = '';
 
-    const openPage = () => { pageContent = ''; currentPageH = 0; };
-    const closePage = (isLast) => {
-      html += `<div class="pv-page" data-page="${pageNum}" style="width:${scaledPageW}px;min-height:${currentPageH}px">${pageContent}</div>`;
-      if (!isLast) html += `<div class="pv-page-break"><span>— Página ${pageNum} de ${pageNum + 1} —</span></div>`;
-      pageNum++;
-    };
-    const addBand = (bandHtml, height) => { pageContent += bandHtml; currentPageH += height; };
-    const needsNewPage = (h) => currentPageH + h > scaledPageH && currentPageH > 0;
-
-    openPage();
-    const headerSecs = DS.sections.filter((s) => s.stype === 'rh' || s.stype === 'ph');
-    const footerSecs = DS.sections.filter((s) => s.stype === 'pf' || s.stype === 'rf');
-    const usableH = scaledPageH
-      - headerSecs.reduce((a, s) => a + s.height, 0)
-      - footerSecs.reduce((a, s) => a + s.height, 0);
+    const rhSecs = DS.sections.filter((s) => s.stype === 'rh');
+    const phSecs = DS.sections.filter((s) => s.stype === 'ph');
+    const pfSecs = DS.sections.filter((s) => s.stype === 'pf');
+    const rfSecs = DS.sections.filter((s) => s.stype === 'rf');
     const detailSecs = DS.sections.filter((s) => s.iterates);
 
-    for (const sec of headerSecs) addBand(renderBand(sec, null, false, data, null), sec.height);
-
+    // Body rows in document order: for each data row, one row per detail section.
+    // Mirrors advanced_engine._body_rows ordering (item-major, section-minor).
     const dataRows = items.length > 0 ? items : [{ _empty: true }];
+    const bodyRows = [];
     for (let ri = 0; ri < dataRows.length; ri++) {
-      const rowData = dataRows[ri];
-      const alt = ri % 2 === 1;
       for (const sec of detailSecs) {
-        if (needsNewPage(sec.height)) {
-          for (const fs of footerSecs.filter((s) => s.stype === 'pf')) addBand(renderBand(fs, null, false, data, null), fs.height);
-          closePage(false);
-          openPage();
-          for (const hs of headerSecs.filter((s) => s.stype === 'ph')) addBand(renderBand(hs, null, false, data, null), hs.height);
-        }
-        addBand(renderBand(sec, rowData, alt, data, ri), sec.height);
+        const rh = _rowHeight(sec, dataRows[ri], data);
+        bodyRows.push({
+          sec,
+          rowData: dataRows[ri],
+          rowIndex: ri,
+          alt: ri % 2 === 1,
+          height: rh,
+          forceBreak: !!sec.newPageBefore,
+        });
       }
     }
-    for (const sec of footerSecs) addBand(renderBand(sec, null, false, data, null), sec.height);
-    closePage(true);
+
+    // Pagination via SSOT (shared with render-layer contract).
+    const metrics = {
+      pageH: (typeof CFG !== 'undefined' && Number.isFinite(CFG.PAGE_H)) ? CFG.PAGE_H : 1123,
+      marginTopMm: _marginMm('top'),
+      marginBottomMm: _marginMm('bottom'),
+    };
+    const plan = global.PreviewPaginationEngine.paginate(
+      DS.sections, bodyRows.map((r) => ({ height: r.height, forceBreak: r.forceBreak })), metrics
+    );
+
+    let html = '';
+    for (const page of plan.pages) {
+      let currentPageH = 0;
+      let pageContent = '';
+      const addBand = (bandHtml, height) => { pageContent += bandHtml; currentPageH += height; };
+
+      if (page.first) for (const sec of rhSecs) addBand(renderBand(sec, null, false, data, null), sec.height);
+      for (const sec of phSecs) addBand(renderBand(sec, null, false, data, null), sec.height);
+      for (let i = page.rowStart; i < page.rowEnd; i++) {
+        const r = bodyRows[i];
+        addBand(renderBand(r.sec, r.rowData, r.alt, data, r.rowIndex), r.height);
+      }
+      if (page.last) for (const sec of rfSecs) addBand(renderBand(sec, null, false, data, null), sec.height);
+      for (const sec of pfSecs) addBand(renderBand(sec, null, false, data, null), sec.height);
+
+      html += `<div class="pv-page" data-page="${page.index + 1}" style="width:${pageW}px;min-height:${currentPageH}px">${pageContent}</div>`;
+      if (!page.last) {
+        html += `<div class="pv-page-break"><span>— Página ${page.index + 1} de ${plan.totalPages} —</span></div>`;
+      }
+    }
     return html;
   }
 

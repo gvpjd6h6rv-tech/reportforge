@@ -251,7 +251,8 @@
         "PreviewEngineMode.js",
         "PreviewEngineRenderer.js",
         "PreviewEngineData.js",
-        "PreviewEngineContracts.js"
+        "PreviewEngineContracts.js",
+        "PreviewPaginationEngine.js"
       ],
       "legacyFiles": [],
       "writableState": [
