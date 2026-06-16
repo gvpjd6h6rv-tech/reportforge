@@ -100,17 +100,25 @@
     }
   }
 
-  function _resetPreviewStageWidth() {
-    for (const id of ['canvas-layer', 'preview-layer']) {
-      const layer = document.getElementById(id);
-      if (!layer) continue;
-      layer.style.width = '';
-      layer.style.minHeight = '';
-      layer.style.height = '';
-      layer.style.maxWidth = '';
-      layer.style.overflow = '';
-      layer.style.backgroundColor = '';
+  function _restoreCanvasLayerDesignGeometry(source) {
+    if (!global.CanvasLayoutSize || typeof global.CanvasLayoutSize.restoreDesignGeometry !== 'function') {
+      throw new Error('CanvasLayoutSize.restoreDesignGeometry missing');
     }
+    global.CanvasLayoutSize.restoreDesignGeometry(source);
+  }
+
+  function _resetPreviewStageWidth() {
+    const previewLayer = document.getElementById('preview-layer');
+    if (previewLayer) {
+      previewLayer.style.width = '';
+      previewLayer.style.minHeight = '';
+      previewLayer.style.height = '';
+      previewLayer.style.maxWidth = '';
+      previewLayer.style.overflow = '';
+      previewLayer.style.backgroundColor = '';
+    }
+
+    _restoreCanvasLayerDesignGeometry('PreviewEngineRenderer._resetPreviewStageWidth');
   }
 
   function _centerPreviewPageInWorkspace(content, firstPage) {

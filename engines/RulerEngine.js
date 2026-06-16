@@ -101,6 +101,18 @@ window.RulerEngine = (() => {
       canvas.style.width = `${cssW}px`;
       canvas.style.minWidth = `${cssW}px`;
       canvas.style.maxWidth = `${cssW}px`;
+    } else if (hCanvasBox) {
+      hCanvasBox.style.position = '';
+      hCanvasBox.style.left = '';
+      hCanvasBox.style.width = '';
+      hCanvasBox.style.minWidth = '';
+      hCanvasBox.style.maxWidth = '';
+      hCanvasBox.style.flex = '';
+      hCanvasBox.style.overflow = '';
+
+      canvas.style.left = '';
+      canvas.style.minWidth = '';
+      canvas.style.maxWidth = '';
     }
 
     const ctx  = _setupCanvas(canvas, cssW, cssH);
