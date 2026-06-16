@@ -88,7 +88,7 @@ class AdvancedHtmlEngine:
             f"{page_rule}"
             f"*,*::before,*::after{{box-sizing:border-box;margin:0;padding:0}}"
             f"body{{font-family:Arial,Helvetica,sans-serif;font-size:8pt;color:#000;background:#fff}}"
-            f".rpt-page{{width:{page_width}px;position:relative;page-break-after:always}}"
+            f".rpt-page{{width:{page_width}px;position:relative;overflow:hidden;page-break-after:always}}"
             f".rpt-page:last-child{{page-break-after:auto}}"
             f".cr-section{{position:relative;width:{page_width}px;overflow:hidden;page-break-inside:avoid}}"
             f".cr-section.keep-together{{page-break-inside:avoid}}"
