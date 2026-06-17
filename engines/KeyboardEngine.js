@@ -128,6 +128,13 @@ const KeyboardEngine = (() => {
             el.x += dx; el.y += dy;
           }
         });
+        if (typeof SelectionEngine !== 'undefined' && typeof SelectionEngine.renderHandles === 'function') {
+          if (typeof RenderScheduler !== 'undefined' && typeof RenderScheduler.flushSync === 'function') {
+            RenderScheduler.flushSync(() => SelectionEngine.renderHandles(), 'KeyboardEngine.nudge.renderHandles');
+          } else {
+            SelectionEngine.renderHandles();
+          }
+        }
         if (typeof DS.saveHistory === 'function') DS.saveHistory();
       });
     });
