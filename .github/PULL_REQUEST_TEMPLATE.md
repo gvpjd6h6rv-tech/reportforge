@@ -45,6 +45,16 @@
 - What remains unverified:
 - Why that risk is acceptable:
 
+## Architectural Governance Checklist
+
+- [ ] no nuevos writers — no new direct DOM writers outside approved modules
+- [ ] no nuevos owners — no new ownership claims on shared subsystems
+- [ ] no bypass del scheduler — all DOM writes go through RenderScheduler
+- [ ] no estado fuera de DS — no state outside DocumentState
+- [ ] no contratos ambiguos — no ambiguous ownership or contract boundaries
+- [ ] tests pasan (runtime + contracts + governance) — all test suites green
+- [ ] no uso de APIs legacy — no calls to retired facades or legacy APIs
+
 ## Notes
 
 - If this is a non-bugfix PR, mark any N/A sections clearly.

@@ -93,13 +93,11 @@
         img.className = 'el-content';
         img.alt = el.content || '';
         img.src = src;
-        img.style.cssText = [
-          'display:block',
-          'width:100%',
-          'height:100%',
-          `object-fit:${el.srcFit || el.imageFit || 'contain'}`,
-          'pointer-events:none',
-        ].join(';');
+        img.style.display = 'block';
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = el.srcFit || el.imageFit || 'contain';
+        img.style.pointerEvents = 'none';
         div.appendChild(img);
       } else {
         div.style.background = '#F9F9F9';

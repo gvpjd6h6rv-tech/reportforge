@@ -162,6 +162,8 @@ global.PreviewEngineMode = {
   isSelectionOverlayVisible: () => false,
 };
 
+const { default: SelectionOverlayPreviewModule } = await import('../../engines/SelectionOverlayPreview.js');
+globalThis.SelectionOverlayPreview = SelectionOverlayPreviewModule;
 const { default: SelectionOverlayModule } = await import('../../engines/SelectionOverlay.js');
 const SelectionOverlay = SelectionOverlayModule || global.SelectionOverlay;
 
