@@ -161,8 +161,14 @@ const SelectionOverlay = (() => {
     box.style.zIndex = '40';
   }
 
+  function selectionGuideThickness() {
+    const zoom = _selectionOverlayZoom();
+    return Math.max(0.25, 1 / zoom);
+  }
+
   function appendSelectionGuide(layer, rect, axis, edge) {
     const guide = document.createElement('div');
+    const thickness = selectionGuideThickness();
     guide.className = `selection-guide selection-guide-${axis}`;
     guide.dataset.edge = edge;
     guide.style.position = 'absolute';
@@ -172,24 +178,29 @@ const SelectionOverlay = (() => {
     if (axis === 'h') {
       guide.style.left = '0px';
       guide.style.width = '100%';
-      guide.style.top = `${Math.round(edge)}px`;
-      guide.style.height = '2px';
+      guide.style.top = `${edge}px`;
+      guide.style.height = `${thickness}px`;
     } else {
       guide.style.top = '0px';
       guide.style.height = '100%';
-      guide.style.left = `${Math.round(edge)}px`;
-      guide.style.width = '2px';
+      guide.style.left = `${edge}px`;
+      guide.style.width = `${thickness}px`;
     }
     layer.appendChild(guide);
   }
 
+  function selectionBoxBorderWidth() {
+    return 1;
+  }
+
   function renderSelectionGuides(layer, rects) {
+    const borderWidth = selectionBoxBorderWidth();
     rects.forEach(rect => {
       if (!rect) return;
       appendSelectionGuide(layer, rect, 'h', rect.top);
-      appendSelectionGuide(layer, rect, 'h', rect.top + rect.height);
+      appendSelectionGuide(layer, rect, 'h', rect.top + rect.height - borderWidth);
       appendSelectionGuide(layer, rect, 'v', rect.left);
-      appendSelectionGuide(layer, rect, 'v', rect.left + rect.width);
+      appendSelectionGuide(layer, rect, 'v', rect.left + rect.width - borderWidth);
     });
   }
 
