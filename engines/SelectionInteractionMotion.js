@@ -1,6 +1,31 @@
 'use strict';
 
 const SelectionInteractionMotion = (() => {
+  function _sectionBounds(sectionId) {
+    const section = DS.getSection(sectionId);
+    return {
+      section,
+      top: section ? DS.getSectionTop(sectionId) : 0,
+      height: section ? Number(section.height) || 0 : 0,
+    };
+  }
+
+  function _clampRectToSection(sectionId, rect) {
+    const bounds = _sectionBounds(sectionId);
+    const pageWidth = Number(CFG.PAGE_W) || 0;
+    const maxX = Math.max(0, pageWidth - rect.w);
+    const maxY = Math.max(0, bounds.height - rect.h);
+    const next = {
+      x: SelectionState.snap(Math.max(0, Math.min(rect.x, maxX))),
+      y: SelectionState.snap(Math.max(0, Math.min(rect.y, maxY))),
+      w: SelectionState.snap(Math.max(CFG.MIN_EL_W, Math.min(rect.w, pageWidth))),
+      h: SelectionState.snap(Math.max(CFG.MIN_EL_H, Math.min(rect.h, bounds.height || rect.h))),
+    };
+    next.w = SelectionState.snap(Math.max(CFG.MIN_EL_W, Math.min(next.w, Math.max(CFG.MIN_EL_W, pageWidth - next.x))));
+    next.h = SelectionState.snap(Math.max(CFG.MIN_EL_H, Math.min(next.h, Math.max(CFG.MIN_EL_H, bounds.height - next.y))));
+    return next;
+  }
+
   function onMouseMove(engine, e) {
     const pos = getCanvasPos(e);
     document.getElementById('sb-pos').textContent = `X: ${Math.round(pos.x)}   Y: ${Math.round(pos.y)}`;
@@ -15,37 +40,40 @@ const SelectionInteractionMotion = (() => {
 
   function _doMove(engine, pos, e) {
     const d = engine._drag;
+    if (!d.moved && typeof HistoryEngine !== 'undefined') HistoryEngine.push('move');
     d.moved = true;
     const dx = pos.x - d.startX;
     const dy = pos.y - d.startY;
     d.startPositions.forEach(orig => {
       const el = SelectionState.getElementById(orig.id); if (!el) return;
-      const rawAbsX = orig.x + dx;
-      const rawAbsY = orig.sectionTop + orig.y + dy;
-      let newX = SelectionState.snap(rawAbsX);
-      const target = SelectionState.getSectionAtY(rawAbsY + el.h / 2);
-      if (target) {
-        DS.updateElementLayout(el.id, {
-          sectionId: target.section.id,
-          y: SelectionState.snap(Math.max(0, rawAbsY - SelectionState.getSectionTop(target.section.id))),
-        }, 'SelectionInteractionMotion.move');
-      } else {
-        DS.updateElementLayout(el.id, { y: SelectionState.snap(Math.max(0, orig.y + dy)) }, 'SelectionInteractionMotion.move');
-      }
-      DS.updateElementLayout(el.id, { x: SelectionState.snap(Math.max(0, Math.min(CFG.PAGE_W - el.w, newX))) }, 'SelectionInteractionMotion.move');
+      const sectionBounds = _sectionBounds(orig.sectionId);
+      const newX = SelectionState.snap(Math.max(0, Math.min(orig.x + dx, Math.max(0, CFG.PAGE_W - el.w))));
+      const newY = SelectionState.snap(Math.max(0, Math.min(orig.y + dy, Math.max(0, sectionBounds.height - el.h))));
+      DS.updateElementLayout(el.id, {
+        x: newX,
+        y: newY,
+      }, 'SelectionInteraction.move');
       const div = document.querySelector(`.cr-element[data-id="${orig.id}"]`);
       if (div) {
         div.classList.add('dragging');
         div.style.left = el.x + 'px';
         div.style.top = el.y + 'px';
-        div.style.transform = `translate(${(rawAbsX - el.x).toFixed(3)}px, ${(rawAbsY - (SelectionState.getSectionTop(el.sectionId) + el.y)).toFixed(3)}px)`;
+        const snappedAbsX = el.x;
+        const snappedAbsY = sectionBounds.top + el.y;
+        const rawAbsX = orig.x + dx;
+        const rawAbsY = orig.sectionTop + orig.y + dy;
+        div.style.transform = `translate(${(rawAbsX - snappedAbsX).toFixed(3)}px, ${(rawAbsY - snappedAbsY).toFixed(3)}px)`;
       }
       if (DS.previewMode) {
         document.querySelectorAll(`.pv-el[data-origin-id="${orig.id}"]`).forEach(pv => {
           pv.classList.add('dragging');
           pv.style.left = el.x + 'px';
           pv.style.top = el.y + 'px';
-          pv.style.transform = `translate(${(rawAbsX - el.x).toFixed(3)}px, ${(rawAbsY - (SelectionState.getSectionTop(el.sectionId) + el.y)).toFixed(3)}px)`;
+          const snappedAbsX = el.x;
+          const snappedAbsY = sectionBounds.top + el.y;
+          const rawAbsX = orig.x + dx;
+          const rawAbsY = orig.sectionTop + orig.y + dy;
+          pv.style.transform = `translate(${(rawAbsX - snappedAbsX).toFixed(3)}px, ${(rawAbsY - snappedAbsY).toFixed(3)}px)`;
         });
       }
     });
@@ -54,6 +82,10 @@ const SelectionInteractionMotion = (() => {
       requestAnimationFrame(() => {
         d._rafPending = false;
         engine.renderHandles();
+        if (typeof PropertiesEngine !== 'undefined' && DS.getSelectedElements().length === 1) {
+          const el = DS.getSelectedElements()[0];
+          if (el) PropertiesEngine.updatePositionFields(el);
+        }
         if (DS.selection.size === 1) {
           const el = DS.getElementById([...DS.selection][0]);
           if (el) document.getElementById('sb-pos').textContent = `X: ${el.x}   Y: ${el.y}`;
@@ -73,7 +105,8 @@ const SelectionInteractionMotion = (() => {
     if (p.includes('s')) h = Math.max(CFG.MIN_EL_H, SelectionState.snap(h + dy));
     if (p.includes('w')) { const nw = Math.max(CFG.MIN_EL_W, SelectionState.snap(w - dx)); x = SelectionState.snap(x + w - nw); w = nw; }
     if (p.includes('n')) { const nh = Math.max(CFG.MIN_EL_H, SelectionState.snap(h - dy)); y = SelectionState.snap(y + h - nh); h = nh; }
-    DS.updateElementLayout(el.id, { x, y, w, h }, 'SelectionInteractionMotion.resize');
+    const clamped = _clampRectToSection(el.sectionId, { x, y, w, h });
+    DS.updateElementLayout(el.id, clamped, 'SelectionInteraction.resize');
     _canonicalCanvasWriter().updateElementPosition(d.elId);
     if (DS.previewMode) {
       document.querySelectorAll(`.pv-el[data-origin-id="${d.elId}"]`).forEach(pv => {
@@ -135,6 +168,9 @@ const SelectionInteractionMotion = (() => {
     }
     if (!isCancel && d.type === 'insert') InsertEngine.onMouseUp(e);
     engine._drag = null;
+    if (!isCancel && (d.type === 'move' || d.type === 'resize')) {
+      engine.renderHandles();
+    }
   }
 
   return {

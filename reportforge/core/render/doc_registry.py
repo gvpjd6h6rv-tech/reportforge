@@ -6,7 +6,6 @@ from .doc_registry_nota_credito import NOTA_CREDITO_FIELD_TREE, NOTA_CREDITO_SAM
 from .doc_registry_remision import REMISION_FIELD_TREE, REMISION_SAMPLE, _remision_layout_raw as remision_layout_raw
 from .doc_registry_retencion import RETENCION_FIELD_TREE, RETENCION_SAMPLE, _retencion_layout_raw as retencion_layout_raw
 
-
 def _factura_layout_raw():
     layout_path = __import__("pathlib").Path(__file__).resolve().parents[2] / "layouts" / "factura_a4.json"
     if layout_path.exists():
@@ -45,7 +44,6 @@ class DocType:
 
     def __repr__(self):
         return f"<DocType {self.key} '{self.label}'>"
-
 
 REGISTRY: dict[str, DocType] = {
 
@@ -113,10 +111,8 @@ REGISTRY: dict[str, DocType] = {
 
 def get_doc_type(key: str) -> DocType:
     if key not in REGISTRY:
-        raise KeyError(f"Tipo de documento desconocido: {key!r}. "
-                       f"Disponibles: {list(REGISTRY.keys())}")
+        raise KeyError(f"Tipo de documento desconocido: {key!r}. Disponibles: {list(REGISTRY.keys())}")
     return REGISTRY[key]
-
 
 def list_doc_types() -> list[dict]:
     return [{"key": dt.key, "label": dt.label, "sri_code": dt.sri_code, "color": dt.color}

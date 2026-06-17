@@ -97,6 +97,9 @@ function loadSelectionOverlayRuntime({ zoom = 4 } = {}) {
   context.globalThis = context;
   vm.createContext(context);
 
+  const previewSource = fs.readFileSync('engines/SelectionOverlayPreview.js', 'utf8');
+  vm.runInContext(previewSource, context, { filename: 'engines/SelectionOverlayPreview.js' });
+
   const source = fs.readFileSync('engines/SelectionOverlay.js', 'utf8');
   vm.runInContext(`${source}\nglobalThis.__SelectionOverlay = SelectionOverlay;`, context, {
     filename: 'engines/SelectionOverlay.js',
@@ -112,6 +115,7 @@ test('SelectionOverlay renders selection guides as zoom-stable hairlines aligned
   const runtime = loadSelectionOverlayRuntime({ zoom: 4 });
 
   runtime.overlay.renderHandles({
+    _drag: { type: 'move' },
     updateSelectionInfo() {},
     attachHandleEvent() {},
   });

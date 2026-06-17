@@ -352,49 +352,7 @@
   <div class="rf-zoom-live-debug__row"><span class="rf-zoom-live-debug__label">FN</span><span class="rf-zoom-live-debug__value" id="rf-zd-fn">boot</span></div>
 </div>
 
-<script>
-  window.RF_BUILD_INFO = {
-    commit: '__RF_BUILD_COMMIT__',
-    assetVersion: '__RF_BUILD_ASSET_VERSION__',
-    htmlTimestamp: '__RF_BUILD_HTML_TIMESTAMP__',
-    jsTimestamp: '__RF_BUILD_JS_TIMESTAMP__',
-    jsRoute: '__RF_BUILD_JS_ROUTE__',
-    cacheStatus: '__RF_BUILD_CACHE_STATUS__',
-    htmlRoute: '__RF_BUILD_HTML_ROUTE__'
-  };
-  window.RF_REFRESH_BUILD_DEBUG = function() {
-    const info = window.RF_BUILD_INFO || {};
-    const commit = document.getElementById('rf-build-commit');
-    const asset = document.getElementById('rf-build-asset');
-    const htmlts = document.getElementById('rf-build-htmlts');
-    const js = document.getElementById('rf-build-js');
-    const jsts = document.getElementById('rf-build-jsts');
-    const cache = document.getElementById('rf-build-cache');
-    if (commit) commit.textContent = `commit ${info.commit || 'unknown'}`;
-    if (asset) asset.textContent = `asset ${info.assetVersion || 'unknown'}`;
-    if (htmlts) htmlts.textContent = `html ${info.htmlTimestamp || 'unknown'}`;
-    if (js) js.textContent = info.jsRoute || 'js unknown';
-    if (jsts) jsts.textContent = `js ${info.jsTimestamp || 'unknown'}`;
-    if (cache) cache.textContent = `cache ${info.cacheStatus || 'unknown'}`;
-  };
-  window.RF_REFRESH_ZOOM_DEBUG_PANEL = function() {
-    const info = window.RF_DEBUG_ZOOM || {};
-    const zoom = document.getElementById('rf-zd-zoom');
-    const slider = document.getElementById('rf-zd-slider');
-    const pct = document.getElementById('rf-zd-pct');
-    const tb = document.getElementById('rf-zd-tb');
-    const event = document.getElementById('rf-zd-event');
-    const fn = document.getElementById('rf-zd-fn');
-    if (zoom) zoom.textContent = String(info.zoom ?? '');
-    if (slider) slider.textContent = String(info.sliderValue ?? '');
-    if (pct) pct.textContent = String(info.pctText ?? '');
-    if (tb) tb.textContent = String(info.tbValue ?? '');
-    if (event) event.textContent = String(info.lastEvent ?? '');
-    if (fn) fn.textContent = String(info.lastFunction ?? '');
-  };
-  window.RF_REFRESH_BUILD_DEBUG();
-  window.RF_REFRESH_ZOOM_DEBUG_PANEL();
-</script>
+<script src="/engines/BuildDebugPanel.js"></script>
 
 
 <!-- Helper overlays -->
@@ -412,14 +370,17 @@
 <script src="/engines/DesignerUI.js"></script>
 <script src="/engines/DebugTrace.js"></script>
 <script src="/engines/RFAudit.js"></script>
+<script src="/engines/DebugPanelGeometry.js"></script>
 <script src="/engines/DebugPanelUtils.js"></script>
+<script src="/engines/DebugHudLayout.js"></script>
 <script src="/engines/DebugChannelsPanel.js"></script>
 <script src="/engines/DebugTraceToggle.js"></script>
 <script src="/engines/DebugOverlay.js"></script>
-<script type="module" src="/tools/rf-debug-center/rf-debug-center.js"></script>
+<script src="/tools/rf-debug-center/rf-debug-center.js" type="module"></script>
 <script src="/engines/DocumentState.js"></script>
 <script src="/engines/DocumentSelectors.js"></script>
 <script src="/engines/DocumentHistory.js"></script>
+<script src="/engines/DocumentActionsSelection.js"></script>
 <script src="/engines/DocumentActions.js"></script>
 <script src="/engines/DocumentStore.js"></script>
 <script src="/engines/RuntimeServices.js"></script>
@@ -448,12 +409,14 @@
 <script src="/engines/PreviewPaginationEngine.js"></script>
 <script src="/engines/PreviewEngineData.js"></script>
 <script src="/engines/PreviewEngineMode.js"></script>
+<script src="/engines/PreviewEngineRendererLayout.js"></script>
 <script src="/engines/PreviewEngineRenderer.js"></script>
 <script src="/engines/CommandRuntimeShared.js"></script>
 <script src="/engines/CommandRuntimeSelection.js"></script>
 <script src="/engines/CommandRuntimeView.js"></script>
 <script src="/engines/CommandRuntimeSections.js"></script>
 <script src="/engines/CommandRuntimeFile.js"></script>
+<script src="/engines/CommandRuntimeFileIO.js"></script>
 <script src="/engines/CommandRuntimeDocType.js"></script>
 <script src="/engines/CommandRuntimeHandlers.js"></script>
 <script src="/engines/CommandRuntimeInit.js"></script>
@@ -482,7 +445,10 @@
 <script src="/engines/SelectionState.js"></script>
 <script src="/engines/SelectionHitTest.js"></script>
 <script src="/engines/SelectionGeometry.js"></script>
+<script src="/engines/SelectionOverlayPreview.js"></script>
 <script src="/engines/SelectionOverlay.js"></script>
+<script src="/engines/SelectionInteractionPointer.js"></script>
+<script src="/engines/SelectionInteractionMotion.js"></script>
 <script src="/engines/SelectionInteraction.js"></script>
 <script src="/engines/AlignEngine.js"></script>
 <script src="/engines/AlignmentGuides.js"></script>

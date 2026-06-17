@@ -233,9 +233,8 @@
         "audit/ssot_guard.mjs"
       ],
       "risk": "critical",
-      "notes": "ssot_guard.mjs enforces DragEngine→DragState delegation. SelectionInteraction.js and SelectionInteractionMotion.js implement the same _doMove/_doResize logic — the active path is controlled by RF.RuntimeServices.isEngineCoreInteractionEnabled().",
+      "notes": "ssot_guard.mjs enforces DragEngine→DragState delegation. SelectionInteraction.js is a thin orchestrator delegating to SelectionInteractionPointer.js (event initiation) and SelectionInteractionMotion.js (drag logic). All three are loaded in v4.html.",
       "unresolvedAmbiguities": [
-        "SelectionInteraction.js vs SelectionInteractionMotion.js: both implement _doMove and _doResize. Which one is used in production? The routing flag isEngineCoreInteractionEnabled() determines the active path but the non-active file still ships.",
         "HandlesEngine.js vs SelectionOverlay.js: both appear to render selection handles. Canonical file not confirmed.",
         "SelectionState.js vs DS.selection: SelectionState exposes its own API (selectOnly, addSelection, etc.) in parallel with DS.selectOnly etc. — are these the same object or two separate state stores?"
       ]

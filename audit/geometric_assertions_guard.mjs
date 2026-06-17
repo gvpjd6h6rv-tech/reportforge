@@ -65,10 +65,8 @@ check('GEOM-CALLSITE-001', 'DocumentActions.js',
   'DocumentActions.updateElementLayout must call assertLayoutPatch(patch) before writing to DS state');
 
 // RULE-C: Resize paths route through DS.updateElementLayout (not direct mutation).
-check('GEOM-RESIZE-001', 'SelectionInteraction.js',
-  /DS\.updateElementLayout\s*\(/.test(selInteract),
-  'SelectionInteraction.js must commit resize via DS.updateElementLayout to stay in assertLayoutPatch path');
-
+// SelectionInteraction.js is now a thin delegator — the model-write contract
+// lives in SelectionInteractionMotion.js which owns _doMove/_doResize.
 check('GEOM-RESIZE-001', 'SelectionInteractionMotion.js',
   /DS\.updateElementLayout\s*\(/.test(selMotion),
   'SelectionInteractionMotion.js must commit resize via DS.updateElementLayout to stay in assertLayoutPatch path');

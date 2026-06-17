@@ -2,7 +2,7 @@
 
 const SelectionInteractionPointer = (() => {
   function useCentralRouter() {
-    return typeof window !== 'undefined' && window.RF?.RuntimeServices?.isEngineCoreInteractionEnabled?.() !== false;
+    return window.RF?.RuntimeServices?.isEngineCoreInteractionEnabled?.() !== false;
   }
 
   function onElementPointerDown(engine, e, id) {
@@ -12,7 +12,7 @@ const SelectionInteractionPointer = (() => {
     if (!div) return;
     const pointerId = SelectionHitTest.resolvePointerId(e);
     if (div.setPointerCapture && typeof pointerId === 'number') div.setPointerCapture(pointerId);
-    if (e.detail === 2 && el.type === 'text') {
+    if (e.detail === 2 && (el.type === 'text' || el.type === 'field')) {
       startTextEdit(engine, div, el); return;
     }
     const shiftKey = SelectionHitTest.isShiftSelection(e);
@@ -23,6 +23,9 @@ const SelectionInteractionPointer = (() => {
       SelectionState.removeSelection(id);
     } else {
       SelectionState.addSelection(id);
+    }
+    if (DS.previewMode && typeof PreviewEngineMode !== 'undefined' && typeof PreviewEngineMode.enableSelectionOverlay === 'function') {
+      PreviewEngineMode.enableSelectionOverlay();
     }
     engine.renderHandles();
     PropertiesEngine.render();
@@ -89,12 +92,35 @@ const SelectionInteractionPointer = (() => {
     range.selectNodeContents(span);
     const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
     const commit = () => {
+      const text = (span.textContent || '').trim();
+      const idx = DS.elements.findIndex(item => item.id === el.id);
+      if (idx >= 0) {
+        const model = DS.elements[idx];
+        if (model.type === 'field') {
+          const bindingLike = /^[A-Za-z_][A-Za-z0-9_.]*$/.test(text);
+          if ((text.startsWith('{') && text.endsWith('}')) || bindingLike) {
+            model.fieldPath = text.startsWith('{') && text.endsWith('}')
+              ? text.slice(1, -1).trim()
+              : text;
+            model.content = '';
+          } else {
+            model.content = text;
+          }
+        } else {
+          model.content = text;
+        }
+        _canonicalCanvasWriter().updateElement(model.id);
+        if (typeof SelectionEngine !== 'undefined' && typeof SelectionEngine.renderHandles === 'function') {
+          SelectionEngine.renderHandles();
+        }
+        if (typeof PropertiesEngine !== 'undefined' && typeof PropertiesEngine.render === 'function') {
+          PropertiesEngine.render();
+        }
+      }
       span.contentEditable = 'false';
       span.style.pointerEvents = 'none';
       div.classList.remove('editing');
       SelectionState.saveHistory();
-      const idx = DS.elements.findIndex(item => item.id === el.id);
-      if (idx >= 0) { DS.elements[idx].content = span.textContent; }
     };
     span.addEventListener('blur', commit, { once: true });
     span.addEventListener('keydown', ke => { if (ke.key === 'Escape' || ke.key === 'Enter') span.blur(); });
