@@ -127,6 +127,17 @@ global.RF = {
   Geometry: {
     invalidate: () => undefined,
     zoom: () => 2,
+    overlayRectToPreviewLayerSpace(node, layer) {
+      const nodeRect = node.getBoundingClientRect();
+      const layerRect = layer.getBoundingClientRect();
+      const z = this.zoom();
+      return {
+        left: (nodeRect.left - layerRect.left) / z,
+        top: (nodeRect.top - layerRect.top) / z,
+        width: nodeRect.width / z,
+        height: nodeRect.height / z,
+      };
+    },
   },
 };
 

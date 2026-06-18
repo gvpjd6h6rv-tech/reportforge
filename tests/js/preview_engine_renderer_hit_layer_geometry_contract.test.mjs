@@ -2,7 +2,8 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 
-const source = fs.readFileSync('engines/PreviewEngineRenderer.js', 'utf8');
+const layoutSrc = fs.readFileSync('engines/PreviewEngineRendererLayout.js', 'utf8');
+const rendererSrc = fs.readFileSync('engines/PreviewEngineRenderer.js', 'utf8');
 
 class FakeNode {
   constructor(className = '', rect = null) {
@@ -61,6 +62,8 @@ class FakeNode {
   get innerHTML() {
     return this._innerHTML;
   }
+
+  remove() {}
 }
 
 const previewContent = new FakeNode('preview-content', {
@@ -70,17 +73,31 @@ const previewContent = new FakeNode('preview-content', {
   height: 700,
 });
 
+const workspace = new FakeNode('workspace', {
+  left: 0,
+  top: 0,
+  width: 1200,
+  height: 800,
+});
+workspace.clientWidth = 1200;
+
 const sandbox = {
   window: {},
   document: {
     head: new FakeNode('head'),
     getElementById(id) {
       if (id === 'preview-content') return previewContent;
+      if (id === 'workspace') return workspace;
+      if (id === 'canvas-layer') return null;
+      if (id === 'preview-layer') return null;
       return null;
     },
     createElement(tagName) {
       return new FakeNode(tagName);
     },
+  },
+  getComputedStyle() {
+    return { paddingTop: '0', paddingBottom: '0', paddingLeft: '0' };
   },
   DOMParser: class {
     parseFromString() {
@@ -96,6 +113,8 @@ const sandbox = {
     ok: true,
     text: async () => '<html><head><style></style></head><body><div class="rpt-page"></div></body></html>',
   }),
+  Number,
+  Math,
   DS: {
     zoom: 2,
     previewMode: true,
@@ -107,6 +126,13 @@ const sandbox = {
   CFG: {
     PAGE_W: 671,
   },
+  RF: {
+    Geometry: {
+      zoom: () => 2,
+    },
+  },
+  structuredClone: undefined,
+  JSON,
   console,
 };
 
@@ -124,11 +150,18 @@ sandbox.window.PreviewEngineMode = {
   isActive: () => true,
 };
 
+sandbox.window.CanvasLayoutSize = {
+  restoreDesignGeometry: () => {},
+};
+
 sandbox.window.RF_UI_TRACE = null;
 sandbox.globalThis = sandbox;
 
 vm.createContext(sandbox);
-vm.runInContext(source, sandbox);
+// Load Layout module first (provides _previewPageWidth etc.)
+vm.runInContext(layoutSrc, sandbox);
+// Then Renderer (depends on Layout)
+vm.runInContext(rendererSrc, sandbox);
 
 await sandbox.window.PreviewEngineRenderer.refresh();
 

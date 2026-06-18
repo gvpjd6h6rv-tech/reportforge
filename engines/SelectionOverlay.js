@@ -53,6 +53,67 @@ const SelectionOverlay = (() => {
     box.style.zIndex = '40';
   }
 
+  function _syncSelectionDomClasses() {
+    document.querySelectorAll('.cr-element').forEach(d => {
+      d.classList.toggle('selected', SelectionState.isSelected(d.dataset.id));
+    });
+  }
+
+  function _syncActiveSectionChrome(selectedElements) {
+    const activeSectionIds = new Set(selectedElements.map((el) => el.sectionId));
+    document.querySelectorAll('.cr-section').forEach((section) => {
+      section.style.boxShadow = activeSectionIds.has(section.dataset.sectionId)
+        ? 'inset 0 0 0 2px rgba(11, 98, 214, 0.6)' : '';
+    });
+  }
+
+  function _ensurePreviewOverlay(renderSelectionIds) {
+    const previewOverlayVisible = !DS.previewMode || typeof PreviewEngineMode === 'undefined' || typeof PreviewEngineMode.isSelectionOverlayVisible !== 'function' || PreviewEngineMode.isSelectionOverlayVisible();
+    const hasPreviewSelection = DS.previewMode && renderSelectionIds.length > 0;
+    if (hasPreviewSelection && !previewOverlayVisible && typeof PreviewEngineMode !== 'undefined' && typeof PreviewEngineMode.enableSelectionOverlay === 'function') PreviewEngineMode.enableSelectionOverlay();
+    return { previewOverlayVisible, hasPreviewSelection };
+  }
+
+  function _renderSingleSelection(engine, layer, id, showGuides) {
+    const el = SelectionState.getElementById(id); if (!el) return;
+    SelectionEngineContracts.assertLayoutContract(el, 'SelectionEngine.renderHandles.layout');
+    const rect = selectionRect(el, layer);
+    SelectionEngineContracts.assertRectShape(rect, 'SelectionEngine.renderHandles.rect');
+    SelectionEngineContracts.assertZoomContract('SelectionEngine.renderHandles.zoom');
+    const positions = SelectionGeometry.selectionHandles(rect);
+    const selBox = document.createElement('div');
+    selBox.className = 'sel-box';
+    _styleSelectionBox(selBox, rect);
+    layer.appendChild(selBox);
+    if (showGuides) SelectionOverlayPreview.renderSelectionGuides(layer, [rect]);
+    positions.forEach(({ pos, cx, cy }) => {
+      const h = document.createElement('div');
+      h.className = 'sel-handle';
+      h.dataset.pos = pos;
+      h.style.left = cx + 'px';
+      h.style.top = cy + 'px';
+      engine.attachHandleEvent(h, pos);
+      layer.appendChild(h);
+    });
+  }
+
+  function _renderMultiSelection(layer, selectedElements) {
+    const viewRects = selectedElements.map((item) => selectionRect(item, layer)).filter(Boolean);
+    const bounds = SelectionGeometry.selectionBoundsFromRects(viewRects);
+    if (!bounds) return;
+    const outline = document.createElement('div');
+    outline.className = 'sel-box sel-box-multi';
+    Object.assign(outline.style, { position: 'absolute', left: bounds.left + 'px', top: bounds.top + 'px', width: bounds.width + 'px', height: bounds.height + 'px', background: 'none', backgroundImage: 'none', border: 'none', outline: 'none', boxShadow: 'none', pointerEvents: 'none' });
+    layer.appendChild(outline);
+    SelectionOverlayPreview.renderSelectionGuides(layer, viewRects);
+    viewRects.forEach((rect) => {
+      const item = document.createElement('div');
+      item.className = 'sel-box-multi-item';
+      Object.assign(item.style, { position: 'absolute', left: (rect.left - bounds.left) + 'px', top: (rect.top - bounds.top) + 'px', width: rect.width + 'px', height: rect.height + 'px', boxSizing: 'border-box', border: '1px solid #000', background: 'transparent', pointerEvents: 'none' });
+      outline.appendChild(item);
+    });
+  }
+
   function renderHandles(engine) {
     SelectionEngineContracts.assertSelectionState('SelectionEngine.renderHandles.selection');
     const beforeUI = _uiSnapshot('#handles-layer');
@@ -66,17 +127,11 @@ const SelectionOverlay = (() => {
     if (!layer) return;
     _clearInactiveSelectionLayers(layer);
     _clearLayerChildren(layer);
-    document.querySelectorAll('.cr-element').forEach(d => {
-      d.classList.toggle('selected', SelectionState.isSelected(d.dataset.id));
-    });
+    _syncSelectionDomClasses();
     const selectedIds = [...SelectionState.selectedIds()];
     const renderSelectionIds = SelectionHitTest.resolveRenderSelectionIds(engine, selectedIds);
     const selectedElements = SelectionState.selectedElementsFromIds(renderSelectionIds);
-    const activeSectionIds = new Set(selectedElements.map((el) => el.sectionId));
-    document.querySelectorAll('.cr-section').forEach((section) => {
-      section.style.boxShadow = activeSectionIds.has(section.dataset.sectionId)
-        ? 'inset 0 0 0 2px rgba(11, 98, 214, 0.6)' : '';
-    });
+    _syncActiveSectionChrome(selectedElements);
     const branch = renderSelectionIds.length === 0 ? 'none' : (renderSelectionIds.length === 1 ? 'single' : 'multi');
     if (Array.isArray(window.__rfBranchAudit)) {
       window.__rfBranchAudit.push({ branch, selectedIds, renderSelectionIds: [...renderSelectionIds] });
@@ -85,48 +140,13 @@ const SelectionOverlay = (() => {
       _uiTrace('select', { phase: 'after', before: beforeUI, after: _uiSnapshot('#handles-layer'), event: DS.previewMode ? 'preview-select-none' : 'design-select-none', source: 'SelectionOverlay.renderHandles', selection: [], previewMode: !!DS.previewMode, focus: '#handles-layer' });
       return;
     }
-    const previewOverlayVisible = !DS.previewMode || typeof PreviewEngineMode === 'undefined' || typeof PreviewEngineMode.isSelectionOverlayVisible !== 'function' || PreviewEngineMode.isSelectionOverlayVisible();
-    const hasPreviewSelection = DS.previewMode && renderSelectionIds.length > 0;
-    if (hasPreviewSelection && !previewOverlayVisible && typeof PreviewEngineMode !== 'undefined' && typeof PreviewEngineMode.enableSelectionOverlay === 'function') PreviewEngineMode.enableSelectionOverlay();
+    const { previewOverlayVisible, hasPreviewSelection } = _ensurePreviewOverlay(renderSelectionIds);
     if (DS.previewMode && !previewOverlayVisible && !hasPreviewSelection) { engine.updateSelectionInfo(); return; }
     const showGuides = !!(engine && engine._drag && (engine._drag.type === 'move' || engine._drag.type === 'resize'));
     if (branch === 'single') {
-      const id = renderSelectionIds[0];
-      const el = SelectionState.getElementById(id); if (!el) return;
-      SelectionEngineContracts.assertLayoutContract(el, 'SelectionEngine.renderHandles.layout');
-      const rect = selectionRect(el, layer);
-      SelectionEngineContracts.assertRectShape(rect, 'SelectionEngine.renderHandles.rect');
-      SelectionEngineContracts.assertZoomContract('SelectionEngine.renderHandles.zoom');
-      const positions = SelectionGeometry.selectionHandles(rect);
-      const selBox = document.createElement('div');
-      selBox.className = 'sel-box';
-      _styleSelectionBox(selBox, rect);
-      layer.appendChild(selBox);
-      if (showGuides) SelectionOverlayPreview.renderSelectionGuides(layer, [rect]);
-      positions.forEach(({ pos, cx, cy }) => {
-        const h = document.createElement('div');
-        h.className = 'sel-handle';
-        h.dataset.pos = pos;
-        h.style.left = cx + 'px';
-        h.style.top = cy + 'px';
-        engine.attachHandleEvent(h, pos);
-        layer.appendChild(h);
-      });
+      _renderSingleSelection(engine, layer, renderSelectionIds[0], showGuides);
     } else {
-      const viewRects = selectedElements.map((item) => selectionRect(item, layer)).filter(Boolean);
-      const bounds = SelectionGeometry.selectionBoundsFromRects(viewRects);
-      if (!bounds) return;
-      const outline = document.createElement('div');
-      outline.className = 'sel-box sel-box-multi';
-      Object.assign(outline.style, { position: 'absolute', left: bounds.left + 'px', top: bounds.top + 'px', width: bounds.width + 'px', height: bounds.height + 'px', background: 'none', backgroundImage: 'none', border: 'none', outline: 'none', boxShadow: 'none', pointerEvents: 'none' });
-      layer.appendChild(outline);
-      SelectionOverlayPreview.renderSelectionGuides(layer, viewRects);
-      viewRects.forEach((rect) => {
-        const item = document.createElement('div');
-        item.className = 'sel-box-multi-item';
-        Object.assign(item.style, { position: 'absolute', left: (rect.left - bounds.left) + 'px', top: (rect.top - bounds.top) + 'px', width: rect.width + 'px', height: rect.height + 'px', boxSizing: 'border-box', border: '1px solid #000', background: 'transparent', pointerEvents: 'none' });
-        outline.appendChild(item);
-      });
+      _renderMultiSelection(layer, selectedElements);
     }
     _uiTrace('select', { phase: 'after', before: beforeUI, after: _uiSnapshot('#handles-layer .sel-box'), event: DS.previewMode ? 'preview-select' : 'design-select', source: 'SelectionOverlay.renderHandles', selection: [...SelectionState.selectedIds()], previewMode: !!DS.previewMode, focus: '#handles-layer .sel-box' });
     engine.updateSelectionInfo();

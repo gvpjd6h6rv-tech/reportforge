@@ -2,6 +2,11 @@
 
 const SelectionHitTest = (() => {
   function resolveElementDiv(target, id) {
+    if (typeof DS !== 'undefined' && DS.previewMode) {
+      return (target && typeof target.closest === 'function'
+        ? target.closest(`.pv-el[data-origin-id="${id}"]`)
+        : null) || document.querySelector(`.pv-el[data-origin-id="${id}"]`);
+    }
     return (target && typeof target.closest === 'function'
       ? target.closest(`.cr-element[data-id="${id}"]`)
       : null) || document.querySelector(`.cr-element[data-id="${id}"]`);
