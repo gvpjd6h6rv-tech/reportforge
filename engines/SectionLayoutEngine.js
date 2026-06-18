@@ -14,6 +14,13 @@ const SectionLayoutEngine = (() => {
   let _rafId = null;
   let _lastContractSignature = null;
 
+  function _scale(value) {
+    if (typeof RF !== 'undefined' && RF.Geometry && typeof RF.Geometry.scale === 'function') {
+      return RF.Geometry.scale(value);
+    }
+    return value;
+  }
+
   function _px(value) {
     return `${Math.round(value)}px`;
   }
@@ -37,10 +44,10 @@ const SectionLayoutEngine = (() => {
       return { ready: false, pageWidth: 0, totalHeight: 0, sections: [] };
     }
 
-    const pageWidth = Math.round(CFG.PAGE_W);
+    const pageWidth = Math.round(_scale(CFG.PAGE_W));
     let top = 0;
     const sections = DS.sections.map(sec => {
-      const height = Math.round(sec.height);
+      const height = Math.round(_scale(sec.height));
       const band = {
         id: sec.id,
         top: Math.round(top),
@@ -76,7 +83,7 @@ const SectionLayoutEngine = (() => {
       if (!div) return;
 
       const nextDisplay = sec.visible === false ? 'none' : '';
-      const nextHeight = _px(sec.height);
+      const nextHeight = _px(_scale(sec.height));
       const nextWidth = _px(contract.pageWidth);
       if (div.style.display !== nextDisplay) div.style.display = nextDisplay;
       if (div.style.height !== nextHeight) div.style.height = nextHeight;
@@ -124,8 +131,8 @@ const SectionLayoutEngine = (() => {
       if (typeof DS === 'undefined') return { y: 0, h: 0 };
       let y = 0;
       for (const sec of DS.sections) {
-        const h = sec.height;
-        if (sec.id === sectionId) return { y, h };
+        const h = Math.round(_scale(sec.height));
+        if (sec.id === sectionId) return { y: Math.round(y), h };
         y += h;
       }
       return { y: 0, h: 0 };
@@ -133,7 +140,7 @@ const SectionLayoutEngine = (() => {
 
     getTotalViewHeight() {
       if (typeof DS === 'undefined') return 0;
-      return DS.sections.reduce((s, sec) => s + sec.height, 0);
+      return Math.round(_scale(DS.sections.reduce((s, sec) => s + sec.height, 0)));
     },
 
     getLayoutContract() {

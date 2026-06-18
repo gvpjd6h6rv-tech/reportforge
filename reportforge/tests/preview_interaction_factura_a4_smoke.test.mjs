@@ -88,15 +88,15 @@ test('factura_a4 preview interactive smoke', { timeout: 120000 }, async () => {
     });
     await clearUiEntries();
     const cleanState = await page.evaluate(() => {
-      const handles = document.getElementById('handles-layer');
-      const box = document.querySelector('#handles-layer .sel-box');
+      const selectionLayer = document.querySelector('#preview-content .preview-selection-layer');
+      const box = document.querySelector('#preview-content .preview-selection-layer .sel-box');
       const cs = box ? getComputedStyle(box) : null;
-      const hs = handles ? getComputedStyle(handles) : null;
+      const hs = selectionLayer ? getComputedStyle(selectionLayer) : null;
       return {
         selection: [...DS.selection],
-        boxCount: document.querySelectorAll('#handles-layer .sel-box').length,
-        handleCount: document.querySelectorAll('#handles-layer .sel-handle').length,
-        guideCount: document.querySelectorAll('#handles-layer .selection-guide').length,
+        boxCount: document.querySelectorAll('#preview-content .preview-selection-layer .sel-box').length,
+        handleCount: document.querySelectorAll('#preview-content .preview-selection-layer .sel-handle').length,
+        guideCount: document.querySelectorAll('#preview-content .preview-selection-layer .selection-guide').length,
         layerOpacity: hs?.opacity || null,
         boxDisplay: cs?.display || null,
       };
@@ -112,16 +112,17 @@ test('factura_a4 preview interactive smoke', { timeout: 120000 }, async () => {
     let selectTrace = uiEntries.filter((entry) => entry.kind === 'ui' && entry.event === 'preview-select' && entry.phase === 'after' && entry.source === 'SelectionOverlay.renderHandles').at(-1);
 
     const afterClick = await page.evaluate(() => {
-      const box = document.querySelector('#handles-layer .sel-box');
+      const selectionLayer = document.querySelector('#preview-content .preview-selection-layer');
+      const box = document.querySelector('#preview-content .preview-selection-layer .sel-box');
       const boxRect = box ? box.getBoundingClientRect() : null;
       const boxStyle = box ? getComputedStyle(box) : null;
-      const layerStyle = getComputedStyle(document.getElementById('handles-layer'));
+      const layerStyle = selectionLayer ? getComputedStyle(selectionLayer) : null;
       return {
         selection: [...DS.selection],
-        boxCount: document.querySelectorAll('#handles-layer .sel-box').length,
-        handleCount: document.querySelectorAll('#handles-layer .sel-handle').length,
-        guideCount: document.querySelectorAll('#handles-layer .selection-guide').length,
-        layerOpacity: layerStyle.opacity,
+        boxCount: document.querySelectorAll('#preview-content .preview-selection-layer .sel-box').length,
+        handleCount: document.querySelectorAll('#preview-content .preview-selection-layer .sel-handle').length,
+        guideCount: document.querySelectorAll('#preview-content .preview-selection-layer .selection-guide').length,
+        layerOpacity: layerStyle?.opacity || null,
         boxDisplay: boxStyle?.display || null,
         boxVisibility: boxStyle?.visibility || null,
         boxOpacity: boxStyle?.opacity || null,
@@ -156,7 +157,7 @@ test('factura_a4 preview interactive smoke', { timeout: 120000 }, async () => {
     await page.waitForTimeout(120);
 
     const duringDrag = await page.evaluate(() => {
-      const guides = [...document.querySelectorAll('#handles-layer .selection-guide')];
+      const guides = [...document.querySelectorAll('#preview-content .preview-selection-layer .selection-guide')];
       return {
         guideCount: guides.length,
         visibleGuides: guides.map((guide) => {
@@ -170,7 +171,7 @@ test('factura_a4 preview interactive smoke', { timeout: 120000 }, async () => {
             height: rect.height,
           };
         }),
-        boxCount: document.querySelectorAll('#handles-layer .sel-box').length,
+        boxCount: document.querySelectorAll('#preview-content .preview-selection-layer .sel-box').length,
       };
     });
     assert.equal(duringDrag.boxCount, 1, 'preview drag must keep one selection box');
@@ -201,9 +202,9 @@ test('factura_a4 preview interactive smoke', { timeout: 120000 }, async () => {
     assert.ok(afterDrag.dx !== 0 || afterDrag.dy !== 0, 'preview drag must move the model element');
 
     const afterRelease = await page.evaluate(() => ({
-      boxCount: document.querySelectorAll('#handles-layer .sel-box').length,
-      handleCount: document.querySelectorAll('#handles-layer .sel-handle').length,
-      guideCount: document.querySelectorAll('#handles-layer .selection-guide').length,
+      boxCount: document.querySelectorAll('#preview-content .preview-selection-layer .sel-box').length,
+      handleCount: document.querySelectorAll('#preview-content .preview-selection-layer .sel-handle').length,
+      guideCount: document.querySelectorAll('#preview-content .preview-selection-layer .selection-guide').length,
     }));
     assert.equal(afterRelease.boxCount, 1, 'preview release must keep the selection box');
     assert.equal(afterRelease.handleCount, 8, 'preview release must keep resize handles');

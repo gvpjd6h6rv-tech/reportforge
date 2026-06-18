@@ -310,7 +310,7 @@ describe('Preview hit routing contract', () => {
       `got "${ctx.dispatched.elementId}"`);
   });
 
-  it('handle click in preview must NOT trigger resize (must dispatch as move)', () => {
+  it('handle click in preview must dispatch resize, not move', () => {
     const ctx = buildContext();
 
     // Add a handle to the DOM
@@ -375,10 +375,9 @@ describe('Preview hit routing contract', () => {
 
     router.routePointer(fakeEvent, 'down');
 
-    // In preview, handle must dispatch as element move, NOT as resize
-    assert.equal(ctx.dispatched.handlePos, null,
-      'handle click in preview must NOT call onHandlePointerDown (resize)');
-    assert.ok(ctx.dispatched.elementId !== null,
-      'handle click in preview must dispatch as onElementPointerDown (move)');
+    assert.equal(ctx.dispatched.handlePos, 'se',
+      'handle click in preview must call onHandlePointerDown with the handle position');
+    assert.equal(ctx.dispatched.elementId, null,
+      'handle click in preview must NOT dispatch as onElementPointerDown (move)');
   });
 });

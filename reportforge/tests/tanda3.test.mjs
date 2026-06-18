@@ -11,6 +11,7 @@ import assert from 'node:assert/strict';
 import {
   startRuntimeServer,
   launchRuntimePage,
+  waitForRuntimeReady,
   selectSingle,
   selectMulti,
   selectPreviewSingle,
@@ -25,7 +26,8 @@ import {
 } from './runtime_harness.mjs';
 
 async function reloadRuntime(page, baseUrl) {
-  await page.goto(baseUrl, { waitUntil: 'networkidle' });
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+  await waitForRuntimeReady(page);
   await page.waitForFunction(
     () => typeof DS !== 'undefined' && Array.isArray(DS.elements) && DS.elements.length > 0,
   );

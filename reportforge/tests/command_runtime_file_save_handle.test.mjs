@@ -1,7 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import path from 'node:path';
 import vm from 'node:vm';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -141,9 +145,11 @@ function makeRuntimeWithFileHandle() {
   context.window.window = context.window;
   context.window.document = document;
 
-  const source = fs.readFileSync('engines/CommandRuntimeFile.js', 'utf8');
+  const source = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeFile.js'), 'utf8');
+  const ioSource = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeFileIO.js'), 'utf8');
   vm.createContext(context);
   vm.runInContext(source, context, { filename: 'engines/CommandRuntimeFile.js' });
+  vm.runInContext(ioSource, context, { filename: 'engines/CommandRuntimeFileIO.js' });
 
   return {
     state,

@@ -118,6 +118,17 @@ document.addEventListener('DOMContentLoaded', () => {
         '[v19.6] FAIL: CanvasLayoutEngine should be active (canonical runtime owns canvas)');
       console.assert(!!SelectionEngine.__active,
         '[v19.6] FAIL: SelectionEngine should be active (canonical runtime owns selection)');
+
+      window.__rfRuntimeReady = true;
+      if (typeof document !== 'undefined' && typeof document.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+        document.dispatchEvent(new CustomEvent('rf-runtime-ready', {
+          detail: {
+            source: 'DeferredBootstrap',
+            phase: 'boot-ready',
+          },
+        }));
+      }
+      console.log('[ReportForge v19.4] runtime ready signal emitted');
     }
   }, 0);
 });

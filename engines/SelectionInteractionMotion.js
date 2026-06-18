@@ -49,7 +49,7 @@ const SelectionInteractionMotion = (() => {
       const sectionBounds = _sectionBounds(orig.sectionId);
       const newX = SelectionState.snap(Math.max(0, Math.min(orig.x + dx, Math.max(0, CFG.PAGE_W - el.w))));
       const newY = SelectionState.snap(Math.max(0, Math.min(orig.y + dy, Math.max(0, sectionBounds.height - el.h))));
-      DS.updateElementLayout(el.id, {
+      engine.updateElementLayout(el.id, {
         x: newX,
         y: newY,
       }, 'SelectionInteraction.move');
@@ -81,14 +81,28 @@ const SelectionInteractionMotion = (() => {
       d._rafPending = true;
       requestAnimationFrame(() => {
         d._rafPending = false;
-        engine.renderHandles();
-        if (typeof PropertiesEngine !== 'undefined' && DS.getSelectedElements().length === 1) {
-          const el = DS.getSelectedElements()[0];
-          if (el) PropertiesEngine.updatePositionFields(el);
-        }
-        if (DS.selection.size === 1) {
-          const el = DS.getElementById([...DS.selection][0]);
-          if (el) document.getElementById('sb-pos').textContent = `X: ${el.x}   Y: ${el.y}`;
+        if (typeof RenderSchedulerScope !== 'undefined' && typeof RenderSchedulerScope.flushSync === 'function') {
+          RenderSchedulerScope.flushSync(() => {
+            engine.renderHandles();
+            if (typeof PropertiesEngine !== 'undefined' && DS.getSelectedElements().length === 1) {
+              const el = DS.getSelectedElements()[0];
+              if (el) PropertiesEngine.updatePositionFields(el);
+            }
+            if (DS.selection.size === 1) {
+              const el = DS.getElementById([...DS.selection][0]);
+              if (el) document.getElementById('sb-pos').textContent = `X: ${el.x}   Y: ${el.y}`;
+            }
+          }, 'SelectionInteraction.move.renderHandles');
+        } else {
+          engine.renderHandles();
+          if (typeof PropertiesEngine !== 'undefined' && DS.getSelectedElements().length === 1) {
+            const el = DS.getSelectedElements()[0];
+            if (el) PropertiesEngine.updatePositionFields(el);
+          }
+          if (DS.selection.size === 1) {
+            const el = DS.getElementById([...DS.selection][0]);
+            if (el) document.getElementById('sb-pos').textContent = `X: ${el.x}   Y: ${el.y}`;
+          }
         }
       });
     }
@@ -106,7 +120,7 @@ const SelectionInteractionMotion = (() => {
     if (p.includes('w')) { const nw = Math.max(CFG.MIN_EL_W, SelectionState.snap(w - dx)); x = SelectionState.snap(x + w - nw); w = nw; }
     if (p.includes('n')) { const nh = Math.max(CFG.MIN_EL_H, SelectionState.snap(h - dy)); y = SelectionState.snap(y + h - nh); h = nh; }
     const clamped = _clampRectToSection(el.sectionId, { x, y, w, h });
-    DS.updateElementLayout(el.id, clamped, 'SelectionInteraction.resize');
+    engine.updateElementLayout(el.id, clamped, 'SelectionInteraction.resize');
     _canonicalCanvasWriter().updateElementPosition(d.elId);
     if (DS.previewMode) {
       document.querySelectorAll(`.pv-el[data-origin-id="${d.elId}"]`).forEach(pv => {

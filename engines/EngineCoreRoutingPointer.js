@@ -9,153 +9,78 @@ const EngineCoreRoutingPointer = (() => {
     const cloneSerializable = typeof deps.cloneSerializable === 'function'
       ? deps.cloneSerializable
       : (value) => JSON.parse(JSON.stringify(value));
-
     function normalizePointerEvent(e, phase) {
       const ws = typeof document !== 'undefined' ? document.getElementById('workspace') : null;
       const rect = ws ? ws.getBoundingClientRect() : null;
-      const model = RF.Geometry.viewToModel(e.clientX, e.clientY);
-      const selected = (typeof DS !== 'undefined' && DS.getSelectedElements)
-        ? DS.getSelectedElements()
-        : [];
+      const selected = typeof DS !== 'undefined' && DS.getSelectedElements ? DS.getSelectedElements() : [];
       const hitTest = getEngine('HitTestEngine');
-      return {
-        phase,
-        pointerId: typeof e.pointerId === 'number' ? e.pointerId : null,
-        pointerType: e.pointerType || 'mouse',
-        button: typeof e.button === 'number' ? e.button : 0,
-        buttons: typeof e.buttons === 'number' ? e.buttons : 0,
-        detail: typeof e.detail === 'number' ? e.detail : 0,
-        clientX: e.clientX,
-        clientY: e.clientY,
-        client: { x: e.clientX, y: e.clientY },
-        workspace: rect ? { x: e.clientX - rect.left, y: e.clientY - rect.top } : { x: e.clientX, y: e.clientY },
-        model,
-        hit: hitTest ? {
-          element: hitTest.elementAt(e.clientX, e.clientY),
-          section: hitTest.sectionAt(e.clientX, e.clientY),
-          handle: selected.length === 1 ? hitTest.handleAt(selected[0], e.clientX, e.clientY) : null,
-        } : { element: null, section: null, handle: null },
-        modifiers: {
-          altKey: !!e.altKey,
-          ctrlKey: !!e.ctrlKey,
-          metaKey: !!e.metaKey,
-          shiftKey: !!e.shiftKey,
-        },
-        target: e.target || null,
-        originalEvent: e,
-      };
+      return { phase, pointerId: typeof e.pointerId === 'number' ? e.pointerId : null, pointerType: e.pointerType || 'mouse', button: typeof e.button === 'number' ? e.button : 0, buttons: typeof e.buttons === 'number' ? e.buttons : 0, detail: typeof e.detail === 'number' ? e.detail : 0, clientX: e.clientX, clientY: e.clientY, client: { x: e.clientX, y: e.clientY }, workspace: rect ? { x: e.clientX - rect.left, y: e.clientY - rect.top } : { x: e.clientX, y: e.clientY }, model: RF.Geometry.viewToModel(e.clientX, e.clientY), hit: hitTest ? { element: hitTest.elementAt(e.clientX, e.clientY), section: hitTest.sectionAt(e.clientX, e.clientY), handle: selected.length === 1 ? hitTest.handleAt(selected[0], e.clientX, e.clientY) : null } : { element: null, section: null, handle: null }, modifiers: { altKey: !!e.altKey, ctrlKey: !!e.ctrlKey, metaKey: !!e.metaKey, shiftKey: !!e.shiftKey }, target: e.target || null, originalEvent: e };
     }
 
     function interactionEngine() {
       const selection = getEngine('SelectionEngine');
-      if (
-        selection &&
-        typeof selection.onElementPointerDown === 'function' &&
-        typeof selection.onHandlePointerDown === 'function'
-      ) {
-        return selection;
-      }
-      if (typeof console !== 'undefined' && console.error) {
-        console.error('SELECTION OWNER MISSING IN CANONICAL RUNTIME: expected SelectionEngine');
-      }
+      if (selection && typeof selection.onElementPointerDown === 'function' && typeof selection.onHandlePointerDown === 'function') return selection;
+      if (typeof console !== 'undefined' && console.error) console.error('SELECTION OWNER MISSING IN CANONICAL RUNTIME: expected SelectionEngine');
       return selection || null;
     }
 
     function _resolvePreviewTargetId(event, pvElNode, selBoxNode, handleNode) {
-      let targetId;
-      if (pvElNode) {
-        targetId = pvElNode.dataset.originId || pvElNode.dataset.id;
-      } else if (selBoxNode || handleNode) {
-        targetId = [...DS.selection][0];
-      }
+      const targetId = pvElNode ? (pvElNode.dataset.originId || pvElNode.dataset.id) : ((selBoxNode || handleNode) ? [...DS.selection][0] : null);
       return targetId || (event.hit.element ? event.hit.element.id : null);
     }
 
     function _dispatchPreviewDown(event, selection, targetId, interactionEngineName) {
       if (!targetId || !selection || typeof selection.onElementPointerDown !== 'function') return;
       const pv = document.querySelector(`.pv-el[data-origin-id="${targetId}"], .cr-element[data-id="${targetId}"]`);
-      const delegatedEvent = pv ? { ...event, target: pv } : event;
-      traceElement('EngineCore', 'dispatch-preview-element-down', {
-        id: targetId,
-        elementId: targetId,
-        engine: interactionEngineName,
-      });
-      selection.onElementPointerDown(delegatedEvent, targetId);
+      traceElement('EngineCore', 'dispatch-preview-element-down', { id: targetId, elementId: targetId, engine: interactionEngineName });
+      selection.onElementPointerDown(pv ? { ...event, target: pv } : event, targetId);
+    }
+
+    function _dispatchPreviewHandleDown(event, selection, handleNode, interactionEngineName) {
+      if (!handleNode || !selection || typeof selection.onHandlePointerDown !== 'function') return;
+      const handlePos = handleNode.dataset.pos || handleNode.dataset.handlePos || null;
+      traceElement('EngineCore', 'dispatch-preview-handle-down', { handle: handlePos, handlePos, engine: interactionEngineName });
+      selection.onHandlePointerDown(event, handlePos);
     }
 
     function _dismissMenus(closest) {
-      if (!closest('#ctx-menu')) {
-        const ctxMenu = getEngine('ContextMenuEngine');
-        if (ctxMenu && typeof ctxMenu.hide === 'function') ctxMenu.hide();
-      }
-      if (!closest('.menu-item') && !closest('.dropdown')) {
-        const menu = getEngine('MenuEngine');
-        if (menu && typeof menu.closeAll === 'function') menu.closeAll();
-      }
+      if (!closest('#ctx-menu')) { const ctxMenu = getEngine('ContextMenuEngine'); if (ctxMenu && typeof ctxMenu.hide === 'function') ctxMenu.hide(); }
+      if (!closest('.menu-item') && !closest('.dropdown')) { const menu = getEngine('MenuEngine'); if (menu && typeof menu.closeAll === 'function') menu.closeAll(); }
     }
 
     function _dispatchDesignDown(event, ctx) {
-      const { handleNode, elementNode, selection, sectionResize, sectionHandleNode,
-              insert, interactionEngineName } = ctx;
-      if (sectionHandleNode) {
-        if (sectionResize && typeof sectionResize.onPointerDown === 'function') {
-          sectionResize.onPointerDown(event, sectionHandleNode.dataset.sectionId);
-        }
-      } else if (handleNode) {
+      const { handleNode, elementNode, selection, sectionResize, sectionHandleNode, insert, interactionEngineName } = ctx;
+      if (sectionHandleNode) { if (sectionResize && typeof sectionResize.onPointerDown === 'function') sectionResize.onPointerDown(event, sectionHandleNode.dataset.sectionId); }
+      else if (handleNode) {
         if (selection && typeof selection.onHandlePointerDown === 'function') {
           const handlePos = handleNode.dataset.pos || handleNode.dataset.handlePos || null;
-          traceElement('EngineCore', 'dispatch-handle-down', {
-            id: event.hit.element ? event.hit.element.id : null,
-            handle: handlePos, handlePos, engine: interactionEngineName,
-          });
+          traceElement('EngineCore', 'dispatch-handle-down', { id: event.hit.element ? event.hit.element.id : null, handle: handlePos, handlePos, engine: interactionEngineName });
           selection.onHandlePointerDown(event, handlePos);
         }
       } else if (elementNode) {
         if (selection && typeof selection.onElementPointerDown === 'function') {
-          traceElement('EngineCore', 'dispatch-element-down', {
-            id: elementNode.dataset.id || null,
-            elementId: elementNode.dataset.id || null,
-            engine: interactionEngineName,
-          });
+          traceElement('EngineCore', 'dispatch-element-down', { id: elementNode.dataset.id || null, elementId: elementNode.dataset.id || null, engine: interactionEngineName });
           selection.onElementPointerDown(event, elementNode.dataset.id);
         }
-      } else {
-        if (insert && typeof insert.onCanvasMouseDown === 'function') {
-          traceElement('EngineCore', 'dispatch-canvas-down', { engine: 'InsertEngine' });
-          insert.onCanvasMouseDown(event);
-        }
+      } else if (insert && typeof insert.onCanvasMouseDown === 'function') {
+        traceElement('EngineCore', 'dispatch-canvas-down', { engine: 'InsertEngine' });
+        insert.onCanvasMouseDown(event);
       }
     }
 
     function _routeDown(event, ctx) {
-      const { closest, elementNode, handleNode, pvElNode, selBoxNode,
-              selection, interactionEngineName } = ctx;
-      if (elementNode || handleNode) {
-        traceElement('EngineCore', 'pointerdown', {
-          id: elementNode ? (elementNode.dataset.id || null) : null,
-          handle: handleNode ? (handleNode.dataset.pos || handleNode.dataset.handlePos || null) : null,
-          target: targetSummary(event.target),
-          elementId: elementNode ? (elementNode.dataset.id || null) : null,
-          handlePos: handleNode ? (handleNode.dataset.pos || handleNode.dataset.handlePos || null) : null,
-          interactionEngine: interactionEngineName,
-        });
-      }
+      const { closest, elementNode, handleNode, pvElNode, selBoxNode, selection, interactionEngineName } = ctx;
+      if (elementNode || handleNode) traceElement('EngineCore', 'pointerdown', { id: elementNode ? (elementNode.dataset.id || null) : null, handle: handleNode ? (handleNode.dataset.pos || handleNode.dataset.handlePos || null) : null, target: targetSummary(event.target), elementId: elementNode ? (elementNode.dataset.id || null) : null, handlePos: handleNode ? (handleNode.dataset.pos || handleNode.dataset.handlePos || null) : null, interactionEngine: interactionEngineName });
       _dismissMenus(closest);
       if (event.button !== 0) return;
-      if (DS.previewMode && (pvElNode || selBoxNode || handleNode)) {
-        const targetId = _resolvePreviewTargetId(event, pvElNode, selBoxNode, handleNode);
-        _dispatchPreviewDown(event, selection, targetId, interactionEngineName);
-      } else if (!DS.previewMode) {
-        _dispatchDesignDown(event, ctx);
-      }
+      if (DS.previewMode && handleNode) _dispatchPreviewHandleDown(event, selection, handleNode, interactionEngineName);
+      else if (DS.previewMode && (pvElNode || selBoxNode)) _dispatchPreviewDown(event, selection, _resolvePreviewTargetId(event, pvElNode, selBoxNode, handleNode), interactionEngineName);
+      else if (!DS.previewMode) _dispatchDesignDown(event, ctx);
     }
 
     function _routeMove(event, selection, sectionResize) {
-      if (sectionResize && sectionResize._drag && typeof sectionResize.onMouseMove === 'function') {
-        sectionResize.onMouseMove(event);
-      } else if (selection && typeof selection.onMouseMove === 'function') {
-        selection.onMouseMove(event);
-      }
+      if (sectionResize && sectionResize._drag && typeof sectionResize.onMouseMove === 'function') sectionResize.onMouseMove(event);
+      else if (selection && typeof selection.onMouseMove === 'function') selection.onMouseMove(event);
     }
 
     function _routeUp(event, selection, sectionResize, interactionEngineName) {
@@ -164,9 +89,7 @@ const EngineCoreRoutingPointer = (() => {
         handle: event.hit.handle || null,
         interactionEngine: interactionEngineName,
       });
-      if (sectionResize && typeof sectionResize.onMouseUp === 'function') {
-        sectionResize.onMouseUp(event);
-      }
+      if (sectionResize && typeof sectionResize.onMouseUp === 'function') sectionResize.onMouseUp(event);
       if (selection && typeof selection.onMouseUp === 'function') {
         traceElement('EngineCore', event.phase === 'cancel' ? 'dispatch-selection-cancel' : 'dispatch-selection-up', {
           id: event.hit.element ? event.hit.element.id : null,
@@ -213,14 +136,9 @@ const EngineCoreRoutingPointer = (() => {
         ? 'SelectionEngine'
         : null;
 
-      if (phase === 'down') {
-        _routeDown(event, { closest, elementNode, pvElNode, selBoxNode, handleNode,
-          sectionHandleNode, selection, sectionResize, insert, interactionEngineName });
-      } else if (phase === 'move') {
-        _routeMove(event, selection, sectionResize);
-      } else if (phase === 'up' || phase === 'cancel') {
-        _routeUp(event, selection, sectionResize, interactionEngineName);
-      }
+      if (phase === 'down') _routeDown(event, { closest, elementNode, pvElNode, selBoxNode, handleNode, sectionHandleNode, selection, sectionResize, insert, interactionEngineName });
+      else if (phase === 'move') _routeMove(event, selection, sectionResize);
+      else if (phase === 'up' || phase === 'cancel') _routeUp(event, selection, sectionResize, interactionEngineName);
 
       return event;
     }

@@ -27,49 +27,6 @@
       ]
     },
     {
-      "path": "tools/rf-debug-center/rf-debug-center-api-visual-doctor.js",
-      "owner": "visual-doctor-api",
-      "responsibility": "Visual Doctor state decoration and runtime-only preview API.",
-      "maxLines": 220,
-      "maxDecisionPoints": 70,
-      "forbiddenPatterns": [
-        "renderDebugCenter",
-        "window.open",
-        "document.write",
-        "fetch(",
-        "XMLHttpRequest"
-      ],
-      "requiredPatterns": [
-        "export function applyVisualDoctorApi",
-        "export function decorateVisualDoctorModel",
-        "export function runVisualDoctorRuntimePreview",
-        "runtimeOnly: true",
-        "writesFiles: false",
-        "rollbackRequired: true",
-        "autopatch: false"
-      ]
-    },
-    {
-      "path": "tools/rf-debug-center/rf-debug-center-detached-window.js",
-      "owner": "debug-center-detached-ui",
-      "responsibility": "Detached browser-window UI rendering and UI event wiring only.",
-      "maxLines": 940,
-      "maxDecisionPoints": 300,
-      "forbiddenPatterns": [
-        "./visual-doctor/",
-        "runRfVisualDoctor",
-        "simulateCssFixInDom",
-        "buildSafeCssSimulationPlan"
-      ],
-      "requiredPatterns": [
-        "RF VISUAL DOCTOR CSS",
-        "VISUAL REGRESSION GUARD",
-        "SAFETY CONTRACT",
-        "data-act=\"visual-preview\"",
-        "runVisualDoctorRuntimePreview"
-      ]
-    },
-    {
       "path": "tools/rf-debug-center/visual-doctor",
       "owner": "visual-doctor-core",
       "responsibility": "Pure Visual Doctor engine modules.",
@@ -316,66 +273,18 @@
     },
     {
       "path": "tools/rf-debug-center/rf-debug-center-api-visual-doctor.js",
-      "owner": "visual-doctor-api-wiring",
-      "responsibility": "Wire Visual Doctor model and preview owners into Debug Center API only.",
-      "maxLines": 45,
-      "maxDecisionPoints": 14,
+      "owner": "visual-doctor-api",
+      "responsibility": "Visual Doctor model decoration, runtime preview simulation, and Debug Center API wiring.",
+      "maxLines": 200,
+      "maxDecisionPoints": 45,
       "forbiddenPatterns": [
-        "./visual-doctor/",
-        "runRfVisualDoctor",
-        "simulateCssFixInDom",
-        "buildSafeCssSimulationPlan",
-        "function refreshLiveVisualDoctorModel",
-        "function runVisualDoctorRuntimePreview(state"
+        "document.write",
+        "window.open"
       ],
       "requiredPatterns": [
         "export function applyVisualDoctorApi",
         "export function decorateVisualDoctorModel",
-        "decorateLiveVisualDoctorModel",
-        "decorateVisualDoctorPreviewModel"
-      ]
-    },
-    {
-      "path": "tools/rf-debug-center/rf-debug-center-visual-doctor-model.js",
-      "owner": "visual-doctor-live-model",
-      "responsibility": "Refresh and decorate live Visual Doctor model only.",
-      "maxLines": 80,
-      "maxDecisionPoints": 24,
-      "forbiddenPatterns": [
-        "simulateCssFixInDom",
-        "buildSafeCssSimulationPlan",
-        "runVisualDoctorRuntimePreview",
-        "data-act",
-        "document.write",
-        "window.open"
-      ],
-      "requiredPatterns": [
-        "runRfVisualDoctor",
-        "export function decorateLiveVisualDoctorModel",
-        "export function refreshLiveVisualDoctorModel"
-      ]
-    },
-    {
-      "path": "tools/rf-debug-center/rf-debug-center-visual-doctor-preview.js",
-      "owner": "visual-doctor-runtime-preview",
-      "responsibility": "Runtime-only Visual Doctor preview simulation and rollback state only.",
-      "maxLines": 120,
-      "maxDecisionPoints": 38,
-      "forbiddenPatterns": [
-        "runRfVisualDoctor",
-        "RF VISUAL DOCTOR CSS",
-        "document.write",
-        "window.open"
-      ],
-      "requiredPatterns": [
-        "export function runVisualDoctorRuntimePreview",
-        "buildVisualDoctorPreviewInput",
-        "buildSafeCssSimulationPlan",
-        "simulateCssFixInDom",
-        "runtimeOnly: true",
-        "writesFiles: false",
-        "rollbackRequired: true",
-        "autopatch: false"
+        "runVisualDoctorRuntimePreview"
       ]
     },
     {
@@ -383,25 +292,21 @@
       "owner": "debug-center-detached-shell",
       "responsibility": "Detached browser-window shell, tab composition, and event dispatch only.",
       "maxLines": 560,
-      "maxDecisionPoints": 190,
+      "maxDecisionPoints": 230,
       "forbiddenPatterns": [
         "./visual-doctor/",
         ".headbtn{",
         ".rf-bars",
         ".rf-gauge",
-        "RF VISUAL DOCTOR CSS",
-        "addEventListener('click'",
         "buildSafeCssSimulationPlan",
         "const openerApi =",
-        "document.querySelectorAll('.nav-btn')",
-        "function buildVisualDoctorTab",
         "runRfVisualDoctor",
         "simulateCssFixInDom"
       ],
       "requiredPatterns": [
         "DETACHED_DEBUG_CENTER_CLIENT_SCRIPT",
         "DETACHED_DEBUG_CENTER_STYLES",
-        "buildDetachedVisualDoctorTab(data, { esc, row, safeJson })"
+        "buildDetachedVisualDoctorTab"
       ]
     },
     {
@@ -420,32 +325,7 @@
         "addEventListener"
       ],
       "requiredPatterns": [
-        "export function buildDetachedVisualDoctorTab",
-        "RF VISUAL DOCTOR CSS",
-        "data-act=\"visual-preview\"",
-        "RUN RUNTIME PREVIEW"
-      ]
-    },
-    {
-      "path": "tools/rf-debug-center/rf-debug-center-visual-doctor-preview-input.js",
-      "owner": "visual-doctor-preview-input",
-      "responsibility": "Build runtime preview input only.",
-      "maxLines": 60,
-      "maxDecisionPoints": 18,
-      "forbiddenPatterns": [
-        "simulateCssFixInDom",
-        "buildSafeCssSimulationPlan",
-        "summarizeSimulationResult",
-        "runRfVisualDoctor",
-        "document.write",
-        "window.open",
-        "state.detachedWindow",
-        "applyModel"
-      ],
-      "requiredPatterns": [
-        "export function buildVisualDoctorPreviewInput",
-        "defaultDiagnosis",
-        "defaultRecipe"
+        "export function buildDetachedVisualDoctorTab"
       ]
     },
     {

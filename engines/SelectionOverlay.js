@@ -1,121 +1,33 @@
 'use strict';
 
 const SelectionOverlay = (() => {
-  function _uiSnapshot(focus = null) {
-    if (typeof window.RF_UI_TRACE?.snapshot !== 'function') return null;
-    return window.RF_UI_TRACE.snapshot({ focus });
+  const C = SelectionEngineContracts;
+  const S = SelectionState;
+  const G = SelectionGeometry;
+  function _preview() {
+    const helper = globalThis.SelectionOverlayPreview;
+    if (!helper) throw new Error('SelectionOverlayPreview is required for SelectionOverlay');
+    return helper;
   }
-  function _uiTrace(event, detail = {}) {
-    if (typeof window.RF_UI_TRACE !== 'function') return null;
-    return window.RF_UI_TRACE(event, detail);
+  function _styleSelectionBox(box, rect) {
+    box.style.setProperty('--sel-x', rect.left+'px');box.style.setProperty('--sel-y', rect.top+'px');box.style.setProperty('--sel-w', rect.width+'px');box.style.setProperty('--sel-h', rect.height+'px');box.style.position='absolute';box.style.left=rect.left+'px';box.style.top=rect.top+'px';box.style.width=rect.width+'px';box.style.height=rect.height+'px';box.style.boxSizing='border-box';box.style.border='1px solid var(--cr-sel-bdr, #0066CC)';box.style.background='transparent';box.style.pointerEvents='none';box.style.zIndex='40';
   }
-  function _clearLayerChildren(layer) {
-    if (!layer) return;
-    while (layer.firstChild) layer.removeChild(layer.firstChild);
-  }
-
-  function _resolveSelectionLayer() {
-    if (typeof DS !== 'undefined' && DS.previewMode) {
-      return SelectionOverlayPreview.ensurePreviewSelectionLayer() || null;
-    }
-    return document.getElementById('handles-layer');
-  }
-
+  function _uiSnapshot(focus = null) { return typeof window.RF_UI_TRACE?.snapshot === 'function' ? window.RF_UI_TRACE.snapshot({ focus }) : null; }
+  function _uiTrace(event, detail = {}) { return typeof window.RF_UI_TRACE === 'function' ? window.RF_UI_TRACE(event, detail) : null; }
+  function _clearLayerChildren(layer) { if (!layer) return; while (layer.firstChild) layer.removeChild(layer.firstChild); }
+  function _resolveSelectionLayer() { return typeof DS !== 'undefined' && DS.previewMode ? (_preview().ensurePreviewSelectionLayer() || null) : document.getElementById('handles-layer'); }
   function _clearInactiveSelectionLayers(activeLayer) {
     if (typeof document === 'undefined') return;
     const designLayer = document.getElementById('handles-layer');
     if (designLayer && designLayer !== activeLayer) _clearLayerChildren(designLayer);
-    const previewLayers = document.querySelectorAll(
-      '#preview-content > .preview-selection-layer, #preview-content .preview-hit-layer .preview-selection-layer'
-    );
-    previewLayers.forEach((pl) => { if (pl && pl !== activeLayer) _clearLayerChildren(pl); });
+    document.querySelectorAll('#preview-content > .preview-selection-layer, #preview-content .preview-hit-layer .preview-selection-layer').forEach((pl) => { if (pl && pl !== activeLayer) _clearLayerChildren(pl); });
   }
-
-  function selectionRect(el, layer) {
-    if (DS.previewMode) return SelectionOverlayPreview.previewRect(el, layer);
-    return { left: el.x, top: SelectionState.getSectionTop(el.sectionId) + el.y, width: el.w, height: el.h };
-  }
-
-  function _styleSelectionBox(box, rect) {
-    box.style.setProperty('--sel-x', rect.left + 'px');
-    box.style.setProperty('--sel-y', rect.top + 'px');
-    box.style.setProperty('--sel-w', rect.width + 'px');
-    box.style.setProperty('--sel-h', rect.height + 'px');
-    box.style.position = 'absolute';
-    box.style.left = rect.left + 'px';
-    box.style.top = rect.top + 'px';
-    box.style.width = rect.width + 'px';
-    box.style.height = rect.height + 'px';
-    box.style.boxSizing = 'border-box';
-    box.style.border = '1px solid var(--cr-sel-bdr, #0066CC)';
-    box.style.background = 'transparent';
-    box.style.pointerEvents = 'none';
-    box.style.zIndex = '40';
-  }
-
-  function _syncSelectionDomClasses() {
-    document.querySelectorAll('.cr-element').forEach(d => {
-      d.classList.toggle('selected', SelectionState.isSelected(d.dataset.id));
-    });
-  }
-
-  function _syncActiveSectionChrome(selectedElements) {
-    const activeSectionIds = new Set(selectedElements.map((el) => el.sectionId));
-    document.querySelectorAll('.cr-section').forEach((section) => {
-      section.style.boxShadow = activeSectionIds.has(section.dataset.sectionId)
-        ? 'inset 0 0 0 2px rgba(11, 98, 214, 0.6)' : '';
-    });
-  }
-
-  function _ensurePreviewOverlay(renderSelectionIds) {
-    const previewOverlayVisible = !DS.previewMode || typeof PreviewEngineMode === 'undefined' || typeof PreviewEngineMode.isSelectionOverlayVisible !== 'function' || PreviewEngineMode.isSelectionOverlayVisible();
-    const hasPreviewSelection = DS.previewMode && renderSelectionIds.length > 0;
-    if (hasPreviewSelection && !previewOverlayVisible && typeof PreviewEngineMode !== 'undefined' && typeof PreviewEngineMode.enableSelectionOverlay === 'function') PreviewEngineMode.enableSelectionOverlay();
-    return { previewOverlayVisible, hasPreviewSelection };
-  }
-
-  function _renderSingleSelection(engine, layer, id, showGuides) {
-    const el = SelectionState.getElementById(id); if (!el) return;
-    SelectionEngineContracts.assertLayoutContract(el, 'SelectionEngine.renderHandles.layout');
-    const rect = selectionRect(el, layer);
-    SelectionEngineContracts.assertRectShape(rect, 'SelectionEngine.renderHandles.rect');
-    SelectionEngineContracts.assertZoomContract('SelectionEngine.renderHandles.zoom');
-    const positions = SelectionGeometry.selectionHandles(rect);
-    const selBox = document.createElement('div');
-    selBox.className = 'sel-box';
-    _styleSelectionBox(selBox, rect);
-    layer.appendChild(selBox);
-    if (showGuides) SelectionOverlayPreview.renderSelectionGuides(layer, [rect]);
-    positions.forEach(({ pos, cx, cy }) => {
-      const h = document.createElement('div');
-      h.className = 'sel-handle';
-      h.dataset.pos = pos;
-      h.style.left = cx + 'px';
-      h.style.top = cy + 'px';
-      engine.attachHandleEvent(h, pos);
-      layer.appendChild(h);
-    });
-  }
-
-  function _renderMultiSelection(layer, selectedElements) {
-    const viewRects = selectedElements.map((item) => selectionRect(item, layer)).filter(Boolean);
-    const bounds = SelectionGeometry.selectionBoundsFromRects(viewRects);
-    if (!bounds) return;
-    const outline = document.createElement('div');
-    outline.className = 'sel-box sel-box-multi';
-    Object.assign(outline.style, { position: 'absolute', left: bounds.left + 'px', top: bounds.top + 'px', width: bounds.width + 'px', height: bounds.height + 'px', background: 'none', backgroundImage: 'none', border: 'none', outline: 'none', boxShadow: 'none', pointerEvents: 'none' });
-    layer.appendChild(outline);
-    SelectionOverlayPreview.renderSelectionGuides(layer, viewRects);
-    viewRects.forEach((rect) => {
-      const item = document.createElement('div');
-      item.className = 'sel-box-multi-item';
-      Object.assign(item.style, { position: 'absolute', left: (rect.left - bounds.left) + 'px', top: (rect.top - bounds.top) + 'px', width: rect.width + 'px', height: rect.height + 'px', boxSizing: 'border-box', border: '1px solid #000', background: 'transparent', pointerEvents: 'none' });
-      outline.appendChild(item);
-    });
-  }
+  function _syncSelectionDomClasses() { document.querySelectorAll('.cr-element').forEach(d => d.classList.toggle('selected', S.isSelected(d.dataset.id))); }
+  function _syncActiveSectionChrome(selectedElements) { const activeSectionIds = new Set(selectedElements.map((el) => el.sectionId)); document.querySelectorAll('.cr-section').forEach((section) => { section.style.boxShadow = activeSectionIds.has(section.dataset.sectionId) ? 'inset 0 0 0 2px rgba(11, 98, 214, 0.6)' : ''; }); }
+  function _ensurePreviewOverlay(engine, renderSelectionIds) { const previewOverlayFrozen = DS.previewMode && typeof engine.isSelectionOverlayFrozen === 'function' && engine.isSelectionOverlayFrozen(); const previewOverlayVisible = !DS.previewMode || (typeof engine.isSelectionOverlayVisible === 'function' && engine.isSelectionOverlayVisible() !== false); const hasPreviewSelection = DS.previewMode && renderSelectionIds.length > 0; if (previewOverlayFrozen) return { previewOverlayVisible: false, hasPreviewSelection, previewOverlayFrozen }; if (hasPreviewSelection && !previewOverlayVisible && engine.enableSelectionOverlay) engine.enableSelectionOverlay(); return { previewOverlayVisible, hasPreviewSelection, previewOverlayFrozen: false }; }
 
   function renderHandles(engine) {
-    SelectionEngineContracts.assertSelectionState('SelectionEngine.renderHandles.selection');
+    C.assertSelectionState('SelectionEngine.renderHandles.selection');
     const beforeUI = _uiSnapshot('#handles-layer');
     if (typeof RenderScheduler !== 'undefined' && !RenderScheduler.allowsDomWrite()) {
       RenderScheduler.handles(() => engine.renderHandles(), 'SelectionEngine.renderHandles');
@@ -128,9 +40,9 @@ const SelectionOverlay = (() => {
     _clearInactiveSelectionLayers(layer);
     _clearLayerChildren(layer);
     _syncSelectionDomClasses();
-    const selectedIds = [...SelectionState.selectedIds()];
+    const selectedIds = [...S.selectedIds()];
     const renderSelectionIds = SelectionHitTest.resolveRenderSelectionIds(engine, selectedIds);
-    const selectedElements = SelectionState.selectedElementsFromIds(renderSelectionIds);
+    const selectedElements = S.selectedElementsFromIds(renderSelectionIds);
     _syncActiveSectionChrome(selectedElements);
     const branch = renderSelectionIds.length === 0 ? 'none' : (renderSelectionIds.length === 1 ? 'single' : 'multi');
     if (Array.isArray(window.__rfBranchAudit)) {
@@ -140,21 +52,27 @@ const SelectionOverlay = (() => {
       _uiTrace('select', { phase: 'after', before: beforeUI, after: _uiSnapshot('#handles-layer'), event: DS.previewMode ? 'preview-select-none' : 'design-select-none', source: 'SelectionOverlay.renderHandles', selection: [], previewMode: !!DS.previewMode, focus: '#handles-layer' });
       return;
     }
-    const { previewOverlayVisible, hasPreviewSelection } = _ensurePreviewOverlay(renderSelectionIds);
+    const R = globalThis.SelectionOverlayRender;
+    if (!R) throw new Error('SelectionOverlayRender is required for SelectionOverlay.renderHandles');
+    const { previewOverlayVisible, hasPreviewSelection, previewOverlayFrozen } = _ensurePreviewOverlay(engine, renderSelectionIds);
+    if (previewOverlayFrozen) {
+      engine.updateSelectionInfo();
+      return;
+    }
     if (DS.previewMode && !previewOverlayVisible && !hasPreviewSelection) { engine.updateSelectionInfo(); return; }
     const showGuides = !!(engine && engine._drag && (engine._drag.type === 'move' || engine._drag.type === 'resize'));
     if (branch === 'single') {
-      _renderSingleSelection(engine, layer, renderSelectionIds[0], showGuides);
+      R.renderSingleSelection(engine, layer, renderSelectionIds[0], showGuides);
     } else {
-      _renderMultiSelection(layer, selectedElements);
+      R.renderMultiSelection(layer, selectedElements);
     }
-    _uiTrace('select', { phase: 'after', before: beforeUI, after: _uiSnapshot('#handles-layer .sel-box'), event: DS.previewMode ? 'preview-select' : 'design-select', source: 'SelectionOverlay.renderHandles', selection: [...SelectionState.selectedIds()], previewMode: !!DS.previewMode, focus: '#handles-layer .sel-box' });
+    _uiTrace('select', { phase: 'after', before: beforeUI, after: _uiSnapshot('#handles-layer .sel-box'), event: DS.previewMode ? 'preview-select' : 'design-select', source: 'SelectionOverlay.renderHandles', selection: [...S.selectedIds()], previewMode: !!DS.previewMode, focus: '#handles-layer .sel-box' });
     engine.updateSelectionInfo();
   }
 
   function clearSelection(engine) {
-    SelectionState.clearSelectionState();
-    if (DS.previewMode && typeof PreviewEngineMode !== 'undefined' && typeof PreviewEngineMode.resetSelectionOverlay === 'function') PreviewEngineMode.resetSelectionOverlay();
+    S.clearSelectionState();
+    if (DS.previewMode && engine.resetSelectionOverlay) engine.resetSelectionOverlay();
     engine.renderHandles();
     PropertiesEngine.render();
     FormatEngine.updateToolbar();
@@ -163,22 +81,16 @@ const SelectionOverlay = (() => {
 
   function updateSelectionInfo() {
     const info = document.getElementById('selection-info');
-    if (SelectionState.selectedIds().size > 1) {
-      info.style.display = 'block';
-      info.textContent = `${SelectionState.selectedIds().size} objetos seleccionados`;
-    } else {
-      info.style.display = 'none';
-    }
+    if (S.selectedIds().size > 1) { info.style.display = 'block'; info.textContent = `${S.selectedIds().size} objetos seleccionados`; } else info.style.display = 'none';
     SectionEngine.updateSectionsList();
-    if (SelectionState.selectedIds().size === 1) {
-      const el = SelectionState.getElementById([...SelectionState.selectedIds()][0]);
+    if (S.selectedIds().size === 1) {
+      const el = S.getElementById([...S.selectedIds()][0]);
       if (el) {
-        document.getElementById('sb-size').style.display = 'flex';
-        document.getElementById('sb-size').textContent = `W: ${el.w}  H: ${el.h}`;
+        const size = document.getElementById('sb-size');
+        size.style.display = 'flex';
+        size.textContent = `W: ${el.w}  H: ${el.h}`;
       }
-    } else {
-      document.getElementById('sb-size').style.display = 'none';
-    }
+    } else document.getElementById('sb-size').style.display = 'none';
   }
 
   return { renderHandles, clearSelection, updateSelectionInfo };

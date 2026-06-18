@@ -175,12 +175,18 @@ global.PreviewEngineMode = {
 
 const { default: SelectionOverlayPreviewModule } = await import('../../engines/SelectionOverlayPreview.js');
 globalThis.SelectionOverlayPreview = SelectionOverlayPreviewModule;
+const { default: SelectionOverlayRenderModule } = await import('../../engines/SelectionOverlayRender.js');
+globalThis.SelectionOverlayRender = SelectionOverlayRenderModule;
 const { default: SelectionOverlayModule } = await import('../../engines/SelectionOverlay.js');
 const SelectionOverlay = SelectionOverlayModule || global.SelectionOverlay;
 
 const engine = {
   updateSelectionInfo: () => undefined,
   attachHandleEvent: () => undefined,
+  enableSelectionOverlay: () => {
+    previewOverlayEnabled = true;
+  },
+  isSelectionOverlayVisible: () => false,
 };
 
 SelectionOverlay.renderHandles(engine);

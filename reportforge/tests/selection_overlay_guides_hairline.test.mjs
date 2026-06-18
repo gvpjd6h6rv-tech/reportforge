@@ -99,6 +99,8 @@ function loadSelectionOverlayRuntime({ zoom = 4 } = {}) {
 
   const previewSource = fs.readFileSync('engines/SelectionOverlayPreview.js', 'utf8');
   vm.runInContext(previewSource, context, { filename: 'engines/SelectionOverlayPreview.js' });
+  const renderSource = fs.readFileSync('engines/SelectionOverlayRender.js', 'utf8');
+  vm.runInContext(renderSource, context, { filename: 'engines/SelectionOverlayRender.js' });
 
   const source = fs.readFileSync('engines/SelectionOverlay.js', 'utf8');
   vm.runInContext(`${source}\nglobalThis.__SelectionOverlay = SelectionOverlay;`, context, {

@@ -1,7 +1,13 @@
 'use strict';
 
 const DocumentHistory = (() => {
-  function syncViewsAfterHistoryChange(global, state) {
+  function syncLayoutAfterHistoryChange() {
+    if (typeof CanvasLayoutEngine !== 'undefined' && typeof CanvasLayoutEngine.update === 'function') {
+      CanvasLayoutEngine.update();
+    }
+    if (typeof SectionLayoutEngine !== 'undefined' && typeof SectionLayoutEngine.update === 'function') {
+      SectionLayoutEngine.update();
+    }
     if (typeof SectionEngine !== 'undefined' && typeof SectionEngine.render === 'function') {
       SectionEngine.render();
     }
@@ -10,6 +16,12 @@ const DocumentHistory = (() => {
     } else if (typeof CanvasLayoutEngine !== 'undefined' && typeof CanvasLayoutEngine.renderAll === 'function') {
       CanvasLayoutEngine.renderAll();
     }
+    if (typeof ElementLayoutEngine !== 'undefined' && typeof ElementLayoutEngine.update === 'function') {
+      ElementLayoutEngine.update();
+    }
+  }
+
+  function syncDecorationsAfterHistoryChange(state) {
     if (state.previewMode && typeof _canonicalPreviewWriter === 'function') {
       _canonicalPreviewWriter().refresh();
     } else if (state.previewMode && typeof PreviewEngineV19 !== 'undefined' && typeof PreviewEngineV19.refresh === 'function') {
@@ -24,6 +36,11 @@ const DocumentHistory = (() => {
     if (typeof FormatEngine !== 'undefined' && typeof FormatEngine.updateToolbar === 'function') {
       FormatEngine.updateToolbar();
     }
+  }
+
+  function syncViewsAfterHistoryChange(global, state) {
+    syncLayoutAfterHistoryChange();
+    syncDecorationsAfterHistoryChange(state);
   }
 
   function createDocumentHistory(state, notify, global, getApi) {
@@ -76,4 +93,3 @@ const DocumentHistory = (() => {
 if (typeof module !== 'undefined') {
   module.exports = DocumentHistory;
 }
-

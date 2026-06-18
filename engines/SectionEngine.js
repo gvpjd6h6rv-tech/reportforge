@@ -86,8 +86,11 @@ const SectionEngine = {
           console.error(message);
           throw new Error(message);
         }
-        CanvasLayoutEngine.renderAll();
+        if (typeof SectionLayoutEngine !== 'undefined' && typeof SectionLayoutEngine.updateSync === 'function') {
+          SectionLayoutEngine.updateSync();
+        }
         if (typeof CanvasLayoutEngine !== 'undefined') CanvasLayoutEngine.updateSync();
+        CanvasLayoutEngine.renderAll();
         if (typeof WorkspaceScrollEngine !== 'undefined') WorkspaceScrollEngine.update();
       }, 'SectionEngine.render.layout');
       RenderScheduler.visual(() => {

@@ -42,6 +42,7 @@ const read = (f) => fs.readFileSync(path.join(ENGINES, f), 'utf8');
 
 const docState     = read('DocumentState.js');
 const docActions   = read('DocumentActions.js');
+const selEngine    = read('SelectionEngine.js');
 const selInteract  = read('SelectionInteraction.js');
 const selMotion    = read('SelectionInteractionMotion.js');
 const geomCore     = read('GeometryCore.js');
@@ -64,12 +65,15 @@ check('GEOM-CALLSITE-001', 'DocumentActions.js',
   /updateElementLayout\s*\([^)]*\)\s*\{[^}]*assertLayoutPatch\s*\(/.test(docActions.replace(/\n/g, ' ')),
   'DocumentActions.updateElementLayout must call assertLayoutPatch(patch) before writing to DS state');
 
-// RULE-C: Resize paths route through DS.updateElementLayout (not direct mutation).
-// SelectionInteraction.js is now a thin delegator — the model-write contract
-// lives in SelectionInteractionMotion.js which owns _doMove/_doResize.
+// RULE-C: Resize paths route through the SelectionEngine bridge, not direct DS mutation.
+// Motion writes through engine.updateElementLayout(); the bridge then owns the DS call.
 check('GEOM-RESIZE-001', 'SelectionInteractionMotion.js',
-  /DS\.updateElementLayout\s*\(/.test(selMotion),
-  'SelectionInteractionMotion.js must commit resize via DS.updateElementLayout to stay in assertLayoutPatch path');
+  /engine\.updateElementLayout\s*\(/.test(selMotion) && !/DS\.updateElementLayout\s*\(/.test(selMotion),
+  'SelectionInteractionMotion.js must commit resize via engine.updateElementLayout and never call DS.updateElementLayout directly');
+
+check('GEOM-RESIZE-001', 'SelectionEngine.js',
+  /updateElementLayout\s*\([^)]*\)\s*\{[^}]*DS\.updateElementLayout\s*\(/s.test(selEngine),
+  'SelectionEngine.updateElementLayout must forward to DS.updateElementLayout so the assertLayoutPatch path remains canonical');
 
 // RULE-D: GeometryCore exports clampValue and clampRect.
 check('GEOM-CLAMP-001', 'GeometryCore.js',

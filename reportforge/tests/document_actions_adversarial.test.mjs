@@ -440,6 +440,77 @@ test('[C-02] DocumentHistory.undo() does NOT directly write state.sections when 
     'undo() must route through getApi().setSections, not state.sections = ...');
 });
 
+test('[C-02] DocumentHistory.undo() re-syncs canvas and section layout before repaint', () => {
+  const { state, history } = makeHistoryEnv();
+  state.sections = [{ id: 's2', stype: 'det', label: 'D', height: 20, visible: true }];
+  history.saveHistory();
+
+  const calls = [];
+  const saved = {
+    CanvasLayoutEngine: globalThis.CanvasLayoutEngine,
+    SectionLayoutEngine: globalThis.SectionLayoutEngine,
+    SectionEngine: globalThis.SectionEngine,
+    ElementLayoutEngine: globalThis.ElementLayoutEngine,
+    PreviewEngineV19: globalThis.PreviewEngineV19,
+    SelectionEngine: globalThis.SelectionEngine,
+    PropertiesEngine: globalThis.PropertiesEngine,
+    FormatEngine: globalThis.FormatEngine,
+  };
+
+  try {
+    globalThis.CanvasLayoutEngine = {
+      update() { calls.push('canvas.update'); },
+      renderAll() { calls.push('canvas.renderAll'); },
+    };
+    globalThis.SectionLayoutEngine = {
+      update() { calls.push('sectionLayout.update'); },
+    };
+    globalThis.SectionEngine = {
+      render() { calls.push('section.render'); },
+    };
+    globalThis.ElementLayoutEngine = {
+      update() { calls.push('elementLayout.update'); },
+    };
+    globalThis.PreviewEngineV19 = {
+      refresh() { calls.push('preview.refresh'); },
+    };
+    globalThis.SelectionEngine = {
+      renderHandles() { calls.push('selection.renderHandles'); },
+    };
+    globalThis.PropertiesEngine = {
+      render() { calls.push('properties.render'); },
+    };
+    globalThis.FormatEngine = {
+      updateToolbar() { calls.push('format.updateToolbar'); },
+    };
+
+    history.undo();
+
+    const canvasUpdateIndex = calls.indexOf('canvas.update');
+    const sectionLayoutUpdateIndex = calls.indexOf('sectionLayout.update');
+    const canvasRenderIndex = calls.indexOf('canvas.renderAll');
+    const elementLayoutUpdateIndex = calls.indexOf('elementLayout.update');
+
+    assert.ok(canvasUpdateIndex !== -1, 'undo() must call CanvasLayoutEngine.update');
+    assert.ok(sectionLayoutUpdateIndex !== -1, 'undo() must call SectionLayoutEngine.update');
+    assert.ok(canvasRenderIndex !== -1, 'undo() must call CanvasLayoutEngine.renderAll');
+    assert.ok(elementLayoutUpdateIndex !== -1, 'undo() must call ElementLayoutEngine.update');
+    assert.ok(canvasUpdateIndex < canvasRenderIndex,
+      'CanvasLayoutEngine.update must happen before CanvasLayoutEngine.renderAll');
+    assert.ok(sectionLayoutUpdateIndex < canvasRenderIndex,
+      'SectionLayoutEngine.update must happen before CanvasLayoutEngine.renderAll');
+  } finally {
+    globalThis.CanvasLayoutEngine = saved.CanvasLayoutEngine;
+    globalThis.SectionLayoutEngine = saved.SectionLayoutEngine;
+    globalThis.SectionEngine = saved.SectionEngine;
+    globalThis.ElementLayoutEngine = saved.ElementLayoutEngine;
+    globalThis.PreviewEngineV19 = saved.PreviewEngineV19;
+    globalThis.SelectionEngine = saved.SelectionEngine;
+    globalThis.PropertiesEngine = saved.PropertiesEngine;
+    globalThis.FormatEngine = saved.FormatEngine;
+  }
+});
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // [H-01] HistoryEngine.push() must NOT call DS.saveHistory() — prevents double-save
 // ═══════════════════════════════════════════════════════════════════════════════

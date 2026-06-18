@@ -18,7 +18,11 @@ test('USER-PARITY preview element remains sufficiently visible under zoom and cl
   const { browser, page, consoleErrors } = await launchRuntimePage(server.baseUrl);
 
   try {
-    await reloadRuntime(page, server.baseUrl);
+    await page.goto(server.baseUrl, { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(
+      () => typeof DS !== 'undefined' && Array.isArray(DS.elements) && DS.elements.length > 0,
+    );
+    await page.waitForTimeout(800);
     await enterPreview(page);
     await setZoom(page, 2.0);
     await page.locator('#preview-content .pv-el').filter({ hasText: 'VALOR TOTAL' }).first().click();

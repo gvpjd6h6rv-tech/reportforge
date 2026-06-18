@@ -134,4 +134,6 @@ const SelectionOverlayPreview = (() => {
   };
 })();
 
+globalThis.SelectionOverlayPreview = SelectionOverlayPreview;
+
 if (typeof module !== 'undefined') module.exports = SelectionOverlayPreview;

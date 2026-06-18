@@ -69,7 +69,14 @@
       content.appendChild(fb);
       _uiTrace('preview', { phase: 'error', before: beforeUI, after: _uiSnap('#preview-content'), source: 'PreviewEngineRenderer.refresh', event: 'preview-error', previewMode: !!DS.previewMode, error: err?.message || String(err), focus: '#preview-content' });
     }
-    if (typeof SelectionEngine !== 'undefined' && typeof SelectionEngine.renderHandles === 'function') SelectionEngine.renderHandles();
+    if (typeof document !== 'undefined' && typeof document.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+      document.dispatchEvent(new CustomEvent('rf-preview-rendered', {
+        detail: {
+          source: 'PreviewEngineRenderer.refresh',
+          previewMode: !!DS.previewMode,
+        },
+      }));
+    }
   }
 
   function getMetrics() {

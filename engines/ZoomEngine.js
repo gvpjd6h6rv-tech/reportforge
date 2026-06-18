@@ -107,14 +107,15 @@ const DesignZoomEngine={
     }
     DS.setZoom(z, meta.fn || 'DesignZoomEngine._apply');
     const applyZoomChrome = () => {
-      vp.style.transform       = 'none';
-      vp.style.transformOrigin = '';
+      vp.style.transform       = `scale(${z})`;
+      vp.style.transformOrigin = 'top left';
+      vp.style.transformBox    = 'border-box';
       vp.style.marginBottom    = CFG.RULER_H + 'px';
       vp.style.display = 'block';
       vp.style.width   = (PAGE_W * z) + 'px';
-      cl.style.transform = `scale(${z})`;
-      cl.style.transformOrigin = 'top left';
-      cl.style.transformBox = 'border-box';
+      cl.style.transform = 'none';
+      cl.style.transformOrigin = '';
+      cl.style.transformBox = '';
       cl.style.setProperty('--geo-zoom', z);
     };
     if (typeof RenderScheduler !== 'undefined') {

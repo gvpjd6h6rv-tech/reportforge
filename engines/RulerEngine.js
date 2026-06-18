@@ -67,6 +67,48 @@ window.RulerEngine = (() => {
     return ctx;
   }
 
+  function _alignHorizontalPreviewCanvas(pageR, canvas, cssW) {
+    const hCanvasBox = document.getElementById('ruler-h-canvas');
+    const hRow = document.getElementById('ruler-h-row');
+    const hCorner = document.getElementById('ruler-corner');
+    if (!pageR || !hCanvasBox || !hRow || !hCorner) return false;
+
+    const rowR = hRow.getBoundingClientRect();
+    const cornerR = hCorner.getBoundingClientRect();
+    const stableBaseLeft = rowR.left + cornerR.width;
+    const left = Math.round((pageR.left - stableBaseLeft) * 100) / 100;
+
+    hCanvasBox.style.position = 'relative';
+    hCanvasBox.style.left = `${left}px`;
+    hCanvasBox.style.width = `${cssW}px`;
+    hCanvasBox.style.minWidth = `${cssW}px`;
+    hCanvasBox.style.maxWidth = `${cssW}px`;
+    hCanvasBox.style.flex = `0 0 ${cssW}px`;
+    hCanvasBox.style.overflow = 'hidden';
+
+    canvas.style.left = '0px';
+    canvas.style.width = `${cssW}px`;
+    canvas.style.minWidth = `${cssW}px`;
+    canvas.style.maxWidth = `${cssW}px`;
+    return true;
+  }
+
+  function _resetHorizontalPreviewCanvas(canvas) {
+    const hCanvasBox = document.getElementById('ruler-h-canvas');
+    if (!hCanvasBox) return;
+    hCanvasBox.style.position = '';
+    hCanvasBox.style.left = '';
+    hCanvasBox.style.width = '';
+    hCanvasBox.style.minWidth = '';
+    hCanvasBox.style.maxWidth = '';
+    hCanvasBox.style.flex = '';
+    hCanvasBox.style.overflow = '';
+
+    canvas.style.left = '';
+    canvas.style.minWidth = '';
+    canvas.style.maxWidth = '';
+  }
+
   // ── Horizontal ruler ─────────────────────────────────────────────
 
   function _renderH() {
@@ -76,44 +118,11 @@ window.RulerEngine = (() => {
     if (!canvas || !ws || !cl) return;
 
     const pageR = _previewPageRect();
-    const hCanvasBox = document.getElementById('ruler-h-canvas');
-    const hRow = document.getElementById('ruler-h-row');
-    const hCorner = document.getElementById('ruler-corner');
 
     const cssW = pageR ? Math.round(pageR.width) : ws.clientWidth;
     const cssH = H_RULER_H;
 
-    if (pageR && hCanvasBox && hRow && hCorner) {
-      const rowR = hRow.getBoundingClientRect();
-      const cornerR = hCorner.getBoundingClientRect();
-      const stableBaseLeft = rowR.left + cornerR.width;
-      const left = Math.round((pageR.left - stableBaseLeft) * 100) / 100;
-
-      hCanvasBox.style.position = 'relative';
-      hCanvasBox.style.left = `${left}px`;
-      hCanvasBox.style.width = `${cssW}px`;
-      hCanvasBox.style.minWidth = `${cssW}px`;
-      hCanvasBox.style.maxWidth = `${cssW}px`;
-      hCanvasBox.style.flex = `0 0 ${cssW}px`;
-      hCanvasBox.style.overflow = 'hidden';
-
-      canvas.style.left = '0px';
-      canvas.style.width = `${cssW}px`;
-      canvas.style.minWidth = `${cssW}px`;
-      canvas.style.maxWidth = `${cssW}px`;
-    } else if (hCanvasBox) {
-      hCanvasBox.style.position = '';
-      hCanvasBox.style.left = '';
-      hCanvasBox.style.width = '';
-      hCanvasBox.style.minWidth = '';
-      hCanvasBox.style.maxWidth = '';
-      hCanvasBox.style.flex = '';
-      hCanvasBox.style.overflow = '';
-
-      canvas.style.left = '';
-      canvas.style.minWidth = '';
-      canvas.style.maxWidth = '';
-    }
+    if (!_alignHorizontalPreviewCanvas(pageR, canvas, cssW)) _resetHorizontalPreviewCanvas(canvas);
 
     const ctx  = _setupCanvas(canvas, cssW, cssH);
 

@@ -45,10 +45,10 @@ test('apply — sub-pixel precision preserved (scale ×1.5)', () => {
   const E = loadElement({ scale: v => v * 1.5 });
   const div = { style: {} };
   E.apply({ x: 10, y: 20, w: 100, h: 50, fontSize: 12 }, div);
-  assert.equal(div.style.left,   '15.000px');
-  assert.equal(div.style.top,    '30.000px');
-  assert.equal(div.style.width,  '150.000px');
-  assert.equal(div.style.height, '75.000px');
+  assert.equal(div.style.left,   '10.000px');
+  assert.equal(div.style.top,    '20.000px');
+  assert.equal(div.style.width,  '100.000px');
+  assert.equal(div.style.height, '50.000px');
 });
 
 test('apply — null div is a no-op (no throw)', () => {

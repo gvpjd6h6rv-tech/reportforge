@@ -13,11 +13,13 @@
  *   OWN-SI-004  SelectionEngine.js delegates every public method to SelectionInteraction.
  *   OWN-SI-005  Pointer exports exactly the pointer responsibility set.
  *   OWN-SI-006  Motion exports exactly the motion responsibility set.
- *   OWN-SI-007  Motion._doMove/_doResize contain DS.updateElementLayout (model write).
+ *   OWN-SI-007  Motion._doMove/_doResize delegate layout writes through engine.updateElementLayout.
  *   OWN-SI-008  Motion.onMouseUp clears engine._drag (drag teardown).
  *   OWN-SI-009  Interaction.js delegates to Pointer (no inline pointer logic).
  *   OWN-SI-010  Interaction.js delegates to Motion (no inline motion logic).
  *   OWN-SI-011  Pointer and Motion stay below 200 LOC each.
+ *   OWN-SI-012  Pointer delegates preview overlay enablement through SelectionEngine bridge.
+ *   OWN-SI-013  SelectionOverlay delegates preview overlay state through SelectionEngine bridge.
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -127,20 +129,24 @@ test('OWN-SI-006 SelectionInteractionMotion exports exactly the motion set', () 
 });
 
 // ── OWN-SI-007: model-write contract in Motion ────────────────────────
-test('OWN-SI-007 Motion._doMove contains DS.updateElementLayout', () => {
+test('OWN-SI-007 Motion._doMove delegates layout writes through engine.updateElementLayout', () => {
   const src = read('engines/SelectionInteractionMotion.js');
   const match = src.match(/function _doMove\b[\s\S]*?^  \}/m);
   assert.ok(match, '_doMove not found in Motion');
-  assert.ok(match[0].includes('DS.updateElementLayout'),
-    'Motion._doMove must write to model via DS.updateElementLayout');
+  assert.ok(match[0].includes('engine.updateElementLayout'),
+    'Motion._doMove must delegate layout writes to engine.updateElementLayout');
+  assert.ok(!match[0].includes('DS.updateElementLayout'),
+    'Motion._doMove must not call DS.updateElementLayout directly');
 });
 
-test('OWN-SI-007 Motion._doResize contains DS.updateElementLayout', () => {
+test('OWN-SI-007 Motion._doResize delegates layout writes through engine.updateElementLayout', () => {
   const src = read('engines/SelectionInteractionMotion.js');
   const match = src.match(/function _doResize\b[\s\S]*?^  \}/m);
   assert.ok(match, '_doResize not found in Motion');
-  assert.ok(match[0].includes('DS.updateElementLayout'),
-    'Motion._doResize must write to model via DS.updateElementLayout');
+  assert.ok(match[0].includes('engine.updateElementLayout'),
+    'Motion._doResize must delegate layout writes to engine.updateElementLayout');
+  assert.ok(!match[0].includes('DS.updateElementLayout'),
+    'Motion._doResize must not call DS.updateElementLayout directly');
 });
 
 // ── OWN-SI-008: drag teardown in Motion ───────────────────────────────
@@ -189,4 +195,40 @@ test('Pointer + Motion exports cover all canonical exports without overlap', () 
   assert.deepStrictEqual(all, CANONICAL_EXPORTS);
   const overlap = POINTER_EXPORTS.filter(f => MOTION_EXPORTS.includes(f));
   assert.deepStrictEqual(overlap, [], `Overlap: ${overlap.join(', ')}`);
+});
+
+// ── OWN-SI-012: pointer preview overlay bridge ───────────────────────
+test('OWN-SI-012 SelectionInteractionPointer delegates preview overlay enablement through SelectionEngine bridge', () => {
+  const pointerSrc = read('engines/SelectionInteractionPointer.js');
+  const engineSrc = read('engines/SelectionEngine.js');
+  assert.ok(engineSrc.includes('enableSelectionOverlay('),
+    'SelectionEngine must expose enableSelectionOverlay bridge');
+  assert.ok(engineSrc.includes('PreviewEngineMode.enableSelectionOverlay'),
+    'SelectionEngine bridge must call PreviewEngineMode.enableSelectionOverlay');
+  assert.ok(pointerSrc.includes('engine.enableSelectionOverlay('),
+    'SelectionInteractionPointer must delegate overlay enablement to engine.enableSelectionOverlay');
+  assert.ok(!pointerSrc.includes('PreviewEngineMode.enableSelectionOverlay'),
+    'SelectionInteractionPointer must not call PreviewEngineMode.enableSelectionOverlay directly');
+});
+
+// ── OWN-SI-013: selection overlay preview bridge ─────────────────────
+test('OWN-SI-013 SelectionOverlay delegates preview overlay state through SelectionEngine bridge', () => {
+  const overlaySrc = read('engines/SelectionOverlay.js');
+  const engineSrc = read('engines/SelectionEngine.js');
+  assert.ok(engineSrc.includes('isSelectionOverlayVisible('),
+    'SelectionEngine must expose isSelectionOverlayVisible bridge');
+  assert.ok(engineSrc.includes('resetSelectionOverlay('),
+    'SelectionEngine must expose resetSelectionOverlay bridge');
+  assert.ok(overlaySrc.includes('engine.isSelectionOverlayVisible('),
+    'SelectionOverlay must delegate overlay visibility checks to engine.isSelectionOverlayVisible');
+  assert.ok(overlaySrc.includes('engine.enableSelectionOverlay('),
+    'SelectionOverlay must delegate overlay enablement to engine.enableSelectionOverlay');
+  assert.ok(overlaySrc.includes('engine.resetSelectionOverlay('),
+    'SelectionOverlay must delegate overlay reset to engine.resetSelectionOverlay');
+  assert.ok(!overlaySrc.includes('PreviewEngineMode.isSelectionOverlayVisible'),
+    'SelectionOverlay must not call PreviewEngineMode.isSelectionOverlayVisible directly');
+  assert.ok(!overlaySrc.includes('PreviewEngineMode.enableSelectionOverlay'),
+    'SelectionOverlay must not call PreviewEngineMode.enableSelectionOverlay directly');
+  assert.ok(!overlaySrc.includes('PreviewEngineMode.resetSelectionOverlay'),
+    'SelectionOverlay must not call PreviewEngineMode.resetSelectionOverlay directly');
 });

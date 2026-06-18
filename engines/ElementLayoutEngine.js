@@ -3,13 +3,17 @@
  * ─────────────────────────────────────────────────────────────────
  * Applies model-space element geometry to DOM elements.
  *
- * The zoom root now scales the document container as a unit, so element
- * writers must keep raw model coordinates here. The container transform is
- * responsible for the view-space scaling.
+ * The zoom root scales the document container as a unit, so element
+ * writers must keep raw model coordinates here.
  */
 'use strict';
 
 const ElementLayoutEngine = (() => {
+  function _px(value) {
+    const n = Number(value);
+    return `${Number.isFinite(n) ? n.toFixed(3) : '0.000'}px`;
+  }
+
   /**
    * Apply position + size to a single element's div.
    * @param {object} el   — DS element (model space)
@@ -18,11 +22,11 @@ const ElementLayoutEngine = (() => {
   function applyElement(el, div) {
     if (!div || !el) return;
 
-    div.style.left     = `${el.x}px`;
-    div.style.top      = `${el.y}px`;
-    div.style.width    = `${el.w}px`;
-    div.style.height   = `${el.h}px`;
-    div.style.fontSize = `${el.fontSize * 96 / 72}px`;
+    div.style.left     = _px(el.x);
+    div.style.top      = _px(el.y);
+    div.style.width    = _px(el.w);
+    div.style.height   = _px(el.h);
+    div.style.fontSize = _px(el.fontSize * 96 / 72);
   }
 
   /**

@@ -3,8 +3,54 @@
 (function initCommandRuntimeHandlers(global) {
   const { setStatus } = global.CommandRuntimeShared;
 
+  function _handleSimpleAction(action) {
+    const handlers = {
+      open() { FileEngine.load(); },
+      save() { FileEngine.save(); },
+      'save-as': () => FileEngine.exportJSON(),
+      'export-json': () => FileEngine.exportJSON(),
+      undo() { DS.undo(); SectionEngine.render(); SelectionEngine.clearSelection(); },
+      redo() { DS.redo(); SectionEngine.render(); SelectionEngine.clearSelection(); },
+      cut() { CommandEngine.cut(); },
+      copy() { CommandEngine.copy(); },
+      paste() { CommandEngine.paste(); },
+      delete() { CommandEngine.delete(); },
+      'select-all': () => CommandEngine.selectAll(),
+      'align-lefts': () => CommandEngine.alignLefts(),
+      'align-centers': () => CommandEngine.alignCenters(),
+      'align-rights': () => CommandEngine.alignRights(),
+      'align-tops': () => CommandEngine.alignTops(),
+      'align-middles': () => CommandEngine.alignMiddles(),
+      'align-bottoms': () => CommandEngine.alignBottoms(),
+      'same-width': () => CommandEngine.sameWidth(),
+      'same-height': () => CommandEngine.sameHeight(),
+      'bring-front': () => CommandEngine.bringFront(),
+      'send-back': () => CommandEngine.sendBack(),
+      'zoom-in': () => ZoomEngine.step(1, 'plus'),
+      'zoom-out': () => ZoomEngine.step(-1, 'minus'),
+      'zoom-100': () => ZoomEngine.set(1.0),
+      preview: () => _canonicalPreviewWriter().toggle(),
+      'toggle-rulers': () => RulerEngine.toggle(),
+      print: () => window.print(),
+      'page-first': () => PreviewEngineRenderer.pageFirst(),
+      'page-prev': () => PreviewEngineRenderer.pagePrev(),
+      'page-next': () => PreviewEngineRenderer.pageNext(),
+      'page-last': () => PreviewEngineRenderer.pageLast(),
+      'insert-text': () => InsertEngine.setTool('text'),
+      'insert-field': () => InsertEngine.setTool('field'),
+      'insert-line': () => InsertEngine.setTool('line'),
+      'insert-box': () => InsertEngine.setTool('box'),
+      refresh: () => setStatus('Datos actualizados'),
+    };
+    const fn = handlers[action];
+    if (!fn) return false;
+    fn();
+    return true;
+  }
+
   function handleAction(action) {
     if (!action) return;
+    if (_handleSimpleAction(action)) return;
     switch (action) {
       case 'new':
         if (confirm('¿Nuevo reporte? Se perderán los cambios no guardados.')) {
@@ -16,36 +62,11 @@
           DS.saveHistory();
         }
         break;
-      case 'open': FileEngine.load(); break;
-      case 'save': FileEngine.save(); break;
-      case 'save-as': FileEngine.exportJSON(); break;
-      case 'export-json': FileEngine.exportJSON(); break;
       case 'export-pdf':
         FileEngine.exportPDF()
           .catch((error) => alert(`Error al exportar PDF: ${error.message}`));
         break;
       case 'quit': if (confirm('¿Cerrar ReportForge?')) window.close(); break;
-      case 'undo': DS.undo(); SectionEngine.render(); SelectionEngine.clearSelection(); break;
-      case 'redo': DS.redo(); SectionEngine.render(); SelectionEngine.clearSelection(); break;
-      case 'cut': CommandEngine.cut(); break;
-      case 'copy': CommandEngine.copy(); break;
-      case 'paste': CommandEngine.paste(); break;
-      case 'delete': CommandEngine.delete(); break;
-      case 'select-all': CommandEngine.selectAll(); break;
-      case 'align-lefts': CommandEngine.alignLefts(); break;
-      case 'align-centers': CommandEngine.alignCenters(); break;
-      case 'align-rights': CommandEngine.alignRights(); break;
-      case 'align-tops': CommandEngine.alignTops(); break;
-      case 'align-middles': CommandEngine.alignMiddles(); break;
-      case 'align-bottoms': CommandEngine.alignBottoms(); break;
-      case 'same-width': CommandEngine.sameWidth(); break;
-      case 'same-height': CommandEngine.sameHeight(); break;
-      case 'bring-front': CommandEngine.bringFront(); break;
-      case 'send-back': CommandEngine.sendBack(); break;
-      case 'zoom-in': ZoomEngine.step(1, 'plus'); break;
-      case 'zoom-out': ZoomEngine.step(-1, 'minus'); break;
-      case 'zoom-100': ZoomEngine.set(1.0); break;
-      case 'preview': _canonicalPreviewWriter().toggle(); break;
       case 'bring-forward': CommandEngine.bringForward && CommandEngine.bringForward(); break;
       case 'send-backward': CommandEngine.sendBackward && CommandEngine.sendBackward(); break;
       case 'group': CommandEngine.group && CommandEngine.group(); break;
@@ -87,21 +108,10 @@
         DS.setSnapToGrid(!DS.snapToGrid, 'CommandRuntimeHandlers.toggleSnap');
         document.getElementById('btn-snap').classList.toggle('active', DS.snapToGrid);
         break;
-      case 'toggle-rulers': RulerEngine.toggle(); break;
-      case 'print': window.print(); break;
-      case 'page-first': PreviewEngineRenderer.pageFirst(); break;
-      case 'page-prev':  PreviewEngineRenderer.pagePrev();  break;
-      case 'page-next':  PreviewEngineRenderer.pageNext();  break;
-      case 'page-last':  PreviewEngineRenderer.pageLast();  break;
-      case 'insert-text': InsertEngine.setTool('text'); break;
-      case 'insert-field': InsertEngine.setTool('field'); break;
-      case 'insert-line': InsertEngine.setTool('line'); break;
-      case 'insert-box': InsertEngine.setTool('box'); break;
       case 'format-field':
         if (DS.selection.size > 0) PropertiesEngine.render();
         document.getElementById('panel-right').scrollTop = 9999;
         break;
-      case 'refresh': setStatus('Datos actualizados'); break;
       case 'color-font': {
         const cp = document.getElementById('color-picker-font');
         const sel = DS.getSelectedElements();

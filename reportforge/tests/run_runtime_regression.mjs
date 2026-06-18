@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {
   startRuntimeServer,
   launchRuntimePage,
+  waitForRuntimeReady,
   selectSingle,
   selectMulti,
   selectPreviewSingle,
@@ -117,7 +118,8 @@ async function run() {
     });
 
     await step('zoom 45 100 200', async () => {
-      await page.goto(server.baseUrl, { waitUntil: 'networkidle' });
+      await page.goto(server.baseUrl, { waitUntil: 'domcontentloaded' });
+      await waitForRuntimeReady(page);
       await page.waitForFunction(() => typeof DS !== 'undefined' && Array.isArray(DS.elements) && DS.elements.length > 0);
       await page.waitForTimeout(800);
       await selectSingle(page, 0);
@@ -178,7 +180,8 @@ async function run() {
     });
 
     await step('preview drag', async () => {
-      await page.goto(server.baseUrl, { waitUntil: 'networkidle' });
+      await page.goto(server.baseUrl, { waitUntil: 'domcontentloaded' });
+      await waitForRuntimeReady(page);
       await page.waitForFunction(() => typeof DS !== 'undefined' && Array.isArray(DS.elements) && DS.elements.length > 0);
       await page.waitForTimeout(800);
       await enterPreview(page);
@@ -205,12 +208,7 @@ async function run() {
       await selectPreviewSingle(page, 0);
       for (const zoom of [0.45, 1, 2]) {
         await setZoom(page, zoom);
-        const state = await page.evaluate(() => ({
-          previewMode: DS.previewMode,
-          zoom: DS.previewZoom || 1,
-          boxCount: document.querySelectorAll('#handles-layer .sel-box').length,
-          handleCount: document.querySelectorAll('#handles-layer .sel-handle').length,
-        }));
+        const state = await runtimeState(page);
         assert.equal(state.previewMode, true);
         assert.equal(state.zoom, zoom);
         assert.equal(state.boxCount, 1);

@@ -110,6 +110,35 @@ RF.Geometry = {
   canvasLeft(){ const cR = this.canvasRect(); const sR = this.scrollRect(); return cR.left - sR.left; },
   rulerVTop(){ const cR = this.canvasRect(); const rR = this.rulerVRect(); return cR.top - rR.top; },
   toCanvasSpace(clientX, clientY){ return this.viewToModel(clientX, clientY); },
+  clientToModel(clientX, clientY){
+    return (typeof DS !== 'undefined' && DS.previewMode)
+      ? this.previewClientToModel(clientX, clientY)
+      : this.viewToModel(clientX, clientY);
+  },
+  previewClientToModel(clientX, clientY){
+    const layer = document.querySelector('#preview-content .preview-hit-layer');
+    if(!layer || typeof layer.getBoundingClientRect !== 'function') return this.viewToModel(clientX, clientY);
+    const z = this.zoom();
+    const r = layer.getBoundingClientRect();
+    return { x: (clientX - r.left) / z, y: (clientY - r.top) / z };
+  },
+  clientDeltaToModelDelta(dx, dy){
+    const z = this.zoom();
+    return { dx: dx / z, dy: dy / z };
+  },
+  overlayRectToPreviewLayerSpace(node, layer){
+    if(!node || !layer) return null;
+    if(typeof node.getBoundingClientRect !== 'function' || typeof layer.getBoundingClientRect !== 'function') return null;
+    const nodeRect = node.getBoundingClientRect();
+    const layerRect = layer.getBoundingClientRect();
+    const z = this.zoom();
+    return {
+      left: (nodeRect.left - layerRect.left) / z,
+      top: (nodeRect.top - layerRect.top) / z,
+      width: nodeRect.width / z,
+      height: nodeRect.height / z,
+    };
+  },
   Matrix2D, AABB, MagneticSnap, PointerNorm,
   canvasMatrix(){ const zoom=(typeof DS!=='undefined'?DS.zoom:1)||1; return Matrix2D.scale(zoom); },
   canvasMatrixInverse(){ return this.canvasMatrix().inverse(); },
@@ -403,7 +432,7 @@ window.getCanvasPos = function(e){
   if(e && e.model && typeof e.model.x === 'number' && typeof e.model.y === 'number'){
     return { x: e.model.x, y: e.model.y };
   }
-  return RF.Geometry.toCanvasSpace(e.clientX, e.clientY);
+  return RF.Geometry.clientToModel(e.clientX, e.clientY);
 };
 
 window.initKeyboard_DISABLED_v19 = function(){

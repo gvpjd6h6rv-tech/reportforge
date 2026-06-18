@@ -28,6 +28,12 @@
     return String(v);
   }
 
+  function _hitLayerInteractionStyle(el) {
+    const zIndex = Number.isFinite(Number(el.zIndex)) ? Number(el.zIndex) : (el.type === 'rect' ? 0 : 1);
+    const pointerEvents = el.type === 'rect' && el.bgColor === 'transparent' ? 'none' : 'auto';
+    return { zIndex, pointerEvents };
+  }
+
   function renderBand(sec, rowData, alt, rootData, rowIndex) {
     const cls = alt ? ' pv-section-bg-alt' : '';
     const ri = rowIndex !== null ? ` data-row-index="${rowIndex}"` : '';
@@ -58,9 +64,12 @@
 
     const r = { left: el.x, top: el.y, width: el.w, height: el.h };
     const fs = el.fontSize * 96 / 72;
+    const interaction = _hitLayerInteractionStyle(el);
     const st = [
       `position:absolute`, `left:${r.left}px`, `top:${r.top}px`,
       `width:${r.width}px`, `height:${r.height}px`,
+      `z-index:${interaction.zIndex}`,
+      `pointer-events:${interaction.pointerEvents}`,
       `font-family:${el.fontFamily}`, `font-size:${fs}px`,
       `font-weight:${el.bold ? 'bold' : 'normal'}`,
       `font-style:${el.italic ? 'italic' : 'normal'}`,

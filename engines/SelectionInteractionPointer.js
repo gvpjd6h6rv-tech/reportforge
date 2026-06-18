@@ -24,9 +24,7 @@ const SelectionInteractionPointer = (() => {
     } else {
       SelectionState.addSelection(id);
     }
-    if (DS.previewMode && typeof PreviewEngineMode !== 'undefined' && typeof PreviewEngineMode.enableSelectionOverlay === 'function') {
-      PreviewEngineMode.enableSelectionOverlay();
-    }
+    if (typeof engine.enableSelectionOverlay === 'function') engine.enableSelectionOverlay();
     engine.renderHandles();
     PropertiesEngine.render();
     FormatEngine.updateToolbar();

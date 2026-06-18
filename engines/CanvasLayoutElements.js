@@ -7,6 +7,171 @@
     return document.querySelector(`.cr-section[data-section-id="${sectionId}"]`);
   }
 
+  function _geometry() {
+    return (typeof RF !== 'undefined' && RF.Geometry) ? RF.Geometry : null;
+  }
+
+  function _scale(value) {
+    if (typeof RF !== 'undefined' && RF.Geometry && typeof RF.Geometry.scale === 'function') {
+      return RF.Geometry.scale(value);
+    }
+    return value;
+  }
+
+  function _modelToView(x, y) {
+    if (typeof RF !== 'undefined' && RF.Geometry && typeof RF.Geometry.modelToView === 'function') {
+      return RF.Geometry.modelToView(x, y);
+    }
+    return { x, y };
+  }
+
+  function _px(value) {
+    return `${value}px`;
+  }
+
+  function _applyBaseStyle(div, el) {
+    // Zoom is owned by the canvas container, so element DOM stays in model space.
+    div.style.left = _px(el.x);
+    div.style.top = _px(el.y);
+    div.style.width = _px(el.w);
+    div.style.height = _px(el.h);
+    div.style.fontFamily = el.fontFamily || 'Arial';
+    div.style.fontSize = _px(el.fontSize * 96 / 72);
+    div.style.fontWeight = el.bold ? 'bold' : 'normal';
+    div.style.fontStyle = el.italic ? 'italic' : 'normal';
+    div.style.textDecoration = el.underline ? 'underline' : 'none';
+    div.style.textAlign = el.align || 'left';
+    div.style.zIndex = el.zIndex || 0;
+  }
+
+  function _setBorder(div, el) {
+    div.style.border = el.borderWidth > 0 ? `${el.borderWidth}px ${el.borderStyle} ${el.borderColor}` : '';
+  }
+
+  function _fieldLabel(el) {
+    if (el.content && el.content !== el.fieldPath) return el.content;
+    return el.fieldPath ? `{${el.fieldPath}}` : '';
+  }
+
+  function _appendContentSpan(div, text = '') {
+    const span = document.createElement('span');
+    span.className = 'el-content';
+    span.textContent = text;
+    div.appendChild(span);
+    return span;
+  }
+
+  function _appendCorners(div) {
+    ['tl', 'tr', 'bl', 'br'].forEach((pos) => {
+      const m = document.createElement('span');
+      m.className = 'el-corner ' + pos;
+      div.appendChild(m);
+    });
+  }
+
+  function _buildField(div, el) {
+    div.style.color = el.color;
+    div.style.background = el.bgColor === 'transparent' ? 'var(--cr-field-bg)' : el.bgColor;
+    _setBorder(div, el);
+    const icon = document.createElement('span');
+    icon.className = 'el-field-icon';
+    icon.textContent = '⬚';
+    div.appendChild(icon);
+    _appendContentSpan(div, _fieldLabel(el));
+  }
+
+  function _buildText(div, el) {
+    div.style.color = el.color;
+    div.style.background = el.bgColor === 'transparent' ? 'var(--cr-text-bg)' : el.bgColor;
+    _setBorder(div, el);
+    const span = _appendContentSpan(div, el.content || 'Texto');
+    span.contentEditable = 'false';
+  }
+
+  function _buildLine(div, el) {
+    div.style.background = 'transparent';
+    div.style.border = 'none';
+    div.style.overflow = 'visible';
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.style.cssText = 'position:absolute;overflow:visible;pointer-events:none';
+    svg.setAttribute('width', el.w);
+    svg.setAttribute('height', Math.max(el.h, 1));
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    const lc = el.borderColor === 'transparent' ? '#000' : (el.borderColor || '#000');
+    const mid = Math.max(el.h / 2, 1);
+    line.setAttribute('x1', 0); line.setAttribute('y1', mid);
+    line.setAttribute('x2', el.w); line.setAttribute('y2', mid);
+    line.setAttribute('stroke', lc);
+    line.setAttribute('stroke-width', el.lineWidth || 1);
+    svg.appendChild(line);
+    div.appendChild(svg);
+    _appendContentSpan(div);
+  }
+
+  function _buildRect(div, el) {
+    div.style.background = el.bgColor === 'transparent' ? 'transparent' : el.bgColor;
+    div.style.overflow = 'visible';
+    _setBorder(div, el);
+    _appendContentSpan(div);
+  }
+
+  function _buildImage(div, el) {
+    const src = el.src || el.imageSrc || '';
+    if (!src) {
+      div.style.background = '#F9F9F9';
+      div.style.border = '1px dashed #999';
+      _appendContentSpan(div, '⬚ imagen');
+      return;
+    }
+    div.style.background = 'transparent';
+    div.style.border = 'none';
+    const img = document.createElement('img');
+    img.className = 'el-content';
+    img.alt = el.content || '';
+    img.src = src;
+    img.style.display = 'block';
+    img.style.width = '100%';
+    img.style.height = '100%';
+    img.style.objectFit = el.srcFit || el.imageFit || 'contain';
+    img.style.pointerEvents = 'none';
+    div.appendChild(img);
+  }
+
+  function _buildElementContent(div, el) {
+    if (el.type === 'field') return _buildField(div, el);
+    if (el.type === 'text') return _buildText(div, el);
+    if (el.type === 'line') return _buildLine(div, el);
+    if (el.type === 'rect') return _buildRect(div, el);
+    if (el.type === 'image') return _buildImage(div, el);
+  }
+
+  function _updateContent(div, el) {
+    const span = div.querySelector('.el-content');
+    if (!span) return;
+    if (el.type === 'field') span.textContent = _fieldLabel(el);
+    else if (el.type === 'text') span.textContent = el.content || '';
+    else if (el.type === 'image') _updateImageContent(div, el, span);
+  }
+
+  function _updateImageContent(div, el, span) {
+    const img = div.querySelector('img.el-content');
+    if (!img) {
+      span.textContent = '⬚ imagen';
+      return;
+    }
+    img.src = el.src || el.imageSrc || '';
+    img.alt = el.content || '';
+    img.style.objectFit = el.srcFit || el.imageFit || 'contain';
+  }
+
+  function _updateVisualStyle(div, el) {
+    div.style.color = el.color || '#000';
+    div.style.background = el.bgColor === 'transparent'
+      ? (el.type === 'field' ? 'var(--cr-field-bg)' : 'var(--cr-text-bg)')
+      : (el.bgColor || 'transparent');
+    _setBorder(div, el);
+  }
+
   function buildElementDiv(el) {
     C.assertLayoutContract(el, 'CanvasLayoutEngine.buildElementDiv');
     C.assertZoomContract('CanvasLayoutEngine.buildElementDiv');
@@ -15,99 +180,9 @@
     div.dataset.id = el.id;
     div.dataset.type = el.type;
 
-    div.style.left = `${el.x}px`;
-    div.style.top = `${el.y}px`;
-    div.style.width = `${el.w}px`;
-    div.style.height = `${el.h}px`;
-
-    div.style.fontFamily = el.fontFamily || 'Arial';
-    div.style.fontSize = `${el.fontSize * 96 / 72}px`;
-    div.style.fontWeight = el.bold ? 'bold' : 'normal';
-    div.style.fontStyle = el.italic ? 'italic' : 'normal';
-    div.style.textDecoration = el.underline ? 'underline' : 'none';
-    div.style.textAlign = el.align || 'left';
-    div.style.zIndex = el.zIndex || 0;
-
-    ['tl', 'tr', 'bl', 'br'].forEach((pos) => {
-      const m = document.createElement('span');
-      m.className = 'el-corner ' + pos;
-      div.appendChild(m);
-    });
-
-    if (el.type === 'field') {
-      div.style.color = el.color;
-      div.style.background = el.bgColor === 'transparent' ? 'var(--cr-field-bg)' : el.bgColor;
-      if (el.borderWidth > 0) div.style.border = `${el.borderWidth}px ${el.borderStyle} ${el.borderColor}`;
-      const icon = document.createElement('span');
-      icon.className = 'el-field-icon';
-      icon.textContent = '⬚';
-      const span = document.createElement('span');
-      span.className = 'el-content';
-      span.textContent = el.content && el.content !== el.fieldPath
-        ? el.content
-        : (el.fieldPath ? `{${el.fieldPath}}` : '');
-      div.appendChild(icon);
-      div.appendChild(span);
-    } else if (el.type === 'text') {
-      div.style.color = el.color;
-      div.style.background = el.bgColor === 'transparent' ? 'var(--cr-text-bg)' : el.bgColor;
-      if (el.borderWidth > 0) div.style.border = `${el.borderWidth}px ${el.borderStyle} ${el.borderColor}`;
-      const span = document.createElement('span');
-      span.className = 'el-content';
-      span.textContent = el.content || 'Texto';
-      span.contentEditable = 'false';
-      div.appendChild(span);
-    } else if (el.type === 'line') {
-      div.style.background = 'transparent';
-      div.style.border = 'none';
-      div.style.overflow = 'visible';
-      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.style.cssText = 'position:absolute;overflow:visible;pointer-events:none';
-      svg.setAttribute('width', el.w);
-      svg.setAttribute('height', Math.max(el.h, 1));
-      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      const lc = el.borderColor === 'transparent' ? '#000' : (el.borderColor || '#000');
-      const mid = Math.max(el.h / 2, 1);
-      line.setAttribute('x1', 0); line.setAttribute('y1', mid);
-      line.setAttribute('x2', el.w); line.setAttribute('y2', mid);
-      line.setAttribute('stroke', lc);
-      line.setAttribute('stroke-width', el.lineWidth || 1);
-      svg.appendChild(line);
-      const span = document.createElement('span');
-      span.className = 'el-content';
-      div.appendChild(svg);
-      div.appendChild(span);
-    } else if (el.type === 'rect') {
-      div.style.background = el.bgColor === 'transparent' ? 'transparent' : el.bgColor;
-      div.style.overflow = 'visible';
-      if (el.borderWidth > 0) div.style.border = `${el.borderWidth}px ${el.borderStyle} ${el.borderColor}`;
-      const span = document.createElement('span');
-      span.className = 'el-content';
-      div.appendChild(span);
-    } else if (el.type === 'image') {
-      const src = el.src || el.imageSrc || '';
-      if (src) {
-        div.style.background = 'transparent';
-        div.style.border = 'none';
-        const img = document.createElement('img');
-        img.className = 'el-content';
-        img.alt = el.content || '';
-        img.src = src;
-        img.style.display = 'block';
-        img.style.width = '100%';
-        img.style.height = '100%';
-        img.style.objectFit = el.srcFit || el.imageFit || 'contain';
-        img.style.pointerEvents = 'none';
-        div.appendChild(img);
-      } else {
-        div.style.background = '#F9F9F9';
-        div.style.border = '1px dashed #999';
-        const span = document.createElement('span');
-        span.className = 'el-content';
-        span.textContent = '⬚ imagen';
-        div.appendChild(span);
-      }
-    }
+    _applyBaseStyle(div, el);
+    _appendCorners(div);
+    _buildElementContent(div, el);
 
     const SE = (typeof EngineRegistry !== 'undefined' && EngineRegistry.get('SelectionEngine'))
             || (typeof SelectionEngine !== 'undefined' ? SelectionEngine : null);
@@ -145,42 +220,9 @@
     const el = typeof DS !== 'undefined' ? DS.getElementById(id) : null;
     if (!el) return;
     C.assertLayoutContract(el, 'CanvasLayoutEngine.updateElement');
-    div.style.left = `${el.x}px`;
-    div.style.top = `${el.y}px`;
-    div.style.width = `${el.w}px`;
-    div.style.height = `${el.h}px`;
-    div.style.fontFamily = el.fontFamily || 'Arial';
-    div.style.fontSize = `${el.fontSize * 96 / 72}px`;
-    div.style.fontWeight = el.bold ? 'bold' : 'normal';
-    div.style.fontStyle = el.italic ? 'italic' : 'normal';
-    div.style.textDecoration = el.underline ? 'underline' : 'none';
-    div.style.textAlign = el.align || 'left';
-    div.style.zIndex = el.zIndex || 0;
-    div.style.color = el.color || '#000';
-    div.style.background = el.bgColor === 'transparent'
-      ? (el.type === 'field' ? 'var(--cr-field-bg)' : 'var(--cr-text-bg)')
-      : (el.bgColor || 'transparent');
-    if (el.borderWidth > 0) div.style.border = `${el.borderWidth}px ${el.borderStyle} ${el.borderColor}`;
-    else div.style.border = '';
-    const span = div.querySelector('.el-content');
-    if (span) {
-      if (el.type === 'field') {
-        span.textContent = el.content && el.content !== el.fieldPath
-          ? el.content
-          : (el.fieldPath ? `{${el.fieldPath}}` : '');
-      }
-      else if (el.type === 'text') span.textContent = el.content || '';
-      else if (el.type === 'image') {
-        const img = div.querySelector('img.el-content');
-        if (img) {
-          img.src = el.src || el.imageSrc || '';
-          img.alt = el.content || '';
-          img.style.objectFit = el.srcFit || el.imageFit || 'contain';
-        } else {
-          span.textContent = '⬚ imagen';
-        }
-      }
-    }
+    _applyBaseStyle(div, el);
+    _updateVisualStyle(div, el);
+    _updateContent(div, el);
     if (typeof DS !== 'undefined')
       div.classList.toggle('selected', (C.assertSelectionState('CanvasLayoutEngine.updateElement.selection'), DS.selection.has(id)));
   }
@@ -192,10 +234,10 @@
     if (!el) return;
     C.assertLayoutContract(el, 'CanvasLayoutEngine.updateElementPosition');
     C.assertZoomContract('CanvasLayoutEngine.updateElementPosition');
-    div.style.left = `${el.x}px`;
-    div.style.top = `${el.y}px`;
-    div.style.width = `${el.w}px`;
-    div.style.height = `${el.h}px`;
+    div.style.left = _px(el.x);
+    div.style.top = _px(el.y);
+    div.style.width = _px(el.w);
+    div.style.height = _px(el.h);
   }
 
   global.CanvasLayoutElements = { buildElementDiv, renderElement, renderAll, updateElement, updateElementPosition };

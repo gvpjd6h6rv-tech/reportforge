@@ -58,8 +58,7 @@ const KeyboardEngine = (() => {
 
   function _register(combo, fn) { R.register(combo, fn); }
 
-  function _init() {
-    // ── Undo / Redo ──────────────────────────────────────────────
+  function _registerUndoRedoShortcuts() {
     _register('ctrl+z', () => {
       if (typeof HistoryEngine !== 'undefined') HistoryEngine.undo();
     });
@@ -69,8 +68,9 @@ const KeyboardEngine = (() => {
     _register('ctrl+shift+z', () => {
       if (typeof HistoryEngine !== 'undefined') HistoryEngine.redo();
     });
+  }
 
-    // ── Clipboard ────────────────────────────────────────────────
+  function _registerClipboardShortcuts() {
     _register('ctrl+c', () => {
       if (typeof ClipboardEngine !== 'undefined') ClipboardEngine.copy();
     });
@@ -83,8 +83,9 @@ const KeyboardEngine = (() => {
     _register('ctrl+d', () => {
       if (typeof ClipboardEngine !== 'undefined') ClipboardEngine.duplicate();
     });
+  }
 
-    // ── Selection ────────────────────────────────────────────────
+  function _registerSelectionShortcuts() {
     _register('ctrl+a', () => {
       if (typeof DS !== 'undefined' && typeof SelectionEngine !== 'undefined') {
         DS.clearSelectionState('KeyboardEngine.selectAll');
@@ -97,13 +98,38 @@ const KeyboardEngine = (() => {
       if (typeof SelectionEngine !== 'undefined') SelectionEngine.clearSelection();
       if (typeof DragEngine !== 'undefined' && DragEngine.cancel) DragEngine.cancel();
     });
+  }
 
-    // ── Delete ───────────────────────────────────────────────────
-    _register('delete',    _deleteSelected);
-    _register('backspace', _deleteSelected);
+  function _renderHandlesAfterNudge() {
+    if (typeof SelectionEngine === 'undefined' || typeof SelectionEngine.renderHandles !== 'function') return;
+    if (typeof RenderScheduler !== 'undefined' && typeof RenderScheduler.flushSync === 'function') {
+      RenderScheduler.flushSync(() => SelectionEngine.renderHandles(), 'KeyboardEngine.nudge.renderHandles');
+      return;
+    }
+    SelectionEngine.renderHandles();
+  }
 
-    // ── Nudge (Arrow keys) ───────────────────────────────────────
-    const NUDGE = 1, NUDGE_BIG = 10;
+  function _nudgeSelected(dx, dy) {
+    if (typeof DS === 'undefined') return;
+    const sel = [...DS.selection];
+    if (!sel.length) return;
+    if (typeof HistoryEngine !== 'undefined') HistoryEngine.push('nudge');
+    sel.forEach(id => {
+      const el = DS.getElementById(id);
+      if (!el) return;
+      if (typeof ElementLayoutEngine !== 'undefined') {
+        ElementLayoutEngine.moveElement(el, dx, dy);
+      } else {
+        el.x += dx; el.y += dy;
+      }
+    });
+    _renderHandlesAfterNudge();
+    if (typeof DS.saveHistory === 'function') DS.saveHistory();
+  }
+
+  function _registerNudgeShortcuts() {
+    const NUDGE = 1;
+    const NUDGE_BIG = 10;
     [
       ['arrowleft',       -NUDGE,     0],
       ['arrowright',       NUDGE,     0],
@@ -114,40 +140,31 @@ const KeyboardEngine = (() => {
       ['shift+arrowup',    0, -NUDGE_BIG],
       ['shift+arrowdown',  0,  NUDGE_BIG],
     ].forEach(([k, dx, dy]) => {
-      _register(k, () => {
-        if (typeof DS === 'undefined') return;
-        const sel = [...DS.selection];
-        if (!sel.length) return;
-        if (typeof HistoryEngine !== 'undefined') HistoryEngine.push('nudge');
-        sel.forEach(id => {
-          const el = DS.getElementById(id);
-          if (!el) return;
-          if (typeof ElementLayoutEngine !== 'undefined') {
-            ElementLayoutEngine.moveElement(el, dx, dy);
-          } else {
-            el.x += dx; el.y += dy;
-          }
-        });
-        if (typeof SelectionEngine !== 'undefined' && typeof SelectionEngine.renderHandles === 'function') {
-          if (typeof RenderScheduler !== 'undefined' && typeof RenderScheduler.flushSync === 'function') {
-            RenderScheduler.flushSync(() => SelectionEngine.renderHandles(), 'KeyboardEngine.nudge.renderHandles');
-          } else {
-            SelectionEngine.renderHandles();
-          }
-        }
-        if (typeof DS.saveHistory === 'function') DS.saveHistory();
-      });
+      _register(k, () => _nudgeSelected(dx, dy));
     });
+  }
 
-    // ── Zoom ─────────────────────────────────────────────────────
+  function _registerZoomShortcuts() {
     _register('ctrl+=',       () => { if (typeof DesignZoomEngine !== 'undefined') DesignZoomEngine.zoomIn(undefined, undefined, { event: 'keyboard-plus', fn: 'KeyboardEngine.ctrl+=' }); });
     _register('ctrl++',       () => { if (typeof DesignZoomEngine !== 'undefined') DesignZoomEngine.zoomIn(undefined, undefined, { event: 'keyboard-plus', fn: 'KeyboardEngine.ctrl++' }); });
     _register('ctrl+-',       () => { if (typeof DesignZoomEngine !== 'undefined') DesignZoomEngine.zoomOut(undefined, undefined, { event: 'keyboard-minus', fn: 'KeyboardEngine.ctrl+-' }); });
     _register('ctrl+0',       () => { if (typeof DesignZoomEngine !== 'undefined') DesignZoomEngine.set(1.0, undefined, undefined, { event: 'keyboard-reset', fn: 'KeyboardEngine.ctrl+0' }); });
+  }
 
-    // ── Grid / Snap toggles ───────────────────────────────────────
+  function _registerGridShortcuts() {
     _register('ctrl+g', () => { if (typeof GridEngine !== 'undefined') GridEngine.toggle(); });
     _register('ctrl+;', () => { if (typeof SnapState !== 'undefined') SnapState.toggle(); });
+  }
+
+  function _init() {
+    _registerUndoRedoShortcuts();
+    _registerClipboardShortcuts();
+    _registerSelectionShortcuts();
+    _register('delete', _deleteSelected);
+    _register('backspace', _deleteSelected);
+    _registerNudgeShortcuts();
+    _registerZoomShortcuts();
+    _registerGridShortcuts();
 
     document.addEventListener('keydown', _onKeyDown);
   }

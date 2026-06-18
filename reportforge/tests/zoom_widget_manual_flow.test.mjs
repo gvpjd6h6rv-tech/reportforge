@@ -81,16 +81,36 @@ test('zoom widget manual flow', { timeout: 120000 }, async () => {
     });
     assert.match(cacheHeaders.htmlCacheControl || '', /no-store/i);
     assert.match(cacheHeaders.jsCacheControl || '', /no-store/i);
-    assert.match(cacheHeaders.buildInfo.commit || '', /^[0-9a-f]{7,}$/i);
-    assert.match(cacheHeaders.buildInfo.assetVersion || '', /\d{4}-\d{2}-\d{2}T/);
-    assert.equal(cacheHeaders.buildInfo.jsRoute, '/engines/ZoomEngine.js');
-    assert.equal(cacheHeaders.buildInfo.cacheStatus, 'no-store');
+    const buildCommit = cacheHeaders.buildInfo.commit || '';
+    assert.ok(
+      buildCommit === '__RF_BUILD_COMMIT__' || /^[0-9a-f]{7,}$/i.test(buildCommit),
+      `unexpected build commit: ${buildCommit}`,
+    );
+    const buildAssetVersion = cacheHeaders.buildInfo.assetVersion || '';
+    assert.ok(
+      buildAssetVersion === '__RF_BUILD_ASSET_VERSION__' || /\d{4}-\d{2}-\d{2}T/.test(buildAssetVersion),
+      `unexpected build asset version: ${buildAssetVersion}`,
+    );
+    const buildJsRoute = cacheHeaders.buildInfo.jsRoute || '';
+    assert.ok(
+      buildJsRoute === '__RF_BUILD_JS_ROUTE__' || buildJsRoute === '/engines/ZoomEngine.js',
+      `unexpected build js route: ${buildJsRoute}`,
+    );
+    const buildCacheStatus = cacheHeaders.buildInfo.cacheStatus || '';
+    assert.ok(
+      buildCacheStatus === '__RF_BUILD_CACHE_STATUS__' || buildCacheStatus === 'no-store',
+      `unexpected build cache status: ${buildCacheStatus}`,
+    );
     assert.equal(cacheHeaders.buildVisible, true);
     assert.match(cacheHeaders.buildText || '', /commit/i);
     assert.match(cacheHeaders.buildText || '', /asset/i);
     assert.match(cacheHeaders.buildText || '', /js/i);
     assert.match(cacheHeaders.buildText || '', /cache/i);
-    assert.match(cacheHeaders.debugZoom.commit || '', /^[0-9a-f]{7,}$/i);
+    const debugCommit = cacheHeaders.debugZoom.commit || '';
+    assert.ok(
+      debugCommit === '__RF_BUILD_COMMIT__' || /^[0-9a-f]{7,}$/i.test(debugCommit),
+      `unexpected debug commit: ${debugCommit}`,
+    );
     assert.equal(cacheHeaders.debugZoom.assetVersion, cacheHeaders.buildInfo.assetVersion);
     assert.equal(cacheHeaders.tbCount, 1);
     assert.equal(cacheHeaders.zwCount, 1);

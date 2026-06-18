@@ -41,6 +41,14 @@ async function waitForServer(url, timeoutMs = 15000) {
   throw new Error(`server did not become ready: ${url}`);
 }
 
+export async function waitForRuntimeReady(page, timeoutMs = 15000) {
+  await page.waitForFunction(
+    () => typeof window !== 'undefined' && window.__rfRuntimeReady === true,
+    null,
+    { timeout: timeoutMs },
+  );
+}
+
 export async function startRuntimeServer(port = randomPort()) {
   const proc = spawn('python3', ['reportforge_server.py', String(port)], {
     cwd: ROOT,
@@ -87,6 +95,7 @@ export async function launchRuntimePage(baseUrl, options = {}) {
   });
 
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+  await waitForRuntimeReady(page);
   await page.waitForFunction(() => typeof DS !== 'undefined' && Array.isArray(DS.elements) && DS.elements.length > 0);
   await page.waitForTimeout(800);
 
@@ -127,7 +136,7 @@ async function resolveBrowserLaunch(browserName) {
 
   const systemCandidates = await detectSystemCandidates(browserName);
   const managedProbe = await probeBrowserLaunch(browserType, {
-    headless: true,
+    headless: process.env.RF_HEADED === '1' ? false : true,
     args: browserLaunchArgs(browserName),
   });
   if (managedProbe.ok) {
@@ -142,7 +151,7 @@ async function resolveBrowserLaunch(browserName) {
       usable: true,
       launchSource: 'playwright-managed',
       launchOptions: {
-        headless: true,
+        headless: process.env.RF_HEADED === '1' ? false : true,
         args: browserLaunchArgs(browserName),
       },
       executablePath: null,
@@ -156,7 +165,7 @@ async function resolveBrowserLaunch(browserName) {
   let fallbackResult = null;
   for (const candidate of systemCandidates.filter((item) => item.exists)) {
     const probe = await probeBrowserLaunch(browserType, {
-      headless: true,
+      headless: process.env.RF_HEADED === '1' ? false : true,
       executablePath: candidate.path,
       args: browserLaunchArgs(browserName),
     });
@@ -172,7 +181,7 @@ async function resolveBrowserLaunch(browserName) {
         usable: true,
         launchSource: 'system-fallback',
         launchOptions: {
-          headless: true,
+          headless: process.env.RF_HEADED === '1' ? false : true,
           executablePath: candidate.path,
           args: browserLaunchArgs(browserName),
         },
@@ -280,27 +289,62 @@ export async function selectMulti(page, first = 0, second = 1) {
 }
 
 export async function selectPreviewSingle(page, index = 0) {
-  await page.locator('#preview-content .pv-el').nth(index).click();
+  const target = page.locator('#preview-content .pv-el').nth(index);
+  const box = await target.boundingBox();
+  assert.ok(box, `preview element ${index} missing`);
+  await target.click({
+    position: {
+      x: Math.min(Math.max(8, box.width * 0.25), Math.max(8, box.width - 8)),
+      y: Math.max(1, Math.min(box.height * 0.5, box.height - 1)),
+    },
+  });
   await page.waitForTimeout(120);
 }
 
 export async function selectPreviewMulti(page, first = 0, second = 1) {
-  await page.locator('#preview-content .pv-el').nth(first).click();
+  const firstTarget = page.locator('#preview-content .pv-el').nth(first);
+  const firstBox = await firstTarget.boundingBox();
+  assert.ok(firstBox, `preview element ${first} missing`);
+  await firstTarget.click({
+    position: {
+      x: Math.min(Math.max(8, firstBox.width * 0.25), Math.max(8, firstBox.width - 8)),
+      y: Math.max(1, Math.min(firstBox.height * 0.5, firstBox.height - 1)),
+    },
+  });
   await page.waitForTimeout(60);
-  await page.locator('#preview-content .pv-el').nth(second).click({ modifiers: ['Shift'] });
+  const secondTarget = page.locator('#preview-content .pv-el').nth(second);
+  const secondBox = await secondTarget.boundingBox();
+  assert.ok(secondBox, `preview element ${second} missing`);
+  await secondTarget.click({
+    modifiers: ['Shift'],
+    position: {
+      x: Math.min(Math.max(8, secondBox.width * 0.25), Math.max(8, secondBox.width - 8)),
+      y: Math.max(1, Math.min(secondBox.height * 0.5, secondBox.height - 1)),
+    },
+  });
   await page.waitForTimeout(120);
 }
 
 export async function getSelectionSnapshot(page) {
   return page.evaluate(() => ({
+    selectionLayerSelector: DS.previewMode ? '#preview-content .preview-selection-layer' : '#handles-layer',
     dsSelection: [...DS.selection],
     domSelected: [...document.querySelectorAll('.cr-element.selected')].map(el => el.dataset.id),
     elementCount: document.querySelectorAll('.cr-element:not(.pv-el)').length,
     uniqueElementIds: new Set([...document.querySelectorAll('.cr-element:not(.pv-el)')].map(el => el.dataset.id)).size,
     previewElementCount: document.querySelectorAll('#preview-content .pv-el').length,
-    boxCount: document.querySelectorAll('#handles-layer .sel-box').length,
-    handleCount: document.querySelectorAll('#handles-layer .sel-handle').length,
-    selectionGuideCount: document.querySelectorAll('#handles-layer .selection-guide').length,
+    boxCount: (() => {
+      const layer = document.querySelector(DS.previewMode ? '#preview-content .preview-selection-layer' : '#handles-layer');
+      return layer ? layer.querySelectorAll('.sel-box').length : 0;
+    })(),
+    handleCount: (() => {
+      const layer = document.querySelector(DS.previewMode ? '#preview-content .preview-selection-layer' : '#handles-layer');
+      return layer ? layer.querySelectorAll('.sel-handle').length : 0;
+    })(),
+    selectionGuideCount: (() => {
+      const layer = document.querySelector(DS.previewMode ? '#preview-content .preview-selection-layer' : '#handles-layer');
+      return layer ? layer.querySelectorAll('.selection-guide').length : 0;
+    })(),
     guideLineCount: document.querySelectorAll('#guide-layer .rf-guide-line').length,
   }));
 }
@@ -308,7 +352,8 @@ export async function getSelectionSnapshot(page) {
 export async function getSingleAlignment(page) {
   return page.evaluate(() => {
     const id = [...DS.selection][0];
-    const box = document.querySelector('#handles-layer .sel-box');
+    const layer = document.querySelector(DS.previewMode ? '#preview-content .preview-selection-layer' : '#handles-layer');
+    const box = layer ? layer.querySelector('.sel-box') : null;
     let el = null;
     if (id) {
       el = DS.previewMode
@@ -327,7 +372,8 @@ export async function getSingleAlignment(page) {
 
 export async function getMultiBBox(page) {
   return page.evaluate(() => {
-    const box = document.querySelector('#handles-layer .sel-box');
+    const layer = document.querySelector(DS.previewMode ? '#preview-content .preview-selection-layer' : '#handles-layer');
+    const box = layer ? layer.querySelector('.sel-box') : null;
     const selected = DS.previewMode
       ? [...DS.selection].flatMap(id => [...document.querySelectorAll(`.pv-el[data-origin-id="${id}"]`)])
       : [...document.querySelectorAll('.cr-element.selected')];
@@ -382,8 +428,14 @@ export async function runtimeState(page) {
     zoom: DS.zoom,
     previewMode: DS.previewMode,
     selection: [...DS.selection],
-    boxCount: document.querySelectorAll('#handles-layer .sel-box').length,
-    handleCount: document.querySelectorAll('#handles-layer .sel-handle').length,
+    boxCount: (() => {
+      const layer = document.querySelector(DS.previewMode ? '#preview-content .preview-selection-layer' : '#handles-layer');
+      return layer ? layer.querySelectorAll('.sel-box').length : 0;
+    })(),
+    handleCount: (() => {
+      const layer = document.querySelector(DS.previewMode ? '#preview-content .preview-selection-layer' : '#handles-layer');
+      return layer ? layer.querySelectorAll('.sel-handle').length : 0;
+    })(),
     previewPages: document.querySelectorAll('#preview-content .preview-render-layer .rpt-page, #preview-content .preview-hit-layer .pv-page').length,
     previewClass: document.getElementById('canvas-layer')?.classList.contains('preview-mode') || false,
   }));
@@ -427,15 +479,32 @@ export async function dragPreviewSelected(page, dx, dy) {
   const target = page.locator('#preview-content .pv-el.selected').first();
   const box = await target.boundingBox();
   assert.ok(box, 'selected preview element bounding box missing');
+  await page.evaluate(() => {
+    document.querySelectorAll('#preview-content .preview-selection-layer .sel-handle').forEach((handle) => {
+      handle.dataset.rfPrevPointerEvents = handle.style.pointerEvents || '';
+      handle.style.pointerEvents = 'none';
+    });
+  });
   await page.mouse.move(box.x + 20, box.y + Math.min(8, box.height / 2));
   await page.mouse.down();
   await page.mouse.move(box.x + 20 + dx, box.y + Math.min(8, box.height / 2) + dy, { steps: 8 });
   await page.mouse.up();
+  await page.evaluate(() => {
+    document.querySelectorAll('#preview-content .preview-selection-layer .sel-handle').forEach((handle) => {
+      handle.style.pointerEvents = handle.dataset.rfPrevPointerEvents || '';
+      delete handle.dataset.rfPrevPointerEvents;
+    });
+  });
   await page.waitForTimeout(180);
 }
 
 export async function resizeFromHandle(page, pos, dx, dy) {
-  const handle = page.locator(`#handles-layer .sel-handle[data-pos="${pos}"]`);
+  const selector = await page.evaluate((handlePos) => (
+    DS.previewMode
+      ? `#preview-content .preview-selection-layer .sel-handle[data-pos="${handlePos}"]`
+      : `#handles-layer .sel-handle[data-pos="${handlePos}"]`
+  ), pos);
+  const handle = page.locator(selector);
   const box = await handle.boundingBox();
   assert.ok(box, `handle ${pos} missing`);
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
@@ -446,7 +515,8 @@ export async function resizeFromHandle(page, pos, dx, dy) {
 }
 
 export async function reloadRuntime(page, baseUrl) {
-  await page.goto(baseUrl, { waitUntil: 'networkidle' });
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+  await waitForRuntimeReady(page);
   await page.waitForFunction(
     () => typeof DS !== 'undefined' && Array.isArray(DS.elements) && DS.elements.length > 0,
   );
