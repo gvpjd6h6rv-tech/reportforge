@@ -201,10 +201,11 @@ test('Pointer + Motion exports cover all canonical exports without overlap', () 
 test('OWN-SI-012 SelectionInteractionPointer delegates preview overlay enablement through SelectionEngine bridge', () => {
   const pointerSrc = read('engines/SelectionInteractionPointer.js');
   const engineSrc = read('engines/SelectionEngine.js');
-  assert.ok(engineSrc.includes('enableSelectionOverlay('),
-    'SelectionEngine must expose enableSelectionOverlay bridge');
-  assert.ok(engineSrc.includes('PreviewEngineMode.enableSelectionOverlay'),
-    'SelectionEngine bridge must call PreviewEngineMode.enableSelectionOverlay');
+  const bridgeSrc = read('engines/SelectionEnginePreviewBridge.js');
+  assert.ok(engineSrc.includes('installSelectionEngineBridge'),
+    'SelectionEngine must install the preview bridge from SelectionEnginePreviewBridge');
+  assert.ok(bridgeSrc.includes('enableSelectionOverlay('),
+    'SelectionEnginePreviewBridge must expose enableSelectionOverlay bridge');
   assert.ok(pointerSrc.includes('engine.enableSelectionOverlay('),
     'SelectionInteractionPointer must delegate overlay enablement to engine.enableSelectionOverlay');
   assert.ok(!pointerSrc.includes('PreviewEngineMode.enableSelectionOverlay'),
@@ -215,10 +216,13 @@ test('OWN-SI-012 SelectionInteractionPointer delegates preview overlay enablemen
 test('OWN-SI-013 SelectionOverlay delegates preview overlay state through SelectionEngine bridge', () => {
   const overlaySrc = read('engines/SelectionOverlay.js');
   const engineSrc = read('engines/SelectionEngine.js');
-  assert.ok(engineSrc.includes('isSelectionOverlayVisible('),
-    'SelectionEngine must expose isSelectionOverlayVisible bridge');
-  assert.ok(engineSrc.includes('resetSelectionOverlay('),
-    'SelectionEngine must expose resetSelectionOverlay bridge');
+  const bridgeSrc = read('engines/SelectionEnginePreviewBridge.js');
+  assert.ok(engineSrc.includes('installSelectionEngineBridge'),
+    'SelectionEngine must install the preview bridge from SelectionEnginePreviewBridge');
+  assert.ok(bridgeSrc.includes('isSelectionOverlayVisible('),
+    'SelectionEnginePreviewBridge must expose isSelectionOverlayVisible bridge');
+  assert.ok(bridgeSrc.includes('resetSelectionOverlay('),
+    'SelectionEnginePreviewBridge must expose resetSelectionOverlay bridge');
   assert.ok(overlaySrc.includes('engine.isSelectionOverlayVisible('),
     'SelectionOverlay must delegate overlay visibility checks to engine.isSelectionOverlayVisible');
   assert.ok(overlaySrc.includes('engine.enableSelectionOverlay('),

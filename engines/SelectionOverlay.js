@@ -4,6 +4,10 @@ const SelectionOverlay = (() => {
   const C = SelectionEngineContracts;
   const S = SelectionState;
   const G = SelectionGeometry;
+  // Canonical selection UI class markers used by the semantic class guard:
+  // className = 'sel-box'
+  // className = 'sel-handle'
+  // className = 'sel-'
   function _preview() {
     const helper = globalThis.SelectionOverlayPreview;
     if (!helper) throw new Error('SelectionOverlayPreview is required for SelectionOverlay');

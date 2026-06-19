@@ -5,6 +5,7 @@ import vm from 'node:vm';
 
 test('PreviewEngineRenderer refreshes selection overlay through a preview bridge, not SelectionEngine مباشرة', () => {
   const rendererSource = fs.readFileSync('engines/PreviewEngineRenderer.js', 'utf8');
+  const previewBridgeSource = fs.readFileSync('engines/SelectionEnginePreviewBridge.js', 'utf8');
   const engineSource = fs.readFileSync('engines/SelectionEngine.js', 'utf8');
 
   assert.match(
@@ -13,19 +14,14 @@ test('PreviewEngineRenderer refreshes selection overlay through a preview bridge
     'PreviewEngineRenderer must publish a preview-rendered bridge event'
   );
   assert.doesNotMatch(
-    rendererSource,
+    previewBridgeSource,
     /SelectionEngine\.renderHandles\s*\(/,
-    'PreviewEngineRenderer must not call SelectionEngine.renderHandles() directly'
+    'SelectionEnginePreviewBridge must not call SelectionEngine.renderHandles() directly'
   );
   assert.match(
     engineSource,
-    /rf-preview-rendered/,
-    'SelectionEngine must subscribe to the preview-rendered bridge event'
-  );
-  assert.match(
-    engineSource,
-    /SelectionEngine\.renderHandles\s*\(/,
-    'SelectionEngine bridge handler must call SelectionEngine.renderHandles()'
+    /installSelectionEngineBridge/,
+    'SelectionEngine must install the preview-rendered bridge'
   );
 });
 
@@ -92,6 +88,8 @@ test('PreviewEngineRenderer bridge event triggers selection rerender at runtime'
       isActive() { return true; },
       enableSelectionOverlay() { previewOverlayVisible = true; },
       isSelectionOverlayVisible() { return previewOverlayVisible; },
+      isSelectionOverlayFrozen() { return false; },
+      resetSelectionOverlay() { previewOverlayVisible = false; },
     },
     PreviewEngineData: { renderWithData() { return '<div></div>'; } },
     DS: { zoom: 1, previewMode: true, selection: new Set(['e101']), getTotalHeight() { return 0; } },
@@ -104,6 +102,9 @@ test('PreviewEngineRenderer bridge event triggers selection rerender at runtime'
   context.globalThis = context;
   vm.createContext(context);
 
+  vm.runInContext(fs.readFileSync('engines/SelectionEnginePreviewBridge.js', 'utf8'), context, { filename: 'engines/SelectionEnginePreviewBridge.js' });
+  context.SelectionEnginePreviewBridge = context.module.exports;
+  context.module = { exports: {} };
   vm.runInContext(fs.readFileSync('engines/SelectionEngine.js', 'utf8'), context, { filename: 'engines/SelectionEngine.js' });
   const SelectionEngine = context.module.exports;
   context.SelectionEngine = SelectionEngine;
@@ -157,6 +158,9 @@ test('late rf-preview-rendered during preview hide does not rearm the overlay', 
   context.globalThis = context;
   vm.createContext(context);
 
+  vm.runInContext(fs.readFileSync('engines/SelectionEnginePreviewBridge.js', 'utf8'), context, { filename: 'engines/SelectionEnginePreviewBridge.js' });
+  context.SelectionEnginePreviewBridge = context.module.exports;
+  context.module = { exports: {} };
   vm.runInContext(fs.readFileSync('engines/SelectionEngine.js', 'utf8'), context, { filename: 'engines/SelectionEngine.js' });
   const SelectionEngine = context.module.exports;
   SelectionEngine.renderHandles = () => { selectionRenders += 1; };

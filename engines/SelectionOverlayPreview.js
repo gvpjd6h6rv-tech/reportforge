@@ -5,6 +5,12 @@ const SelectionOverlayPreview = (() => {
     return values.find((value) => Number.parseFloat(value) > 0) || '100%';
   }
 
+  function _previewMode() {
+    if (typeof globalThis !== 'undefined' && globalThis.PreviewEngineMode) return globalThis.PreviewEngineMode;
+    if (typeof window !== 'undefined' && window.PreviewEngineMode) return window.PreviewEngineMode;
+    return typeof PreviewEngineMode !== 'undefined' ? PreviewEngineMode : null;
+  }
+
   function ensurePreviewSelectionLayer() {
     if (typeof document === 'undefined') return null;
     const content = document.querySelector('#preview-content');

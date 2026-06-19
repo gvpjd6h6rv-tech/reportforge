@@ -37,7 +37,6 @@ const ALLOWED_WINDOW_EXPORTS = [
   'DebugChannelsPanel',
   '__rfConsoleGateInstalled',
   '__rfConsoleOriginal',
-  '__rfRuntimeReady',
   'DebugTraceToggle',
   'DebugOverlay',
   'DOC_TYPES',
@@ -628,6 +627,44 @@ test('canvas layout split stays modular, thin, and contract-stable', () => {
   assert.match(size, /function getLayoutContract\(/);
   assert.match(elements, /function buildElementDiv\(/);
   assert.match(elements, /function renderAll\(/);
+});
+
+test('engine core contracts split stays modular, thin, and contract-stable', () => {
+  const files = {
+    'engines/EngineCoreContracts.js': 120,
+    'engines/EngineCoreContractAsserts.js': 100,
+    'engines/EngineCoreContractSnapshots.js': 120,
+    'engines/EngineCoreContractValidators.js': 340,
+  };
+
+  for (const [relPath, maxLines] of Object.entries(files)) {
+    const source = fs.readFileSync(path.join(ROOT, relPath), 'utf8');
+    assert.ok(source.split('\n').length <= maxLines, `${relPath} should stay <= ${maxLines} lines`);
+  }
+
+  const main = fs.readFileSync(path.join(ROOT, 'engines/EngineCoreContracts.js'), 'utf8');
+  const asserts = fs.readFileSync(path.join(ROOT, 'engines/EngineCoreContractAsserts.js'), 'utf8');
+  const snapshots = fs.readFileSync(path.join(ROOT, 'engines/EngineCoreContractSnapshots.js'), 'utf8');
+  const validators = fs.readFileSync(path.join(ROOT, 'engines/EngineCoreContractValidators.js'), 'utf8');
+  const html = fs.readFileSync(path.join(ROOT, 'designer/crystal-reports-designer-v4.html'), 'utf8');
+
+  assert.match(main, /function loadContractFactory\(/);
+  assert.match(main, /function createEngineCoreContracts\(/);
+  assert.doesNotMatch(main, /\bfunction assertRectShape\(/);
+  assert.doesNotMatch(main, /\bfunction snapshotSections\(/);
+  assert.doesNotMatch(main, /\bfunction validateSectionContract\(/);
+
+  assert.match(asserts, /function assertRectShape\(/);
+  assert.match(snapshots, /function snapshotSections\(/);
+  assert.match(validators, /function validateSectionContract\(/);
+  assert.match(validators, /function validateCanonicalRuntime\(/);
+
+  assert.ok(html.indexOf('EngineCoreContractAsserts.js') < html.indexOf('EngineCoreContracts.js'),
+    'contract asserts helper must load before coordinator');
+  assert.ok(html.indexOf('EngineCoreContractSnapshots.js') < html.indexOf('EngineCoreContracts.js'),
+    'contract snapshots helper must load before coordinator');
+  assert.ok(html.indexOf('EngineCoreContractValidators.js') < html.indexOf('EngineCoreContracts.js'),
+    'contract validators helper must load before coordinator');
 });
 
 test('preview engine split stays modular, thin, and contract-stable', () => {

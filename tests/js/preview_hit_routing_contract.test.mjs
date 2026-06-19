@@ -17,6 +17,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const ROOT = path.resolve(import.meta.dirname, '..', '..');
+const helperSrc = fs.readFileSync(path.join(ROOT, 'engines', 'EngineCoreRoutingPointerHelpers.js'), 'utf8');
 const src = fs.readFileSync(path.join(ROOT, 'engines', 'EngineCoreRoutingPointer.js'), 'utf8');
 
 function buildContext() {
@@ -206,6 +207,9 @@ describe('Preview hit routing contract', () => {
       globalThis: {},
     };
     vm.createContext(sandbox);
+    vm.runInContext(helperSrc, sandbox, { filename: 'engines/EngineCoreRoutingPointerHelpers.js' });
+    sandbox.EngineCoreRoutingPointerHelpers = sandbox.module.exports;
+    sandbox.module = { exports: {} };
     vm.runInContext(src, sandbox);
 
     const factory = sandbox.module.exports.createEngineCoreRoutingPointer
@@ -268,6 +272,9 @@ describe('Preview hit routing contract', () => {
       globalThis: {},
     };
     vm.createContext(sandbox);
+    vm.runInContext(helperSrc, sandbox, { filename: 'engines/EngineCoreRoutingPointerHelpers.js' });
+    sandbox.EngineCoreRoutingPointerHelpers = sandbox.module.exports;
+    sandbox.module = { exports: {} };
     vm.runInContext(src, sandbox);
 
     const factory = sandbox.module.exports.createEngineCoreRoutingPointer
@@ -349,6 +356,9 @@ describe('Preview hit routing contract', () => {
       globalThis: {},
     };
     vm.createContext(sandbox);
+    vm.runInContext(helperSrc, sandbox, { filename: 'engines/EngineCoreRoutingPointerHelpers.js' });
+    sandbox.EngineCoreRoutingPointerHelpers = sandbox.module.exports;
+    sandbox.module = { exports: {} };
     vm.runInContext(src, sandbox);
 
     const factory = sandbox.module.exports.createEngineCoreRoutingPointer
@@ -379,5 +389,142 @@ describe('Preview hit routing contract', () => {
       'handle click in preview must call onHandlePointerDown with the handle position');
     assert.equal(ctx.dispatched.elementId, null,
       'handle click in preview must NOT dispatch as onElementPointerDown (move)');
+  });
+
+  it('design mode must dispatch element target and empty canvas fallback, not model hit', () => {
+    const ctx = buildContext();
+    ctx.DS.previewMode = false;
+
+    const designElement = {
+      tagName: 'DIV',
+      className: 'cr-element',
+      dataset: { id: 'rh-company-matriz' },
+      style: {},
+      children: [],
+      parentElement: null,
+      closest(sel) {
+        if (sel === '.cr-element') return this;
+        if (sel === '#ctx-menu') return null;
+        if (sel === '.menu-item') return null;
+        if (sel === '.dropdown') return null;
+        if (sel === '.sel-box') return null;
+        if (sel === '.sel-handle') return null;
+        if (sel === '.section-resize-handle') return null;
+        if (sel === '.pv-el') return null;
+        return null;
+      },
+      matches() { return false; },
+      classList: { add() {}, remove() {}, contains() { return false; }, toggle() {} },
+      getBoundingClientRect() { return { left: 0, top: 0, width: 100, height: 20 }; },
+      setPointerCapture() {},
+      getAttribute(name) { return name === 'class' ? this.className : null; },
+    };
+
+    const canvasTarget = {
+      tagName: 'DIV',
+      className: 'canvas-target',
+      dataset: {},
+      style: {},
+      children: [],
+      parentElement: null,
+      closest(sel) {
+        if (sel === '#ctx-menu') return null;
+        if (sel === '.menu-item') return null;
+        if (sel === '.dropdown') return null;
+        if (sel === '.cr-element') return null;
+        if (sel === '.sel-box') return null;
+        if (sel === '.sel-handle') return null;
+        if (sel === '.section-resize-handle') return null;
+        if (sel === '.pv-el') return null;
+        return null;
+      },
+      matches() { return false; },
+      classList: { add() {}, remove() {}, contains() { return false; }, toggle() {} },
+      getBoundingClientRect() { return { left: 0, top: 0, width: 100, height: 20 }; },
+      setPointerCapture() {},
+      getAttribute(name) { return name === 'class' ? this.className : null; },
+    };
+
+    const dispatched = { elementId: null, handlePos: null, canvasDown: 0 };
+    const sandbox = {
+      RF: ctx.RF,
+      DS: ctx.DS,
+      document: ctx.documentMock,
+      console,
+      JSON,
+      performance: { now: () => 0 },
+      module: { exports: {} },
+      globalThis: {},
+    };
+    vm.createContext(sandbox);
+    vm.runInContext(helperSrc, sandbox, { filename: 'engines/EngineCoreRoutingPointerHelpers.js' });
+    sandbox.EngineCoreRoutingPointerHelpers = sandbox.module.exports;
+    sandbox.module = { exports: {} };
+    vm.runInContext(src, sandbox);
+
+    const factory = sandbox.module.exports.createEngineCoreRoutingPointer
+      || sandbox.EngineCoreRoutingPointer?.createEngineCoreRoutingPointer;
+
+    const router = factory({
+      state: { runtime: { pipeline: { lastPointerEvent: null } } },
+      getEngine(name) {
+        if (name === 'HitTestEngine') return ctx.HitTestEngine;
+        if (name === 'SelectionEngine') {
+          return {
+            _drag: null,
+            onElementPointerDown(_e, id) { dispatched.elementId = id; },
+            onHandlePointerDown(_e, pos) { dispatched.handlePos = pos; },
+            onMouseMove() {},
+            onMouseUp() {},
+          };
+        }
+        if (name === 'InsertEngine') {
+          return {
+            onCanvasMouseDown() { dispatched.canvasDown += 1; },
+          };
+        }
+        return null;
+      },
+      traceElement() {},
+      targetSummary() { return null; },
+    });
+
+    router.routePointer({
+      button: 0,
+      buttons: 1,
+      detail: 1,
+      clientX: 10,
+      clientY: 20,
+      pointerId: 1,
+      pointerType: 'mouse',
+      altKey: false,
+      ctrlKey: false,
+      metaKey: false,
+      shiftKey: false,
+      target: designElement,
+    }, 'down');
+
+    assert.equal(dispatched.elementId, 'rh-company-matriz',
+      'design element click must dispatch the DOM target id, not the model hit');
+    assert.equal(dispatched.canvasDown, 0,
+      'design element click must not fall back to canvas insertion');
+
+    router.routePointer({
+      button: 0,
+      buttons: 1,
+      detail: 1,
+      clientX: 10,
+      clientY: 20,
+      pointerId: 2,
+      pointerType: 'mouse',
+      altKey: false,
+      ctrlKey: false,
+      metaKey: false,
+      shiftKey: false,
+      target: canvasTarget,
+    }, 'down');
+
+    assert.equal(dispatched.canvasDown, 1,
+      'empty canvas click must delegate to InsertEngine.onCanvasMouseDown');
   });
 });

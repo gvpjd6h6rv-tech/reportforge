@@ -73,6 +73,11 @@ if (!goldenSrc) {
 
 // ── Load EngineCoreContracts in vm sandbox ─────────────────────────────────────
 
+const contractHelperFiles = [
+  'EngineCoreContractAsserts.js',
+  'EngineCoreContractSnapshots.js',
+  'EngineCoreContractValidators.js',
+];
 const contractsSrc = fs.readFileSync(path.join(ENGINES, 'EngineCoreContracts.js'), 'utf8');
 
 // Build a minimal DS mock with one section and one element.
@@ -108,6 +113,9 @@ function loadContracts(DS, doc = null) {
   mockGlobal.window = mockGlobal;
 
   const ctx = vm.createContext(mockGlobal);
+  for (const helper of contractHelperFiles) {
+    vm.runInContext(fs.readFileSync(path.join(ENGINES, helper), 'utf8'), ctx);
+  }
   // Strip module.exports footer — contracts factory needs globalThis assignment.
   vm.runInContext(contractsSrc, ctx);
 

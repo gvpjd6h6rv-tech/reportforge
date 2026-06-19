@@ -40,6 +40,7 @@ const read = (f) => fs.readFileSync(path.join(ENGINES, f), 'utf8');
 
 const canvasElements  = read('CanvasLayoutElements.js');
 const coreContracts   = read('EngineCoreContracts.js');
+const contractValidators = read('EngineCoreContractValidators.js');
 const coreRuntime     = read('EngineCoreRuntime.js');
 
 const violations = [];
@@ -55,18 +56,22 @@ check('ORPHAN-CLEAR-001', 'CanvasLayoutElements.js',
   /\.remove\s*\(\s*\)/.test(canvasElements),
   'renderAll() must querySelectorAll(\'.cr-element\') and remove() all nodes before re-rendering to prevent DOM orphans');
 
-// RULE-B: EngineCoreContracts must export validateOrphanNodes.
-check('ORPHAN-GUARD-001', 'EngineCoreContracts.js',
-  /validateOrphanNodes/.test(coreContracts),
-  'EngineCoreContracts.js must define and export validateOrphanNodes for runtime orphan detection');
+// RULE-B: contract validators must export validateOrphanNodes.
+check('ORPHAN-GUARD-001', 'EngineCoreContractValidators.js',
+  /validateOrphanNodes/.test(contractValidators),
+  'EngineCoreContractValidators.js must define and export validateOrphanNodes for runtime orphan detection');
 
-check('ORPHAN-GUARD-001', 'EngineCoreContracts.js',
-  /orphan\.dom-element/.test(coreContracts),
+check('ORPHAN-GUARD-001', 'EngineCoreContractValidators.js',
+  /orphan\.dom-element/.test(contractValidators),
   'validateOrphanNodes must push issue code \'orphan.dom-element\' for DOM elements with no DS model entry');
 
-check('ORPHAN-GUARD-001', 'EngineCoreContracts.js',
-  /orphan\.model-element/.test(coreContracts),
+check('ORPHAN-GUARD-001', 'EngineCoreContractValidators.js',
+  /orphan\.model-element/.test(contractValidators),
   'validateOrphanNodes must push issue code \'orphan.model-element\' for DS entries with no DOM section');
+
+check('ORPHAN-GUARD-001', 'EngineCoreContracts.js',
+  /EngineCoreContractValidatorsFactory/.test(coreContracts),
+  'EngineCoreContracts.js must compose EngineCoreContractValidatorsFactory for runtime orphan detection');
 
 // RULE-C: EngineCoreRuntime must call validateOrphanNodes in the invariant path.
 check('ORPHAN-RUNTIME-001', 'EngineCoreRuntime.js',

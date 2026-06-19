@@ -497,7 +497,6 @@ test('render storm guard — static instrumentation verified', () => {
 // ---------------------------------------------------------------------------
 
 function loadContractsSandbox(DS, doc = null) {
-  const contractsSrc = fs.readFileSync(path.join(ROOT, 'engines/EngineCoreContracts.js'), 'utf8');
   const mockGlobal = {
     DS,
     window: null,
@@ -507,7 +506,14 @@ function loadContractsSandbox(DS, doc = null) {
   };
   mockGlobal.window = mockGlobal;
   const ctx = vm.createContext(mockGlobal);
-  vm.runInContext(contractsSrc, ctx);
+  for (const rel of [
+    'engines/EngineCoreContractAsserts.js',
+    'engines/EngineCoreContractSnapshots.js',
+    'engines/EngineCoreContractValidators.js',
+    'engines/EngineCoreContracts.js',
+  ]) {
+    vm.runInContext(fs.readFileSync(path.join(ROOT, rel), 'utf8'), ctx);
+  }
   const factory = mockGlobal.EngineCoreContractsFactory;
   return factory({ doc, runtimeServices: null, getEngine: () => null });
 }

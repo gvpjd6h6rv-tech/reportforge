@@ -45,9 +45,17 @@ function loadRuntimeData() {
 }
 
 function loadEngineCoreContracts() {
-  const src = fs.readFileSync(path.join(ROOT, 'engines/EngineCoreContracts.js'), 'utf8');
-  // runInThisContext so instanceof Set uses the same realm as the test — avoids cross-realm false rejects
-  return vm.runInThisContext(`(function(){ ${src}; return createEngineCoreContracts; })()`);
+  const files = [
+    'engines/EngineCoreContractAsserts.js',
+    'engines/EngineCoreContractSnapshots.js',
+    'engines/EngineCoreContractValidators.js',
+    'engines/EngineCoreContracts.js',
+  ];
+  for (const rel of files) {
+    const src = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+    vm.runInThisContext(src);
+  }
+  return globalThis.EngineCoreContractsFactory;
 }
 
 // ---------------------------------------------------------------------------

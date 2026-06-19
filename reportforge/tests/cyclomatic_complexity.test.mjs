@@ -42,8 +42,6 @@ const KNOWN_VIOLATIONS = new Map([
   ['CanvasLayoutElements.js::buildElementDiv',          29],
   ['CanvasLayoutElements.js::updateElement',            21],
   ['CommandRuntimeHandlers.js::handleAction',          104],
-  ['EngineCoreContracts.js::validateSectionContract',   24],
-  ['EngineCoreContracts.js::validateCanonicalRuntime',  30],
   ['EngineCoreRoutingPointer.js::routePointer',         68],
   ['EngineCoreRoutingRegistry.js::registerAllEngines',  33],
   ['KeyboardBindings.js::installDefaults',              28],
