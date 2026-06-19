@@ -119,7 +119,9 @@ document.addEventListener('DOMContentLoaded', () => {
       console.assert(!!SelectionEngine.__active,
         '[v19.6] FAIL: SelectionEngine should be active (canonical runtime owns selection)');
 
-      window.__rfRuntimeReady = true;
+      if (typeof document !== 'undefined' && document.documentElement) {
+        document.documentElement.dataset.rfRuntimeReady = '1';
+      }
       if (typeof document !== 'undefined' && typeof document.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
         document.dispatchEvent(new CustomEvent('rf-runtime-ready', {
           detail: {

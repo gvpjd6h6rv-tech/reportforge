@@ -194,7 +194,7 @@ test.describe('LIVE RF smoke real browsers', () => {
     await page.goto('/?rf-debug=1&debug=1', { waitUntil: 'domcontentloaded' });
     await assertHealth(page);
 
-    await page.waitForFunction(() => window.__rfRuntimeReady === true, null, { timeout: 30_000 });
+    await page.waitForFunction(() => document.documentElement?.dataset?.rfRuntimeReady === '1', null, { timeout: 30_000 });
     await page.waitForSelector('#app', { timeout: 30_000 });
     await page.waitForSelector('#canvas-area', { timeout: 30_000 });
 

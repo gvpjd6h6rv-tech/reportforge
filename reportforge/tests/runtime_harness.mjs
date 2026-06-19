@@ -43,7 +43,7 @@ async function waitForServer(url, timeoutMs = 15000) {
 
 export async function waitForRuntimeReady(page, timeoutMs = 15000) {
   await page.waitForFunction(
-    () => typeof window !== 'undefined' && window.__rfRuntimeReady === true,
+    () => typeof document !== 'undefined' && document.documentElement?.dataset?.rfRuntimeReady === '1',
     null,
     { timeout: timeoutMs },
   );
