@@ -56,27 +56,31 @@ def render_element(engine, el, res, agg=None, ctx=None) -> str:
 def element_value(engine, el, res, agg, ctx=None) -> str:
     ctx = ctx or {}
     p = el.fieldPath
-    if not p:
-        return ""
-    sp_key = p.strip()
-    if sp_key in _SPECIAL:
-        return _SPECIAL[sp_key](ctx)
-    is_expr = any(c in p for c in ("*", "/", "+", "-", ">", "<", "?", "=", "(", "!"))
-    if is_expr:
-        gitems = getattr(agg, "_items", None) if agg is not engine._agg else None
-        value = engine._ev.eval_expr(p, res, group_items=gitems)
-        return _format_value(engine, value, el.fieldFmt)
-    return res.get_formatted(p, el.fieldFmt)
+    if p:
+        sp_key = p.strip()
+        if sp_key in _SPECIAL:
+            return _SPECIAL[sp_key](ctx)
+        is_expr = any(c in p for c in ("*", "/", "+", "-", ">", "<", "?", "=", "(", "!"))
+        if is_expr:
+            gitems = getattr(agg, "_items", None) if agg is not engine._agg else None
+            value = engine._ev.eval_expr(p, res, group_items=gitems)
+            return _format_value(engine, value, el.fieldFmt)
+        return res.get_formatted(p, el.fieldFmt)
+    content = getattr(el, "content", None)
+    if content is not None and content != "":
+        return content
+    return ""
 
 
 def render_field(engine, el, res, agg, ctx=None) -> str:
     return _div(engine, el, element_value(engine, el, res, agg, ctx or {}))
 
 def render_text(engine, el, res, agg) -> str:
-    content = el.content or ""
-    if engine._ev.contains_expr(content):
+    content = getattr(el, "content", None)
+    content = content if content is not None else ""
+    if isinstance(content, str) and engine._ev.contains_expr(content):
         content = engine._ev.eval_text(content, res)
-    return _div(engine, el, _esc(content))
+    return _div(engine, el, _esc(str(content)))
 
 def render_line(el) -> str:
     color = el.borderColor if el.borderColor not in ("transparent", "") else "#000"
@@ -190,7 +194,11 @@ def calc_row_height(engine, sec, item) -> int:
     for el in engine._layout.elements_for(sec.id):
         if not getattr(el, "canGrow", False):
             continue
-        extra = max(extra, _calc_h(engine, el, str(element_value(engine, el, res, engine._agg))) - el.h)
+        if getattr(el, "type", "") == "field" and getattr(el, "fieldPath", None):
+            value = str(element_value(engine, el, res, engine._agg))
+        else:
+            value = getattr(el, "content", None)
+        extra = max(extra, _calc_h(engine, el, value) - el.h)
     return base + extra
 
 
@@ -243,11 +251,11 @@ def _sty(engine, el, h, av="center") -> str:
 
 
 def _calc_h(engine, el, value) -> int:
-    if not value:
+    if value is None or value == "":
         return el.h
     cw = max(1, int(el.w / max(0.01, el.fontSize * _PT_PX * _CHAR_PX)))
     lh = int(el.fontSize * _PT_PX * 1.4)
-    txt = re.sub(r"<[^>]+>", "", value)
+    txt = re.sub(r"<[^>]+>", "", str(value))
     return max(el.h, max(1, math.ceil(len(txt) / cw)) * lh + 4)
 
 
@@ -259,5 +267,3 @@ def _format_value(engine, value, fmt) -> str:
             from ..resolvers.field_resolver import _format_value as _fmt
         return _fmt(value, fmt)
     return str(value)
-
-

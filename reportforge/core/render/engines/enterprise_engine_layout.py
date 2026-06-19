@@ -48,7 +48,7 @@ def build_pages(engine) -> str:
     body = build_body_rows(engine)
     pages = []
     cur = []
-    cy = float(rh_h)
+    cy = 0.0
     for row in body:
         if row.get("break_before") and cur:
             pages.append(cur)
@@ -192,11 +192,15 @@ def build_row_h(engine, sec, item) -> int:
     base = sec.height
     res = engine._resolver.with_item(item)
     extra = 0
+    from .element_renderers import _calc_h, element_value
     for el in engine._layout.elements_for(sec.id):
         if not getattr(el, "canGrow", False):
             continue
-        from .element_renderers import element_value, _calc_h
-        extra = max(extra, _calc_h(engine, el, str(element_value(engine, el, res, engine._agg))) - el.h)
+        if getattr(el, "type", "") == "field" and getattr(el, "fieldPath", None):
+            value = str(element_value(engine, el, res, engine._agg))
+        else:
+            value = getattr(el, "content", None)
+        extra = max(extra, _calc_h(engine, el, value) - el.h)
     return base + extra
 
 
@@ -206,4 +210,3 @@ def build_secs(engine, stype: str) -> list:
 
 def build_secs_group(engine, stype: str, gi: int) -> list:
     return [s for s in engine._layout.sections if s.stype == stype and getattr(s, "groupIndex", 0) == gi]
-

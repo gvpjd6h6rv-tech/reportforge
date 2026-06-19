@@ -154,7 +154,7 @@ class AdvancedHtmlEngine:
         body = self._body_rows()
         pages: list[list] = []
         cur: list = []
-        cy = float(rh_h)
+        cy = 0.0
         for row in body:
             sec = row["s"]
             force_break = getattr(sec, "newPageBefore", False)

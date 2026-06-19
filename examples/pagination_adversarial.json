@@ -1,0 +1,51 @@
+{
+  "layout": {
+    "name": "Pagination Adversarial Fixture",
+    "pageSize": "A4",
+    "pageWidth": 754,
+    "pageHeight": 1165,
+    "margins": {
+      "top": 15,
+      "right": 0,
+      "bottom": 15,
+      "left": 0
+    },
+    "sections": [
+      { "id": "s-rh", "stype": "rh", "height": 409 },
+      { "id": "s-ph", "stype": "ph", "height": 16 },
+      { "id": "s-dt", "stype": "det", "height": 32, "iterates": "items" },
+      { "id": "s-pf", "stype": "pf", "height": 20 },
+      { "id": "s-rf", "stype": "rf", "height": 30 }
+    ],
+    "elements": [
+      { "id": "dt-code", "type": "field", "sectionId": "s-dt", "x": 4, "y": 4, "w": 100, "h": 12, "fieldPath": "item.code" },
+      { "id": "dt-name", "type": "field", "sectionId": "s-dt", "x": 108, "y": 4, "w": 240, "h": 12, "fieldPath": "item.name" }
+    ]
+  },
+  "data": {
+    "items": [
+      { "code": "X001", "name": "Item 1" },
+      { "code": "X002", "name": "Item 2" },
+      { "code": "X003", "name": "Item 3" },
+      { "code": "X004", "name": "Item 4" },
+      { "code": "X005", "name": "Item 5" },
+      { "code": "X006", "name": "Item 6" },
+      { "code": "X007", "name": "Item 7" },
+      { "code": "X008", "name": "Item 8" },
+      { "code": "X009", "name": "Item 9" },
+      { "code": "X010", "name": "Item 10" },
+      { "code": "X011", "name": "Item 11" },
+      { "code": "X012", "name": "Item 12" },
+      { "code": "X013", "name": "Item 13" },
+      { "code": "X014", "name": "Item 14" },
+      { "code": "X015", "name": "Item 15" },
+      { "code": "X016", "name": "Item 16" },
+      { "code": "X017", "name": "Item 17" },
+      { "code": "X018", "name": "Item 18" },
+      { "code": "X019", "name": "Item 19" },
+      { "code": "X020", "name": "Item 20" },
+      { "code": "X021", "name": "Item 21" },
+      { "code": "X022", "name": "Item 22" }
+    ]
+  }
+}

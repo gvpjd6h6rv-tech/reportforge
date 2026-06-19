@@ -82,6 +82,7 @@ def _norm_sec(raw,idx):
 def _norm_el(raw):
     etype = _ETYPE.get(str(_p(raw,"type","elementType","kind") or "text").lower())
     if not etype: return None
+    content = _p(raw,"content","text","label","caption")
     return {
         "id":               str(_p(raw,"id","elementId") or ""),
         "sectionId":        str(_p(raw,"sectionId","section","bandId") or ""),
@@ -104,7 +105,7 @@ def _norm_el(raw):
         "lineDir":          "v" if str(_p(raw,"lineDir","direction") or "h").lower() in("v","vertical","vert") else "h",
         "lineWidth":        int(_p(raw,"lineWidth","strokeWidth") or 1),
         "zIndex":           int(_p(raw,"zIndex","z","layer") or 0),
-        "content":          str(_p(raw,"content","text","label","caption") or ""),
+        "content":          content if content is not None else "",
         "fieldPath":        str(_p(raw,"fieldPath","field","dataField","source","path") or ""),
         "fieldFmt":         _p(raw,"fieldFmt","format","fmt","formatString"),
         "canGrow":          bool(_p(raw,"canGrow","grow","autoHeight")),

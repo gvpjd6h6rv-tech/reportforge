@@ -24,6 +24,7 @@ DATA = {
     "items":     ITEMS,
 }
 TOTAL = sum(i["total"] for i in ITEMS)  # 8979.64
+ADV_FIXTURE = Path(__file__).resolve().parent.parent.parent / "examples" / "pagination_adversarial.json"
 
 
 def minimal_layout(extra_secs=None, extra_els=None) -> dict:
@@ -316,6 +317,26 @@ class TestPaginationTextLayout(unittest.TestCase):
         html = self._render_many_items(100)
         self.assertEqual(html.count("Report: Q4 2025"), 1)
 
+    def test_shared_pagination_fixture(self):
+        fixture = json.loads(ADV_FIXTURE.read_text())
+        layout = fixture["layout"]
+        data = fixture["data"]
+        from core.render.engines.enterprise_engine import EnterpriseHtmlEngine
+        html = EnterpriseHtmlEngine(layout, data).render()
+        pages = html.split('class="rpt-page"')[1:]
+        counts = [page.count("cr-detail-row") for page in pages]
+        margins = layout.get("margins", {}) or {}
+        usable = layout["pageHeight"] - int(float(margins.get("top", 0)) * 3.7795) - int(float(margins.get("bottom", 0)) * 3.7795)
+        ph_h = sum(s["height"] for s in layout["sections"] if s["stype"] == "ph")
+        pf_h = sum(s["height"] for s in layout["sections"] if s["stype"] == "pf")
+        rh_h = sum(s["height"] for s in layout["sections"] if s["stype"] == "rh")
+        row_h = next(s["height"] for s in layout["sections"] if s["stype"] == "det")
+        expected_first = (usable - ph_h - pf_h - rh_h) // row_h
+        self.assertEqual(counts, [expected_first, len(data["items"]) - expected_first])
+        self.assertIn('data-stype="rf"', pages[-1])
+        for page in pages[:-1]:
+            self.assertNotIn('data-stype="rf"', page)
+
     def test_can_grow_element(self):
         from core.render.engines.enterprise_engine import EnterpriseHtmlEngine
         long_text = "A" * 200
@@ -361,6 +382,28 @@ class TestConditionalVisibility(unittest.TestCase):
                   "fieldPath":"nonexistent.field","suppressIfEmpty":True}]
         html = EnterpriseHtmlEngine(minimal_layout(extra_els=extra), DATA).render()
         self.assertNotIn('id="sup1"', html)
+
+    def test_pagination_suppress_if_empty_keeps_zero_content(self):
+        from core.render.engines.enterprise_engine import EnterpriseHtmlEngine
+        layout = {
+            "name":"Zero Content",
+            "pageSize":"A4",
+            "pageWidth":754,
+            "margins":{"top":15,"right":20,"bottom":15,"left":20},
+            "sections":[{"id":"s-rh","stype":"rh","height":20}],
+            "elements":[{"id":"sup0","type":"text","sectionId":"s-rh","x":4,"y":4,"w":200,"h":12,"content":0,"suppressIfEmpty":True}],
+        }
+        html = EnterpriseHtmlEngine(layout, {"items": []}).render()
+        self.assertIn(">0</span>", html)
+
+    def test_pagination_fieldpath_takes_precedence_over_content(self):
+        from core.render.engines.enterprise_engine import EnterpriseHtmlEngine
+        extra = [{"id":"fp0","type":"field","sectionId":"s-dt",
+                  "x":4,"y":30,"w":200,"h":12,
+                  "fieldPath":"item.code","content":"OVERRIDE"}]
+        html = EnterpriseHtmlEngine(minimal_layout(extra_els=extra), {"items":[{"code":"ABC"}]}).render()
+        self.assertIn("ABC", html)
+        self.assertNotIn("OVERRIDE", html)
 
     def test_conditional_style_applied(self):
         from core.render.engines.enterprise_engine import EnterpriseHtmlEngine

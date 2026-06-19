@@ -59,7 +59,7 @@
       const raw = (typeof resolveField !== 'undefined') ? resolveField(el.fieldPath, data, itemData) : _resolveField(el.fieldPath, data, itemData);
       value = (typeof formatValue !== 'undefined') ? formatValue(raw, el.fieldFmt) : _formatValue(raw, el.fieldFmt);
     } else {
-      value = el.content || '';
+      value = (el.content !== null && el.content !== undefined) ? el.content : '';
     }
 
     const r = { left: el.x, top: el.y, width: el.w, height: el.h };
@@ -102,7 +102,7 @@
       const raw = (typeof resolveField !== 'undefined') ? resolveField(el.fieldPath, data, rowData) : _resolveField(el.fieldPath, data, rowData);
       value = (typeof formatValue !== 'undefined') ? formatValue(raw, el.fieldFmt) : _formatValue(raw, el.fieldFmt);
     } else {
-      value = el.content || '';
+      value = (el.content !== null && el.content !== undefined) ? el.content : '';
     }
     const ri = rowIndex !== null ? ` data-row-index="${rowIndex}"` : '';
     const r = { left: el.x, top: el.y, width: el.w, height: el.h };
@@ -125,7 +125,7 @@
   // Keeps hit-layer row heights identical to render-layer so pagination matches.
   const _PT_PX = 1.333, _CHAR_PX = 0.6;
   function _calcElH(el, value) {
-    if (!value) return el.h;
+    if (value === null || value === undefined || value === '') return el.h;
     const cw = Math.max(1, Math.trunc(el.w / Math.max(0.01, el.fontSize * _PT_PX * _CHAR_PX)));
     const lh = Math.trunc(el.fontSize * _PT_PX * 1.4);
     const txt = String(value).replace(/<[^>]+>/g, '');
@@ -140,8 +140,10 @@
       if (el.type === 'field' && el.fieldPath) {
         const raw = _resolveField(el.fieldPath, data, rowData);
         value = _formatValue(raw, el.fieldFmt);
-      } else { value = el.content || ''; }
-      extra = Math.max(extra, _calcElH(el, String(value)) - el.h);
+      } else {
+        value = (el.content !== null && el.content !== undefined) ? el.content : '';
+      }
+      extra = Math.max(extra, _calcElH(el, value) - el.h);
     }
     return base + extra;
   }

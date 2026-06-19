@@ -10,7 +10,7 @@
  *
  * Canonical formula (advanced_engine.py):
  *   usable = pageH - mTop - mBot - phH - pfH
- *   cy starts at rhH
+ *   cy starts at 0
  *   avail = usable - (rhH if page index 0 else 0)
  *   break when (forceBreak && cur) || (cy + rowH > avail && cur)
  *   page composition: [rh? (first only)] + [ph] + rows + [rf? (last only)] + [pf]
@@ -43,8 +43,8 @@
   function paginate(sections, rowHeights, metrics) {
     const m = metrics || {};
     const pageH = Number.isFinite(m.pageH) ? m.pageH : 1123;
-    const mTop = Number.isFinite(m.mTop) ? m.mTop : Math.round((Number(m.marginTopMm) || 0) * MM2PX);
-    const mBot = Number.isFinite(m.mBot) ? m.mBot : Math.round((Number(m.marginBottomMm) || 0) * MM2PX);
+    const mTop = Number.isFinite(m.mTop) ? m.mTop : Math.trunc((Number(m.marginTopMm) || 0) * MM2PX);
+    const mBot = Number.isFinite(m.mBot) ? m.mBot : Math.trunc((Number(m.marginBottomMm) || 0) * MM2PX);
 
     const phH = _sumH(_byType(sections, 'ph'));
     const pfH = _sumH(_byType(sections, 'pf'));
@@ -53,7 +53,7 @@
 
     const pages = [];
     let curStart = 0;
-    let cy = rhH;
+    let cy = 0;
     let count = 0;
 
     for (let i = 0; i < rowHeights.length; i++) {
