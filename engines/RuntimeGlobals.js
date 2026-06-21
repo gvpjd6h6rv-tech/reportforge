@@ -1,5 +1,9 @@
 'use strict';
 
+(() => {
+const root = globalThis;
+if (root.__RuntimeGlobalsLoaded) return;
+
 class Matrix2D{
   constructor(a=1,b=0,c=0,d=1,e=0,f=0){this.a=a;this.b=b;this.c=c;this.d=d;this.e=e;this.f=f;}
   static identity(){return new Matrix2D();}
@@ -447,3 +451,6 @@ window.initClock = function(){
   update();
   window._clockInterval = setInterval(update,30000);
 };
+
+root.__RuntimeGlobalsLoaded = true;
+})();
