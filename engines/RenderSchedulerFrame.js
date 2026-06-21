@@ -10,6 +10,135 @@
       : Date.now();
   }
 
+  function _priorityName(priorityIndex) {
+    return priorityIndex === S.PRIORITY.LAYOUT ? 'layout' : priorityIndex === S.PRIORITY.VISUAL ? 'visual' : priorityIndex === S.PRIORITY.HANDLES ? 'handles' : 'post';
+  }
+
+  function _recordStormBookkeeping(nowMs) {
+    S.recentFrameTimes.push(nowMs);
+    S.recentFrameTimes = S.recentFrameTimes.filter(t => nowMs - t <= 1000);
+    if (S.recentFrameTimes.length > S.stormThreshold && !S.stormActive) {
+      S.stormActive = true;
+      global.dispatchEvent(new global.CustomEvent('rf:render-storm', {
+        detail: { framesInWindow: S.recentFrameTimes.length, stormThreshold: S.stormThreshold, frame: S.frame },
+      }));
+    }
+  }
+
+  function _buildFrameMeta(scheduler, flushT0) {
+    return {
+      frame: S.frame,
+      startMs: flushT0,
+      startedAt: new Date().toISOString(),
+      invalidations: scheduler && typeof scheduler.getInvalidationState === 'function'
+        ? scheduler.getInvalidationState()
+        : JSON.parse(JSON.stringify(S.invalidations)),
+      queued: {
+        layout: S.queues[S.PRIORITY.LAYOUT].size,
+        visual: S.queues[S.PRIORITY.VISUAL].size,
+        handles: S.queues[S.PRIORITY.HANDLES].size,
+        post: S.queues[S.PRIORITY.POST].size,
+      },
+      executed: {
+        layout: 0,
+        visual: 0,
+        handles: 0,
+        post: 0,
+      },
+      phases: [],
+    };
+  }
+
+  function _leaveWriteScope() { if (S.writeScopeDepth > 0) S.writeScopeDepth -= 1; if (S.writeScopeDepth === 0) S.writeScope = null; }
+
+  function _recordTaskMetrics(priorityName, taskKey, taskMs, phaseState) {
+    if (taskMs > phaseState.slowestMs) {
+      phaseState.slowestMs = taskMs;
+      phaseState.slowestKey = taskKey;
+    }
+    if (taskMs > S.hotspotThresholdMs) {
+      S.hotspots.push({ frame: S.frame, phase: priorityName, key: taskKey, ms: taskMs });
+      if (S.hotspots.length > 100) S.hotspots.shift();
+    }
+    phaseState.executed += 1;
+  }
+
+  function _clearPhaseInvalidations(priorityName) {
+    if (priorityName === 'layout') S.invalidations.layout.dirty = false;
+    if (priorityName === 'visual') {
+      S.invalidations.canvas.dirty = false;
+      S.invalidations.overlay.dirty = false;
+    }
+    if (priorityName === 'handles') S.invalidations.handles.dirty = false;
+    if (priorityName === 'post') S.invalidations.scroll.dirty = false;
+  }
+
+  function _runPriorityPhase(priorityIndex, q, frameMeta, frameState) {
+    const tasks = [...q.entries()];
+    const priorityName = _priorityName(priorityIndex);
+    const phaseStartedAt = perfNow();
+    const phaseState = { slowestMs: 0, slowestKey: null, executed: 0 };
+
+    H.trace('RenderScheduler', 'priority-begin', {
+      priority: priorityName,
+      queued: tasks.length,
+    }, priorityName, S.frame);
+    q.clear();
+    for (const [key, fn] of tasks) {
+      try {
+        const taskKey = typeof key === 'symbol' ? key.toString() : String(key);
+        const taskT0 = perfNow();
+        S.writeScope = priorityName;
+        S.writeScopeDepth += 1;
+        fn();
+        const taskMs = perfNow() - taskT0;
+        _recordTaskMetrics(priorityName, taskKey, taskMs, phaseState);
+        _leaveWriteScope();
+      } catch (e) {
+        _leaveWriteScope();
+        if (!frameState.firstError) frameState.firstError = e;
+        console.error('[RenderScheduler]', e);
+        H.trace('RenderScheduler', 'task-error', {
+          priority: priorityName,
+          key: typeof key === 'symbol' ? key.toString() : key,
+          message: e && e.message ? e.message : String(e),
+        }, priorityName, S.frame);
+      }
+    }
+    const durationMs = perfNow() - phaseStartedAt;
+    frameMeta.phases.push({
+      priority: priorityIndex,
+      name: priorityName,
+      queued: tasks.length,
+      tasks: tasks.length,
+      executed: phaseState.executed,
+      durationMs,
+      slowestMs: phaseState.slowestMs,
+      slowestKey: phaseState.slowestKey,
+    });
+    H.trace('RenderScheduler', 'priority-complete', {
+      priority: priorityName,
+      executed: phaseState.executed,
+      durationMs,
+    }, priorityName, S.frame);
+    _clearPhaseInvalidations(priorityName);
+  }
+
+  function _finalizeFrame(frameMeta, frameState, flushT0) {
+    frameMeta.durationMs = perfNow() - flushT0;
+    frameMeta.completedAt = new Date().toISOString();
+    frameMeta.pendingWork = H.hasPendingWork();
+    frameMeta.stable = H.isStableFrame({ ...frameMeta, error: frameState.firstError });
+    _runStableFrameInvariants({ ...frameMeta, error: frameState.firstError });
+    H.trace('RenderScheduler', 'flush-complete', {
+      executed: H.cloneFrameCounts(frameMeta.executed),
+      queued: frameMeta.queued,
+      pendingWork: frameMeta.pendingWork,
+      stable: frameMeta.stable,
+    }, 'flush', S.frame);
+    H.notifyCore('completeFrame', frameMeta);
+  }
+
   function _runStableFrameInvariants(meta) {
     if (S.stableInvariantRafId !== null) {
       cancelAnimationFrame(S.stableInvariantRafId);
@@ -85,137 +214,27 @@
     S.frame++;
     S.locked = true;
 
-    // Storm detection (#53): track flush rate, fire rf:render-storm when burst detected.
     const nowMs = Date.now();
-    S.recentFrameTimes.push(nowMs);
-    S.recentFrameTimes = S.recentFrameTimes.filter(t => nowMs - t <= 1000);
-    if (S.recentFrameTimes.length > S.stormThreshold && !S.stormActive) {
-      S.stormActive = true;
-      global.dispatchEvent(new global.CustomEvent('rf:render-storm', {
-        detail: { framesInWindow: S.recentFrameTimes.length, stormThreshold: S.stormThreshold, frame: S.frame },
-      }));
-    }
-
+    _recordStormBookkeeping(nowMs);
     const scheduler = global.RenderScheduler || null;
     const flushT0 = perfNow();
-    const frameMeta = {
-      frame: S.frame,
-      startMs: flushT0,
-      startedAt: new Date().toISOString(),
-      invalidations: scheduler && typeof scheduler.getInvalidationState === 'function'
-        ? scheduler.getInvalidationState()
-        : JSON.parse(JSON.stringify(S.invalidations)),
-      queued: {
-        layout: S.queues[S.PRIORITY.LAYOUT].size,
-        visual: S.queues[S.PRIORITY.VISUAL].size,
-        handles: S.queues[S.PRIORITY.HANDLES].size,
-        post: S.queues[S.PRIORITY.POST].size,
-      },
-      executed: {
-        layout: 0,
-        visual: 0,
-        handles: 0,
-        post: 0,
-      },
-      phases: [],
-    };
-    let firstError = null;
+    const frameMeta = _buildFrameMeta(scheduler, flushT0);
+    const frameState = { firstError: null };
 
     H.trace('RenderScheduler', 'flush-begin', { queued: frameMeta.queued }, 'flush', S.frame);
     H.notifyCore('beginFrame', frameMeta);
     try {
       for (let i = 0; i < S.queues.length; i++) {
         const q = S.queues[i];
-        const tasks = [...q.entries()];
-        const priorityName = i === S.PRIORITY.LAYOUT ? 'layout'
-          : i === S.PRIORITY.VISUAL ? 'visual'
-          : i === S.PRIORITY.HANDLES ? 'handles'
-          : 'post';
-        const phaseStartedAt = perfNow();
-        const phaseT0 = perfNow();
-        let slowestMs = 0;
-        let slowestKey = null;
-        H.trace('RenderScheduler', 'priority-begin', {
-          priority: priorityName,
-          queued: tasks.length,
-        }, priorityName, S.frame);
-        q.clear();
-        for (const [key, fn] of tasks) {
-          try {
-            const taskKey = typeof key === 'symbol' ? key.toString() : String(key);
-            const taskT0 = perfNow();
-            S.writeScope = priorityName;
-            S.writeScopeDepth += 1;
-            fn();
-            const taskMs = perfNow() - taskT0;
-            if (taskMs > slowestMs) {
-              slowestMs = taskMs;
-              slowestKey = taskKey;
-            }
-            if (taskMs > S.hotspotThresholdMs) {
-              S.hotspots.push({ frame: S.frame, phase: priorityName, key: taskKey, ms: taskMs });
-              if (S.hotspots.length > 100) S.hotspots.shift();
-            }
-            S.writeScopeDepth -= 1;
-            if (S.writeScopeDepth === 0) S.writeScope = null;
-            if (i === S.PRIORITY.LAYOUT) frameMeta.executed.layout += 1;
-            else if (i === S.PRIORITY.VISUAL) frameMeta.executed.visual += 1;
-            else if (i === S.PRIORITY.HANDLES) frameMeta.executed.handles += 1;
-            else if (i === S.PRIORITY.POST) frameMeta.executed.post += 1;
-          } catch (e) {
-            if (S.writeScopeDepth > 0) S.writeScopeDepth -= 1;
-            if (S.writeScopeDepth === 0) S.writeScope = null;
-            if (!firstError) firstError = e;
-            console.error('[RenderScheduler]', e);
-            H.trace('RenderScheduler', 'task-error', {
-              priority: priorityName,
-              key: typeof key === 'symbol' ? key.toString() : key,
-              message: e && e.message ? e.message : String(e),
-            }, priorityName, S.frame);
-          }
-        }
-        const durationMs = perfNow() - phaseStartedAt;
-        frameMeta.phases.push({
-          priority: i,
-          name: priorityName,
-          queued: tasks.length,
-          tasks: tasks.length,
-          executed: frameMeta.executed[priorityName],
-          durationMs,
-          slowestMs,
-          slowestKey,
-        });
-        H.trace('RenderScheduler', 'priority-complete', {
-          priority: priorityName,
-          executed: frameMeta.executed[priorityName],
-          durationMs,
-        }, priorityName, S.frame);
-        if (priorityName === 'layout') S.invalidations.layout.dirty = false;
-        if (priorityName === 'visual') {
-          S.invalidations.canvas.dirty = false;
-          S.invalidations.overlay.dirty = false;
-        }
-        if (priorityName === 'handles') S.invalidations.handles.dirty = false;
-        if (priorityName === 'post') S.invalidations.scroll.dirty = false;
+        _runPriorityPhase(i, q, frameMeta, frameState);
       }
     } finally {
       S.locked = false;
-      frameMeta.durationMs = perfNow() - flushT0;
-      frameMeta.completedAt = new Date().toISOString();
-      frameMeta.pendingWork = H.hasPendingWork();
-      frameMeta.stable = H.isStableFrame({ ...frameMeta, error: firstError });
-      _runStableFrameInvariants({ ...frameMeta, error: firstError });
-      H.trace('RenderScheduler', 'flush-complete', {
-        executed: H.cloneFrameCounts(frameMeta.executed),
-        queued: frameMeta.queued,
-        pendingWork: frameMeta.pendingWork,
-        stable: frameMeta.stable,
-      }, 'flush', S.frame);
-      H.notifyCore('completeFrame', frameMeta);
+      _finalizeFrame(frameMeta, frameState, flushT0);
     }
 
-    if (firstError) {
-      H.attemptRecovery('render_scheduler_flush_failure', firstError, {
+    if (frameState.firstError) {
+      H.attemptRecovery('render_scheduler_flush_failure', frameState.firstError, {
         frame: S.frame,
         frameMeta,
       });

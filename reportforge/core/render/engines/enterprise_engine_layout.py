@@ -3,7 +3,7 @@ from __future__ import annotations
 from itertools import groupby
 
 from .element_renderers import render_element
-from .enterprise_engine_shared import _ROW_EVEN, _ROW_ODD, _esc, _sk
+from .enterprise_engine_shared import _ROW_EVEN,_ROW_ODD,_sk
 
 
 def build_css(engine) -> str:
@@ -40,7 +40,7 @@ def build_css(engine) -> str:
     )
 
 
-def build_pages(engine) -> str:
+def build_pages(engine)->str:
     ph_h = sum(s.height for s in engine._secs("ph"))
     pf_h = sum(s.height for s in engine._secs("pf"))
     rh_h = sum(s.height for s in engine._secs("rh"))
@@ -67,7 +67,7 @@ def build_pages(engine) -> str:
             cy = 0.0
     pages.append(cur)
     n = len(pages)
-    return "\n".join(build_page(engine, rows, i == 0, i == n - 1) for i, rows in enumerate(pages))
+    return "\n".join(build_page(engine,rows,i==0,i==n-1)for i,rows in enumerate(pages))
 
 
 def build_body_rows(engine) -> list[dict]:
@@ -80,10 +80,10 @@ def build_body_rows(engine) -> list[dict]:
                 if not build_visible(engine, s, engine._resolver.with_item(item)):
                     continue
                 rows.append({
-                    "s": s, "item": item, "i": i, "alt": i % 2 == 1,
-                    "h": build_row_h(engine, s, item), "gitems": [], "gval": None, "gtype": "det",
-                    "break_before": getattr(s, "pageBreakBefore", False),
-                    "break_after": getattr(s, "pageBreakAfter", False),
+                    "s":s,"item":item,"i":i,"alt":i % 2 == 1,
+                    "h":build_row_h(engine,s,item),"gitems":[],"gval":None,"gtype":"det",
+                    "break_before":getattr(s,"pageBreakBefore",False),
+                    "break_after":getattr(s,"pageBreakAfter",False),
                 })
     else:
         gf = engine._groups[0]["field"]
@@ -96,10 +96,10 @@ def build_body_rows(engine) -> list[dict]:
                 if not build_visible(engine, s, engine._resolver):
                     continue
                 rows.append({
-                    "s": s, "item": gitems[0], "i": gi, "alt": False,
-                    "h": s.height, "gitems": gitems, "gval": gval, "gtype": "gh",
-                    "break_before": getattr(s, "pageBreakBefore", False),
-                    "break_after": getattr(s, "pageBreakAfter", False),
+                    "s":s,"item":gitems[0],"i":gi,"alt":False,
+                    "h":s.height,"gitems":gitems,"gval":gval,"gtype":"gh",
+                    "break_before":getattr(s,"pageBreakBefore",False),
+                    "break_after":getattr(s,"pageBreakAfter",False),
                 })
             for di, item in enumerate(gitems):
                 engine._rt.push(item)
@@ -107,26 +107,26 @@ def build_body_rows(engine) -> list[dict]:
                     if not build_visible(engine, s, engine._resolver.with_item(item)):
                         continue
                     rows.append({
-                        "s": s, "item": item, "i": di, "alt": di % 2 == 1,
-                        "h": build_row_h(engine, s, item),
-                        "gitems": gitems, "gval": gval, "gtype": "det",
-                        "break_before": False, "break_after": False,
+                        "s":s,"item":item,"i":di,"alt":di % 2 == 1,
+                        "h":build_row_h(engine,s,item),
+                        "gitems":gitems,"gval":gval,"gtype":"det",
+                        "break_before":False,"break_after":False,
                     })
             for s in engine._secs_group("gf", 0):
                 if not build_visible(engine, s, engine._resolver):
                     continue
                 rows.append({
-                    "s": s, "item": gitems[-1], "i": gi, "alt": False,
-                    "h": s.height, "gitems": gitems, "gval": gval, "gtype": "gf",
-                    "break_before": False, "break_after": getattr(s, "pageBreakAfter", False),
+                    "s":s,"item":gitems[-1],"i":gi,"alt":False,
+                    "h":s.height,"gitems":gitems,"gval":gval,"gtype":"gf",
+                    "break_before":False,"break_after":getattr(s,"pageBreakAfter",False),
                 })
             gi += 1
     return rows
 
 
-def build_page(engine, rows, first: bool, last: bool) -> str:
+def build_page(engine,rows,first: bool,last: bool)->str:
     pw = engine._layout.page_width
-    out = [f'<div class="rpt-page" style="width:{pw}px">']
+    out=[f'<div class="rpt-page" style="width:{pw}px">']
     if first:
         for s in engine._secs("rh"):
             if build_visible(engine, s, engine._resolver):
@@ -147,14 +147,14 @@ def build_page(engine, rows, first: bool, last: bool) -> str:
     return "\n".join(out)
 
 
-def build_row(engine, row: dict) -> str:
+def build_row(engine,row:dict)->str:
     s = row["s"]
     item = row["item"]
-    if row["gtype"] in ("gh", "gf"):
+    if row["gtype"] in ("gh","gf"):
         from ..expressions.aggregator import Aggregator
         agg = Aggregator(row["gitems"])
         res = engine._resolver.with_item(item) if item else engine._resolver
-        return build_section(engine, s, res, agg)
+        return build_section(engine,s,res,agg)
     res = engine._resolver.with_item(item)
     bg = _ROW_EVEN if row["alt"] else _ROW_ODD
     sbg = getattr(s, "bgColor", "transparent")
@@ -164,10 +164,10 @@ def build_row(engine, row: dict) -> str:
 
 
 def build_static(engine, s) -> str:
-    return build_section(engine, s, engine._resolver, engine._agg)
+    return build_section(engine,s,engine._resolver,engine._agg)
 
 
-def build_section(engine, s, res, agg) -> str:
+def build_section(engine,s,res,agg)->str:
     inner = "".join(render_element(engine, e, res, agg) for e in engine._layout.elements_for(s.id))
     sbg = getattr(s, "bgColor", "transparent")
     bgs = f"background:{sbg};" if sbg != "transparent" else ""
@@ -178,7 +178,7 @@ def build_section(engine, s, res, agg) -> str:
     return f'<div class="{cls}" data-section="{s.id}" data-stype="{s.stype}" style="height:{s.height}px;{bgs}">{inner}</div>'
 
 
-def build_visible(engine, section, res) -> bool:
+def build_visible(engine,section,res)->bool:
     expr = getattr(section, "visibleIf", "") or ""
     if not expr:
         return True
@@ -188,7 +188,7 @@ def build_visible(engine, section, res) -> bool:
         return True
 
 
-def build_row_h(engine, sec, item) -> int:
+def build_row_h(engine,sec,item)->int:
     base = sec.height
     res = engine._resolver.with_item(item)
     extra = 0
@@ -204,9 +204,9 @@ def build_row_h(engine, sec, item) -> int:
     return base + extra
 
 
-def build_secs(engine, stype: str) -> list:
+def build_secs(engine,stype:str)->list:
     return [s for s in engine._layout.sections if s.stype == stype]
 
 
-def build_secs_group(engine, stype: str, gi: int) -> list:
+def build_secs_group(engine,stype:str,gi:int)->list:
     return [s for s in engine._layout.sections if s.stype == stype and getattr(s, "groupIndex", 0) == gi]

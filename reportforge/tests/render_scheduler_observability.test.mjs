@@ -12,6 +12,16 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
+if (typeof globalThis.CustomEvent === 'undefined') {
+  globalThis.CustomEvent = class CustomEvent extends Event {
+    constructor(type, params = {}) {
+      super(type, params);
+      this.detail = params.detail;
+    }
+  };
+}
+if (typeof CustomEvent === 'undefined') (0, eval)('var CustomEvent = globalThis.CustomEvent');
+
 const require = createRequire(import.meta.url);
 const ROOT    = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const OBS     = require('../../engines/RenderSchedulerObservability.js');
