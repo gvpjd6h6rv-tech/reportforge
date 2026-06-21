@@ -21,10 +21,18 @@
     SelectionEngine.clearSelection();
   }
 
+  function dispatchActionMap(action, handlers) {
+    const fn = handlers[action];
+    if (!fn) return false;
+    fn();
+    return true;
+  }
+
   global.CommandRuntimeShared = {
     setStatus,
     syncSelectionPanels,
     renderSelectionHandles,
     renderSectionsAndSelection,
+    dispatchActionMap,
   };
 })(window);

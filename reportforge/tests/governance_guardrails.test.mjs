@@ -536,6 +536,15 @@ test('command runtime split stays modular, thin, and contract-stable', () => {
     'engines/CommandRuntimeFileIO.js': 220,
     'engines/CommandRuntimeDocType.js': 260,
     'engines/CommandRuntimeHandlers.js': 240,
+    'engines/CommandRuntimeHandlersFile.js': 40,
+    'engines/CommandRuntimeHandlersPreview.js': 40,
+    'engines/CommandRuntimeHandlersZoom.js': 40,
+    'engines/CommandRuntimeHandlersSelectionDispatch.js': 60,
+    'engines/CommandRuntimeHandlersFormat.js': 40,
+    'engines/CommandRuntimeHandlersInsert.js': 40,
+    'engines/CommandRuntimeHandlersLayout.js': 50,
+    'engines/CommandRuntimeHandlersDialog.js': 40,
+    'engines/CommandRuntimeHandlersSystem.js': 40,
     'engines/CommandRuntimeInit.js': 80,
   };
 
@@ -554,11 +563,21 @@ test('command runtime split stays modular, thin, and contract-stable', () => {
   const docType = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeDocType.js'), 'utf8');
   const handlers = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeHandlers.js'), 'utf8');
   const init = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeInit.js'), 'utf8');
+  const handlersFile = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeHandlersFile.js'), 'utf8');
+  const handlersPreview = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeHandlersPreview.js'), 'utf8');
+  const handlersZoom = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeHandlersZoom.js'), 'utf8');
+  const handlersSelectionDispatch = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeHandlersSelectionDispatch.js'), 'utf8');
+  const handlersFormat = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeHandlersFormat.js'), 'utf8');
+  const handlersInsert = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeHandlersInsert.js'), 'utf8');
+  const handlersLayout = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeHandlersLayout.js'), 'utf8');
+  const handlersDialog = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeHandlersDialog.js'), 'utf8');
+  const handlersSystem = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeHandlersSystem.js'), 'utf8');
 
   assert.match(main, /Object\.assign\(/);
   assert.doesNotMatch(main, /\bfunction\s+handleAction\s*\(/);
   assert.doesNotMatch(main, /\bfunction\s+copy\s*\(/);
   assert.match(shared, /function setStatus\(/);
+  assert.match(shared, /function dispatchActionMap\(/);
   assert.match(selection, /function copy\(/);
   assert.match(selection, /function selectAll\(/);
   assert.match(view, /function zoomFitPage\(/);
@@ -567,7 +586,18 @@ test('command runtime split stays modular, thin, and contract-stable', () => {
   assert.match(fileIO, /function exportJSON\(/);
   assert.match(docType, /function switchDocType\(/);
   assert.match(handlers, /function handleAction\(/);
+  assert.doesNotMatch(handlers, /function handleFileCommands\(/);
+  assert.doesNotMatch(handlers, /function handleSelectionCommands\(/);
   assert.match(init, /function initCommandRuntimeState\(/);
+  assert.match(handlersFile, /function handleFileCommands\(/);
+  assert.match(handlersPreview, /function handlePreviewCommands\(/);
+  assert.match(handlersZoom, /function handleZoomCommands\(/);
+  assert.match(handlersSelectionDispatch, /function handleSelectionCommands\(/);
+  assert.match(handlersFormat, /function handleFormatCommands\(/);
+  assert.match(handlersInsert, /function handleInsertCommands\(/);
+  assert.match(handlersLayout, /function handleLayoutCommands\(/);
+  assert.match(handlersDialog, /function handleDialogCommands\(/);
+  assert.match(handlersSystem, /function handleSystemCommands\(/);
 });
 
 test('render scheduler split stays modular, thin, and contract-stable', () => {

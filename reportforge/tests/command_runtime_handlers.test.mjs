@@ -80,6 +80,12 @@ function loadHandlers(options = {}) {
       setStatus(message) {
         calls.statuses.push(message);
       },
+      dispatchActionMap(action, handlers) {
+        const fn = handlers[action];
+        if (!fn) return false;
+        fn();
+        return true;
+      },
     },
     document,
     FileEngine: {
@@ -245,8 +251,22 @@ function loadHandlers(options = {}) {
   context.window.document = document;
 
   vm.createContext(context);
-  const source = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeHandlers.js'), 'utf8');
-  vm.runInContext(source, context, { filename: 'engines/CommandRuntimeHandlers.js' });
+  const files = [
+    'engines/CommandRuntimeHandlersFile.js',
+    'engines/CommandRuntimeHandlersPreview.js',
+    'engines/CommandRuntimeHandlersZoom.js',
+    'engines/CommandRuntimeHandlersSelectionDispatch.js',
+    'engines/CommandRuntimeHandlersFormat.js',
+    'engines/CommandRuntimeHandlersInsert.js',
+    'engines/CommandRuntimeHandlersLayout.js',
+    'engines/CommandRuntimeHandlersDialog.js',
+    'engines/CommandRuntimeHandlersSystem.js',
+    'engines/CommandRuntimeHandlers.js',
+  ];
+  for (const rel of files) {
+    const source = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+    vm.runInContext(source, context, { filename: rel });
+  }
 
   return { handlers: context.CommandRuntimeHandlers, calls, context, panelRight, fontPicker, bgPicker, borderPicker };
 }
