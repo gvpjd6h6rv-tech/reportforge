@@ -10,7 +10,7 @@
  *   3. EngineCoreContracts validators — assertRectShape, assertSelectionState,
  *      assertZoomContract, assertLayoutContract rechazan formas inválidas
  *   4. Window whitelist — los nombres canónicos están presentes en ALLOWED_WINDOW_EXPORTS
- *   5. DEFERRED: install() idempotency (RuntimeData no tiene guard)
+ *   5. install() idempotency (RuntimeData no debe sobrescribir en segunda llamada)
  *
  * Nota: estos tests corren en Node sin browser — los paths que requieren DOM se
  * instrumentan con mocks mínimos o se documentan como DEFERRED.
@@ -228,6 +228,23 @@ test('global state — RuntimeData: FIELD_TREE root categories present and non-e
   }
 });
 
+test('global state — RuntimeData: second install is a no-op', () => {
+  const { RuntimeData, window: w } = loadRuntimeData();
+
+  RuntimeData.install();
+  const firstCfg = w.CFG;
+  const firstFieldTree = w.FIELD_TREE;
+  const firstSampleData = w.SAMPLE_DATA;
+  const firstFormats = w.FORMATS;
+
+  RuntimeData.install();
+
+  assert.strictEqual(w.CFG, firstCfg, 'CFG must survive a second install');
+  assert.strictEqual(w.FIELD_TREE, firstFieldTree, 'FIELD_TREE must survive a second install');
+  assert.strictEqual(w.SAMPLE_DATA, firstSampleData, 'SAMPLE_DATA must survive a second install');
+  assert.strictEqual(w.FORMATS, firstFormats, 'FORMATS must survive a second install');
+});
+
 // ---------------------------------------------------------------------------
 // 3. EngineCoreContracts — validators reject corrupted shapes
 // ---------------------------------------------------------------------------
@@ -416,20 +433,4 @@ test('global state — whitelist: prohibited direct engine globals are not windo
 
   assert.equal(violations.length, 0,
     `prohibited direct window assignments found:\n${violations.join('\n')}`);
-});
-
-// ---------------------------------------------------------------------------
-// 5. DEFERRED: RuntimeData install() idempotency
-// ---------------------------------------------------------------------------
-
-test('global state — DEFERRED: RuntimeData install() called twice may overwrite globals (no guard)', () => {
-  const GAP = {
-    id: 'GLOBALS-DATA-001',
-    description: 'RuntimeData.install() has no re-install guard — calling twice resets CFG and FORMATS',
-    risk: 'low in practice (install called once at boot) but silent in theory',
-    mitigation: 'RuntimeServicesState re-install guard is the model to follow if needed',
-    implemented_in: null,
-  };
-  assert.ok(GAP.id);
-  assert.equal(GAP.implemented_in, null, 'gap is unimplemented — update when guard is added');
 });
