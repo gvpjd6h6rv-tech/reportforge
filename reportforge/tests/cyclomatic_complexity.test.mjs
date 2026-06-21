@@ -41,7 +41,6 @@ const ENGINES = path.join(ROOT, 'engines');
 const KNOWN_VIOLATIONS = new Map([
   ['CanvasLayoutElements.js::buildElementDiv',          29],
   ['CanvasLayoutElements.js::updateElement',            21],
-  ['CommandRuntimeHandlers.js::handleAction',          104],
   ['EngineCoreRoutingPointer.js::routePointer',         68],
   ['EngineCoreRoutingRegistry.js::registerAllEngines',  33],
   ['KeyboardBindings.js::installDefaults',              28],
@@ -194,6 +193,21 @@ test('cyclomatic complexity — known violations must not get WORSE', () => {
     }
   }
 
+  // Detectar deuda mejorada >=50% sin reflejar en el snapshot (drift silencioso)
+  const driftedKeys = [];
+  for (const file of ENGINE_FILES) {
+    const { fns } = analyzeFile(file);
+    const base = path.basename(file);
+    for (const fn of fns) {
+      const key = `${base}::${fn.name}`;
+      if (!KNOWN_VIOLATIONS.has(key)) continue;
+      const snapshotCC = KNOWN_VIOLATIONS.get(key);
+      if (fn.cc <= snapshotCC * 0.5) {
+        driftedKeys.push(`${key}: CC dropped ${snapshotCC} → ${fn.cc}, lower the snapshot value`);
+      }
+    }
+  }
+
   if (regressions.length > 0) {
     console.error('\n[CC FAIL] Known violations that got worse:');
     regressions.forEach((v) => console.error('  ', v));
@@ -201,6 +215,10 @@ test('cyclomatic complexity — known violations must not get WORSE', () => {
   if (staleKeys.length > 0) {
     console.warn('\n[CC WARN] Stale KNOWN_VIOLATIONS entries:');
     staleKeys.forEach((v) => console.warn('  ', v));
+  }
+  if (driftedKeys.length > 0) {
+    console.warn('\n[CC WARN] KNOWN_VIOLATIONS entries far above real CC (snapshot drift):');
+    driftedKeys.forEach((v) => console.warn('  ', v));
   }
 
   assert.equal(regressions.length, 0,
