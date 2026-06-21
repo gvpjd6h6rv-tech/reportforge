@@ -4,6 +4,7 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 
 const source = fs.readFileSync('engines/RuntimeGlobals.js', 'utf8');
+const runtimeDataSource = fs.readFileSync('engines/RuntimeData.js', 'utf8');
 
 function createSandbox() {
   const nodes = new Map();
@@ -77,6 +78,7 @@ function createSandbox() {
 
 function loadRuntimeGlobals(sandbox) {
   vm.createContext(sandbox);
+  vm.runInContext(runtimeDataSource, sandbox);
   vm.runInContext(source, sandbox);
 }
 
@@ -85,6 +87,7 @@ test('RuntimeGlobals freezes global exports and legacy helpers', () => {
   loadRuntimeGlobals(sandbox);
 
   assert.ok(sandbox.RF.Geometry, 'RF.Geometry should be installed');
+  assert.equal(typeof sandbox.RuntimeData.install, 'function', 'RuntimeData should be loaded before RuntimeGlobals');
   assert.equal(sandbox.CFG, sandbox.window.CFG, 'CFG should be exposed globally');
   assert.equal(sandbox.FIELD_TREE, sandbox.window.FIELD_TREE, 'FIELD_TREE should be exposed globally');
   assert.equal(sandbox.SAMPLE_DATA, sandbox.window.SAMPLE_DATA, 'SAMPLE_DATA should be exposed globally');

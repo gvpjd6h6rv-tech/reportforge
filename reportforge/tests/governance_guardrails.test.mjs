@@ -434,6 +434,7 @@ test('runtime boundary modules use RuntimeServices instead of raw structural glo
 test('engine globals are reduced to the approved window export whitelist', () => {
   const files = [
     path.join(ROOT, 'engines/RuntimeGlobals.js'),
+    path.join(ROOT, 'engines/RuntimeData.js'),
     path.join(ROOT, 'engines/DeferredBootstrap.js'),
     path.join(ROOT, 'engines/FormulaEngine.js'),
     path.join(ROOT, 'engines/FormulaEditorDialog.js'),
