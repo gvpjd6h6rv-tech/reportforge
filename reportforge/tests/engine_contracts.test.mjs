@@ -156,7 +156,7 @@ test('canonical engines reference contract guards explicitly', () => {
   assert.match(selection, /assertZoomContract/);
   assert.match(selectionState, /selectedElementsFromIds/);
   assert.match(selectionHitTest, /resolveRenderSelectionIds/);
-  assert.match(selection, /CanvasGeometry/);
+  assert.match(canvasGeometry, /CanvasGeometry/);
   assert.match(selectionGeometry, /selectionBoundsFromRects/);
   assert.match(selectionGeometry, /selectionHandles/);
   assert.match(selectionOverlay, /renderHandles/);
