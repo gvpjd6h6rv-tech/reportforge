@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 
 const source = fs.readFileSync('engines/RuntimeGlobals.js', 'utf8');
 const runtimeDataSource = fs.readFileSync('engines/RuntimeData.js', 'utf8');
+const runtimeHelpersSource = fs.readFileSync('engines/RuntimeHelpers.js', 'utf8');
 
 function createSandbox() {
   const nodes = new Map();
@@ -79,6 +80,7 @@ function createSandbox() {
 function loadRuntimeGlobals(sandbox) {
   vm.createContext(sandbox);
   vm.runInContext(runtimeDataSource, sandbox);
+  vm.runInContext(runtimeHelpersSource, sandbox);
   vm.runInContext(source, sandbox);
 }
 
