@@ -7,8 +7,6 @@
     "SnapState.js",
     "SnapGuides.js",
     "RuntimeServices.js",
-    "RuntimeServicesState.js",
-    "RuntimeServicesTrace.js",
     "EngineCoreRuntime.js",
     "EngineCoreContracts.js",
     "CanvasLayoutContracts.js",

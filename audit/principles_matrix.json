@@ -8,7 +8,7 @@
     "owner": "document-store",
     "kind": "guard",
     "source_files": [
-      "engines/RuntimeServicesState.js",
+      "engines/RuntimeServices.js",
       "engines/ClipboardState.js",
       "engines/DragState.js",
       "engines/KeyboardRegistry.js",
@@ -409,7 +409,7 @@
     "owner": "runtime-services",
     "kind": "guard",
     "source_files": [
-      "engines/RuntimeServicesState.js"
+      "engines/RuntimeServices.js"
     ],
     "test_files": [
       "reportforge/tests/global_state_corruption.test.mjs"
@@ -452,7 +452,7 @@
     "kind": "guard",
     "source_files": [
       "reportforge/tests/global_state_corruption.test.mjs",
-      "engines/RuntimeServicesState.js"
+      "engines/RuntimeServices.js"
     ],
     "test_files": [
       "reportforge/tests/global_state_corruption.test.mjs"
@@ -824,7 +824,7 @@
     "owner": "engineering-testing",
     "kind": "guard",
     "source_files": [
-      "engines/RuntimeServicesState.js",
+      "engines/RuntimeServices.js",
       "engines/HistoryState.js"
     ],
     "test_files": [
@@ -1215,7 +1215,6 @@
     "owner": "debuggability",
     "kind": "guard",
     "source_files": [
-      "engines/RuntimeServicesState.js",
       "engines/RuntimeServices.js",
       "docs/architecture/writer-conflict-log.md"
     ],
@@ -1238,7 +1237,6 @@
     "owner": "debuggability",
     "kind": "guard",
     "source_files": [
-      "engines/RuntimeServicesState.js",
       "engines/RuntimeServices.js",
       "audit/writer_conflict_guard.mjs"
     ],
@@ -1553,7 +1551,7 @@
     "kind": "guard",
     "source_files": [
       "reportforge/tests/global_state_corruption.test.mjs",
-      "engines/RuntimeServicesState.js"
+      "engines/RuntimeServices.js"
     ],
     "test_files": [
       "reportforge/tests/global_state_corruption.test.mjs"

@@ -5,7 +5,7 @@
  * Verifica que los estados globales del runtime no puedan corromperse silenciosamente.
  *
  * Estrategia:
- *   1. RuntimeServicesState — expose/owner/flag/export correctness + re-install guard
+ *   1. RuntimeServices — expose/owner/flag/export correctness + re-install guard
  *   2. RuntimeData — CFG fields typed and present after install()
  *   3. EngineCoreContracts validators — assertRectShape, assertSelectionState,
  *      assertZoomContract, assertLayoutContract rechazan formas inválidas
@@ -29,12 +29,12 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 // Loaders
 // ---------------------------------------------------------------------------
 
-function loadRuntimeServicesState() {
-  const src = fs.readFileSync(path.join(ROOT, 'engines/RuntimeServicesState.js'), 'utf8');
+function loadRuntimeServices() {
+  const src = fs.readFileSync(path.join(ROOT, 'engines/RuntimeServices.js'), 'utf8');
   const ctx = { RF: {} };
-  // RuntimeServicesState uses (function(...)(window)) — provide window = ctx
+  // RuntimeServices uses (function(...)(window)) — provide window = ctx
   vm.runInNewContext(src, { window: ctx, RF: ctx.RF });
-  return ctx.RF.RuntimeServicesState;
+  return ctx.RF.RuntimeServices;
 }
 
 function loadRuntimeData() {
@@ -59,12 +59,12 @@ function loadEngineCoreContracts() {
 }
 
 // ---------------------------------------------------------------------------
-// 1. RuntimeServicesState — correctness y re-install guard
+// 1. RuntimeServices — correctness y re-install guard
 // ---------------------------------------------------------------------------
 
-test('global state — RuntimeServicesState: expose installs global AND stores in exports', () => {
-  const S = loadRuntimeServicesState();
-  assert.ok(S, 'RuntimeServicesState must be defined');
+test('global state — RuntimeServices: expose installs global AND stores in exports', () => {
+  const S = loadRuntimeServices();
+  assert.ok(S, 'RuntimeServices must be defined');
 
   // expose registers the value so getExport finds it
   const dummy = { kind: 'test-value' };
@@ -73,8 +73,8 @@ test('global state — RuntimeServicesState: expose installs global AND stores i
     'getExport must return value previously exposed');
 });
 
-test('global state — RuntimeServicesState: setOwner/getOwner round-trip is lossless', () => {
-  const S = loadRuntimeServicesState();
+test('global state — RuntimeServices: setOwner/getOwner round-trip is lossless', () => {
+  const S = loadRuntimeServices();
 
   S.setOwner('canvas', 'CanvasLayoutEngine');
   assert.equal(S.getOwner('canvas'), 'CanvasLayoutEngine');
@@ -87,8 +87,8 @@ test('global state — RuntimeServicesState: setOwner/getOwner round-trip is los
     'unknown owner must return null, not undefined or fabricated value');
 });
 
-test('global state — RuntimeServicesState: setFlag/getFlag with fallback, no cross-contamination', () => {
-  const S = loadRuntimeServicesState();
+test('global state — RuntimeServices: setFlag/getFlag with fallback, no cross-contamination', () => {
+  const S = loadRuntimeServices();
 
   // Flag not set yet — fallback
   assert.equal(S.getFlag('__flag_unset_xyz', 'FALLBACK'), 'FALLBACK',
@@ -107,8 +107,8 @@ test('global state — RuntimeServicesState: setFlag/getFlag with fallback, no c
   assert.equal(S.getFlag('__flag_a'), 'aaa', 'flag_a must not be overwritten by flag_b');
 });
 
-test('global state — RuntimeServicesState: setDebugFlags makes defensive copy (mutation safe)', () => {
-  const S = loadRuntimeServicesState();
+test('global state — RuntimeServices: setDebugFlags makes defensive copy (mutation safe)', () => {
+  const S = loadRuntimeServices();
 
   const original = { verbose: true, trace: false };
   S.setDebugFlags(original);
@@ -124,20 +124,20 @@ test('global state — RuntimeServicesState: setDebugFlags makes defensive copy 
     'injected key must not appear in stored debugFlags (copy isolation)');
 });
 
-test('global state — RuntimeServicesState: re-install guard (second script load is a no-op)', () => {
-  // Load source twice into same context — root.RuntimeServicesState check prevents overwrite
-  const src = fs.readFileSync(path.join(ROOT, 'engines/RuntimeServicesState.js'), 'utf8');
+test('global state — RuntimeServices: re-install guard (second script load is a no-op)', () => {
+  // Load source twice into same context — root.RuntimeServices check prevents overwrite
+  const src = fs.readFileSync(path.join(ROOT, 'engines/RuntimeServices.js'), 'utf8');
   const ctx = { RF: {} };
 
   vm.runInNewContext(src, { window: ctx, RF: ctx.RF });
-  const first = ctx.RF.RuntimeServicesState;
+  const first = ctx.RF.RuntimeServices;
   first.setOwner('__re_install_probe', 'first-install');
 
   vm.runInNewContext(src, { window: ctx, RF: ctx.RF });
-  const second = ctx.RF.RuntimeServicesState;
+  const second = ctx.RF.RuntimeServices;
 
   assert.strictEqual(first, second,
-    'RuntimeServicesState re-install must return the same object (idempotency guard)');
+    'RuntimeServices re-install must return the same object (idempotency guard)');
   assert.equal(second.getOwner('__re_install_probe'), 'first-install',
     'owner set in first install must survive second install (state not wiped)');
 });

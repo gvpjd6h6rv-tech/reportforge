@@ -251,8 +251,8 @@ test('debuggability — recovery is tracked: recoveryAttempted flag is boolean a
 // 5. Writer conflict detection — #54 Tracking de writers / #55 Writer Conflict Detection
 // ---------------------------------------------------------------------------
 
-function loadRuntimeServicesState() {
-  const src = fs.readFileSync(path.join(ROOT, 'engines/RuntimeServicesState.js'), 'utf8');
+function loadRuntimeServices() {
+  const src = fs.readFileSync(path.join(ROOT, 'engines/RuntimeServices.js'), 'utf8');
   const safeModeCalls = [];
   const events = [];
 
@@ -278,11 +278,11 @@ function loadRuntimeServicesState() {
   const ctx = vm.createContext({ window: mockWindow, CustomEvent: MockCustomEvent });
   vm.runInContext(src, ctx);
 
-  return { S: mockWindow.RF.RuntimeServicesState, safeModeCalls, events, mockWindow };
+  return { S: mockWindow.RF.RuntimeServices, safeModeCalls, events, mockWindow };
 }
 
 test('writer conflict — setOwner fires incident when a different owner claims existing slot', () => {
-  const { S, safeModeCalls, events, mockWindow } = loadRuntimeServicesState();
+  const { S, safeModeCalls, events, mockWindow } = loadRuntimeServices();
 
   // First claim — no conflict.
   S.setOwner('canvas', 'CanvasLayoutEngine');
@@ -307,7 +307,7 @@ test('writer conflict — setOwner fires incident when a different owner claims 
 });
 
 test('writer conflict — getWriterConflicts returns append-only conflict log', () => {
-  const { S } = loadRuntimeServicesState();
+  const { S } = loadRuntimeServices();
 
   assert.equal(S.getWriterConflicts().length, 0, 'conflict log starts empty');
 
