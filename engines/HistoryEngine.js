@@ -83,7 +83,10 @@ const HistoryEngine = (() => {
       if (!entry) return false;
       // Push current state to redo
       const redoSnap = _snapshot();
-      if (redoSnap) _redoStack.push({ label: entry.label, snapshot: redoSnap });
+      if (redoSnap) {
+        _redoStack.push({ label: entry.label, snapshot: redoSnap });
+        if (_redoStack.length > MAX_STACK) _redoStack.shift();
+      }
       _restore(entry.snapshot);
       _notify();
       return true;
@@ -93,7 +96,10 @@ const HistoryEngine = (() => {
       const entry = _redoStack.pop();
       if (!entry) return false;
       const undoSnap = _snapshot();
-      if (undoSnap) _undoStack.push({ label: entry.label, snapshot: undoSnap });
+      if (undoSnap) {
+        _undoStack.push({ label: entry.label, snapshot: undoSnap });
+        if (_undoStack.length > MAX_STACK) _undoStack.shift();
+      }
       _restore(entry.snapshot);
       _notify();
       return true;
@@ -105,7 +111,7 @@ const HistoryEngine = (() => {
     /** Suppress push() calls (e.g. during programmatic batch updates) */
     suppress(fn) {
       _suppressed = true;
-      try { fn(); } finally { _suppressed = false; }
+      try { return fn(); } finally { _suppressed = false; }
     },
 
     /** Subscribe to stack changes */

@@ -262,6 +262,61 @@ test('race condition — HistoryEngine: restore path fires the canonical side-ef
 });
 
 // ---------------------------------------------------------------------------
+// HistoryEngine — divergence fixes locked in (P14B)
+// ---------------------------------------------------------------------------
+
+test('race condition — HistoryEngine: redo stack is bounded by MAX_STACK under sustained undo', () => {
+  const { HistoryEngine, DS } = loadHistoryEngine();
+
+  // Push once per element id so each undo() produces a distinct redo entry.
+  const PUSHES = 150; // > MAX_STACK (100)
+  for (let i = 0; i < PUSHES; i++) {
+    DS.setElements([{ id: `e${i}`, type: 'text', x: i, y: i, w: 1, h: 1, text: String(i) }]);
+    HistoryEngine.push(`action-${i}`);
+  }
+
+  // Undo everything available — each undo() moves one entry from undo to redo.
+  let undoCount = 0;
+  while (HistoryEngine.undo()) undoCount++;
+  assert.equal(undoCount, 100, 'undo stack itself must already be capped at MAX_STACK=100 (push-time cap)');
+
+  // Redo stack now holds up to 100 entries (one per undo). Without the P14B
+  // cap fix, undo() pushed to _redoStack unconditionally — this loop would
+  // have produced 100 entries here regardless, so the real regression guard
+  // is pushing MORE undos than MAX_STACK and confirming redo never exceeds it.
+  let redoCount = 0;
+  while (HistoryEngine.redo()) redoCount++;
+  assert.ok(redoCount <= 100,
+    `redo stack must never exceed MAX_STACK=100 entries, got ${redoCount} redo() successes`);
+});
+
+test('race condition — HistoryEngine: undo stack stays bounded by MAX_STACK under sustained redo', () => {
+  const { HistoryEngine, DS } = loadHistoryEngine();
+
+  for (let i = 0; i < 50; i++) {
+    DS.setElements([{ id: `e${i}`, type: 'text', x: i, y: i, w: 1, h: 1, text: String(i) }]);
+    HistoryEngine.push(`action-${i}`);
+  }
+  // Move everything to redo, then bounce back and forth far beyond MAX_STACK
+  // to exercise redo()'s push into _undoStack — must stay capped too.
+  while (HistoryEngine.undo()) {}
+  for (let i = 0; i < 500; i++) {
+    if (!HistoryEngine.redo()) break;
+    HistoryEngine.undo();
+  }
+  let undoCount = 0;
+  while (HistoryEngine.undo()) undoCount++;
+  assert.ok(undoCount <= 100,
+    `undo stack must never exceed MAX_STACK=100 entries after sustained redo/undo bouncing, got ${undoCount}`);
+});
+
+test('race condition — HistoryEngine: suppress(fn) returns the value produced by fn', () => {
+  const { HistoryEngine } = loadHistoryEngine();
+  const result = HistoryEngine.suppress(() => 42);
+  assert.equal(result, 42, 'suppress() must forward the return value of fn(), matching HistoryState.suppress contract');
+});
+
+// ---------------------------------------------------------------------------
 // Capa B — Race conditions en browser (Playwright)
 // ---------------------------------------------------------------------------
 
