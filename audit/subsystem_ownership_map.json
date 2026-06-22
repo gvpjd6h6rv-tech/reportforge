@@ -653,16 +653,12 @@
       "allowedFiles": [
         "GuideEngine.js",
         "GuideRenderer.js",
-        "GuideState.js",
         "AlignmentGuides.js",
         "AlignmentGuideOverlay.js"
       ],
       "legacyFiles": [],
       "writableState": [],
-      "selectors": [
-        "GuideState.getGuides()",
-        "GuideState.hasGuides()"
-      ],
+      "selectors": [],
       "events": [
         "GuideEngine.show(guides)",
         "GuideEngine.clear()",
