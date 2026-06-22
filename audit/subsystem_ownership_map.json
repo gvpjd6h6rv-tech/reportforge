@@ -492,8 +492,7 @@
       "owner": "designer-runtime/format-properties",
       "allowedFiles": [
         "FormatEngine.js",
-        "PropertiesEngine.js",
-        "PropertiesEnginePanel.js"
+        "PropertiesEngine.js"
       ],
       "legacyFiles": [],
       "writableState": [],
@@ -626,17 +625,14 @@
       "owner": "designer-runtime/guide-rendering",
       "allowedFiles": [
         "GuideEngine.js",
-        "GuideRenderer.js",
-        "AlignmentGuides.js",
-        "AlignmentGuideOverlay.js"
+        "AlignmentGuides.js"
       ],
       "legacyFiles": [],
       "writableState": [],
       "selectors": [],
       "events": [
         "GuideEngine.show(guides)",
-        "GuideEngine.clear()",
-        "GuideRenderer.render(guides)"
+        "GuideEngine.clear()"
       ],
       "existingTests": [
         "reportforge/tests/governance_guardrails.test.mjs"
@@ -644,10 +640,7 @@
       "requiredGuardCI": [],
       "risk": "low",
       "notes": "GuideEngine.js and GuideRenderer.js duplicate _getContainer(), GUIDE_COLOR constants and rendering logic. AlignmentGuides.js and AlignmentGuideOverlay.js also duplicate guide DOM creation. UI-only — no DS critical field mutations.",
-      "unresolvedAmbiguities": [
-        "GuideEngine.js vs GuideRenderer.js: both render guide lines — which is the active path?",
-        "AlignmentGuides.js vs AlignmentGuideOverlay.js: same DOM guide pattern — canonical one unclear"
-      ]
+      "unresolvedAmbiguities": []
     },
     {
       "id": "SS-13",
@@ -754,11 +747,8 @@
       "tier": "supporting",
       "owner": "designer-runtime/doc-types-fields",
       "allowedFiles": [
-        "DocTypeRegistry.js",
         "DocTypeAndProbes.js",
-        "DocTypeProbes.js",
         "FieldExplorerEngine.js",
-        "FieldExplorerTree.js",
         "FieldExplorerDrop.js"
       ],
       "legacyFiles": [],
@@ -767,7 +757,6 @@
         "DS._sampleData"
       ],
       "selectors": [
-        "DocTypeRegistry.get(key)",
         "FieldExplorerEngine.getActiveTree()"
       ],
       "events": [
@@ -781,7 +770,6 @@
       "risk": "low",
       "notes": "FieldExplorerDrop.js may call DS.elements.push() directly bypassing DocumentActions — not confirmed. DocTypeAndProbes.js and DocTypeProbes.js appear to overlap — only one may be needed.",
       "unresolvedAmbiguities": [
-        "DocTypeAndProbes.js vs DocTypeProbes.js: overlap suspected. Which is canonical?",
         "FieldExplorerDrop.js: likely calls DS.elements.push() directly — write-log bypass risk not yet verified"
       ]
     },
@@ -793,7 +781,6 @@
       "owner": "designer-runtime/workspace-ui",
       "allowedFiles": [
         "RulerEngine.js",
-        "RulerEngineRenderer.js",
         "GridEngine.js",
         "WorkspaceScrollEngine.js",
         "OverlayEngine.js",
@@ -1297,8 +1284,7 @@
       "owner": "designer-runtime/alignment-runtime",
       "allowedFiles": [
         "AlignmentEngine.js",
-        "AlignEngine.js",
-        "AlignEngineActions.js"
+        "AlignEngine.js"
       ],
       "legacyFiles": [],
       "writableState": [
