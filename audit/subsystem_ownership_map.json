@@ -829,8 +829,6 @@
         "RulerEngineRenderer.js",
         "GridEngine.js",
         "WorkspaceScrollEngine.js",
-        "WorkspaceScrollEngineLayout.js",
-        "WorkspaceScrollEngineRuntime.js",
         "OverlayEngine.js",
         "SectionResizeEngine.js"
       ],
@@ -839,9 +837,7 @@
         "DS.gridVisible",
         "DS.snapToGrid"
       ],
-      "selectors": [
-        "WorkspaceScrollEngine.getScrollPos()"
-      ],
+      "selectors": [],
       "events": [
         "RulerEngine.updateCursor(x, y)",
         "RulerEngine.toggle()",
