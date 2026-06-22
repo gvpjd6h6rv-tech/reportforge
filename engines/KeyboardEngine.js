@@ -87,6 +87,18 @@ const KeyboardEngine = (() => {
 
   function _registerSelectionShortcuts() {
     _register('ctrl+a', () => {
+      // Delegates to CommandEngine.selectAll() (CommandRuntimeSelection,
+      // merged in production via CommandRuntime.js — same alias
+      // _deleteSelected() already uses for Ctrl+X/Delete) so Ctrl+A runs the
+      // same syncSelectionPanels() chain the menu/toolbar select-all uses
+      // (P24A/B — the inline duplicate below only called
+      // SelectionEngine.renderHandles(), never PropertiesEngine.render() or
+      // FormatEngine.updateToolbar(), leaving those panels stale).
+      //
+      // The block below is kept ONLY as a fallback for when CommandEngine
+      // isn't loaded — it must keep working standalone, but is no longer
+      // the path production actually takes.
+      if (typeof CommandEngine !== 'undefined') { CommandEngine.selectAll(); return; }
       if (typeof DS !== 'undefined' && typeof SelectionEngine !== 'undefined') {
         DS.clearSelectionState('KeyboardEngine.selectAll');
         DS.elements.forEach(el => DS.addSelection(el.id, 'KeyboardEngine.selectAll'));
