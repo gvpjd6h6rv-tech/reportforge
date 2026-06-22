@@ -1,8 +1,17 @@
 'use strict';
 /**
- * SS-12 snap — snap state contracts (via SnapEngine facade)
- * Tests the same state lifecycle contracts previously in SnapState.
- * SnapState.js moved to sharedFiles — contracts verified through SnapEngine API.
+ * SS-12 snap — SnapState.js state lifecycle contracts
+ *
+ * Migrated in P16B to load SnapState.js directly instead of through the
+ * SnapEngine.js facade. SnapState.js is the real, live state module —
+ * engines/DragEngine.js, RuntimeBootstrap.js, and KeyboardEngine.js call
+ * SnapState.getGrid()/isEnabled()/toggle() directly; SnapEngine.js has zero
+ * production callers (confirmed in P16A) and is pending retirement.
+ *
+ * SnapState.js is a mutable singleton (module-level _gridModel/_enabled).
+ * require() would cache it across tests, breaking the isolation contract
+ * this suite verifies — so each test loads a fresh vm context, same
+ * isolation guarantee the original SnapEngine-facade tests relied on.
  */
 import test   from 'node:test';
 import assert from 'node:assert/strict';
@@ -13,90 +22,90 @@ import { fileURLToPath }    from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
-function loadSnap() {
-  const src = fs.readFileSync(resolve(ROOT, 'engines/SnapEngine.js'), 'utf8');
-  const ctx = { window: {}, module: { exports: {} } };
+function loadSnapState() {
+  const src = fs.readFileSync(resolve(ROOT, 'engines/SnapState.js'), 'utf8');
+  const ctx = { module: { exports: {} } };
   vm.runInNewContext(src, ctx);
   return ctx.module.exports;
 }
 
 // ── defaults ─────────────────────────────────────────────────────────────────
 
-test('snap state — default: enabled=true, grid=4', () => {
-  const E = loadSnap();
-  assert.equal(E.isEnabled(), true);
-  assert.equal(E.getGrid(), 4);
+test('SnapState — default: enabled=true, grid=4', () => {
+  const S = loadSnapState();
+  assert.equal(S.isEnabled(), true);
+  assert.equal(S.getGrid(), 4);
 });
 
 // ── setEnabled ───────────────────────────────────────────────────────────────
 
-test('snap state — setEnabled(false): isEnabled returns false', () => {
-  const E = loadSnap();
-  E.setEnabled(false);
-  assert.equal(E.isEnabled(), false);
+test('SnapState — setEnabled(false): isEnabled returns false', () => {
+  const S = loadSnapState();
+  S.setEnabled(false);
+  assert.equal(S.isEnabled(), false);
 });
 
-test('snap state — setEnabled(true): isEnabled returns true', () => {
-  const E = loadSnap();
-  E.setEnabled(false);
-  E.setEnabled(true);
-  assert.equal(E.isEnabled(), true);
+test('SnapState — setEnabled(true): isEnabled returns true', () => {
+  const S = loadSnapState();
+  S.setEnabled(false);
+  S.setEnabled(true);
+  assert.equal(S.isEnabled(), true);
 });
 
-test('snap state — setEnabled coerces truthy/falsy values', () => {
-  const E = loadSnap();
-  E.setEnabled(0);
-  assert.equal(E.isEnabled(), false);
-  E.setEnabled(1);
-  assert.equal(E.isEnabled(), true);
-  E.setEnabled('');
-  assert.equal(E.isEnabled(), false);
+test('SnapState — setEnabled coerces truthy/falsy values', () => {
+  const S = loadSnapState();
+  S.setEnabled(0);
+  assert.equal(S.isEnabled(), false);
+  S.setEnabled(1);
+  assert.equal(S.isEnabled(), true);
+  S.setEnabled('');
+  assert.equal(S.isEnabled(), false);
 });
 
 // ── toggle ───────────────────────────────────────────────────────────────────
 
-test('snap state — toggle flips enabled state', () => {
-  const E = loadSnap();
-  assert.equal(E.isEnabled(), true);
-  E.toggle();
-  assert.equal(E.isEnabled(), false);
-  E.toggle();
-  assert.equal(E.isEnabled(), true);
+test('SnapState — toggle flips enabled state', () => {
+  const S = loadSnapState();
+  assert.equal(S.isEnabled(), true);
+  S.toggle();
+  assert.equal(S.isEnabled(), false);
+  S.toggle();
+  assert.equal(S.isEnabled(), true);
 });
 
 // ── setGrid ──────────────────────────────────────────────────────────────────
 
-test('snap state — setGrid updates grid value', () => {
-  const E = loadSnap();
-  E.setGrid(8);
-  assert.equal(E.getGrid(), 8);
+test('SnapState — setGrid updates grid value', () => {
+  const S = loadSnapState();
+  S.setGrid(8);
+  assert.equal(S.getGrid(), 8);
 });
 
-test('snap state — setGrid(0) clamps to minimum 1', () => {
-  const E = loadSnap();
-  E.setGrid(0);
-  assert.equal(E.getGrid(), 1);
+test('SnapState — setGrid(0) clamps to minimum 1', () => {
+  const S = loadSnapState();
+  S.setGrid(0);
+  assert.equal(S.getGrid(), 1);
 });
 
-test('snap state — setGrid(-4) clamps to minimum 1', () => {
-  const E = loadSnap();
-  E.setGrid(-4);
-  assert.equal(E.getGrid(), 1);
+test('SnapState — setGrid(-4) clamps to minimum 1', () => {
+  const S = loadSnapState();
+  S.setGrid(-4);
+  assert.equal(S.getGrid(), 1);
 });
 
-test('snap state — setGrid multiple writes, last wins', () => {
-  const E = loadSnap();
-  E.setGrid(4);
-  E.setGrid(10);
-  E.setGrid(2);
-  assert.equal(E.getGrid(), 2);
+test('SnapState — setGrid multiple writes, last wins', () => {
+  const S = loadSnapState();
+  S.setGrid(4);
+  S.setGrid(10);
+  S.setGrid(2);
+  assert.equal(S.getGrid(), 2);
 });
 
 // ── isolation ────────────────────────────────────────────────────────────────
 
-test('snap state — instances are isolated (each loadSnap is a fresh vm context)', () => {
-  const A = loadSnap();
-  const B = loadSnap();
+test('SnapState — instances are isolated (each loadSnapState is a fresh vm context)', () => {
+  const A = loadSnapState();
+  const B = loadSnapState();
   A.setEnabled(false);
   A.setGrid(16);
   assert.equal(B.isEnabled(), true);
