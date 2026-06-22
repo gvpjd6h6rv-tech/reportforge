@@ -2,9 +2,10 @@
 /**
  * audit/ssot_guard.mjs — SSOT compliance gate (orchestrator)
  *
- * Runs subsystem_ssot_guard.mjs and configurational_ssot_guard.mjs in parallel.
- * Exits 0 only when BOTH guards pass — closing the gap where running either guard
- * alone left the other layer silently unverified.
+ * Runs subsystem_ssot_guard.mjs, configurational_ssot_guard.mjs, and (P29B)
+ * ssot_runtime_binding_guard.mjs in parallel. Exits 0 only when ALL guards
+ * pass — closing the gap where running any subset alone left the others
+ * silently unverified.
  *
  * Exit codes:
  *   0 = all SSOT guards PASS
@@ -37,10 +38,11 @@ function runGuard(script) {
 const GUARDS = [
   'subsystem_ssot_guard.mjs',
   'configurational_ssot_guard.mjs',
+  'ssot_runtime_binding_guard.mjs',
 ];
 
 console.log(`\n${SEP}`);
-console.log('🛡  SSOT Guard  ·  Subsystem + Configurational');
+console.log('🛡  SSOT Guard  ·  Subsystem + Configurational + Runtime Binding');
 console.log(SEP);
 
 const results = await Promise.all(GUARDS.map(runGuard));
