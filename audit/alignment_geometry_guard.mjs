@@ -1,21 +1,31 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * alignment_geometry_guard.mjs — SS-23 alignment geometry SSOT compliance gate
+ * alignment_geometry_guard.mjs — SS-36 alignment geometry SSOT compliance gate
  *
- * Verifies that AlignmentGeometry.js is a pure, side-effect-free geometry
- * module — no hard DOM/global references at module scope — so it can be
- * tested and reused without browser context.
+ * Verifies that AlignmentEngine.js (the live implementation, consumed by
+ * engines/DragEngine.js) is a pure, side-effect-free geometry core for its
+ * compute/computeSpacing surface — no hard DOM/global references at module
+ * scope — so it can be tested and reused without browser context.
  *
- * RULE-A (AG-EXIST-001): AlignmentGeometry.js must exist in engines/.
+ * AlignmentGeometry.js was a byte-for-byte duplicate of the same compute/
+ * computeSpacing/THRESHOLD logic, with zero production callers — retired in
+ * P17E after its test coverage was migrated to load AlignmentEngine.js
+ * directly (P17D). _bounds is intentionally NOT required here: it is
+ * closure-private to AlignmentEngine.js (never exported), and exporting it
+ * would add production API surface solely to serve test convenience for a
+ * code path with no behavioral risk (pure arithmetic) — decision recorded
+ * in P17E, not revisited by this guard.
  *
- * RULE-B (AG-EXPORT-001): AlignmentGeometry.js must have module.exports for
+ * RULE-A (AG-EXIST-001): AlignmentEngine.js must exist in engines/.
+ *
+ * RULE-B (AG-EXPORT-001): AlignmentEngine.js must have module.exports for
  *   node:test testability.
  *
- * RULE-C (AG-API-001): AlignmentGeometry.js must export all 4 canonical
- *   members: _bounds, compute, computeSpacing, THRESHOLD.
+ * RULE-C (AG-API-001): AlignmentEngine.js must export the canonical
+ *   members: compute, computeSpacing, THRESHOLD.
  *
- * RULE-D (AG-GUARD-001): AlignmentGeometry.js must guard DS access with
+ * RULE-D (AG-GUARD-001): AlignmentEngine.js must guard DS access with
  *   typeof — no naked reference to DS or CFG at module scope or function
  *   entry without a guard.
  *   Required pattern: `typeof DS` must appear (early-return guard).
@@ -44,34 +54,36 @@ function check(rule, file, condition, desc) {
 const exists = (f) => fs.existsSync(path.join(ENGINES, f));
 const read   = (f) => fs.readFileSync(path.join(ENGINES, f), 'utf8');
 
-// ── RULE-A: AlignmentGeometry.js must exist ───────────────────────────────────
+// ── RULE-A: AlignmentEngine.js must exist ───────────────────────────────────
 
-check('AG-EXIST-001', 'AlignmentGeometry.js',
-  exists('AlignmentGeometry.js'),
-  'AlignmentGeometry.js must exist — pure geometry layer for smart-alignment snap');
+check('AG-EXIST-001', 'AlignmentEngine.js',
+  exists('AlignmentEngine.js'),
+  'AlignmentEngine.js must exist — live geometry core for smart-alignment snap');
 
-if (exists('AlignmentGeometry.js')) {
-  const src = read('AlignmentGeometry.js');
+if (exists('AlignmentEngine.js')) {
+  const src = read('AlignmentEngine.js');
 
   // ── RULE-B: module.exports ─────────────────────────────────────────────────
-  check('AG-EXPORT-001', 'AlignmentGeometry.js',
+  check('AG-EXPORT-001', 'AlignmentEngine.js',
     /module\.exports/.test(src),
-    'AlignmentGeometry.js must have module.exports for node:test testability');
+    'AlignmentEngine.js must have module.exports for node:test testability');
 
-  // ── RULE-C: 4 canonical API members exported ───────────────────────────────
-  const REQUIRED_MEMBERS = ['_bounds', 'compute', 'computeSpacing', 'THRESHOLD'];
+  // ── RULE-C: canonical API members exported ──────────────────────────────────
+  // _bounds intentionally excluded — closure-private, never exported, by
+  // design (P17E decision: no production need, no behavioral risk).
+  const REQUIRED_MEMBERS = ['compute', 'computeSpacing', 'THRESHOLD'];
 
   for (const member of REQUIRED_MEMBERS) {
-    check('AG-API-001', 'AlignmentGeometry.js',
+    check('AG-API-001', 'AlignmentEngine.js',
       new RegExp(`\\b${member}\\b`).test(src),
-      `AlignmentGeometry.js must export: ${member}`);
+      `AlignmentEngine.js must export: ${member}`);
   }
 
   // ── RULE-D: DS and CFG must be guarded with typeof ────────────────────────
   // Require that typeof DS guard is present (early-return pattern)
-  check('AG-GUARD-001', 'AlignmentGeometry.js',
+  check('AG-GUARD-001', 'AlignmentEngine.js',
     /typeof DS/.test(src),
-    'AlignmentGeometry.js must guard DS access with typeof DS (early-return pattern required)');
+    'AlignmentEngine.js must guard DS access with typeof DS (early-return pattern required)');
 
   // Verify no top-level (unindented) naked DS. or CFG. references
   const topLevelNakedGlobals = src
@@ -86,14 +98,14 @@ if (exists('AlignmentGeometry.js')) {
       return /\b(DS|CFG)\s*\./.test(trimmed);
     });
 
-  check('AG-GUARD-001', 'AlignmentGeometry.js',
+  check('AG-GUARD-001', 'AlignmentEngine.js',
     topLevelNakedGlobals.length === 0,
-    `AlignmentGeometry.js must not have top-level naked DS/CFG access — found: ${topLevelNakedGlobals.join('; ')}`);
+    `AlignmentEngine.js must not have top-level naked DS/CFG access — found: ${topLevelNakedGlobals.join('; ')}`);
 }
 
 // ── Report ────────────────────────────────────────────────────────────────────
 
-const rulesChecked = 1 + (exists('AlignmentGeometry.js') ? 1 + 4 + 2 : 0);
+const rulesChecked = 1 + (exists('AlignmentEngine.js') ? 1 + 3 + 2 : 0);
 console.log('── Alignment Geometry Guard ────────────────────────────────────');
 console.log(`   rules checked: ${rulesChecked}  violations found: ${violations.length}`);
 
@@ -106,6 +118,6 @@ if (violations.length > 0) {
   console.error('\n❌ alignment-geometry purity contract compromised\n');
   if (!REPORT) process.exit(1);
 } else {
-  console.log('\n✅ AlignmentGeometry pure-layer contract intact — API + typeof guards verified\n');
+  console.log('\n✅ AlignmentEngine pure-layer contract intact — API + typeof guards verified\n');
   process.exit(0);
 }

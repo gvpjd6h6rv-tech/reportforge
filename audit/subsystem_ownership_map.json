@@ -587,34 +587,6 @@
       "unresolvedAmbiguities": []
     },
     {
-      "id": "SS-23",
-      "name": "alignment",
-      "domain": "designer-runtime",
-      "tier": "supporting",
-      "owner": "designer-runtime/alignment",
-      "allowedFiles": [
-        "AlignmentGeometry.js"
-      ],
-      "legacyFiles": [],
-      "writableState": [],
-      "selectors": [
-        "AlignmentGeometry.compute(movingEl, threshold)",
-        "AlignmentGeometry.computeSpacing(movingEl, threshold)"
-      ],
-      "events": [],
-      "existingTests": [
-        "reportforge/tests/alignment_geometry.test.mjs",
-        "reportforge/tests/governance_guardrails.test.mjs",
-        "reportforge/tests/run_runtime_regression.mjs"
-      ],
-      "requiredGuardCI": [
-        "audit/alignment_geometry_guard.mjs"
-      ],
-      "risk": "low",
-      "notes": "AlignmentGeometry.js is the pure geometry layer — zero DOM, typeof guards for DS/CFG, module.exports present. Exports: _bounds (absolute bounds with sectionTop), compute (edge+center snap guides), computeSpacing (equal-spacing guides), THRESHOLD=4. AlignmentEngine.js, AlignmentActions.js, AlignEngine.js, AlignEngineActions.js moved to SS-36 alignment-runtime (DOM-heavy, DS hard-calls, CommandEngine coupling).",
-      "unresolvedAmbiguities": []
-    },
-    {
       "id": "SS-24",
       "name": "guide-rendering",
       "domain": "designer-runtime",
@@ -1293,17 +1265,18 @@
         "AlignEngine.alignCenter()"
       ],
       "existingTests": [
-        "reportforge/tests/governance_guardrails.test.mjs"
+        "reportforge/tests/governance_guardrails.test.mjs",
+        "reportforge/tests/alignment_geometry.test.mjs"
       ],
       "requiredGuardCI": [
         "audit/alignment_geometry_guard.mjs"
       ],
       "risk": "medium",
-      "notes": "justification: DOM-heavy alignment runtime split from SS-23. AlignEngine.js: facade calling CommandEngine.alignLeft/Right/Top/Bottom + DS.saveHistory() + _canonicalCanvasWriter().renderAll() in fallback. AlignEngineActions.js: exact duplicate of AlignEngine.js (only fallback caller string differs — backlog for consolidation). AlignmentEngine.js: duplicates all of AlignmentGeometry.js (_bounds/compute/computeSpacing) + adds align()/distribute() with hard DS.getSectionTop calls — backlog for consolidation with AlignmentGeometry.js. AlignmentActions.js: align/distribute that delegate to AlignmentGeometry._bounds as global + hard DS calls without typeof guard.",
+      "notes": "justification: DOM-heavy alignment runtime, formerly split from SS-23 (retired in P17E — AlignmentGeometry.js was a byte-for-byte duplicate of AlignmentEngine.js's compute/computeSpacing/THRESHOLD with zero production callers; coverage migrated to load AlignmentEngine.js directly, alignment_geometry_guard.mjs retargeted to it). AlignEngine.js: facade calling CommandEngine.alignLeft/Right/Top/Bottom + DS.saveHistory() + _canonicalCanvasWriter().renderAll() in fallback. AlignmentEngine.js: live compute()/computeSpacing() (consumed by engines/DragEngine.js) + align()/distribute() with hard DS.getSectionTop calls. _bounds is closure-private to AlignmentEngine.js, intentionally not exported (P17E decision — no production need, pure arithmetic, no behavioral risk).",
       "unresolvedAmbiguities": [],
       "coverageExclusion": {
         "reason": "backlog",
-        "justification": "AlignEngine.js and AlignmentEngine.js require DS, CommandEngine, and _canonicalCanvasWriter() to unit test meaningfully. AlignEngineActions.js is a literal duplicate of AlignEngine.js — consolidation is a backlog item. Covered integration-level by governance_guardrails.test.mjs."
+        "justification": "AlignEngine.js requires DS, CommandEngine, and _canonicalCanvasWriter() to unit test meaningfully — covered integration-level by governance_guardrails.test.mjs. AlignmentEngine.js's compute()/computeSpacing()/THRESHOLD are unit-tested directly (no DOM/CommandEngine needed) by reportforge/tests/alignment_geometry.test.mjs since P17D; align()/distribute() remain untested (require DS.getSectionTop + element mutation context) — backlog."
       }
     }
   ]
