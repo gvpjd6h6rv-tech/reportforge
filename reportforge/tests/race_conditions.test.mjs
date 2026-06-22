@@ -5,7 +5,7 @@
  * Detecta condiciones de carrera reales mediante dos capas:
  *
  * Capa A — Lógica pura (sin browser):
- *   Concurrencia simulada en HistoryState, HistoryEngine, HistorySnapshot.
+ *   Concurrencia simulada en HistoryState, HistoryEngine.
  *   Interleaving manual de operaciones que en el browser ocurren en callbacks
  *   anidados (pointer → undo → notify → suppress → pushUndo).
  *
@@ -41,19 +41,38 @@ function load(filename, extra = {}) {
 }
 
 function loadHistoryState() { return load('HistoryState.js'); }
-function loadHistorySnapshot() {
-  // HistorySnapshot needs DS-like context
+
+// HistoryEngine is a DOM-bound singleton (DS + layout engines + overlay).
+// Stub the minimum surface it touches so push/undo/redo run headless,
+// and track side-effect calls so restore-path tests can assert on them.
+function loadHistoryEngine() {
+  const calls = { canvasUpdate: 0, sectionUpdate: 0, canvasRenderAll: 0, overlayRender: 0 };
+
+  const DS = {
+    elements: [{ id: 'e1', type: 'text', x: 10, y: 10, w: 100, h: 20, text: 'hello' }],
+    sections: [{ id: 'ph', stype: 'pageHeader', height: 40 }],
+    zoom: 1.0,
+    setElements(els) { this.elements = els; },
+    setSections(sects) { this.sections = sects; },
+  };
+  const CanvasLayoutEngine = {
+    update() { calls.canvasUpdate++; },
+    renderAll() { calls.canvasRenderAll++; },
+  };
+  const SectionLayoutEngine = { update() { calls.sectionUpdate++; } };
+  const OverlayEngine = { render() { calls.overlayRender++; } };
+
   const ctx = {
     module: { exports: {} },
-    DS: {
-      elements: [{ id: 'e1', type: 'text', x: 10, y: 10, w: 100, h: 20, text: 'hello' }],
-      sections: [{ id: 'ph', stype: 'pageHeader', height: 40 }],
-      zoom: 1.0,
-    },
+    console,
+    DS,
+    CanvasLayoutEngine,
+    SectionLayoutEngine,
+    OverlayEngine,
   };
-  const src = fs.readFileSync(path.join(ROOT, 'engines/HistorySnapshot.js'), 'utf8');
+  const src = fs.readFileSync(path.join(ROOT, 'engines/HistoryEngine.js'), 'utf8');
   vm.runInNewContext(src, ctx);
-  return ctx.module.exports;
+  return { HistoryEngine: ctx.module.exports, DS, calls };
 }
 
 // ---------------------------------------------------------------------------
@@ -177,49 +196,69 @@ test('race condition — HistoryState: popUndo+popRedo interleaving never return
 });
 
 // ---------------------------------------------------------------------------
-// HistorySnapshot — serialización concurrente
+// HistoryEngine — snapshot/restore via push/undo/redo
+// (migrated from HistorySnapshot direct-capture tests — P13B)
 // ---------------------------------------------------------------------------
 
-test('race condition — HistorySnapshot: captureHistorySnapshot is deterministic across repeated calls', () => {
-  const H = loadHistorySnapshot();
-  if (!H.captureHistorySnapshot) {
-    // snapshot no disponible en este contexto — documenta el gap
-    assert.ok(true, 'SKIP: captureHistorySnapshot not available without full DS context');
-    return;
-  }
+test('race condition — HistoryEngine: undo restores the exact pre-push snapshot, deterministically', () => {
+  const { HistoryEngine, DS } = loadHistoryEngine();
 
-  // Llamadas rápidas sucesivas deben producir el mismo snapshot
-  const snap1 = H.captureHistorySnapshot();
-  const snap2 = H.captureHistorySnapshot();
+  HistoryEngine.push('baseline');
+  const baselineElements = JSON.parse(JSON.stringify(DS.elements));
+  const baselineSections = JSON.parse(JSON.stringify(DS.sections));
 
-  assert.deepEqual(
-    JSON.parse(JSON.stringify(snap1)),
-    JSON.parse(JSON.stringify(snap2)),
-    'captureHistorySnapshot must be deterministic — same DS state → same snapshot',
-  );
+  // Mutate DS after push — simulates the model changing post-snapshot
+  DS.setElements([{ id: 'e2', type: 'text', x: 0, y: 0, w: 1, h: 1, text: 'mutated' }]);
+  DS.setSections([{ id: 'rh', stype: 'reportHeader', height: 10 }]);
+
+  const ok = HistoryEngine.undo();
+  assert.ok(ok, 'undo() must report success when an entry exists');
+
+  // DS.elements/sections are parsed inside the vm sandbox realm — compare by
+  // serialized value, not assert.deepEqual, which also checks Object.prototype
+  // identity and would false-fail across realms even on identical content.
+  assert.equal(JSON.stringify(DS.elements), JSON.stringify(baselineElements),
+    'undo must restore elements to the exact pre-push snapshot');
+  assert.equal(JSON.stringify(DS.sections), JSON.stringify(baselineSections),
+    'undo must restore sections to the exact pre-push snapshot');
 });
 
-test('race condition — HistorySnapshot: snapshot is deep-cloned (mutations do not corrupt captured state)', () => {
-  const H = loadHistorySnapshot();
-  if (!H.captureHistorySnapshot) {
-    assert.ok(true, 'SKIP: captureHistorySnapshot not available without full DS context');
-    return;
-  }
+test('race condition — HistoryEngine: snapshot is deep-cloned (post-push mutation does not corrupt the stored entry)', () => {
+  const { HistoryEngine, DS } = loadHistoryEngine();
 
-  const snap = H.captureHistorySnapshot();
-  assert.ok(snap, 'snapshot must be produced');
+  HistoryEngine.push('baseline');
+  const originalLen = DS.elements.length;
 
-  // Verificar que snap.elements es una copia, no referencia al array original
-  // Si fuera referencia, mutarlo contaminaría la historia
-  if (Array.isArray(snap.elements) && snap.elements.length > 0) {
-    const originalLen = snap.elements.length;
-    snap.elements.push({ id: 'injected', type: 'fake' }); // mutar la copia
+  // Mutate the SAME array reference that was live at push time — if the
+  // snapshot held a reference instead of a deep clone, this would corrupt it.
+  DS.elements.push({ id: 'injected', type: 'fake' });
+  assert.equal(DS.elements.length, originalLen + 1, 'sanity: mutation applied to live array');
 
-    // Capturar de nuevo — debe ser igual a la primera (la mutación no debe propagarse)
-    const snap2 = H.captureHistorySnapshot();
-    assert.equal(snap2.elements.length, originalLen,
-      'snapshot must deep-clone elements — mutating snapshot must not affect future captures');
-  }
+  HistoryEngine.undo();
+
+  assert.equal(DS.elements.length, originalLen,
+    'undo must restore the deep-cloned snapshot, unaffected by post-push mutation of the live array');
+  assert.ok(!DS.elements.some((e) => e.id === 'injected'),
+    'restored elements must not contain the post-push injected entry');
+});
+
+test('race condition — HistoryEngine: restore path fires the canonical side-effect set exactly once per undo/redo', () => {
+  const { HistoryEngine, DS, calls } = loadHistoryEngine();
+
+  HistoryEngine.push('baseline');
+  DS.setElements([{ id: 'e2', type: 'text', x: 0, y: 0, w: 1, h: 1, text: 'mutated' }]);
+
+  HistoryEngine.undo();
+  assert.equal(calls.canvasUpdate, 1, 'undo must call CanvasLayoutEngine.update() exactly once');
+  assert.equal(calls.sectionUpdate, 1, 'undo must call SectionLayoutEngine.update() exactly once');
+  assert.equal(calls.canvasRenderAll, 1, 'undo must call CanvasLayoutEngine.renderAll() exactly once');
+  assert.equal(calls.overlayRender, 1, 'undo must call OverlayEngine.render() exactly once');
+
+  HistoryEngine.redo();
+  assert.equal(calls.canvasUpdate, 2, 'redo must call CanvasLayoutEngine.update() again');
+  assert.equal(calls.sectionUpdate, 2, 'redo must call SectionLayoutEngine.update() again');
+  assert.equal(calls.canvasRenderAll, 2, 'redo must call CanvasLayoutEngine.renderAll() again');
+  assert.equal(calls.overlayRender, 2, 'redo must call OverlayEngine.render() again');
 });
 
 // ---------------------------------------------------------------------------
