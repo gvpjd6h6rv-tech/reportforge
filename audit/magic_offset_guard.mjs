@@ -19,9 +19,9 @@
  *   hardcoded pixel offsets (+N or -N where N is a numeric literal ≥4) to
  *   section height or top/left positioning without going through RF.Geometry.
  *
- * RULE-D (MAGIC-CORE-001): GeometryCore.js must be the single source of
- *   truth for scale factor (RF.Geometry.zoom-based scaling). It must contain
- *   the scale function that other engines call.
+ * RULE-D (MAGIC-CORE-001): RuntimeGlobals.js (the live RF.Geometry installer)
+ *   must be the single source of truth for scale factor (RF.Geometry.zoom-
+ *   based scaling). It must contain the scale function that other engines call.
  *
  * Usage:
  *   node audit/magic_offset_guard.mjs          # fail on violations
@@ -43,7 +43,7 @@ const readEngine = (f) => {
 };
 
 const geometryCore      = readEngine('GeometryCore.js');
-const runtimeGeometry   = readEngine('RuntimeGeometry.js');
+const runtimeGlobals    = readEngine('RuntimeGlobals.js');
 const canvasElements    = readEngine('CanvasLayoutElements.js');
 const sectionLayout     = readEngine('SectionLayoutEngine.js');
 
@@ -63,7 +63,7 @@ check('MAGIC-EXPORT-001', 'engines/GeometryCore.js',
   /clampRect/.test(geometryCore),
   'GeometryCore.js must export clampRect — canonical rectangle clamping for layout');
 
-// scale is in RuntimeGeometry.js (RF.Geometry.scale), not GeometryCore — just verify RF.Geometry exists there
+// scale is in RuntimeGlobals.js (RF.Geometry.scale), not GeometryCore — just verify RF.Geometry exists there
 // and that GeometryCore exports the geometric primitives (clamp/snap) as documented.
 
 // ── RULE-B: CanvasLayoutElements uses RF.Geometry for pixel placement ─────────
@@ -108,15 +108,16 @@ check('MAGIC-SECTION-001', 'engines/SectionLayoutEngine.js',
   `(${secOffsetLines.length} line(s)): ` +
   secOffsetLines.slice(0, 2).map((l) => l.trim()).join(' | '));
 
-// ── RULE-D: RuntimeGeometry is the SSOT for zoom-aware scale factor ───────────
-// RF.Geometry.scale(v) = v * zoom(); it lives in RuntimeGeometry.js, not GeometryCore.js.
+// ── RULE-D: RuntimeGlobals.js is the SSOT for zoom-aware scale factor ─────────
+// RF.Geometry.scale(v) = v * zoom(); it lives in RuntimeGlobals.js (the live
+// installer), not GeometryCore.js.
 
-check('MAGIC-CORE-001', 'engines/RuntimeGeometry.js',
-  /scale\s*\(v\)/.test(runtimeGeometry) || /scale\(v\)/.test(runtimeGeometry),
-  'RuntimeGeometry.js must define RF.Geometry.scale(v) as the single source for zoom-aware pixel scaling');
+check('MAGIC-CORE-001', 'engines/RuntimeGlobals.js',
+  /scale\s*\(v\)/.test(runtimeGlobals) || /scale\(v\)/.test(runtimeGlobals),
+  'RuntimeGlobals.js must define RF.Geometry.scale(v) as the single source for zoom-aware pixel scaling');
 
-check('MAGIC-CORE-001', 'engines/RuntimeGeometry.js',
-  /zoom\(\)/.test(runtimeGeometry),
+check('MAGIC-CORE-001', 'engines/RuntimeGlobals.js',
+  /zoom\(\)/.test(runtimeGlobals),
   'RF.Geometry.scale must derive from zoom() — not a hardcoded constant');
 
 // ── Report ─────────────────────────────────────────────────────────────────────

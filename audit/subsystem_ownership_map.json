@@ -1182,7 +1182,6 @@
         "RuntimeConfig.js",
         "RuntimeData.js",
         "RuntimeHelpers.js",
-        "RuntimeGeometry.js",
         "RuntimeGlobals.js"
       ],
       "legacyFiles": [],

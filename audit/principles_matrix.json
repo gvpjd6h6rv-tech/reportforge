@@ -556,7 +556,7 @@
     "kind": "guard",
     "source_files": [
       "engines/GeometryCore.js",
-      "engines/RuntimeGeometry.js",
+      "engines/RuntimeGlobals.js",
       "audit/magic_offset_guard.mjs"
     ],
     "test_files": [
