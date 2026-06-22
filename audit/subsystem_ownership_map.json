@@ -1298,7 +1298,6 @@
       "owner": "designer-runtime/alignment-runtime",
       "allowedFiles": [
         "AlignmentEngine.js",
-        "AlignmentActions.js",
         "AlignEngine.js",
         "AlignEngineActions.js"
       ],
