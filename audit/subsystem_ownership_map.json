@@ -696,7 +696,6 @@
       "allowedFiles": [
         "KeyboardEngine.js",
         "KeyboardRegistry.js",
-        "KeyboardBindings.js",
         "KeyboardCombo.js"
       ],
       "legacyFiles": [],
@@ -715,9 +714,7 @@
       ],
       "risk": "low",
       "notes": "ssot_guard.mjs enforces KeyboardEngine→KeyboardRegistry delegation. KeyboardBindings.js content not fully verified — may define the concrete key combo table.",
-      "unresolvedAmbiguities": [
-        "KeyboardBindings.js: defines key combo data or registers handlers? Not confirmed."
-      ]
+      "unresolvedAmbiguities": []
     },
     {
       "id": "SS-15",

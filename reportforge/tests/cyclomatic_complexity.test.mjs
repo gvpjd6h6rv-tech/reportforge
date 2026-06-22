@@ -39,7 +39,6 @@ const ENGINES = path.join(ROOT, 'engines');
 // Para agregar: requiere decisión explícita aquí.
 // ---------------------------------------------------------------------------
 const KNOWN_VIOLATIONS = new Map([
-  ['KeyboardBindings.js::installDefaults',              28],
 ]);
 
 // ---------------------------------------------------------------------------
