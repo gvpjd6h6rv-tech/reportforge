@@ -138,6 +138,7 @@ function main() {
     'ssot_runtime_binding_guard.test.mjs',
     'subsystem_ownership_guard_rule_exist.test.mjs',
     'salad_score_metric_file_type.test.mjs',
+    'salad_score_template_dashboard.test.mjs',
   ]);
   const testsDir = join(ROOT, 'reportforge/tests');
   const testFiles = readdirSync(testsDir).filter((f) => f.endsWith('.test.mjs') && !SELF_TESTS.has(f));

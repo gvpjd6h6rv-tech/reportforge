@@ -716,6 +716,20 @@
       "responsibility": "SP1A-FIX4 architecture: bin layer, single responsibility per file. Individual override: 7 flags + 6 exit codes + 3 reporter dispatch genuinely need more than the generic CLI cap of 100 lines once expressed as readable, low-complexity lookup tables instead of long if/else chains.",
       "maxLines": 120,
       "maxDecisionPoints": 20
+    },
+    {
+      "path": "tools/salad-score/dashboard/template_dashboard.mjs",
+      "owner": "salad-score-dashboard",
+      "responsibility": "SPD1B: pure HTML template builder for the static SP Score dashboard. No I/O, no fetch, no eval, no subprocess. Larger cap than other pure layers: 10 mandatory sections + embedded dark-theme CSS + minimal DOM-only filter/copy script (real precedent: scripts/rf_e2r_dashboard.mjs is 200+ lines for fewer sections).",
+      "maxLines": 400,
+      "maxDecisionPoints": 60
+    },
+    {
+      "path": "tools/salad-score/reporters/reporter_dashboard.mjs",
+      "owner": "salad-score-reporters",
+      "responsibility": "SPD1B: delegates entirely to dashboard/template_dashboard.mjs, same contract as the other 3 reporters.",
+      "maxLines": 30,
+      "maxDecisionPoints": 5
     }
   ]
 }

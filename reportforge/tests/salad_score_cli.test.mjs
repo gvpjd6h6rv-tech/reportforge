@@ -52,3 +52,15 @@ test('CLI — --format markdown --output writes a real markdown report', () => {
   const text = fs.readFileSync(out, 'utf8');
   assert.match(text, /# Salad Point Score/);
 });
+
+test('CLI — --format dashboard --output writes a real static HTML dashboard, no insecure execution', () => {
+  const out = 'reports/salad-score-dashboard.html';
+  const r = run(['audit', '--format', 'dashboard', '--output', out]);
+  assert.equal(r.status, 0);
+  const html = fs.readFileSync(out, 'utf8');
+  assert.match(html, /<!DOCTYPE html>/i);
+  assert.match(html, /SP_REPO_SCORE|Resumen/);
+  assert.doesNotMatch(html, /\bfetch\s*\(/);
+  assert.doesNotMatch(html, /\beval\s*\(/);
+  assert.doesNotMatch(html, /subprocess|child_process/);
+});

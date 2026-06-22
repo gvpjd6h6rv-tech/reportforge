@@ -7,6 +7,7 @@ import { runSaladScore } from '../runner/run_salad_score.mjs';
 import { reporterConsole } from '../reporters/reporter_console.mjs';
 import { reporterJson } from '../reporters/reporter_json.mjs';
 import { reporterMarkdown } from '../reporters/reporter_markdown.mjs';
+import { reporterDashboard } from '../reporters/reporter_dashboard.mjs';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 
@@ -79,6 +80,7 @@ function main() {
     json: () => reporterJson(args.summary ? [] : result.files, result.repoScore, result.files.length),
     markdown: () => reporterMarkdown(result.files, result.repoScore, top),
     console: () => reporterConsole(result.files, result.repoScore, top),
+    dashboard: () => reporterDashboard(result.files, result.repoScore, config),
   };
   const output = (REPORTERS[args.format] || REPORTERS.console)();
 

@@ -1,6 +1,6 @@
 'use strict';
 
-const LAYER_ORDER = ['contracts', 'collectors', 'metrics', 'normalizers', 'checkers', 'scoring', 'reporters', 'runner', 'bin'];
+const LAYER_ORDER = ['contracts', 'collectors', 'metrics', 'normalizers', 'checkers', 'scoring', 'dashboard', 'reporters', 'runner', 'bin'];
 
 /** RULE: a layer must only import from itself or a layer earlier in LAYER_ORDER, never a later one. */
 export function checkNoCrossLayerImports(filePath, text) {
