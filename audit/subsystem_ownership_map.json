@@ -5,7 +5,6 @@
   "sharedFiles": [
     "SnapCore.js",
     "SnapState.js",
-    "SnapGuides.js",
     "RuntimeServices.js",
     "EngineCoreRuntime.js",
     "EngineCoreContracts.js",
