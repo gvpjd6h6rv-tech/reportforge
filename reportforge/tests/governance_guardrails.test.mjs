@@ -977,6 +977,7 @@ test('datasource package split stays modular, thin, and contract-stable', () => 
 test('document store split stays modular, thin, and contract-stable', () => {
   const files = [
     'engines/DocumentStore.js',
+    'engines/DocumentStoreUtils.js',
     'engines/DocumentState.js',
     'engines/DocumentSelectors.js',
     'engines/DocumentHistory.js',
@@ -989,13 +990,16 @@ test('document store split stays modular, thin, and contract-stable', () => {
   }
 
   const facade = fs.readFileSync(path.join(ROOT, 'engines/DocumentStore.js'), 'utf8');
+  const utils = fs.readFileSync(path.join(ROOT, 'engines/DocumentStoreUtils.js'), 'utf8');
   const state = fs.readFileSync(path.join(ROOT, 'engines/DocumentState.js'), 'utf8');
   const selectors = fs.readFileSync(path.join(ROOT, 'engines/DocumentSelectors.js'), 'utf8');
   const history = fs.readFileSync(path.join(ROOT, 'engines/DocumentHistory.js'), 'utf8');
   const actions = fs.readFileSync(path.join(ROOT, 'engines/DocumentActions.js'), 'utf8');
   const contract = fs.readFileSync(path.join(ROOT, 'docs/architecture/document-store-contract.md'), 'utf8');
+  const html = fs.readFileSync(path.join(ROOT, 'designer/crystal-reports-designer-v4.html'), 'utf8');
 
   assert.ok(facade.split('\n').length <= 120, 'DocumentStore.js should remain facade-only');
+  assert.ok(utils.split('\n').length <= 20, 'DocumentStoreUtils.js should remain bounded');
   assert.ok(state.split('\n').length <= 180, 'DocumentState.js should remain bounded');
   assert.ok(selectors.split('\n').length <= 120, 'DocumentSelectors.js should remain bounded');
   assert.ok(history.split('\n').length <= 120, 'DocumentHistory.js should remain bounded');
@@ -1006,10 +1010,15 @@ test('document store split stays modular, thin, and contract-stable', () => {
   assert.match(facade, /DocumentHistory/);
   assert.match(facade, /DocumentActions/);
   assert.match(facade, /DS\.state/);
+  assert.match(facade, /DocumentStoreUtils must be loaded before DocumentStore/);
+  assert.match(utils, /function install\(/);
   assert.match(selectors, /getSelectedElements/);
   assert.match(history, /saveHistory/);
   assert.match(contract, /facade-only/i);
   assert.match(contract, /DS\.state/i);
+
+  assert.ok(html.indexOf('DocumentStoreUtils.js') < html.indexOf('"/engines/DocumentStore.js"'),
+    'document store utils helper must load before DocumentStore facade');
 });
 
 test('engine core routing split stays modular, thin, and contract-stable', () => {

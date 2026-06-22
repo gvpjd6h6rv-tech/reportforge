@@ -109,17 +109,46 @@ check('DERIVED-CALL-001', 'engines/*.js',
   `Inline section-top accumulator detected outside document-store layer — use DS.getSectionTop() instead. Found in: ${inlineComputeViolators.join(', ')}`);
 
 // ── RULE-D: DocumentStore delegates the canonical selectors ──────────────────
+//
+// Two legitimate delegation styles are recognized:
+//   1. Legacy single-line arrow:  fnName: (...args) => selectors.fnName(...args)
+//   2. forward(selectors, [...]) — a bracket-balanced array of delegated names,
+//      which may span multiple lines (engines/DocumentStore.js uses this form).
+// Both are real proof of delegation — neither relaxes the guarantee that the
+// computation must live in DocumentSelectors.js, not be reimplemented inline.
+
+function delegatesViaSelectors(src, fnName) {
+  const legacy = new RegExp(`${fnName}\\s*:\\s*\\([^)]*\\)\\s*=>\\s*selectors\\.${fnName}\\(`);
+  if (legacy.test(src)) return true;
+
+  const forwardCallRe = /forward\(\s*selectors\s*,\s*\[/g;
+  let m;
+  while ((m = forwardCallRe.exec(src)) !== null) {
+    let depth = 1;
+    let i = m.index + m[0].length;
+    let block = '';
+    while (i < src.length && depth > 0) {
+      const ch = src[i];
+      if (ch === '[') depth++;
+      else if (ch === ']') depth--;
+      if (depth > 0) block += ch;
+      i++;
+    }
+    if (new RegExp(`['"\`]${fnName}['"\`]`).test(block)) return true;
+  }
+  return false;
+}
 
 check('DERIVED-FACADE-001', 'engines/DocumentStore.js',
-  /getSectionTop.*selectors/.test(storeSrc),
+  delegatesViaSelectors(storeSrc, 'getSectionTop'),
   'DocumentStore.js must delegate getSectionTop to selectors object');
 
 check('DERIVED-FACADE-001', 'engines/DocumentStore.js',
-  /getTotalHeight.*selectors/.test(storeSrc) || /selectors.*getTotalHeight/.test(storeSrc),
+  delegatesViaSelectors(storeSrc, 'getTotalHeight'),
   'DocumentStore.js must delegate getTotalHeight to selectors object');
 
 check('DERIVED-FACADE-001', 'engines/DocumentStore.js',
-  /getElementById.*selectors/.test(storeSrc) || /selectors.*getElementById/.test(storeSrc),
+  delegatesViaSelectors(storeSrc, 'getElementById'),
   'DocumentStore.js must delegate getElementById to selectors object');
 
 // ── Report ─────────────────────────────────────────────────────────────────────

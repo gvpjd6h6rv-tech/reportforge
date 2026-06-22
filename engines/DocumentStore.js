@@ -9,43 +9,25 @@
   }, global, () => api);
   const actions = DocumentActions.createDocumentActions(state, selectors, invariants, history, () => api);
 
+  function forward(source, names) {
+    const out = {};
+    for (const name of names) out[name] = (...args) => source[name](...args);
+    return out;
+  }
+
   api = {
-    state,
-    actions,
-    selectors,
-    invariants,
-    subscribe: (...args) => actions.subscribe(...args),
-    notify: (...args) => actions.notify(...args),
-    saveHistory: (...args) => actions.saveHistory(...args),
-    undo: (...args) => actions.undo(...args),
-    redo: (...args) => actions.redo(...args),
-    _updateUndoRedo: (...args) => actions._updateUndoRedo(...args),
-    getSection: (...args) => selectors.getSection(...args),
-    getSectionTop: (...args) => selectors.getSectionTop(...args),
-    getSectionAtY: (...args) => selectors.getSectionAtY(...args),
-    getTotalHeight: (...args) => selectors.getTotalHeight(...args),
-    isSelected: (...args) => selectors.isSelected(...args),
-    clearSelectionState: (...args) => actions.clearSelectionState(...args),
-    replaceSelection: (...args) => actions.replaceSelection(...args),
-    selectOnly: (...args) => actions.selectOnly(...args),
-    addSelection: (...args) => actions.addSelection(...args),
-    removeSelection: (...args) => actions.removeSelection(...args),
-    toggleSelection: (...args) => actions.toggleSelection(...args),
-    getSelectedElements: (...args) => selectors.getSelectedElements(...args),
-    getElementById: (...args) => selectors.getElementById(...args),
-    setZoom: (...args) => actions.setZoom(...args),
-    setZoomDesign: (...args) => actions.setZoomDesign(...args),
-    setZoomPreview: (...args) => actions.setZoomPreview(...args),
-    setSections: (...args) => actions.setSections(...args),
-    setElements: (...args) => actions.setElements(...args),
-    setTool: (...args) => actions.setTool(...args),
-    setPreviewMode: (...args) => actions.setPreviewMode(...args),
-    setGridVisible: (...args) => actions.setGridVisible(...args),
-    setSnapToGrid: (...args) => actions.setSnapToGrid(...args),
-    setPageMarginLeft: (...args) => actions.setPageMarginLeft(...args),
-    setPageMarginTop: (...args) => actions.setPageMarginTop(...args),
-    updateElementLayout: (...args) => actions.updateElementLayout(...args),
-    snap: (...args) => selectors.snap(...args),
+    state, actions, selectors, invariants,
+    ...forward(actions, [
+      'subscribe', 'notify', 'saveHistory', 'undo', 'redo', '_updateUndoRedo',
+      'clearSelectionState', 'replaceSelection', 'selectOnly', 'addSelection',
+      'removeSelection', 'toggleSelection', 'setZoom', 'setZoomDesign', 'setZoomPreview',
+      'setSections', 'setElements', 'setTool', 'setPreviewMode', 'setGridVisible',
+      'setSnapToGrid', 'setPageMarginLeft', 'setPageMarginTop', 'updateElementLayout',
+    ]),
+    ...forward(selectors, [
+      'getSection', 'getSectionTop', 'getSectionAtY', 'getTotalHeight', 'isSelected',
+      'getSelectedElements', 'getElementById', 'snap',
+    ]),
   };
 
   const _GUARDED = 'sections|elements|selection|zoom|zoomDesign|zoomPreview|tool|previewMode|pageMarginLeft|pageMarginTop';
@@ -64,8 +46,8 @@
   Object.freeze(api.selectors);
   Object.freeze(api.invariants);
 
-  global.newId = newId;
-  global.mkEl = mkEl;
+  if (!global.DocumentStoreUtils) throw new Error('DocumentStoreUtils must be loaded before DocumentStore');
+  global.DocumentStoreUtils.install(global, newId, mkEl);
   global.DS = api; // DS.state + DS.actions + DS.selectors + DS.invariants
   actions.saveHistory();
 })(window);
