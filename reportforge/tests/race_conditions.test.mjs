@@ -5,7 +5,7 @@
  * Detecta condiciones de carrera reales mediante dos capas:
  *
  * Capa A — Lógica pura (sin browser):
- *   Concurrencia simulada en HistoryState, HistoryEngine.
+ *   Concurrencia simulada en HistoryEngine.
  *   Interleaving manual de operaciones que en el browser ocurren en callbacks
  *   anidados (pointer → undo → notify → suppress → pushUndo).
  *
@@ -32,15 +32,6 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 // ---------------------------------------------------------------------------
 // Loaders
 // ---------------------------------------------------------------------------
-
-function load(filename, extra = {}) {
-  const src = fs.readFileSync(path.join(ROOT, 'engines', filename), 'utf8');
-  const ctx = { module: { exports: {} }, ...extra };
-  vm.runInNewContext(src, ctx);
-  return ctx.module.exports;
-}
-
-function loadHistoryState() { return load('HistoryState.js'); }
 
 // HistoryEngine is a DOM-bound singleton (DS + layout engines + overlay).
 // Stub the minimum surface it touches so push/undo/redo run headless,
@@ -75,124 +66,120 @@ function loadHistoryEngine() {
   return { HistoryEngine: ctx.module.exports, DS, calls };
 }
 
+function setIdRC(DS, id) {
+  DS.setElements([{ id, type: 'text', x: 0, y: 0, w: 1, h: 1, text: id }]);
+}
+
+function currentIdRC(DS) {
+  return DS.elements[0].id;
+}
+
 // ---------------------------------------------------------------------------
 // Capa A — Race conditions en lógica pura
 // ---------------------------------------------------------------------------
 
-test('race condition — HistoryState: interleaved push+popUndo is consistent (no phantom entries)', () => {
-  const { createHistoryState } = loadHistoryState();
-  const st = createHistoryState(100);
+// Migrated from HistoryState.js in P14F (retired). HistoryEngine.js never
+// exposes raw popUndo/popRedo/pushRedo/clearRedo — only push/undo/redo/
+// canUndo/canRedo/suppress/onChange/clear, so each interleaving scenario is
+// re-expressed through that public API, asserted via canUndo()/canRedo() and
+// the restored DS state rather than direct stack inspection.
 
-  // Simula: dos "threads" compitiendo — uno push, uno pop
-  // En JS single-threaded esto no puede ocurrir en paralelo real,
-  // pero sí puede ocurrir en callbacks anidados (e.g. undo triggered from notify listener)
-  const results = [];
-  st.onChange(() => {
-    // Listener que intenta pop durante notify — interleaving de callbacks
-    const entry = st.popUndo();
-    if (entry) results.push({ type: 'listener-pop', label: entry.label });
+test('race condition — HistoryEngine: undo triggered from inside its own onChange listener does not corrupt the stack', () => {
+  const { HistoryEngine } = loadHistoryEngine();
+
+  // Simula: callback anidado — un listener de notify dispara undo()
+  // inmediatamente. push() ya terminó de mutar el stack antes de notificar,
+  // así que esto es seguro, pero ejercita el re-entrancy real del browser
+  // (pointer → push → notify → undo-from-listener).
+  let undoCallsFromListener = 0;
+  HistoryEngine.onChange(() => {
+    if (HistoryEngine.undo()) undoCallsFromListener++;
   });
 
-  // Secuencia de push → cada push triggerea notify → listener hace pop
-  for (let i = 0; i < 5; i++) {
-    st.pushUndo({ label: `action-${i}` });
-    st.notify();
-  }
+  for (let i = 0; i < 5; i++) HistoryEngine.push(`action-${i}`);
 
-  // El stack debe estar vacío porque cada notify triggeró un pop
-  // Si hay race: el stack tendría entries fantasma
-  assert.equal(st.undoStack.length, 0,
-    'undo stack must be empty after push+notify+listener-pop cycle (no phantom entries)');
-  assert.equal(results.length, 5, 'listener must have popped exactly 5 entries');
+  assert.equal(undoCallsFromListener, 5, 'listener must have triggered undo() exactly 5 times');
+  assert.equal(HistoryEngine.canUndo(), false,
+    'undo stack must be empty — each push was immediately undone by the listener (no phantom entries)');
 });
 
-test('race condition — HistoryState: suppress during notify does not corrupt stack', () => {
-  const { createHistoryState } = loadHistoryState();
-  const st = createHistoryState(100);
+test('race condition — HistoryEngine: suppress triggered from inside its own onChange listener blocks the nested push', () => {
+  const { HistoryEngine } = loadHistoryEngine();
 
   let suppressedPushAttempted = 0;
-  let suppressedPushBlocked = 0;
 
-  st.onChange(() => {
-    // Listener intenta push mientras se está en medio de un notify
-    // Esto ocurre en el browser cuando un undo listener dispara saveHistory
-    st.suppress(() => {
+  HistoryEngine.onChange(() => {
+    // Listener intenta push mientras se está en medio de un notify —
+    // ocurre en el browser cuando un listener de undo dispara saveHistory.
+    HistoryEngine.suppress(() => {
       suppressedPushAttempted++;
-      // Dentro de suppress, pushUndo no debería ocurrir
-      // pero el stack se verifica después
-      suppressedPushBlocked++;
+      HistoryEngine.push('attempted-inside-suppress'); // must be a no-op
     });
   });
 
-  st.pushUndo({ label: 'baseline' });
-  const stackBefore = st.undoStack.length;
+  HistoryEngine.push('baseline');
+  assert.equal(suppressedPushAttempted, 1, 'listener must have run suppress exactly once');
 
-  st.notify();
-
-  // notify disparo el listener → suppress se ejecutó
-  assert.equal(suppressedPushAttempted, 1, 'listener must have been called once');
-  assert.equal(suppressedPushBlocked, 1, 'suppress callback must have run');
-
-  // El stack NO debe haber crecido dentro del suppress (suppress bloquea pushes)
-  // Pero pushUndo en HistoryState NO verifica st.suppressed — es HistoryEngine quien lo hace
-  // Esto documenta el gap: suppress está en HistoryState pero pushUndo no lo respeta
-  assert.ok(st.undoStack.length >= stackBefore,
-    'stack must not shrink from suppress-in-notify sequence');
+  // Only the original 'baseline' push survives — the nested push inside
+  // suppress (triggered from baseline's own notify) must not have landed.
+  let undoCount = 0;
+  while (HistoryEngine.undo()) undoCount++;
+  assert.equal(undoCount, 1,
+    'exactly one entry (baseline) must be undoable — the suppressed nested push must not corrupt the stack');
 });
 
-test('race condition — HistoryState: clearRedo during push sequence is atomic', () => {
-  const { createHistoryState } = loadHistoryState();
-  const st = createHistoryState(100);
+test('race condition — HistoryEngine: a new push fully invalidates redo even under sustained interleaving', () => {
+  const { HistoryEngine, DS } = loadHistoryEngine();
 
-  // Poblar redo stack
-  for (let i = 0; i < 10; i++) st.pushRedo({ label: `redo-${i}` });
-  assert.equal(st.redoStack.length, 10);
+  // Poblar redo: push + undo deja una entrada en redo.
+  setIdRC(DS, 's0');
+  HistoryEngine.push('baseline');
+  setIdRC(DS, 's1');
+  HistoryEngine.undo();
+  assert.equal(HistoryEngine.canRedo(), true, 'sanity: redo populated after undo');
 
-  // clearRedo y pushUndo entrelazados (simula undo+new-action concurrente)
+  // push + clearRedo (automático) entrelazados — simula undo+new-action concurrente.
   const OPERATIONS = 50;
   for (let i = 0; i < OPERATIONS; i++) {
-    st.pushUndo({ label: `action-${i}` });
-    st.clearRedo(); // each new action clears redo
+    setIdRC(DS, `action-${i}`);
+    HistoryEngine.push(`action-${i}`);
+    assert.equal(HistoryEngine.canRedo(), false,
+      `redo must be invalidated immediately after push #${i} — no atomicity gap`);
   }
-
-  // Invariante: redo debe estar vacío (cada clearRedo vació completamente)
-  assert.equal(st.redoStack.length, 0,
-    'redo stack must be empty after interleaved push+clearRedo');
-  assert.equal(st.undoStack.length, Math.min(OPERATIONS, 100),
-    'undo stack must have correct count after push+clearRedo sequence');
 });
 
-test('race condition — HistoryState: popUndo+popRedo interleaving never returns same entry twice', () => {
-  const { createHistoryState } = loadHistoryState();
-  const st = createHistoryState(100);
+test('race condition — HistoryEngine: undo then redo never restores the same snapshot twice in a row', () => {
+  const { HistoryEngine, DS } = loadHistoryEngine();
 
-  // Llenar ambos stacks
-  for (let i = 0; i < 20; i++) {
-    st.pushUndo({ label: `undo-${i}` });
-    st.pushRedo({ label: `redo-${i}` });
+  const PUSHES = 20;
+  for (let i = 0; i < PUSHES; i++) {
+    setIdRC(DS, `e${i}`);
+    HistoryEngine.push(`action-${i}`);
   }
+  // Move DS to a state distinct from every pushed snapshot — otherwise the
+  // last push's snapshot equals the current state and the first undo()
+  // becomes a no-op restore, creating a spurious duplicate at the boundary
+  // between the undo and redo chains (a test-construction artifact, not a
+  // HistoryEngine bug).
+  setIdRC(DS, 'final');
 
-  const popped = new Set();
-  const conflicts = [];
+  const undoSeen = [];
+  while (HistoryEngine.undo()) undoSeen.push(currentIdRC(DS));
+  assert.equal(new Set(undoSeen).size, undoSeen.length,
+    `undo must never restore the same snapshot twice in a row:\n${undoSeen.join(',')}`);
+  assert.equal(undoSeen.length, PUSHES, 'all pushes must be undoable exactly once');
 
-  // Pop alternado — cada entry debe aparecer exactamente una vez
-  for (let i = 0; i < 20; i++) {
-    const u = st.popUndo();
-    const r = st.popRedo();
-    if (u) {
-      if (popped.has(u.label)) conflicts.push(`DUPLICATE UNDO: ${u.label}`);
-      popped.add(u.label);
-    }
-    if (r) {
-      if (popped.has(r.label)) conflicts.push(`DUPLICATE REDO: ${r.label}`);
-      popped.add(r.label);
-    }
-  }
+  const redoSeen = [];
+  while (HistoryEngine.redo()) redoSeen.push(currentIdRC(DS));
+  assert.equal(new Set(redoSeen).size, redoSeen.length,
+    `redo must never restore the same snapshot twice in a row:\n${redoSeen.join(',')}`);
+  assert.equal(redoSeen.length, PUSHES, 'all undone entries must be redoable exactly once');
 
-  assert.equal(conflicts.length, 0,
-    `no entry must be returned twice:\n${conflicts.join('\n')}`);
-  assert.equal(st.undoStack.length, 0, 'undo stack must be empty after all pops');
-  assert.equal(st.redoStack.length, 0, 'redo stack must be empty after all pops');
+  // redo() repopulates the undo stack as it drains the redo stack — that's
+  // the whole point of redo, not a leak. Redo stack must be empty; undo
+  // stack must be fully restored (every redo became undoable again).
+  assert.equal(HistoryEngine.canRedo(), false, 'redo stack must be empty after all pops');
+  assert.equal(HistoryEngine.canUndo(), true, 'undo stack must be repopulated after redoing everything back');
 });
 
 // ---------------------------------------------------------------------------

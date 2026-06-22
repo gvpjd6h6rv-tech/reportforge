@@ -12,7 +12,7 @@
       "engines/ClipboardState.js",
       "engines/DragState.js",
       "engines/KeyboardRegistry.js",
-      "engines/HistoryState.js",
+      "engines/HistoryEngine.js",
       "engines/SelectionState.js",
       "engines/SnapState.js",
       "engines/RenderSchedulerState.js",
@@ -44,7 +44,6 @@
     "kind": "guard",
     "source_files": [
       "engines/HistoryEngine.js",
-      "engines/HistoryState.js",
       "audit/immutability_guard.mjs"
     ],
     "test_files": [
@@ -824,7 +823,7 @@
     "kind": "guard",
     "source_files": [
       "engines/RuntimeServices.js",
-      "engines/HistoryState.js"
+      "engines/HistoryEngine.js"
     ],
     "test_files": [
       "reportforge/tests/global_state_corruption.test.mjs",

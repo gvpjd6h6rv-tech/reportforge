@@ -21,10 +21,6 @@
  *   Drag*, Keyboard*, Grid*, Ruler*, Zoom*, Preview*, RenderScheduler*,
  *   Workspace*) must not directly assign to DS state arrays.
  *
- * RULE-D (IMMUT-HIST-002): HistoryState.js must use factory-function closures
- *   (undoStack / redoStack as private let/const), not exported raw arrays, so
- *   tests instantiate isolated state rather than a shared singleton.
- *
  * Usage:
  *   node audit/immutability_guard.mjs          # fail on violations
  *   node audit/immutability_guard.mjs --report # report only
@@ -45,7 +41,6 @@ const readEngine = (f) => {
 };
 
 const historyEngine = readEngine('HistoryEngine.js');
-const historyState  = readEngine('HistoryState.js');
 
 // All engine files except the allowed owners for DS state mutation.
 const RENDER_ENGINES = [
@@ -102,7 +97,6 @@ check('IMMUT-HIST-001', 'engines/*.js',
 
 // The return object of HistoryEngine should not have _undoStack/_redoStack as keys.
 // We check that the string "undoStack:" does not appear in the returned object literal.
-// HistoryState.js intentionally exposes undoStack/redoStack for test isolation — exempted.
 const histEngineReturn = historyEngine.slice(historyEngine.indexOf('return {'));
 check('IMMUT-EXPOSE-001', 'engines/HistoryEngine.js',
   !/\bundoStack\s*[,}]/.test(histEngineReturn),
@@ -124,16 +118,6 @@ check('IMMUT-DS-001', 'engines/[render engines]',
   renderViolators.length === 0,
   `Render engines must not directly assign DS.elements/DS.sections — found in: ${renderViolators.join(', ') || 'none'} ` +
   '(mutation must go through document-store owner or CommandRuntime layer)');
-
-// ── RULE-D: HistoryState.js uses factory closures, not a shared singleton ────
-
-check('IMMUT-HIST-002', 'engines/HistoryState.js',
-  /function createHistoryState/.test(historyState),
-  'HistoryState.js must use a factory function (createHistoryState) for test isolation — not a shared singleton');
-
-check('IMMUT-HIST-002', 'engines/HistoryState.js',
-  /const undoStack\s*=\s*\[\]/.test(historyState) || /let undoStack\s*=\s*\[\]/.test(historyState),
-  'HistoryState.js factory must declare undoStack as a closure-private array');
 
 // ── Report ─────────────────────────────────────────────────────────────────────
 

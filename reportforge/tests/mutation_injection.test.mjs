@@ -5,7 +5,7 @@
  * Pregunta que responde: ¿nuestros tests detectan bugs reales o solo verifican el happy path?
  *
  * Método:
- *   1. Cargar source de engines puras (GeometryCore, HistoryState)
+ *   1. Cargar source de engines puras (GeometryCore) o stubbed (HistoryEngine)
  *   2. Aplicar una mutación concreta (cambio de operador, off-by-one, flip de condición)
  *   3. Correr las mismas assertions del test suite contra el código mutado
  *   4. Exigir que la assertion FALLE → mutación "killed"
@@ -178,80 +178,125 @@ test('mutation kill — GeometryCore: inflateRect sign flip on amount', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Tier B — HistoryState boundary guards & stack semantics
+// Tier B — HistoryEngine boundary guards & stack semantics
+// (migrated from HistoryState.js in P14F — HistoryState.js retired, its
+// internals were exposed for test isolation; HistoryEngine.js is a DOM-bound
+// singleton with closure-private stacks, so these tests load it with DS/
+// layout-engine stubs and assert through the public API + restored DS state,
+// never reading _undoStack/_redoStack directly.)
 // ---------------------------------------------------------------------------
 
-test('mutation kill — HistoryState: pushUndo shift→pop removes wrong end', () => {
-  const src = path.join(ROOT, 'engines/HistoryState.js');
-  assertMutationKilled(
-    src,
+function loadHistoryEngineForMutation(src) {
+  const DS = {
+    elements: [{ id: 'e0', type: 'text', x: 0, y: 0, w: 1, h: 1, text: 'e0' }],
+    sections: [{ id: 'ph', stype: 'pageHeader', height: 40 }],
+    zoom: 1.0,
+    setElements(els) { this.elements = els; },
+    setSections(sects) { this.sections = sects; },
+  };
+  const ctx = {
+    module: { exports: {} },
+    console,
+    DS,
+    CanvasLayoutEngine: { update() {}, renderAll() {} },
+    SectionLayoutEngine: { update() {} },
+    OverlayEngine: { render() {} },
+  };
+  vm.runInNewContext(src, ctx);
+  return { HistoryEngine: ctx.module.exports, DS };
+}
+
+/**
+ * Same baseline/mutant flow as assertMutationKilled, but for HistoryEngine.js,
+ * which needs DS + layout-engine stubs instead of the bare BASE_CTX.
+ */
+function assertHistoryEngineMutationKilled(mutateFn, runFn, label) {
+  const srcPath = path.join(ROOT, 'engines/HistoryEngine.js');
+  const src = fs.readFileSync(srcPath, 'utf8');
+
+  const baseline = loadHistoryEngineForMutation(src);
+  runFn(baseline.HistoryEngine, baseline.DS); // throws if baseline is broken
+
+  const mutated = mutateFn(src);
+  if (mutated === src) throw new Error(`Mutation did not change source: ${label}`);
+  const mutant = loadHistoryEngineForMutation(mutated);
+
+  let killed = false;
+  try {
+    runFn(mutant.HistoryEngine, mutant.DS);
+  } catch {
+    killed = true;
+  }
+  assert.ok(killed, `SURVIVOR — mutation not detected (test gap): ${label}`);
+}
+
+test('mutation kill — HistoryEngine: undo stack shift→pop removes wrong end on overflow', () => {
+  assertHistoryEngineMutationKilled(
     (s) => s.replace(
-      'if (undoStack.length > maxStack) undoStack.shift();',
-      'if (undoStack.length > maxStack) undoStack.pop();',
+      'if (_undoStack.length > MAX_STACK) _undoStack.shift();',
+      'if (_undoStack.length > MAX_STACK) _undoStack.pop();',
     ),
-    (H) => {
-      const st = H.createHistoryState(2);
-      st.pushUndo({ label: 'first' });
-      st.pushUndo({ label: 'second' });
-      st.pushUndo({ label: 'third' }); // overflow: oldest must be evicted
-      // With shift: [second, third]. With pop (mutant): [first, second]
-      const top = st.undoStack[st.undoStack.length - 1];
-      assert.equal(top.label, 'third', 'most recent entry must survive eviction');
+    (H, DS) => {
+      // MAX_STACK is fixed at 100 — push 101 distinguishable states to force
+      // exactly one eviction, then unwind via undo() to see which survived.
+      for (let i = 0; i <= 100; i++) {
+        DS.setElements([{ id: `e${i}`, type: 'text', x: 0, y: 0, w: 1, h: 1, text: `e${i}` }]);
+        H.push(`action-${i}`);
+      }
+      let lastRestoredId = null;
+      while (H.undo()) lastRestoredId = DS.elements[0].id;
+      // With shift(): oldest (e0) is evicted, oldest survivor is e1.
+      // With pop() (mutant): the newest entry is evicted instead.
+      assert.equal(lastRestoredId, 'e1', 'oldest surviving entry must be e1 (e0 evicted by shift)');
     },
-    'HistoryState: undoStack.shift() → undoStack.pop() on overflow',
+    'HistoryEngine: _undoStack.shift() → _undoStack.pop() on overflow',
   );
 });
 
-test('mutation kill — HistoryState: canUndo > 0 → > 1 off-by-one', () => {
-  const src = path.join(ROOT, 'engines/HistoryState.js');
-  assertMutationKilled(
-    src,
+test('mutation kill — HistoryEngine: canUndo length > 0 → > 1 off-by-one', () => {
+  assertHistoryEngineMutationKilled(
     (s) => s.replace(
-      'return undoStack.length > 0;',
-      'return undoStack.length > 1;',
+      'canUndo() { return _undoStack.length > 0; }',
+      'canUndo() { return _undoStack.length > 1; }',
     ),
     (H) => {
-      const st = H.createHistoryState(10);
-      st.pushUndo({ label: 'action' });
-      assert.ok(st.canUndo(), 'canUndo must be true after exactly one push');
+      H.push('action');
+      assert.ok(H.canUndo(), 'canUndo must be true after exactly one push');
     },
-    'HistoryState: canUndo length > 0 → > 1 (off-by-one)',
+    'HistoryEngine: canUndo length > 0 → > 1 (off-by-one)',
   );
 });
 
-test('mutation kill — HistoryState: suppress does not release (finally removed)', () => {
-  const src = path.join(ROOT, 'engines/HistoryState.js');
-  assertMutationKilled(
-    src,
+test('mutation kill — HistoryEngine: suppress does not release (finally removed)', () => {
+  assertHistoryEngineMutationKilled(
     (s) => s.replace(
-      'suppressed = true;\n      try { return fn(); } finally { suppressed = false; }',
-      'suppressed = true;\n      return fn();',
+      'try { return fn(); } finally { _suppressed = false; }',
+      'return fn();',
     ),
     (H) => {
-      const st = H.createHistoryState(10);
-      st.suppress(() => {}); // after suppress, suppressed must be false again
-      assert.ok(!st.suppressed, 'suppress must release flag after callback completes');
+      H.suppress(() => {});
+      H.push('after'); // if the flag never released, this push is silently dropped
+      assert.ok(H.canUndo(), 'suppress must release the flag so a later push() succeeds');
     },
-    'HistoryState: suppress finally { suppressed = false } removed',
+    'HistoryEngine: suppress finally { _suppressed = false } removed',
   );
 });
 
-test('mutation kill — HistoryState: clearRedo keeps redo entries (length=0 → length=1)', () => {
-  const src = path.join(ROOT, 'engines/HistoryState.js');
-  assertMutationKilled(
-    src,
+test('mutation kill — HistoryEngine: new push() keeps stale redo entries (length=0 → length=1)', () => {
+  assertHistoryEngineMutationKilled(
     (s) => s.replace(
-      'redoStack.length = 0;',
-      'redoStack.length = 1;',
+      '_redoStack.length = 0;   // invalidate redo on new action',
+      '_redoStack.length = 1;   // MUTANT',
     ),
-    (H) => {
-      const st = H.createHistoryState(10);
-      st.pushRedo({ label: 'r1' });
-      st.pushRedo({ label: 'r2' });
-      st.clearRedo();
-      assert.equal(st.redoStack.length, 0, 'clearRedo must empty the redo stack completely');
+    (H, DS) => {
+      DS.setElements([{ id: 's0', type: 'text', x: 0, y: 0, w: 1, h: 1, text: 's0' }]);
+      H.push('a');
+      DS.setElements([{ id: 's1', type: 'text', x: 0, y: 0, w: 1, h: 1, text: 's1' }]);
+      H.undo(); // populates redo stack
+      H.push('b'); // must fully invalidate redo
+      assert.equal(H.canRedo(), false, 'a new push must fully clear the redo stack');
     },
-    'HistoryState: redoStack.length = 0 → = 1 (clearRedo leaves entry)',
+    'HistoryEngine: _redoStack.length = 0 → = 1 (push leaves stale redo entry)',
   );
 });
 
@@ -270,10 +315,10 @@ test('mutation kill rate — 100% required (zero survivors allowed)', () => {
     'snapValue round→floor',
     'rectContainsPoint edge miss',
     'inflateRect sign flip',
-    'HistoryState shift→pop',
-    'HistoryState canUndo off-by-one',
-    'HistoryState suppress no-release',
-    'HistoryState clearRedo partial',
+    'HistoryEngine shift→pop',
+    'HistoryEngine canUndo off-by-one',
+    'HistoryEngine suppress no-release',
+    'HistoryEngine redo not cleared on push',
   ];
   assert.equal(mutations.length, 10, 'mutation suite must cover exactly 10 operators');
   // Operators covered: AOR×4, ROR×2, COR×0, SBR×2, UOI×2

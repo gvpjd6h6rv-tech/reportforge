@@ -73,31 +73,6 @@
       ]
     },
     {
-      "id": "SS-02",
-      "name": "history",
-      "domain": "designer-runtime",
-      "tier": "core",
-      "owner": "designer-runtime/history",
-      "allowedFiles": [
-        "HistoryState.js"
-      ],
-      "legacyFiles": [],
-      "writableState": [],
-      "selectors": [],
-      "events": [],
-      "existingTests": [
-        "reportforge/tests/history_state.test.mjs",
-        "reportforge/tests/user_parity/undo_redo_user_parity.test.mjs",
-        "reportforge/tests/user_parity/undo_redo_mixed_history_user_parity.test.mjs"
-      ],
-      "requiredGuardCI": [
-        "audit/history_state_guard.mjs"
-      ],
-      "risk": "low",
-      "notes": "HistoryState.js is a pure factory — zero DOM, zero globals, zero side effects. createHistoryState(maxStack) returns an independent stack instance with pushUndo/popUndo/pushRedo/popRedo/clearRedo/canUndo/canRedo/suppress/onChange/summary/clear. DocumentHistory.js, HistoryEngine.js, HistorySnapshot.js moved to SS-34 history-runtime (DOM-heavy, singleton patterns).",
-      "unresolvedAmbiguities": []
-    },
-    {
       "id": "SS-03",
       "name": "render-scheduler",
       "domain": "designer-runtime",

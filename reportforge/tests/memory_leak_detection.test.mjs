@@ -5,7 +5,7 @@
  * Detecta leaks reales mediante tres estrategias sin heap profiler externo:
  *
  *   1. Listener accumulation: verifica que las operaciones repetidas no acumulan
- *      listeners en objetos vivos (HistoryState.onChange, RenderScheduler queues)
+ *      listeners en objetos vivos (HistoryEngine.onChange, RenderScheduler queues)
  *
  *   2. Stack boundedness: verifica que los stacks de undo/redo respetan MAX_STACK
  *      y no crecen ilimitadamente con operaciones repetidas
@@ -32,13 +32,6 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 // Loaders aislados
 // ---------------------------------------------------------------------------
 
-function loadHistoryState() {
-  const src = fs.readFileSync(path.join(ROOT, 'engines/HistoryState.js'), 'utf8');
-  const ctx = { module: { exports: {} } };
-  vm.runInNewContext(src, ctx);
-  return ctx.module.exports;
-}
-
 function loadGeometryCore() {
   const src = fs.readFileSync(path.join(ROOT, 'engines/GeometryCore.js'), 'utf8');
   const ctx = { module: { exports: {} } };
@@ -48,116 +41,47 @@ function loadGeometryCore() {
 
 // ---------------------------------------------------------------------------
 // 1. Listener accumulation
+//
+// HistoryState.js (the old factory harness) was retired in P14F. Its
+// "onChange listeners do not accumulate" coverage was migrated to
+// history_engine.test.mjs ("onChange: repeated registration accumulates
+// listeners") in P14E, against the real HistoryEngine.js singleton.
 // ---------------------------------------------------------------------------
 
-test('memory leak — HistoryState: onChange listeners do not accumulate across repeated registrations', () => {
-  const { createHistoryState } = loadHistoryState();
-  const st = createHistoryState(100);
-
-  // Patrón de leak: re-registrar el mismo listener en cada operación
-  // (common bug: widget se re-monta y añade listener sin limpiar el anterior)
-  const REGISTRATIONS = 50;
-  const fired = [];
-
-  for (let i = 0; i < REGISTRATIONS; i++) {
-    // Cada "registro" añade un listener — simula el bug de re-mount sin cleanup
-    st.onChange(() => fired.push(i));
-  }
-
-  // Una sola operación
-  st.pushUndo({ label: 'action' });
-  st.notify();
-
-  // Con 50 registros, fired tendrá 50 entradas — esto ES el leak
-  // El test documenta la realidad y fija un umbral: si crece más de 50× → alerta
-  // La corrección real requiere removeListener (fuera de scope de este test)
-  const listenersNow = st.listeners.length;
-  assert.equal(listenersNow, REGISTRATIONS,
-    'listener count must equal registrations (documents accumulation as known behavior)');
-
-  // Snapshot honesto: este engine NO tiene removeListener — gap documentado
-  // La verificación real sería: listenersNow === 1 después de cleanup
-  // Por ahora: el test falla si acumula MÁS de lo esperado (regresión de peor leak)
-  assert.ok(listenersNow <= REGISTRATIONS,
-    `REGRESSION: listener count ${listenersNow} exceeds registered count ${REGISTRATIONS}`);
-});
-
-test('memory leak — HistoryState: notify does not accumulate entries in stack', () => {
-  const { createHistoryState } = loadHistoryState();
-  const st = createHistoryState(10);
-
-  // Verificar que notify() no tiene side-effects en los stacks
-  const NOTIFY_COUNT = 200;
-  st.pushUndo({ label: 'base' });
-
-  for (let i = 0; i < NOTIFY_COUNT; i++) {
-    st.notify();
-  }
-
-  // Stacks deben mantenerse igual — notify no empuja nada
-  assert.equal(st.undoStack.length, 1, 'notify must not accumulate undo stack entries');
-  assert.equal(st.redoStack.length, 0, 'notify must not accumulate redo stack entries');
+test('memory leak — DEFERRED: notify() isolated from stack mutation (requires exposing a bare notify hook)', () => {
+  // HistoryState.js exposed notify() standalone, decoupled from any stack
+  // mutation, so "calling notify 200x doesn't grow the stacks" was directly
+  // testable. HistoryEngine.js never exposes notify() without coupling it to
+  // push()/undo()/redo()/clear() — each of which DOES mutate a stack by
+  // design. There is no black-box way to trigger a notify-only event on the
+  // real singleton without changing its public API (out of scope here, and
+  // not requested by any production caller). Documented as a gap rather than
+  // silently dropped — same convention as the RenderScheduler rAF gap in
+  // race_conditions.test.mjs and the DOM listener leak gap below.
+  const GAP = {
+    id: 'MEMLEAK-NOTIFY-001',
+    description: 'HistoryEngine.js has no standalone notify() hook decoupled from a stack mutation',
+    requires: 'exposing notify() (or an equivalent no-op trigger) on HistoryEngine.js — a public API change',
+    knownRisk: 'low', // every real caller of notify is already a stack mutation in this codebase
+    implementedIn: null,
+  };
+  assert.ok(GAP.id, 'gap must be formally documented');
+  assert.equal(GAP.implementedIn, null, 'gap is unimplemented — update when done');
 });
 
 // ---------------------------------------------------------------------------
 // 2. Stack boundedness — stacks deben respetar MAX_STACK
+//
+// "undo stack bounded under sustained push" migrated to history_engine.test.mjs
+// ("undo stack is capped at MAX_STACK=100, oldest entries evicted") in P14C.
+// "redo stack bounded under sustained pushRedo" had no equivalent to migrate:
+// HistoryEngine.js exposes no standalone pushRedo — redo only grows as a
+// side-effect of undo(), which is itself bounded by the undo stack's own cap
+// (conservation invariant, confirmed in P14B) — the property this test
+// checked is not reachable through HistoryEngine's public API.
+// "clear releases all stack memory" migrated to history_engine.test.mjs
+// ("clear empties both stacks (canUndo/canRedo become false)") in P14C.
 // ---------------------------------------------------------------------------
-
-test('memory leak — HistoryState: undo stack is bounded by maxStack under sustained push', () => {
-  const { createHistoryState } = loadHistoryState();
-  const MAX = 10;
-  const st = createHistoryState(MAX);
-
-  // Push 5× la capacidad máxima
-  const PUSHES = MAX * 5;
-  for (let i = 0; i < PUSHES; i++) {
-    st.pushUndo({ label: `action-${i}` });
-  }
-
-  assert.ok(st.undoStack.length <= MAX,
-    `undo stack must be bounded at maxStack=${MAX}, got ${st.undoStack.length}`);
-
-  // Verificar que las entradas más recientes sobreviven (FIFO correcto)
-  const top = st.undoStack[st.undoStack.length - 1];
-  assert.equal(top.label, `action-${PUSHES - 1}`,
-    'most recent push must survive eviction (FIFO eviction from front)');
-
-  const bottom = st.undoStack[0];
-  assert.equal(bottom.label, `action-${PUSHES - MAX}`,
-    'oldest surviving entry must be PUSHES-MAX (correct eviction boundary)');
-});
-
-test('memory leak — HistoryState: redo stack is bounded by maxStack under sustained push', () => {
-  const { createHistoryState } = loadHistoryState();
-  const MAX = 10;
-  const st = createHistoryState(MAX);
-
-  const PUSHES = MAX * 5;
-  for (let i = 0; i < PUSHES; i++) {
-    st.pushRedo({ label: `redo-${i}` });
-  }
-
-  assert.ok(st.redoStack.length <= MAX,
-    `redo stack must be bounded at maxStack=${MAX}, got ${st.redoStack.length}`);
-});
-
-test('memory leak — HistoryState: clear releases all stack memory', () => {
-  const { createHistoryState } = loadHistoryState();
-  const st = createHistoryState(100);
-
-  for (let i = 0; i < 100; i++) {
-    st.pushUndo({ label: `u${i}` });
-    st.pushRedo({ label: `r${i}` });
-  }
-
-  assert.equal(st.undoStack.length, 100);
-  assert.equal(st.redoStack.length, 100);
-
-  st.clear();
-
-  assert.equal(st.undoStack.length, 0, 'clear must release undo stack');
-  assert.equal(st.redoStack.length, 0, 'clear must release redo stack');
-});
 
 // ---------------------------------------------------------------------------
 // 3. Reference retention en GeometryCore — funciones puras no retienen estado
@@ -203,46 +127,12 @@ test('memory leak — GeometryCore: makeRect produces independent objects (no sh
 
 // ---------------------------------------------------------------------------
 // 4. Suppress anidado no corrompe el flag
+//
+// Both "suppress does not leak suppressed=true after normal/error completion"
+// and "nested suppress is NOT re-entrant" migrated to history_engine.test.mjs
+// in P14C/P14E, proxied through the observable effect on push() (HistoryEngine
+// never exposes the raw suppressed flag, by design — see immutability_guard.mjs).
 // ---------------------------------------------------------------------------
-
-test('memory leak — HistoryState: suppress does not leak suppressed=true after normal completion', () => {
-  const { createHistoryState } = loadHistoryState();
-  const st = createHistoryState(10);
-
-  // Caso normal: suppress libera el flag al terminar
-  st.suppress(() => {
-    assert.ok(st.suppressed, 'must be suppressed inside callback');
-  });
-  assert.equal(st.suppressed, false, 'suppressed must be false after normal completion');
-
-  // Caso error: finally garantiza liberación incluso si el callback lanza
-  try {
-    st.suppress(() => { throw new Error('inner error'); });
-  } catch {}
-  assert.equal(st.suppressed, false, 'suppressed must be false after error in callback (finally clause)');
-});
-
-test('memory leak — HistoryState: nested suppress is NOT re-entrant (documents known limitation)', () => {
-  const { createHistoryState } = loadHistoryState();
-  const st = createHistoryState(10);
-
-  // HistoryState.suppress no implementa conteo de re-entrada — cada suppress anidado
-  // libera el flag cuando su finally corre, incluso si un outer suppress sigue activo.
-  // Este test documenta el comportamiento real: no es un bug de leak, pero sí un gap
-  // de re-entrancia que podría causar pushes inesperados en suppress anidado.
-  let outerSeenAfterInner = null;
-  st.suppress(() => {
-    st.suppress(() => {}); // inner libera el flag
-    outerSeenAfterInner = st.suppressed; // outer ya ve false — behavior real del engine
-  });
-
-  // Documenta el comportamiento real: suppress no es re-entrant-safe
-  // Si esto cambia (se agrega contador de depth), este test debe actualizarse.
-  assert.equal(outerSeenAfterInner, false,
-    'KNOWN: suppress is not re-entrant — inner suppress releases flag before outer completes');
-  assert.equal(st.suppressed, false,
-    'after all callbacks: suppressed must be false regardless of nesting');
-});
 
 // ---------------------------------------------------------------------------
 // 5. Deferred: leaks de DOM/heap real
