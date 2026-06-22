@@ -1253,8 +1253,7 @@
       "owner": "designer-runtime/history-runtime",
       "allowedFiles": [
         "DocumentHistory.js",
-        "HistoryEngine.js",
-        "HistorySnapshot.js"
+        "HistoryEngine.js"
       ],
       "legacyFiles": [],
       "writableState": [
