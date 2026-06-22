@@ -128,6 +128,7 @@ function loadCRS(elements, selectionIds) {
   const _canonicalCanvasWriter = () => ({
     renderElement() {},
     updateElementPosition() {},
+    renderAll() {},
   });
   const window = {
     CommandRuntimeShared: {
@@ -156,6 +157,7 @@ function loadClipboardWorld(elements, selectionIds) {
   const _canonicalCanvasWriter = () => ({
     renderElement() {},
     updateElementPosition() {},
+    renderAll() {},
   });
   const window = {
     CommandRuntimeShared: {

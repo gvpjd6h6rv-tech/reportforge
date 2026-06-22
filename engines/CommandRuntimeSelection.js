@@ -62,9 +62,11 @@
     if (!sel.length) return;
     sel.forEach((id) => {
       DS.setElements(DS.elements.filter((e) => e.id !== id), 'CommandRuntimeSelection.removeSelection');
-      const div = document.querySelector(`.cr-element[data-id="${id}"]`);
-      if (div) div.remove();
     });
+    // DOM cleanup goes through the canonical canvas writer's own full-resync
+    // (P25B — this used to query the DOM directly via document.querySelector
+    // (...).remove(), bypassing _canonicalCanvasWriter() entirely).
+    _canonicalCanvasWriter().renderAll();
     DS.clearSelectionState('CommandRuntimeSelection.removeSelection');
     syncSelectionPanels();
     DS.saveHistory();

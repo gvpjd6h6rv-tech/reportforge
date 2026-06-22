@@ -8,11 +8,16 @@
  * (RuntimeWriteLog.js / Principle #22 "Fallbacks honestos") that
  * paste()/sameWidth()/sameHeight() correctly use.
  *
- * This file deliberately documents the bypass as a finding, not just a
- * passing assertion — each bypass test would FAIL if the function were
- * changed to go through DS.updateElementLayout()/DS.setElements() instead,
- * so it also doubles as a regression guard for whichever direction this
- * code evolves in.
+ * bringFront/sendBack still document a real, intentional finding: each
+ * "DOCUMENTED BYPASS" test would FAIL if those functions were changed to go
+ * through DS.updateElementLayout() instead, so it doubles as a regression
+ * guard for whichever direction that code evolves in.
+ *
+ * delete/removeSelection() no longer has that bypass (P25B): it used to
+ * query the DOM directly (document.querySelector(...).remove()), bypassing
+ * the canonical canvas writer entirely. It now requires
+ * _canonicalCanvasWriter().renderAll() — the writer's own full-resync
+ * method — instead of touching the DOM itself.
  *
  * Coverage:
  *   1. bringFront(): zIndex becomes max+1, calls _canonicalCanvasWriter().
@@ -22,8 +27,8 @@
  *      bypass of DS.updateElementLayout().
  *   3. delete/removeSelection(): DS.setElements() called with the
  *      'CommandRuntimeSelection.removeSelection' tag, DS.saveHistory() once,
- *      syncSelectionPanels() once, and a documented direct DOM div.remove()
- *      that bypasses _canonicalCanvasWriter() entirely.
+ *      syncSelectionPanels() once, and DOM cleanup exclusively via
+ *      _canonicalCanvasWriter().renderAll() — never document.querySelector().
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -39,7 +44,7 @@ function makeEl(id, extra = {}) {
   return { id, x: 0, y: 0, w: 10, h: 10, ...extra };
 }
 
-function load(elements, selectionIds, { missingDomIds = [] } = {}) {
+function load(elements, selectionIds) {
   const calls = {
     updateElementLayout: [],
     updateElement: [],
@@ -47,6 +52,7 @@ function load(elements, selectionIds, { missingDomIds = [] } = {}) {
     clearSelectionState: [],
     saveHistory: 0,
     syncSelectionPanels: 0,
+    renderAll: 0,
   };
   const domCalls = { querySelector: [], remove: [] };
 
@@ -76,6 +82,7 @@ function load(elements, selectionIds, { missingDomIds = [] } = {}) {
     updateElement(id) { calls.updateElement.push(id); },
     updateElementPosition() {},
     renderElement() {},
+    renderAll() { calls.renderAll++; },
   });
 
   const document = {
@@ -83,10 +90,6 @@ function load(elements, selectionIds, { missingDomIds = [] } = {}) {
       domCalls.querySelector.push(selector);
       const m = selector.match(/data-id="([^"]+)"/);
       const id = m ? m[1] : null;
-      // Simulates the real-world case the code's own `if (div) div.remove();`
-      // guard exists for: the element was never rendered, or was already
-      // removed from the DOM by something else.
-      if (missingDomIds.includes(id)) return null;
       return {
         remove() { domCalls.remove.push(id); },
       };
@@ -282,37 +285,24 @@ test('delete — is a no-op when nothing is selected', () => {
   assert.equal(calls.setElements.length, 0);
 });
 
-test('DOCUMENTED BYPASS — delete removes the DOM node directly via div.remove(), bypassing _canonicalCanvasWriter()', () => {
-  // Unlike bringFront/sendBack/sameWidth/sameHeight, which always route DOM
-  // sync through _canonicalCanvasWriter(), removeSelection() queries the DOM
-  // directly (document.querySelector('.cr-element[data-id="..."]')) and
-  // calls .remove() on it itself. This is a second, independent bypass from
-  // the zIndex one — DS state is updated canonically (setElements + tag),
-  // but the DOM removal is not mediated by the canvas writer at all.
-  const { CRS, domCalls } = load([makeEl('a'), makeEl('b')], ['a', 'b']);
+test('FIXED (P25B) — delete cleans up the DOM exclusively via _canonicalCanvasWriter().renderAll(), never document.querySelector()', () => {
+  // Before P25B, removeSelection() queried the DOM directly
+  // (document.querySelector('.cr-element[data-id="..."]').remove()),
+  // bypassing the canonical canvas writer. It now calls
+  // _canonicalCanvasWriter().renderAll() — the writer's own full-resync
+  // method, which re-derives the DOM from the (already-filtered) DS.elements
+  // — instead of touching the DOM itself.
+  const { CRS, calls, domCalls } = load([makeEl('a'), makeEl('b')], ['a', 'b']);
   CRS.delete();
-  assert.deepEqual(domCalls.remove.sort(), ['a', 'b'],
-    'KNOWN BYPASS: removeSelection calls document.querySelector(...).remove() directly, never _canonicalCanvasWriter()');
-  assert.deepEqual(domCalls.querySelector, [
-    '.cr-element[data-id="a"]',
-    '.cr-element[data-id="b"]',
-  ]);
+  assert.equal(calls.renderAll, 1, 'REQUIRED: removeSelection must call _canonicalCanvasWriter().renderAll() exactly once');
+  assert.deepEqual(domCalls.querySelector, [], 'REGRESSION GUARD: removeSelection must never call document.querySelector() directly anymore');
+  assert.deepEqual(domCalls.remove, [], 'REGRESSION GUARD: removeSelection must never call .remove() on a DOM node directly anymore');
 });
 
-test('delete — does not throw when document.querySelector finds no matching DOM node', () => {
-  // Exercises the `if (div) div.remove();` guard's true reason for
-  // existing: the element was never rendered (or was already removed by
-  // something else). Without this guard, calling .remove() on null would
-  // throw — this test would catch a regression that removed the guard.
-  const { CRS, calls, domCalls, DS } = load(
-    [makeEl('a'), makeEl('b')],
-    ['a', 'b'],
-    { missingDomIds: ['a'] },
-  );
-  assert.doesNotThrow(() => CRS.delete(), 'a missing DOM node must not crash removeSelection');
-  assert.deepEqual(domCalls.remove, ['b'], 'remove() must only be called for the element whose DOM node existed');
-  assert.deepEqual(DS.elements.map((e) => e.id), [], 'DS state removal must proceed for BOTH elements regardless of DOM presence');
-  assert.equal(calls.saveHistory, 1);
+test('FIXED (P25B) — delete calls renderAll() exactly once regardless of how many elements are removed', () => {
+  const { CRS, calls } = load([makeEl('a'), makeEl('b'), makeEl('c'), makeEl('d')], ['a', 'c']);
+  CRS.delete();
+  assert.equal(calls.renderAll, 1, 'a single renderAll() resync covers the whole batch, not one call per removed element');
 });
 
 test('delete — a selected id with no matching DS element is still processed without crashing', () => {
@@ -329,9 +319,7 @@ test('delete — a selected id with no matching DS element is still processed wi
   // id (the filter is just a no-op for an id that was never present).
   assert.equal(calls.setElements.length, 2,
     'DS.setElements is called once per selected id, even for an id with no matching element');
-  assert.deepEqual(domCalls.querySelector, [
-    '.cr-element[data-id="a"]',
-    '.cr-element[data-id="ghost-id"]',
-  ], 'querySelector is attempted for the ghost id too — removeSelection does not pre-filter by existence');
+  assert.equal(calls.renderAll, 1, 'renderAll() still runs once even when one of the selected ids was a ghost');
+  assert.deepEqual(domCalls.querySelector, [], 'removeSelection must not query the DOM directly for the ghost id either');
   assert.equal(calls.saveHistory, 1);
 });
