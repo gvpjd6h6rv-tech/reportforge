@@ -204,7 +204,11 @@
     const curSel = new Set(DS.selection);
     DS.clearSelectionState('CommandRuntimeSelection.invertSelection');
     allIds.forEach((id) => { if (!curSel.has(id)) DS.addSelection(id, 'CommandRuntimeSelection.invertSelection'); });
-    renderSelectionHandles();
+    // P26B — was renderSelectionHandles() only (handles, but no properties
+    // panel / format toolbar refresh), unlike selectAll() which already used
+    // the full syncSelectionPanels() chain for the same kind of selection
+    // change.
+    syncSelectionPanels();
     setStatus('Selección invertida');
   }
 
