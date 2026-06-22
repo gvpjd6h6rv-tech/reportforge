@@ -1,0 +1,44 @@
+{
+  "excludedDirs": ["node_modules", ".git", ".venv", "__pycache__", "dist", "build", "archive", "deb-source"],
+  "scanRoots": ["engines"],
+  "weights": {
+    "fileScore": {
+      "loc": 0.12,
+      "complexity": 0.20,
+      "imports": 0.10,
+      "functions": 0.10,
+      "classes": 0.08,
+      "nesting": 0.15,
+      "responsibilities": 0.13,
+      "globals": 0.07,
+      "topLevelSideEffects": 0.05
+    },
+    "behaviorScore": {
+      "ownershipViolation": 0.25,
+      "roleViolation": 0.20,
+      "crossLayerDependency": 0.20,
+      "hiddenSideEffect": 0.15,
+      "coupling": 0.20
+    },
+    "totalScore": { "file": 0.60, "behavior": 0.40 }
+  },
+  "caps": {
+    "loc": 400,
+    "complexity": 80,
+    "imports": 20,
+    "functions": 25,
+    "classes": 5,
+    "nesting": 6,
+    "responsibilities": 4,
+    "globals": 10,
+    "topLevelSideEffects": 3
+  },
+  "levelScale": [
+    { "level": "limpio", "min": 0, "max": 20 },
+    { "level": "aceptable", "min": 21, "max": 40 },
+    { "level": "sospechoso", "min": 41, "max": 60 },
+    { "level": "ensalada_seria", "min": 61, "max": 80 },
+    { "level": "ensalada_nivel_dios", "min": 81, "max": 100 }
+  ],
+  "globalIdentifiers": ["window", "document", "DS", "Facade", "DocumentModel", "CFG", "RF"]
+}

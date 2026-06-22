@@ -373,6 +373,349 @@
         "api.runVisualDoctorRuntimePreview",
         "api.syncDetachedWindow"
       ]
+    },
+    {
+      "path": "salad-score.config.json",
+      "owner": "salad-score-config",
+      "responsibility": "Root-level user-tunable weights/caps/levelScale/scanRoots for SP Score. Data only.",
+      "maxLines": 9999,
+      "maxDecisionPoints": 0
+    },
+    {
+      "path": "tools/salad-score/contracts/contract_checker.mjs",
+      "owner": "salad-score-contracts",
+      "responsibility": "SP1A-FIX4 architecture: contracts layer, single responsibility per file.",
+      "maxLines": 30,
+      "maxDecisionPoints": 5
+    },
+    {
+      "path": "tools/salad-score/contracts/contract_collector.mjs",
+      "owner": "salad-score-contracts",
+      "responsibility": "SP1A-FIX4 architecture: contracts layer, single responsibility per file.",
+      "maxLines": 30,
+      "maxDecisionPoints": 5
+    },
+    {
+      "path": "tools/salad-score/contracts/contract_file_result.mjs",
+      "owner": "salad-score-contracts",
+      "responsibility": "SP1A-FIX4 architecture: contracts layer, single responsibility per file. Individual override: this contract validates an aggregate 13-field shape (the full per-file output contract), genuinely larger than a single-value contract like contract_normalizer.mjs — the generic contracts/ cap of 30 lines was too tight for this one file specifically.",
+      "maxLines": 45,
+      "maxDecisionPoints": 5
+    },
+    {
+      "path": "tools/salad-score/contracts/contract_metric.mjs",
+      "owner": "salad-score-contracts",
+      "responsibility": "SP1A-FIX4 architecture: contracts layer, single responsibility per file.",
+      "maxLines": 30,
+      "maxDecisionPoints": 5
+    },
+    {
+      "path": "tools/salad-score/contracts/contract_normalizer.mjs",
+      "owner": "salad-score-contracts",
+      "responsibility": "SP1A-FIX4 architecture: contracts layer, single responsibility per file.",
+      "maxLines": 30,
+      "maxDecisionPoints": 5
+    },
+    {
+      "path": "tools/salad-score/contracts/contract_reporter.mjs",
+      "owner": "salad-score-contracts",
+      "responsibility": "SP1A-FIX4 architecture: contracts layer, single responsibility per file.",
+      "maxLines": 30,
+      "maxDecisionPoints": 5
+    },
+    {
+      "path": "tools/salad-score/contracts/contract_scorer.mjs",
+      "owner": "salad-score-contracts",
+      "responsibility": "SP1A-FIX4 architecture: contracts layer, single responsibility per file.",
+      "maxLines": 30,
+      "maxDecisionPoints": 5
+    },
+    {
+      "path": "tools/salad-score/collectors/collect_file_list.mjs",
+      "owner": "salad-score-collectors",
+      "responsibility": "SP1A-FIX4 architecture: collectors layer, single responsibility per file.",
+      "maxLines": 40,
+      "maxDecisionPoints": 8
+    },
+    {
+      "path": "tools/salad-score/collectors/collect_file_text.mjs",
+      "owner": "salad-score-collectors",
+      "responsibility": "SP1A-FIX4 architecture: collectors layer, single responsibility per file.",
+      "maxLines": 40,
+      "maxDecisionPoints": 8
+    },
+    {
+      "path": "tools/salad-score/collectors/collect_owner.mjs",
+      "owner": "salad-score-collectors",
+      "responsibility": "SP1A-FIX4 architecture: collectors layer, single responsibility per file.",
+      "maxLines": 40,
+      "maxDecisionPoints": 8
+    },
+    {
+      "path": "tools/salad-score/metrics/metric_classes.mjs",
+      "owner": "salad-score-metrics",
+      "responsibility": "SP1A-FIX4 architecture: metrics layer, single responsibility per file.",
+      "maxLines": 40,
+      "maxDecisionPoints": 8
+    },
+    {
+      "path": "tools/salad-score/metrics/metric_complexity.mjs",
+      "owner": "salad-score-metrics",
+      "responsibility": "SP1A-FIX4 architecture: metrics layer, single responsibility per file.",
+      "maxLines": 40,
+      "maxDecisionPoints": 8
+    },
+    {
+      "path": "tools/salad-score/metrics/metric_file_type.mjs",
+      "owner": "salad-score-metrics",
+      "responsibility": "SP1A-FIX4 architecture: metrics layer, single responsibility per file.",
+      "maxLines": 40,
+      "maxDecisionPoints": 8
+    },
+    {
+      "path": "tools/salad-score/metrics/metric_functions.mjs",
+      "owner": "salad-score-metrics",
+      "responsibility": "SP1A-FIX4 architecture: metrics layer, single responsibility per file.",
+      "maxLines": 40,
+      "maxDecisionPoints": 8
+    },
+    {
+      "path": "tools/salad-score/metrics/metric_globals.mjs",
+      "owner": "salad-score-metrics",
+      "responsibility": "SP1A-FIX4 architecture: metrics layer, single responsibility per file.",
+      "maxLines": 40,
+      "maxDecisionPoints": 8
+    },
+    {
+      "path": "tools/salad-score/metrics/metric_imports.mjs",
+      "owner": "salad-score-metrics",
+      "responsibility": "SP1A-FIX4 architecture: metrics layer, single responsibility per file.",
+      "maxLines": 40,
+      "maxDecisionPoints": 8
+    },
+    {
+      "path": "tools/salad-score/metrics/metric_loc.mjs",
+      "owner": "salad-score-metrics",
+      "responsibility": "SP1A-FIX4 architecture: metrics layer, single responsibility per file.",
+      "maxLines": 40,
+      "maxDecisionPoints": 8
+    },
+    {
+      "path": "tools/salad-score/metrics/metric_nesting.mjs",
+      "owner": "salad-score-metrics",
+      "responsibility": "SP1A-FIX4 architecture: metrics layer, single responsibility per file.",
+      "maxLines": 40,
+      "maxDecisionPoints": 8
+    },
+    {
+      "path": "tools/salad-score/metrics/metric_responsibilities.mjs",
+      "owner": "salad-score-metrics",
+      "responsibility": "SP1A-FIX4 architecture: metrics layer, single responsibility per file.",
+      "maxLines": 40,
+      "maxDecisionPoints": 8
+    },
+    {
+      "path": "tools/salad-score/metrics/metric_top_level_side_effects.mjs",
+      "owner": "salad-score-metrics",
+      "responsibility": "SP1A-FIX4 architecture: metrics layer, single responsibility per file.",
+      "maxLines": 40,
+      "maxDecisionPoints": 8
+    },
+    {
+      "path": "tools/salad-score/normalizers/normalize_capped_linear.mjs",
+      "owner": "salad-score-normalizers",
+      "responsibility": "SP1A-FIX4 architecture: normalizers layer, single responsibility per file.",
+      "maxLines": 40,
+      "maxDecisionPoints": 8
+    },
+    {
+      "path": "tools/salad-score/checkers/check_checker_single_contract.mjs",
+      "owner": "salad-score-checkers",
+      "responsibility": "SP1A-FIX4 architecture: checkers layer, single responsibility per file.",
+      "maxLines": 50,
+      "maxDecisionPoints": 10
+    },
+    {
+      "path": "tools/salad-score/checkers/check_cli_io_only.mjs",
+      "owner": "salad-score-checkers",
+      "responsibility": "SP1A-FIX4 architecture: checkers layer, single responsibility per file.",
+      "maxLines": 50,
+      "maxDecisionPoints": 10
+    },
+    {
+      "path": "tools/salad-score/checkers/check_coupling.mjs",
+      "owner": "salad-score-checkers",
+      "responsibility": "SP1A-FIX4 architecture: checkers layer, single responsibility per file.",
+      "maxLines": 50,
+      "maxDecisionPoints": 10
+    },
+    {
+      "path": "tools/salad-score/checkers/check_cross_layer_dependency.mjs",
+      "owner": "salad-score-checkers",
+      "responsibility": "SP1A-FIX4 architecture: checkers layer, single responsibility per file.",
+      "maxLines": 50,
+      "maxDecisionPoints": 10
+    },
+    {
+      "path": "tools/salad-score/checkers/check_guard_single_rule.mjs",
+      "owner": "salad-score-checkers",
+      "responsibility": "SP1A-FIX4 architecture: checkers layer, single responsibility per file.",
+      "maxLines": 50,
+      "maxDecisionPoints": 10
+    },
+    {
+      "path": "tools/salad-score/checkers/check_hidden_side_effect.mjs",
+      "owner": "salad-score-checkers",
+      "responsibility": "SP1A-FIX4 architecture: checkers layer, single responsibility per file.",
+      "maxLines": 50,
+      "maxDecisionPoints": 10
+    },
+    {
+      "path": "tools/salad-score/checkers/check_map_data_only.mjs",
+      "owner": "salad-score-checkers",
+      "responsibility": "SP1A-FIX4 architecture: checkers layer, single responsibility per file.",
+      "maxLines": 50,
+      "maxDecisionPoints": 10
+    },
+    {
+      "path": "tools/salad-score/checkers/check_no_cross_layer_imports.mjs",
+      "owner": "salad-score-checkers",
+      "responsibility": "SP1A-FIX4 architecture: checkers layer, single responsibility per file.",
+      "maxLines": 50,
+      "maxDecisionPoints": 10
+    },
+    {
+      "path": "tools/salad-score/checkers/check_no_god_file.mjs",
+      "owner": "salad-score-checkers",
+      "responsibility": "SP1A-FIX4 architecture: checkers layer, single responsibility per file.",
+      "maxLines": 50,
+      "maxDecisionPoints": 10
+    },
+    {
+      "path": "tools/salad-score/checkers/check_no_hidden_side_effects.mjs",
+      "owner": "salad-score-checkers",
+      "responsibility": "SP1A-FIX4 architecture: checkers layer, single responsibility per file.",
+      "maxLines": 50,
+      "maxDecisionPoints": 10
+    },
+    {
+      "path": "tools/salad-score/checkers/check_no_mixed_io_and_logic.mjs",
+      "owner": "salad-score-checkers",
+      "responsibility": "SP1A-FIX4 architecture: checkers layer, single responsibility per file.",
+      "maxLines": 50,
+      "maxDecisionPoints": 10
+    },
+    {
+      "path": "tools/salad-score/checkers/check_ownership_violation.mjs",
+      "owner": "salad-score-checkers",
+      "responsibility": "SP1A-FIX4 architecture: checkers layer, single responsibility per file.",
+      "maxLines": 50,
+      "maxDecisionPoints": 10
+    },
+    {
+      "path": "tools/salad-score/checkers/check_role_violation.mjs",
+      "owner": "salad-score-checkers",
+      "responsibility": "SP1A-FIX4 architecture: checkers layer, single responsibility per file.",
+      "maxLines": 50,
+      "maxDecisionPoints": 10
+    },
+    {
+      "path": "tools/salad-score/checkers/check_runner_only_orchestration.mjs",
+      "owner": "salad-score-checkers",
+      "responsibility": "SP1A-FIX4 architecture: checkers layer, single responsibility per file.",
+      "maxLines": 50,
+      "maxDecisionPoints": 10
+    },
+    {
+      "path": "tools/salad-score/checkers/check_test_single_contract.mjs",
+      "owner": "salad-score-checkers",
+      "responsibility": "SP1A-FIX4 architecture: checkers layer, single responsibility per file.",
+      "maxLines": 50,
+      "maxDecisionPoints": 10
+    },
+    {
+      "path": "tools/salad-score/scoring/build_reasons.mjs",
+      "owner": "salad-score-scoring",
+      "responsibility": "SP1A-FIX4 architecture: scoring layer, single responsibility per file.",
+      "maxLines": 60,
+      "maxDecisionPoints": 12
+    },
+    {
+      "path": "tools/salad-score/scoring/classify_level.mjs",
+      "owner": "salad-score-scoring",
+      "responsibility": "SP1A-FIX4 architecture: scoring layer, single responsibility per file.",
+      "maxLines": 60,
+      "maxDecisionPoints": 12
+    },
+    {
+      "path": "tools/salad-score/scoring/score_behavior.mjs",
+      "owner": "salad-score-scoring",
+      "responsibility": "SP1A-FIX4 architecture: scoring layer, single responsibility per file.",
+      "maxLines": 60,
+      "maxDecisionPoints": 12
+    },
+    {
+      "path": "tools/salad-score/scoring/score_file.mjs",
+      "owner": "salad-score-scoring",
+      "responsibility": "SP1A-FIX4 architecture: scoring layer, single responsibility per file.",
+      "maxLines": 60,
+      "maxDecisionPoints": 12
+    },
+    {
+      "path": "tools/salad-score/scoring/score_repo.mjs",
+      "owner": "salad-score-scoring",
+      "responsibility": "SP1A-FIX4 architecture: scoring layer, single responsibility per file.",
+      "maxLines": 60,
+      "maxDecisionPoints": 12
+    },
+    {
+      "path": "tools/salad-score/scoring/score_total.mjs",
+      "owner": "salad-score-scoring",
+      "responsibility": "SP1A-FIX4 architecture: scoring layer, single responsibility per file.",
+      "maxLines": 60,
+      "maxDecisionPoints": 12
+    },
+    {
+      "path": "tools/salad-score/scoring/suggest_split.mjs",
+      "owner": "salad-score-scoring",
+      "responsibility": "SP1A-FIX4 architecture: scoring layer, single responsibility per file.",
+      "maxLines": 60,
+      "maxDecisionPoints": 12
+    },
+    {
+      "path": "tools/salad-score/reporters/reporter_console.mjs",
+      "owner": "salad-score-reporters",
+      "responsibility": "SP1A-FIX4 architecture: reporters layer, single responsibility per file.",
+      "maxLines": 150,
+      "maxDecisionPoints": 20
+    },
+    {
+      "path": "tools/salad-score/reporters/reporter_json.mjs",
+      "owner": "salad-score-reporters",
+      "responsibility": "SP1A-FIX4 architecture: reporters layer, single responsibility per file.",
+      "maxLines": 150,
+      "maxDecisionPoints": 20
+    },
+    {
+      "path": "tools/salad-score/reporters/reporter_markdown.mjs",
+      "owner": "salad-score-reporters",
+      "responsibility": "SP1A-FIX4 architecture: reporters layer, single responsibility per file.",
+      "maxLines": 150,
+      "maxDecisionPoints": 20
+    },
+    {
+      "path": "tools/salad-score/runner/run_salad_score.mjs",
+      "owner": "salad-score-runner",
+      "responsibility": "SP1A-FIX4 architecture: runner layer, single responsibility per file.",
+      "maxLines": 150,
+      "maxDecisionPoints": 30
+    },
+    {
+      "path": "tools/salad-score/bin/salad-score.mjs",
+      "owner": "salad-score-cli",
+      "responsibility": "SP1A-FIX4 architecture: bin layer, single responsibility per file. Individual override: 7 flags + 6 exit codes + 3 reporter dispatch genuinely need more than the generic CLI cap of 100 lines once expressed as readable, low-complexity lookup tables instead of long if/else chains.",
+      "maxLines": 120,
+      "maxDecisionPoints": 20
     }
   ]
 }

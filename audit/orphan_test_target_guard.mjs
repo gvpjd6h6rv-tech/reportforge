@@ -128,15 +128,16 @@ function main() {
   const htmlSources = htmlFiles.map((f) => readFileSync(join(htmlDir, f), 'utf8'));
   const loadedByHtml = collectHtmlScriptSrcs(htmlSources);
 
-  // Excludes the P29B/P30B guards' own meta-test files: all three use
-  // synthetic placeholder names like 'engines/A.js' / 'engines/Missing.js' in
-  // unit-test fixtures to test guard logic itself, not real engine source —
+  // Excludes meta-test files that use synthetic placeholder paths like
+  // 'engines/A.js' / 'engines/Missing.js' / '/repo/engines/X.js' in unit-test
+  // fixtures to test guard/metric logic itself, not real engine source —
   // those literals would otherwise be indistinguishable from a genuine test
-  // target (same class of self-reference contamination, three instances).
+  // target (same class of self-reference contamination, recurring since P30B).
   const SELF_TESTS = new Set([
     'orphan_test_target_guard.test.mjs',
     'ssot_runtime_binding_guard.test.mjs',
     'subsystem_ownership_guard_rule_exist.test.mjs',
+    'salad_score_metric_file_type.test.mjs',
   ]);
   const testsDir = join(ROOT, 'reportforge/tests');
   const testFiles = readdirSync(testsDir).filter((f) => f.endsWith('.test.mjs') && !SELF_TESTS.has(f));

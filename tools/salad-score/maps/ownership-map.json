@@ -1,0 +1,10 @@
+{
+  "tool": "RF Salad Point Score",
+  "version": 1,
+  "ssot": {
+    "config": "salad-score.config.json",
+    "cli": "tools/salad-score/bin/salad-score.mjs",
+    "runner": "tools/salad-score/runner/run_salad_score.mjs",
+    "ownershipLookupSource": "audit/subsystem_ownership_map.json"
+  }
+}

@@ -4,6 +4,7 @@ __pycache__/
 *.pyd
 node_modules/
 .env
+reports/
 *.log
 *.zip
 *.tar.gz
