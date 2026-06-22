@@ -10,7 +10,21 @@
     });
   }
 
+  // copy/cut/paste delegate to ClipboardEngine whenever it is loaded (always
+  // true in production — designer-v4.html). This unifies the menu/toolbar
+  // path with the Ctrl+C/X/V path onto one shared clipboard storage (P23A/B
+  // — they previously used two separate, non-syncing stores: DS.clipboard
+  // here vs ClipboardEngine's own storage, so copying via one path and
+  // pasting via the other silently failed).
+  //
+  // The DS.clipboard-based logic below is kept ONLY as a fallback for a
+  // context where ClipboardEngine isn't loaded (mirrors the same
+  // typeof-guard fallback idiom ClipboardEngine itself uses for
+  // ClipboardState) — it must keep working standalone, but is no longer the
+  // path production actually takes.
+
   function copy() {
+    if (typeof ClipboardEngine !== 'undefined') { ClipboardEngine.copy(); return; }
     const sel = DS.getSelectedElements();
     if (!sel.length) return;
     DS.clipboard = sel.map((el) => JSON.stringify(el));
@@ -18,11 +32,13 @@
   }
 
   function cut() {
+    if (typeof ClipboardEngine !== 'undefined') { ClipboardEngine.cut(); return; }
     copy();
     removeSelection();
   }
 
   function paste() {
+    if (typeof ClipboardEngine !== 'undefined') { ClipboardEngine.paste(); return; }
     if (!DS.clipboard.length) return;
     DS.clearSelectionState('CommandRuntimeSelection.paste');
     const newEls = DS.clipboard.map((json) => {

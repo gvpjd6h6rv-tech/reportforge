@@ -2,33 +2,45 @@
 /**
  * command_runtime_selection_clipboard.test.mjs
  *
- * Covers the 6 remaining active CommandRuntimeSelection.js functions
- * (copy/cut/paste/selectAll/sameWidth/sameHeight, P22D) AND documents, with
- * a reproducing test (not just narration), the real dual-path clipboard bug
- * found in P22D:
+ * Covers the 6 active CommandRuntimeSelection.js functions
+ * (copy/cut/paste/selectAll/sameWidth/sameHeight, P22D).
  *
- *   menu/toolbar click (data-action="copy"/"cut"/"paste")
- *     → CommandEngine.copy/cut/paste() → CommandRuntimeSelection.* → DS.clipboard
+ * P22D/P22E found a real dual-path clipboard bug: menu/toolbar
+ * (data-action="copy"/"cut"/"paste" → CommandRuntimeSelection.* → DS.clipboard)
+ * and Ctrl+C/X/V (KeyboardEngine.js:74-84 → ClipboardEngine.* → its own
+ * private storage) never shared state, so mixing the two silently failed.
  *
- *   Ctrl+C / Ctrl+X / Ctrl+V (engines/KeyboardEngine.js:74-84)
- *     → ClipboardEngine.copy/cut/paste() → ClipboardState's private _clipboard
+ * P23B fixed this by making CommandRuntimeSelection.copy/cut/paste() delegate
+ * to ClipboardEngine.copy/cut/paste() whenever ClipboardEngine is loaded
+ * (always true in production — designer-v4.html:479), with the original
+ * DS.clipboard-based logic kept ONLY as a fallback for a context where
+ * ClipboardEngine isn't loaded (mirrors the same typeof-guard fallback idiom
+ * already used throughout this codebase, e.g. ClipboardEngine's own
+ * ClipboardState fallback).
  *
- * These two paths never share storage. Copying via one and pasting via the
- * other silently does nothing (or pastes stale content) — confirmed below
- * by loading both engines.js files into the SAME DS/window, not narrated.
+ * This file now covers BOTH branches:
+ *   - "fallback path" tests (loadCRS, no ClipboardEngine in context) verify
+ *     the original DS.clipboard logic still works when ClipboardEngine is
+ *     absent — required by P23B's "maintain a reasonable fallback".
+ *   - "delegated / interoperability" tests (loadClipboardWorld, both engines
+ *     loaded) verify the bug is actually fixed: copy via one entry point and
+ *     paste via the other now succeeds, because both go through the same
+ *     ClipboardEngine.
  *
  * Also documents the lower-severity selectAll duplicate: Ctrl+A
  * (engines/KeyboardEngine.js:89-92) reimplements selectAll inline instead of
  * calling CommandEngine.selectAll() — same behavior, different source tag.
+ * Not touched by this fix — out of scope for P23B.
  *
  * Coverage:
- *   1. copy/cut/paste round-trip through CommandRuntimeSelection alone.
- *   2. selectAll, sameWidth, sameHeight.
- *   3. DS.clipboard is read/written as an array of JSON strings (the actual
- *      shape CommandRuntimeSelection uses), confirmed explicitly.
- *   4. BUG: copy via CommandRuntimeSelection + paste via ClipboardEngine.
- *   5. BUG: copy via ClipboardEngine + paste via CommandRuntimeSelection.
- *   6. selectAll: CommandRuntimeSelection vs the literal Ctrl+A snippet are
+ *   1. copy/cut/paste fallback path (ClipboardEngine absent).
+ *   2. selectAll, sameWidth, sameHeight (unaffected by the clipboard fix).
+ *   3. copy/cut/paste delegate to ClipboardEngine when it is present, and no
+ *      longer touch DS.clipboard at all in that case.
+ *   4. FIXED: menu copy → Ctrl+V paste now succeeds.
+ *   5. FIXED: Ctrl+C copy → menu paste now succeeds.
+ *   6. FIXED: mixed cut (menu cut → Ctrl+V paste) does not lose the element.
+ *   7. selectAll: CommandRuntimeSelection vs the literal Ctrl+A snippet are
  *      behaviorally equivalent except for the source tag.
  */
 import test from 'node:test';
@@ -166,17 +178,30 @@ function loadClipboardWorld(elements, selectionIds) {
   ctx.module = { exports: {} };
   vm.runInNewContext(CLIPBOARD_ENGINE_SRC, ctx);
   const ClipboardEngine = ctx.module.exports;
+  ctx.ClipboardEngine = ClipboardEngine; // make it a readable global for CommandRuntimeSelection's typeof check
 
   ctx.module = { exports: {} };
   vm.runInNewContext(CRS_SRC, ctx);
   const CRS = ctx.window.CommandRuntimeSelection;
 
+  // ClipboardEngine.cut() calls the global `CommandEngine.delete()` (not
+  // ClipboardEngine itself) to remove the originals — in production
+  // CommandEngine is the merged object built in CommandRuntime.js that
+  // includes CommandRuntimeSelection's methods. CRS.delete is already that
+  // same removeSelection function (aliased in its own return object).
+  ctx.CommandEngine = CRS;
+
   return { CRS, ClipboardEngine, ClipboardState, DS, calls };
 }
 
-// ── copy / cut / paste — within CommandRuntimeSelection alone ────────────────
+// ── copy / cut / paste — FALLBACK path (ClipboardEngine absent) ─────────────
+//
+// loadCRS() does not put ClipboardEngine in the vm context, so
+// `typeof ClipboardEngine !== 'undefined'` is false here — these tests
+// exercise CommandRuntimeSelection's own DS.clipboard-based logic, kept as
+// the fallback per P23B's "maintain a reasonable fallback" requirement.
 
-test('copy — stores selected elements as JSON strings in DS.clipboard', () => {
+test('FALLBACK — copy stores selected elements as JSON strings in DS.clipboard', () => {
   const { CRS, DS } = loadCRS([makeEl('a', { x: 5, y: 6 })], ['a']);
   CRS.copy();
   assert.equal(DS.clipboard.length, 1);
@@ -184,13 +209,13 @@ test('copy — stores selected elements as JSON strings in DS.clipboard', () => 
   assert.deepEqual(JSON.parse(DS.clipboard[0]), makeEl('a', { x: 5, y: 6 }));
 });
 
-test('copy — is a no-op when nothing is selected', () => {
+test('FALLBACK — copy is a no-op when nothing is selected', () => {
   const { CRS, DS } = loadCRS([makeEl('a')], []);
   CRS.copy();
   assert.deepEqual(DS.clipboard, []);
 });
 
-test('paste — round-trips a CommandRuntimeSelection copy back into new elements, offset by 8', () => {
+test('FALLBACK — paste round-trips a CommandRuntimeSelection copy back into new elements, offset by 8', () => {
   const { CRS, DS, calls } = loadCRS([makeEl('a', { x: 5, y: 6 })], ['a']);
   CRS.copy();
   CRS.paste();
@@ -204,14 +229,14 @@ test('paste — round-trips a CommandRuntimeSelection copy back into new element
   assert.deepEqual(DS.selection, [pasted.id], 'the newly pasted element must become the selection');
 });
 
-test('paste — is a no-op when DS.clipboard is empty', () => {
+test('FALLBACK — paste is a no-op when DS.clipboard is empty', () => {
   const { CRS, DS, calls } = loadCRS([makeEl('a')], []);
   CRS.paste();
   assert.equal(DS.elements.length, 1, 'no element must be added');
   assert.equal(calls.saveHistory, 0);
 });
 
-test('cut — copies then removes the selected elements', () => {
+test('FALLBACK — cut copies then removes the selected elements', () => {
   const { CRS, DS } = loadCRS([makeEl('a', { x: 1, y: 2 }), makeEl('b')], ['a']);
   CRS.cut();
   assert.equal(DS.clipboard.length, 1);
@@ -283,50 +308,88 @@ test('sameWidth/sameHeight — call saveHistory() and syncSelectionPanels() exac
   }
 });
 
-// ── BUG: clipboard dual-path — confirmed by reproduction, not narration ──────
+// ── DELEGATION: copy/cut/paste hand off to ClipboardEngine when present ─────
+//
+// loadClipboardWorld() puts ClipboardEngine in the vm context, so
+// `typeof ClipboardEngine !== 'undefined'` is true — CommandRuntimeSelection
+// must delegate entirely and never touch DS.clipboard in this branch.
 
-test('BUG — copy via CommandRuntimeSelection, then paste via ClipboardEngine, pastes nothing', () => {
+test('DELEGATION — copy does not touch DS.clipboard when ClipboardEngine is present', () => {
   const { CRS, ClipboardEngine, DS } = loadClipboardWorld([makeEl('a', { x: 5, y: 6 })], ['a']);
-
-  CRS.copy(); // writes JSON strings into DS.clipboard
-  assert.equal(DS.clipboard.length, 1, 'sanity: DS.clipboard was populated');
-
-  const newIds = ClipboardEngine.paste(); // reads from ClipboardState, which CRS.copy() never touched
-
-  // newIds is a vm-sandbox-realm array — compare by length/content, not
-  // assert.deepEqual against a main-realm [] literal, which also checks
-  // Object.prototype identity and would false-fail across realms even on
-  // identical (empty) content (same pitfall as P13B/P15E in this campaign).
-  assert.equal(newIds.length, 0, 'KNOWN BUG: ClipboardEngine.paste() returns nothing — it never saw the CommandRuntimeSelection copy');
-  assert.equal(DS.elements.length, 1, 'KNOWN BUG: no element was actually pasted, despite DS.clipboard holding real content');
-});
-
-test('BUG — copy via ClipboardEngine, then paste via CommandRuntimeSelection, pastes nothing', () => {
-  const { CRS, ClipboardEngine, DS } = loadClipboardWorld([makeEl('a', { x: 5, y: 6 })], ['a']);
-
-  ClipboardEngine.copy(); // writes into ClipboardState's private _clipboard
-  assert.equal(DS.clipboard.length, 0, 'sanity: DS.clipboard (CommandRuntimeSelection\'s storage) was never touched');
-
-  CRS.paste(); // reads DS.clipboard, which is still empty
-
-  assert.equal(DS.elements.length, 1,
-    'KNOWN BUG: CommandRuntimeSelection.paste() is a no-op — it never saw the ClipboardEngine copy, ' +
-    'because DS.clipboard.length is 0 even though ClipboardState holds real content');
-});
-
-test('BUG — the two clipboard storages use incompatible shapes even if one tried to read the other', () => {
-  // Reinforces why the bug above is not a trivial "forgot to sync" fix:
-  // CommandRuntimeSelection stores JSON STRINGS in DS.clipboard;
-  // ClipboardEngine stores deep-copied OBJECTS in ClipboardState. Even a
-  // naive cross-read would need a format conversion, not just a shared
-  // reference.
-  const { CRS, ClipboardEngine, ClipboardState, DS } = loadClipboardWorld([makeEl('a')], ['a']);
   CRS.copy();
-  assert.equal(typeof DS.clipboard[0], 'string', 'CommandRuntimeSelection.copy() stores JSON strings');
+  assert.equal(DS.clipboard.length, 0, 'DS.clipboard must stay untouched — copy() delegated to ClipboardEngine');
+  assert.ok(ClipboardEngine.hasContent(), 'ClipboardEngine must hold the copied content instead');
+});
 
-  ClipboardState.clear();
+test('DELEGATION — paste delegates to ClipboardEngine.paste() and returns its result', () => {
+  const { CRS, ClipboardEngine, DS } = loadClipboardWorld([makeEl('a', { x: 5, y: 6 })], ['a']);
   ClipboardEngine.copy();
-  assert.equal(typeof ClipboardState.get()[0], 'object', 'ClipboardEngine.copy() stores plain objects, not strings');
+  CRS.paste();
+  assert.equal(DS.elements.length, 2, 'paste must add the pasted element via ClipboardEngine');
+});
+
+test('DELEGATION — cut delegates to ClipboardEngine.cut(), which still removes the element via the shared delete path', () => {
+  const { CRS, ClipboardEngine, DS } = loadClipboardWorld([makeEl('a', { x: 1, y: 2 }), makeEl('b')], ['a']);
+  CRS.cut();
+  assert.deepEqual(DS.elements.map((e) => e.id), ['b'], 'the cut element must be removed from DS.elements');
+  assert.ok(ClipboardEngine.hasContent(), 'the cut element must be retrievable from ClipboardEngine');
+});
+
+// ── FIXED: clipboard dual-path bug — confirmed by reproduction, not narration ─
+//
+// Same 2 scenarios documented as KNOWN BUG in P22E. Now that
+// CommandRuntimeSelection delegates to ClipboardEngine whenever it is
+// present (always true in production), both directions succeed.
+
+test('FIXED — menu copy (CommandRuntimeSelection) then Ctrl+V paste (ClipboardEngine) now succeeds', () => {
+  const { CRS, ClipboardEngine, DS } = loadClipboardWorld([makeEl('a', { x: 5, y: 6 })], ['a']);
+
+  CRS.copy(); // menu/toolbar entry point
+  const newIds = ClipboardEngine.paste(); // Ctrl+V entry point
+
+  assert.equal(newIds.length, 1, 'FIXED: ClipboardEngine.paste() now sees the menu copy');
+  assert.equal(DS.elements.length, 2, 'FIXED: a new element was actually pasted');
+});
+
+test('FIXED — Ctrl+C copy (ClipboardEngine) then menu paste (CommandRuntimeSelection) now succeeds', () => {
+  const { CRS, ClipboardEngine, DS } = loadClipboardWorld([makeEl('a', { x: 5, y: 6 })], ['a']);
+
+  ClipboardEngine.copy(); // Ctrl+C entry point
+  CRS.paste(); // menu/toolbar entry point
+
+  assert.equal(DS.elements.length, 2,
+    'FIXED: CommandRuntimeSelection.paste() now sees the Ctrl+C copy, because it delegates to the same ClipboardEngine');
+});
+
+test('FIXED — mixed cut: menu cut, then Ctrl+V paste, does not lose the element', () => {
+  const { CRS, ClipboardEngine, DS } = loadClipboardWorld([makeEl('a', { x: 1, y: 2 }), makeEl('b')], ['a']);
+
+  CRS.cut(); // menu cut — removes 'a', stores it via ClipboardEngine
+  assert.deepEqual(DS.elements.map((e) => e.id), ['b'], 'sanity: the original element was removed by cut');
+
+  const newIds = ClipboardEngine.paste(); // Ctrl+V — must bring it back
+
+  assert.equal(newIds.length, 1, 'FIXED: the cut element must be retrievable via Ctrl+V — no data loss');
+  // DS.elements was rebuilt via a `[...]` spread inside ClipboardEngine.js's
+  // own paste() — that spread executes in the vm sandbox realm, so the
+  // resulting array (and .map()/.sort() on it) is a sandbox-realm array.
+  // Compare by content (.includes), not assert.deepEqual against a
+  // main-realm array literal (same pitfall as P13B/P15E/P22E).
+  const ids = DS.elements.map((e) => e.id);
+  assert.equal(ids.length, 2);
+  assert.ok(ids.includes('b'));
+  assert.ok(ids.includes(newIds[0]));
+});
+
+test('FIXED — mixed cut the other way: Ctrl+X cut, then menu paste, does not lose the element', () => {
+  const { CRS, ClipboardEngine, DS } = loadClipboardWorld([makeEl('a', { x: 1, y: 2 }), makeEl('b')], ['a']);
+
+  ClipboardEngine.cut(); // Ctrl+X — removes 'a' via the shared CommandEngine.delete(), stores it via ClipboardEngine
+  assert.deepEqual(DS.elements.map((e) => e.id), ['b'], 'sanity: the original element was removed by Ctrl+X');
+
+  CRS.paste(); // menu paste — must bring it back, now that CRS.paste() delegates too
+
+  assert.equal(DS.elements.length, 2, 'FIXED: the Ctrl+X-cut element must be retrievable via menu paste — no data loss');
 });
 
 // ── selectAll duplicate: CommandRuntimeSelection vs the literal Ctrl+A snippet ─
