@@ -12,7 +12,6 @@
       "engines/ClipboardState.js",
       "engines/DragState.js",
       "engines/KeyboardRegistry.js",
-      "engines/GuideState.js",
       "engines/HistoryState.js",
       "engines/SelectionState.js",
       "engines/SnapState.js",
