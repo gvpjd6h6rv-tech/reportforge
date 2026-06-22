@@ -1,6 +1,16 @@
 'use strict';
 /**
- * SS-23 — AlignmentGeometry contracts
+ * SS-23/SS-36 — AlignmentEngine contracts (_bounds/compute/computeSpacing)
+ *
+ * Migrated in P17D from engines/AlignmentGeometry.js to engines/AlignmentEngine.js
+ * — AlignmentEngine.js is the live implementation (consumed by
+ * engines/DragEngine.js:97 via AlignmentEngine.compute(movingEl)).
+ * AlignmentGeometry.js was a byte-for-byte duplicate of _bounds/compute/
+ * computeSpacing with zero production callers (confirmed in P17C), pending
+ * retirement in P17E. AlignmentEngine.js additionally exposes align()/
+ * distribute(), not covered here (out of scope for this migration — see
+ * P17C item 4, pre-existing gap, not introduced by this change).
+ *
  * Covers: THRESHOLD constant, _bounds (no-DS / with-DS), compute (no-DS early
  * return / page edges / element edges / deduplication), computeSpacing
  * (no-DS / equal spacing / unequal spacing / single element).
@@ -14,7 +24,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const require = createRequire(import.meta.url);
-const AG = require('../../engines/AlignmentGeometry.js');
+const AG = require('../../engines/AlignmentEngine.js');
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -44,61 +54,74 @@ test('THRESHOLD — is exported and equals 4', () => {
   assert.equal(AG.THRESHOLD, 4);
 });
 
-// ── _bounds — no DS ───────────────────────────────────────────────────────────
-
-test('_bounds — without DS: secTop=0, y equals el.y', () => {
-  const b = AG._bounds(makeEl('a', 10, 20, 30, 40));
-  assert.equal(b.y, 20);
-  assert.equal(b.x, 10);
+// ── _bounds — NOT migratable: private to AlignmentEngine.js, unreachable ──────
+//
+// AlignmentEngine.js's public API is { compute, computeSpacing, align,
+// distribute, THRESHOLD } — _bounds is a closure-private helper, never
+// exported (confirmed empirically: AG._bounds is undefined, all 9 original
+// direct-call tests failed immediately when retargeted here).
+//
+// Worse than "not exported": the "without DS" half of the original 6 tests
+// exercises a code path that is structurally UNREACHABLE through
+// AlignmentEngine's public API even indirectly. compute()'s very first line
+// is `if (typeof DS === 'undefined') return {...}` — it returns before ever
+// calling _bounds — so _bounds(el) without DS never executes inside
+// AlignmentEngine.js at all. This is not a migration gap, it's dead surface
+// that this task is correctly forbidden from closing (rule: no tocar
+// AlignmentEngine.js). Documented per project convention (see the
+// RenderScheduler rAF gap in race_conditions.test.mjs) rather than silently
+// dropped.
+test('AlignmentEngine — DEFERRED: _bounds without DS is unreachable via the public API (documents real gap, not migrated)', () => {
+  const GAP = {
+    id: 'ALIGN-BOUNDS-001',
+    description: '_bounds(el) without DS was directly unit-tested against AlignmentGeometry.js (6 cases: x/y/x2/y2/cx/cy passthrough). AlignmentEngine.js never exposes _bounds, and compute() short-circuits on `typeof DS === "undefined"` before ever calling it — so this behavior cannot be exercised through AlignmentEngine.js, not even indirectly.',
+    requires: 'Exporting _bounds from AlignmentEngine.js (an API change, out of scope — rule: no tocar AlignmentEngine.js) or accepting the gap.',
+    knownRisk: 'low — _bounds is pure arithmetic (el.x/el.y/el.w/el.h passthrough), trivial to re-verify by inspection; no DS-dependent branch involved in the no-DS path.',
+    implementedIn: null,
+  };
+  assert.ok(GAP.id, 'gap must be formally documented');
+  assert.equal(GAP.implementedIn, null, 'gap is unimplemented — update when done');
 });
 
-test('_bounds — without DS: x2 = x + w', () => {
-  const b = AG._bounds(makeEl('a', 10, 20, 30, 40));
-  assert.equal(b.x2, 40);
+// ── _bounds — with DS: migrated indirectly via compute()'s guide positions ────
+//
+// The "with DS" half IS reachable: compute() calls _bounds(el) for every
+// other element once DS exists, and the resulting guide modelPos values are
+// exactly _bounds(el).x / .y / .x2 / .cx / .cy (offset by secTop for y).
+// These 3 tests verify the same arithmetic _bounds performed, observed
+// through compute()'s public output instead of calling _bounds directly.
+
+test('compute (with DS): y-axis guide position includes secTop offset', () => {
+  // other el: y=20, h=40, secTop=100 → bounds.y=120 (same arithmetic the
+  // original "_bounds with DS: secTop added to y" test verified directly).
+  // secTop is shared by both elements, so it cancels out of the distance
+  // check (|mb.y - b.y| = |movingY - otherY|) — proximity is on raw y, but
+  // the resulting guide position is still the secTop-offset absolute value.
+  const moving = makeEl('m', 200, 21, 20, 20); // close to other's raw y=20 (d=1 ≤ 4)
+  const other  = makeEl('o', 200, 20, 30, 40);
+  const result = withDSAndCFG([moving, other], 800, () => 100, () => AG.compute(moving));
+  const g = result.guides.find(g => g.axis === 'y' && g.modelPos === 120);
+  assert.ok(g, 'expected y-guide at secTop(100) + el.y(20) = 120');
 });
 
-test('_bounds — without DS: y2 = y + h', () => {
-  const b = AG._bounds(makeEl('a', 10, 20, 30, 40));
-  assert.equal(b.y2, 60);
+test('compute (with DS): x-axis guide positions are unaffected by secTop', () => {
+  // other el: x=10, w=30 → bounds.x=10 regardless of secTop (same arithmetic
+  // the original "_bounds with DS: x values unaffected by secTop" verified).
+  const moving = makeEl('m', 12, 500, 20, 20); // close to x=10 (d=2 ≤ 4)
+  const other  = makeEl('o', 10, 500, 30, 20);
+  const result = withDSAndCFG([moving, other], 800, () => 999, () => AG.compute(moving));
+  const g = result.guides.find(g => g.axis === 'x' && g.modelPos === 10);
+  assert.ok(g, 'expected x-guide at el.x=10, unaffected by secTop=999');
 });
 
-test('_bounds — without DS: cx = x + w/2', () => {
-  const b = AG._bounds(makeEl('a', 10, 20, 30, 40));
-  assert.equal(b.cx, 25);
-});
-
-test('_bounds — without DS: cy = y + h/2', () => {
-  const b = AG._bounds(makeEl('a', 10, 20, 30, 40));
-  assert.equal(b.cy, 40);
-});
-
-test('_bounds — without DS: w and h pass through', () => {
-  const b = AG._bounds(makeEl('a', 10, 20, 30, 40));
-  assert.equal(b.w, 30);
-  assert.equal(b.h, 40);
-});
-
-// ── _bounds — with DS ─────────────────────────────────────────────────────────
-
-test('_bounds — with DS: secTop added to y', () => {
-  const b = withDS([], () => 100, () => AG._bounds(makeEl('a', 10, 20, 30, 40, 's1')));
-  assert.equal(b.y,  120);   // 100 + 20
-  assert.equal(b.y2, 160);   // 100 + 20 + 40
-  assert.equal(b.cy, 140);   // 100 + 20 + 20
-});
-
-test('_bounds — with DS: x values unaffected by secTop', () => {
-  const b = withDS([], () => 50, () => AG._bounds(makeEl('a', 10, 20, 30, 40)));
-  assert.equal(b.x,  10);
-  assert.equal(b.x2, 40);
-  assert.equal(b.cx, 25);
-});
-
-test('_bounds — with DS secTop=0: same as no-DS result', () => {
-  const el = makeEl('a', 5, 15, 20, 10);
-  const noDS = AG._bounds(el);
-  const withDSResult = withDS([], () => 0, () => AG._bounds(el));
-  assert.deepEqual(noDS, withDSResult);
+test('compute (with DS): secTop=0 yields the same y-guide position as el.y directly', () => {
+  // other el: y=15 with secTop()=>0 → bounds.y=15 (same boundary case the
+  // original "_bounds with DS secTop=0: same as no-DS result" verified).
+  const moving = makeEl('m', 600, 16, 20, 20); // close to 15 (d=1 ≤ 4)
+  const other  = makeEl('o', 600, 15, 20, 20);
+  const result = withDSAndCFG([moving, other], 800, () => 0, () => AG.compute(moving));
+  const g = result.guides.find(g => g.axis === 'y' && g.modelPos === 15);
+  assert.ok(g, 'expected y-guide at el.y=15 when secTop=0 (matches no-DS arithmetic)');
 });
 
 // ── compute — no DS ───────────────────────────────────────────────────────────
