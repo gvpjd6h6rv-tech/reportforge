@@ -6,8 +6,18 @@
  * Enforces two invariants:
  *
  *   RULE-A: Every data-action value declared in the designer HTML must have a
- *   matching `case 'X':` in CommandRuntimeHandlers.js. An unhandled data-action
- *   is a silent no-op — the user clicks a button and nothing happens.
+ *   matching handler across the CommandRuntimeHandlers*.js family — either a
+ *   `case 'X':` or a `'X': fn` / `X() {...}` entry inside an object literal
+ *   passed to `dispatchActionMap(action, {...})`. An unhandled data-action is
+ *   a silent no-op — the user clicks a button and nothing happens.
+ *
+ *   (P19B fix: the action dispatch architecture evolved from a single
+ *   switch/case in CommandRuntimeHandlers.js into a per-domain family of
+ *   files — CommandRuntimeHandlersFormat.js, ...SelectionDispatch.js, etc. —
+ *   each calling dispatchActionMap() with an object-literal handler map. The
+ *   guard only ever scanned CommandRuntimeHandlers.js for `case` syntax, so
+ *   every action wired through the newer files was a false positive. Fixed
+ *   by scanning the whole CommandRuntimeHandlers*.js family for both styles.)
  *
  *   RULE-B: No engine file outside the declared binding owners may wire a
  *   toolbar/tab/toolbar-input command using imperative getElementById + click/change.
@@ -36,8 +46,15 @@ const ARGS    = process.argv.slice(2);
 const REPORT  = ARGS.includes('--report');
 
 const SHELL_HTML     = path.join(ROOT, 'designer/crystal-reports-designer-v4.html');
-const HANDLER_JS     = path.join(ROOT, 'engines/CommandRuntimeHandlers.js');
 const ENGINES_DIR    = path.join(ROOT, 'engines');
+
+// The action-dispatch family — CommandRuntimeHandlers.js plus every
+// per-domain CommandRuntimeHandlers*.js file. Discovered dynamically (not
+// hardcoded) so a future new domain file is picked up automatically instead
+// of silently becoming a new blind spot, repeating the P19B root cause.
+const HANDLER_FILES = fs.readdirSync(ENGINES_DIR)
+  .filter(f => /^CommandRuntimeHandlers.*\.js$/.test(f))
+  .map(f => path.join(ENGINES_DIR, f));
 
 // Binding owner files — allowed to wire imperative event listeners for commands
 const BINDING_OWNERS = new Set([
@@ -78,6 +95,47 @@ function extractHandlerCases(src) {
   return cases;
 }
 
+// ── Extract action keys from dispatchActionMap(action, { ... }) calls ───────
+//
+// Handlers are declared as object-literal entries in one of three styles:
+//   'quoted-key': fn            (string key, e.g. 'color-font': runColorFont)
+//   bareKey: fn                 (identifier key, e.g. print: () => ...)
+//   bareKey() { ... }           (ES6 method shorthand, e.g. undo() { ... })
+// All entries observed in the codebase are one-per-line, so a balanced-brace
+// extraction of the object literal followed by line-by-line key matching is
+// sufficient — no need for a full JS parser.
+
+function extractBalancedBraceBody(src, openBraceIdx) {
+  let depth = 0;
+  for (let i = openBraceIdx; i < src.length; i++) {
+    if (src[i] === '{') depth++;
+    else if (src[i] === '}') {
+      depth--;
+      if (depth === 0) return src.slice(openBraceIdx + 1, i);
+    }
+  }
+  return src.slice(openBraceIdx + 1);
+}
+
+function extractDispatchMapKeys(src) {
+  const keys = new Set();
+  const callRe = /dispatchActionMap\s*\(\s*action\s*,\s*\{/g;
+  let m;
+  while ((m = callRe.exec(src)) !== null) {
+    const openBraceIdx = src.indexOf('{', m.index);
+    const body = extractBalancedBraceBody(src, openBraceIdx);
+    for (const rawLine of body.split('\n')) {
+      const line = rawLine.trim();
+      if (!line || line.startsWith('//')) continue;
+      const quoted = line.match(/^['"]([^'"]+)['"]\s*:/);
+      if (quoted) { keys.add(quoted[1]); continue; }
+      const bareKeyOrMethod = line.match(/^([A-Za-z_$][\w$]*)\s*[:(]/);
+      if (bareKeyOrMethod) keys.add(bareKeyOrMethod[1]);
+    }
+  }
+  return keys;
+}
+
 // ── Check for imperative command bindings in non-owner files ─────────────────
 
 // Matches: getElementById('btn-X').addEventListener OR querySelector('#btn-X').addEventListener
@@ -89,19 +147,26 @@ const IMPERATIVE_BINDING = /(?:getElementById|querySelector)\s*\(\s*['"`](?:#?(?
 const violations = [];
 
 // Load sources
-const html        = fs.readFileSync(SHELL_HTML, 'utf8');
-const handlerSrc  = fs.readFileSync(HANDLER_JS, 'utf8');
+const html = fs.readFileSync(SHELL_HTML, 'utf8');
 
 const htmlActions  = extractDataActions(html);
 const htmlFormats  = extractDataFormats(html);
-const handlerCases = extractHandlerCases(handlerSrc);
+
+// RULE-A source of truth: union of case-style and dispatchActionMap-style
+// handlers across the whole CommandRuntimeHandlers*.js family.
+const handlerActions = new Set();
+for (const file of HANDLER_FILES) {
+  const src = fs.readFileSync(file, 'utf8');
+  for (const k of extractHandlerCases(src)) handlerActions.add(k);
+  for (const k of extractDispatchMapKeys(src)) handlerActions.add(k);
+}
 
 // RULE-A: data-action values with no handler case
 for (const action of htmlActions) {
-  if (!handlerCases.has(action)) {
+  if (!handlerActions.has(action)) {
     violations.push({
       rule: 'BIND-ACTION-001',
-      desc: `data-action="${action}" in HTML has no case '${action}': in CommandRuntimeHandlers.js — silent no-op`,
+      desc: `data-action="${action}" in HTML has no handler in CommandRuntimeHandlers*.js — silent no-op`,
     });
   }
 }
@@ -133,7 +198,7 @@ for (const name of engineFiles) {
 
 console.log('── Declarative Bindings Guard (#13) ─────────────────────────');
 console.log(`   data-action values in HTML: ${htmlActions.size}`);
-console.log(`   handler cases found:        ${handlerCases.size}`);
+console.log(`   handler actions found:      ${handlerActions.size} (across ${HANDLER_FILES.length} CommandRuntimeHandlers*.js files)`);
 console.log(`   violations:                 ${violations.length}`);
 
 if (violations.length > 0) {
