@@ -39,15 +39,7 @@ const ENGINES = path.join(ROOT, 'engines');
 // Para agregar: requiere decisión explícita aquí.
 // ---------------------------------------------------------------------------
 const KNOWN_VIOLATIONS = new Map([
-  ['CanvasLayoutElements.js::buildElementDiv',          29],
-  ['CanvasLayoutElements.js::updateElement',            21],
-  ['EngineCoreRoutingPointer.js::routePointer',         68],
-  ['EngineCoreRoutingRegistry.js::registerAllEngines',  33],
   ['KeyboardBindings.js::installDefaults',              28],
-  ['KeyboardEngine.js::_init',                          26],
-  ['RenderSchedulerFrame.js::_flush',                   32],
-  ['RuntimeGeometry.js::install',                       37],
-  ['RuntimeHelpers.js::install',                        21],
   ['RuntimeServicesState.js::initRuntimeServicesState', 22],
 ]);
 
