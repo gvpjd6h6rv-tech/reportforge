@@ -10,13 +10,14 @@ node_modules/
 .DS_Store
 Thumbs.db
 *.bak*
-*trace*
 *.fixbak
-__pycache__/
-*.pyc
-*.bak*
-*trace*
-*.fixbak
+# Do NOT re-add a broad "*trace*" pattern — it silently hid real source
+# files (engines/DebugTrace.js, engines/DebugTraceToggle.js) and a real
+# test (reportforge/tests/test_coercion_traceability.py) for an unknown
+# period of time, since gitignore matches *trace* against any path
+# component, not just generated trace/log dumps. If a real trace-dump
+# artifact needs ignoring, use a specific, anchored pattern instead, e.g.
+# *.trace.log or /trace-dumps/ — never a bare substring wildcard.
 .rf_browser_pref
 .venv/
 .debug-archive/
