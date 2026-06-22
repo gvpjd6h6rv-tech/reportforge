@@ -391,7 +391,6 @@ test('#46 feature CSS isolation — overlay engines use namespaced DOM roots', (
     'engines/OverlayEngine.js',
     'engines/SelectionOverlay.js',
     'engines/RulerEngine.js',
-    'engines/FieldExplorerDrop.js',
   ].filter(f => fs.existsSync(path.join(ROOT, f)));
 
   // A root element is "isolated" if:

@@ -745,8 +745,7 @@
       "owner": "designer-runtime/doc-types-fields",
       "allowedFiles": [
         "DocTypeAndProbes.js",
-        "FieldExplorerEngine.js",
-        "FieldExplorerDrop.js"
+        "FieldExplorerEngine.js"
       ],
       "legacyFiles": [],
       "writableState": [
@@ -757,7 +756,6 @@
         "FieldExplorerEngine.getActiveTree()"
       ],
       "events": [
-        "FieldExplorerDrop.onDrop(fieldPath, el)",
         "FieldExplorerEngine.render()"
       ],
       "existingTests": [
@@ -765,10 +763,8 @@
       ],
       "requiredGuardCI": [],
       "risk": "low",
-      "notes": "FieldExplorerDrop.js may call DS.elements.push() directly bypassing DocumentActions — not confirmed. DocTypeAndProbes.js and DocTypeProbes.js appear to overlap — only one may be needed.",
-      "unresolvedAmbiguities": [
-        "FieldExplorerDrop.js: likely calls DS.elements.push() directly — write-log bypass risk not yet verified"
-      ]
+      "notes": "FieldExplorerEngine.js owns field insertion (insertField/setupCanvasDrop) — confirmed it uses DS.setElements([...DS.elements, el], '...') correctly, not a direct DS.elements.push() bypass. FieldExplorerDrop.js was a byte-for-byte duplicate of that same logic, with zero production callers — retired in P17B.",
+      "unresolvedAmbiguities": []
     },
     {
       "id": "SS-17",
