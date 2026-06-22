@@ -3,8 +3,6 @@
   "generatedAt": "2026-05-18",
   "description": "ReportForge subsystem ownership map — PR-1 of E2R. No scores. No snapshots. Conservative, verifiable inventory.",
   "sharedFiles": [
-    "SnapCore.js",
-    "SnapState.js",
     "RuntimeServices.js",
     "EngineCoreRuntime.js",
     "EngineCoreContracts.js",
@@ -24,7 +22,9 @@
         "DocumentStore.js",
         "DocumentState.js",
         "DocumentActions.js",
-        "DocumentSelectors.js"
+        "DocumentSelectors.js",
+        "DocumentActionsSelection.js",
+        "DocumentStoreUtils.js"
       ],
       "legacyFiles": [],
       "writableState": [
@@ -66,7 +66,7 @@
         "audit/ssot_guard.mjs"
       ],
       "risk": "critical",
-      "notes": "Central SSOT for all mutable designer state. All mutations must pass through DocumentActions + RuntimeWriteLog. The property setters on DS (via defineProperty loop in DocumentStore.js) bypass write logging — callers must use set* methods, not direct assignment.",
+      "notes": "Central SSOT for all mutable designer state. All mutations must pass through DocumentActions + RuntimeWriteLog. The property setters on DS (via defineProperty loop in DocumentStore.js) bypass write logging — callers must use set* methods, not direct assignment. P31C reclaimed (confirmed <script>-loaded in designer-v4.html + real consumer, was a RULE-ORPHAN gap, not a zombie): DocumentActionsSelection.js (required directly by DocumentActions.js — provides createSelectionActions, the clearSelectionState/replaceSelection/selectOnly/addSelection/removeSelection/toggleSelection implementations DocumentActions spreads in via `...sa`); DocumentStoreUtils.js (DocumentStore.js calls `global.DocumentStoreUtils.install(global, newId, mkEl)` at init — throws hard if absent, confirming it is a required, not optional, dependency).",
       "unresolvedAmbiguities": [
         "DocumentHistory.js is composed inside DocumentStore.js but has distinct undo/redo responsibility — see SS-02 for boundary question"
       ]
@@ -176,7 +176,10 @@
         "DragState.js",
         "HitTestEngine.js",
         "HitTestGeometry.js",
-        "HandlesEngine.js"
+        "HandlesEngine.js",
+        "SelectionEnginePreviewBridge.js",
+        "SelectionOverlayPreview.js",
+        "SelectionOverlayRender.js"
       ],
       "legacyFiles": [],
       "writableState": [
@@ -205,7 +208,7 @@
         "audit/ssot_guard.mjs"
       ],
       "risk": "critical",
-      "notes": "ssot_guard.mjs enforces DragEngine→DragState delegation. SelectionInteraction.js is a thin orchestrator delegating to SelectionInteractionPointer.js (event initiation) and SelectionInteractionMotion.js (drag logic). All three are loaded in v4.html.",
+      "notes": "ssot_guard.mjs enforces DragEngine→DragState delegation. SelectionInteraction.js is a thin orchestrator delegating to SelectionInteractionPointer.js (event initiation) and SelectionInteractionMotion.js (drag logic). All three are loaded in v4.html. P31C reclaimed (confirmed <script>-loaded in designer-v4.html + real consumer, was a RULE-ORPHAN gap, not a zombie): SelectionEnginePreviewBridge.js (consumed by SelectionEngine.js); SelectionOverlayPreview.js and SelectionOverlayRender.js (SelectionOverlay.js reads `globalThis.SelectionOverlayPreview`/`globalThis.SelectionOverlayRender` and throws hard if either is absent — required, not optional, dependencies). P31C also retired DragEngine.js's begin()/update()/commit() (and internal _updateMove/_updateResize/_snap helpers) — confirmed zero callers anywhere in the repo; cancel() remains, reachable via KeyboardEngine.js's Escape handler.",
       "unresolvedAmbiguities": [
         "HandlesEngine.js vs SelectionOverlay.js: both appear to render selection handles. Canonical file not confirmed.",
         "SelectionState.js vs DS.selection: SelectionState exposes its own API (selectOnly, addSelection, etc.) in parallel with DS.selectOnly etc. — are these the same object or two separate state stores?"
@@ -223,7 +226,8 @@
         "PreviewEngineRenderer.js",
         "PreviewEngineData.js",
         "PreviewEngineContracts.js",
-        "PreviewPaginationEngine.js"
+        "PreviewPaginationEngine.js",
+        "PreviewEngineRendererLayout.js"
       ],
       "legacyFiles": [],
       "writableState": [
@@ -247,7 +251,7 @@
       ],
       "requiredGuardCI": [],
       "risk": "high",
-      "notes": "justification: covered by runtime regression baseline runtime-preview.png and preview_clipping_user_parity.test.mjs. PreviewEngine.js is the top-level compositor (previously named PreviewEngineV19 in docs). PreviewZoomEngine lives inside ZoomEngine.js (SS-11) — cross-subsystem coupling.",
+      "notes": "justification: covered by runtime regression baseline runtime-preview.png and preview_clipping_user_parity.test.mjs. PreviewEngine.js is the top-level compositor (previously named PreviewEngineV19 in docs). PreviewZoomEngine lives inside ZoomEngine.js (SS-11) — cross-subsystem coupling. P31C reclaimed (confirmed <script>-loaded in designer-v4.html + real consumer, was a RULE-ORPHAN gap, not a zombie): PreviewEngineRendererLayout.js (PreviewEngineRenderer.js reads `global.PreviewEngineRendererLayout` directly for its layout helpers).",
       "unresolvedAmbiguities": [
         "PreviewZoomEngine is defined inside ZoomEngine.js (SS-11) but exclusively used by PreviewEngineMode — boundary ownership unclear",
         "DS._sampleData is read by PreviewEngineData but assigned by DocTypeAndProbes (SS-16) — cross-subsystem write to private state field"
@@ -374,7 +378,8 @@
       "owner": "designer-runtime/command-io",
       "allowedFiles": [
         "CommandRuntimeFile.js",
-        "CommandRuntimeDocType.js"
+        "CommandRuntimeDocType.js",
+        "CommandRuntimeFileIO.js"
       ],
       "legacyFiles": [],
       "writableState": [],
@@ -393,7 +398,7 @@
         "audit/command_runtime_guard.mjs"
       ],
       "risk": "high",
-      "notes": "File I/O (localStorage, FileReader, Blob URL) and document-type switching. CommandRuntimeDocType.js mutates FieldExplorerEngine._activeTree directly and calls confirm() when switching doc type. Risk high: browser APIs (localStorage, URL.createObjectURL, FileReader), blocking dialogs (prompt, confirm), and cross-engine mutation (FieldExplorerEngine).",
+      "notes": "File I/O (localStorage, FileReader, Blob URL) and document-type switching. CommandRuntimeDocType.js mutates FieldExplorerEngine._activeTree directly and calls confirm() when switching doc type. Risk high: browser APIs (localStorage, URL.createObjectURL, FileReader), blocking dialogs (prompt, confirm), and cross-engine mutation (FieldExplorerEngine). P31C reclaimed (confirmed <script>-loaded in designer-v4.html + real consumer, was a RULE-ORPHAN gap, not a zombie): CommandRuntimeFileIO.js (CommandRuntimeFile.js's save/load/exportJSON/exportPDF/importJSON getters all delegate directly to `global.CommandRuntimeFileIO.*` — unguarded, required dependency).",
       "unresolvedAmbiguities": []
     },
     {
@@ -403,7 +408,16 @@
       "tier": "core",
       "owner": "designer-runtime/command-dispatcher",
       "allowedFiles": [
-        "CommandRuntimeHandlers.js"
+        "CommandRuntimeHandlers.js",
+        "CommandRuntimeHandlersDialog.js",
+        "CommandRuntimeHandlersFile.js",
+        "CommandRuntimeHandlersFormat.js",
+        "CommandRuntimeHandlersInsert.js",
+        "CommandRuntimeHandlersLayout.js",
+        "CommandRuntimeHandlersPreview.js",
+        "CommandRuntimeHandlersSelectionDispatch.js",
+        "CommandRuntimeHandlersSystem.js",
+        "CommandRuntimeHandlersZoom.js"
       ],
       "legacyFiles": [],
       "writableState": [],
@@ -425,7 +439,7 @@
         "audit/command_runtime_guard.mjs"
       ],
       "risk": "high",
-      "notes": "justification: governance_guardrails.test.mjs + content_edit_smoke_user_parity.test.mjs verify end-to-end dispatch. UI event dispatcher layer — 120-case switch in handleAction routes application-level events to engines (ZoomEngine, InsertEngine, FormatEngine, GridEngine, RulerEngine, AlignmentGuides, PreviewEngineRenderer). This is not a command but a UI adapter hub. Risk high: calls confirm() for new/quit, uses prompt() for margin commands, and dispatches to 8+ external engines. It is the application's single input surface.",
+      "notes": "justification: governance_guardrails.test.mjs + content_edit_smoke_user_parity.test.mjs verify end-to-end dispatch. UI event dispatcher layer — 120-case switch in handleAction routes application-level events to engines (ZoomEngine, InsertEngine, FormatEngine, GridEngine, RulerEngine, AlignmentGuides, PreviewEngineRenderer). This is not a command but a UI adapter hub. Risk high: calls confirm() for new/quit, uses prompt() for margin commands, and dispatches to 8+ external engines. It is the application's single input surface. P31C reclaimed (confirmed <script>-loaded in designer-v4.html + real consumer, was a RULE-ORPHAN gap, not a zombie): all 9 are destructured directly and unguarded at the top of CommandRuntimeHandlers.js — CommandRuntimeHandlersFile.js (handleFileCommands), CommandRuntimeHandlersPreview.js (handlePreviewCommands), CommandRuntimeHandlersZoom.js (handleZoomCommands), CommandRuntimeHandlersSelectionDispatch.js (handleSelectionCommands), CommandRuntimeHandlersFormat.js (handleFormatCommands), CommandRuntimeHandlersInsert.js (handleInsertCommands), CommandRuntimeHandlersLayout.js (handleLayoutCommands), CommandRuntimeHandlersDialog.js (handleDialogCommands), CommandRuntimeHandlersSystem.js (handleSystemCommands) — these ARE the 120-case switch's real implementation, split one-file-per-command-category.",
       "unresolvedAmbiguities": []
     },
     {
@@ -562,28 +576,21 @@
       "allowedFiles": [],
       "legacyFiles": [],
       "writableState": [
-        "DS.snapToGrid",
-        "SnapState._enabled",
-        "SnapState._gridModel"
+        "DS.snapToGrid"
       ],
       "selectors": [
-        "SnapCore.snapValue(v, grid, enabled)",
-        "SnapState.isEnabled()",
-        "SnapState.getGrid()"
+        "DS.snap(value)"
       ],
       "events": [
-        "SnapState.setEnabled(v)",
-        "SnapState.toggle()"
+        "data-action=\"toggle-snap\" (CommandRuntimeHandlersLayout.js) -> DS.setSnapToGrid",
+        "Ctrl+; (KeyboardEngine.js) -> handleAction('toggle-snap')"
       ],
-      "existingTests": [
-        "reportforge/tests/snap_core.test.mjs",
-        "reportforge/tests/snap_state.test.mjs"
-      ],
+      "existingTests": [],
       "requiredGuardCI": [
         "audit/ssot_guard.mjs"
       ],
       "risk": "low",
-      "notes": "SnapCore.js and SnapState.js (sharedFiles) are the active implementation: engines/DragEngine.js and engines/RuntimeBootstrap.js call SnapCore.snapValue(v, SnapState.getGrid(), SnapState.isEnabled()) directly; engines/KeyboardEngine.js calls SnapState.toggle(). SnapEngine.js was an earlier monolith predating the SnapCore/SnapState split, with zero production callers — retired in P16C after its useful test coverage (snap math + state lifecycle) was migrated to load SnapCore.js/SnapState.js directly (P16B).",
+      "notes": "CORRECTED P31B: the previous note claiming 'SnapCore.js and SnapState.js are the active implementation' was false — neither file was ever loaded by any designer/*.html <script> tag (confirmed P30A/P31A), so every typeof-guarded call into them was always a no-op. The real, only snapping implementation has always been engines/DocumentSelectors.js's own DS.snap(value) (Math.round(value/grid)*grid using CFG.MODEL_GRID/state.snapToGrid), which is what CommandRuntimeSelection.js, InsertEngine.js, SelectionState.js, FieldExplorerEngine.js, and DragEngine.js (post-P31B) all call. SnapCore.js/SnapState.js were retired in P31B (deleted, zero functional role). Ctrl+; previously called the also-dead SnapState.toggle() (permanent no-op); now delegates to the same handleAction('toggle-snap') path the menu item already used, so it actually toggles DS.snapToGrid in sync with the #btn-snap UI state.",
       "unresolvedAmbiguities": []
     },
     {
@@ -655,26 +662,25 @@
       "tier": "supporting",
       "owner": "designer-runtime/keyboard",
       "allowedFiles": [
-        "KeyboardEngine.js",
-        "KeyboardRegistry.js",
-        "KeyboardCombo.js"
+        "KeyboardEngine.js"
       ],
       "legacyFiles": [],
       "writableState": [
-        "KeyboardRegistry (binding table)"
+        "KeyboardEngine internal handler registry (inline)"
       ],
       "selectors": [],
       "events": [
         "keydown on window"
       ],
       "existingTests": [
-        "reportforge/tests/keyboard_registry.test.mjs"
+        "reportforge/tests/keyboard_engine_select_all.test.mjs",
+        "reportforge/tests/keyboard_nudge_selection_overlay.test.mjs"
       ],
       "requiredGuardCI": [
         "audit/ssot_guard.mjs"
       ],
       "risk": "low",
-      "notes": "ssot_guard.mjs enforces KeyboardEngine→KeyboardRegistry delegation. KeyboardBindings.js content not fully verified — may define the concrete key combo table.",
+      "notes": "RETIRED P31B: KeyboardRegistry.js and KeyboardCombo.js deleted — both were zombies (never loaded by any designer/*.html <script> tag, confirmed P30A/P31A). KeyboardEngine.js's inline handler registry (previously a fallback for when KeyboardRegistry wasn't loaded) was always the real, only implementation in production with confirmed identical API/behavior; it is no longer a fallback for an absent delegate, it is simply the implementation. audit/subsystem_ssot_guard.mjs's KeyboardRegistry-specific rules (former RULE-C, part of RULE-D/E) were removed in the same change.",
       "unresolvedAmbiguities": []
     },
     {
@@ -784,7 +790,10 @@
       "tier": "supporting",
       "owner": "designer-runtime/engine-core-init",
       "allowedFiles": [
-        "EngineCore.js"
+        "EngineCore.js",
+        "EngineCoreContractAsserts.js",
+        "EngineCoreContractSnapshots.js",
+        "EngineCoreContractValidators.js"
       ],
       "legacyFiles": [],
       "writableState": [],
@@ -807,7 +816,7 @@
         "audit/engine_core_contracts_guard.mjs"
       ],
       "risk": "low",
-      "notes": "EngineCore.js is the single facade: wires createEngineCoreContracts (assertRectShape/assertSelectionState/assertLayoutContract/assertZoomContract), createEngineCoreRuntime (safe-mode, lifecycle), and createEngineCoreRouting (pointer/zoom/workspace dispatch). EngineCoreContracts.js and EngineCoreRuntime.js moved to sharedFiles — pure factories testable independently. EngineCoreRouting*.js extracted to SS-26. CI gate: engine_core_contracts_guard.mjs.",
+      "notes": "EngineCore.js is the single facade: wires createEngineCoreContracts (assertRectShape/assertSelectionState/assertLayoutContract/assertZoomContract), createEngineCoreRuntime (safe-mode, lifecycle), and createEngineCoreRouting (pointer/zoom/workspace dispatch). EngineCoreContracts.js and EngineCoreRuntime.js moved to sharedFiles — pure factories testable independently. EngineCoreRouting*.js extracted to SS-26. CI gate: engine_core_contracts_guard.mjs. P31C reclaimed (confirmed <script>-loaded in designer-v4.html + real consumer, was a RULE-ORPHAN gap, not a zombie): EngineCoreContractAsserts.js, EngineCoreContractSnapshots.js, EngineCoreContractValidators.js — all three loaded by engines/EngineCoreContracts.js's loadContractFactory(globalName, requirePath, exportName) dynamic factory lookup (e.g. 'EngineCoreContractAssertsFactory' / './EngineCoreContractAsserts.js' / 'createEngineCoreContractAsserts'), which is why a plain identifier grep missed them.",
       "unresolvedAmbiguities": []
     },
     {
@@ -821,7 +830,11 @@
         "DebugOverlay.js",
         "DebugChannelsPanel.js",
         "DebugPanelUtils.js",
-        "DebugTraceToggle.js"
+        "DebugTraceToggle.js",
+        "BuildDebugPanel.js",
+        "DebugHudLayout.js",
+        "DebugPanelGeometry.js",
+        "RFAudit.js"
       ],
       "legacyFiles": [],
       "writableState": [
@@ -837,7 +850,7 @@
       ],
       "requiredGuardCI": [],
       "risk": "low",
-      "notes": "Non-production subsystem. Toggle channels: runtime, scheduler, invariants, elements, selection, resize, edit, overlay, zoom, scroll, move. Stored in localStorage so debug state survives page reload.",
+      "notes": "Non-production subsystem. Toggle channels: runtime, scheduler, invariants, elements, selection, resize, edit, overlay, zoom, scroll, move. Stored in localStorage so debug state survives page reload. P31C reclaimed (confirmed <script>-loaded in designer-v4.html, was a RULE-ORPHAN gap, not a zombie): BuildDebugPanel.js (self-installing — sets window.RF_BUILD_INFO and window.RF_REFRESH_BUILD_DEBUG at load, no external caller needed by design); DebugHudLayout.js, DebugPanelGeometry.js (debug HUD layout/geometry helpers); RFAudit.js (self-registering audit/diagnostics script). None has a traditional external caller — confirmed intentional for this self-installing-utility pattern, not evidence of dead code.",
       "unresolvedAmbiguities": []
     },
     {
@@ -895,10 +908,11 @@
         "reportforge/tests/runtime_write_log.test.mjs"
       ],
       "requiredGuardCI": [
-        "audit/runtime_trace_guard.mjs"
+        "audit/runtime_trace_guard.mjs",
+        "audit/orphan_test_target_guard.mjs"
       ],
       "risk": "medium",
-      "notes": "Append-only audit log for all DS mutations. Throws hard on missing source or UNKNOWN source. Phase guard (off/warn/throw) enforces render-phase ordering. CI gate: audit/runtime_trace_guard.mjs scans engines/ for direct DS.<criticalField>= assignments that bypass this log.",
+      "notes": "ENFORCED EXCEPTION (P31B, decided test-only — see audit/orphan_test_target_guard.mjs ENFORCED_EXCEPTIONS): confirmed RuntimeWriteLog.js is never loaded by any designer/*.html <script> tag, so engines/DocumentActions.js's `wl = typeof RuntimeWriteLog !== 'undefined' ? RuntimeWriteLog : null` guard is always false in production — recordWrite() never executes outside tests, where it is injected via globalThis/dynamic import. Decision: this governance log stays test-only by design rather than being loaded in production, because activating it now would be the first-ever production exercise of every DS-mutation write path with no observed governance failure motivating the risk. If that decision changes, this file must move from designer-runtime's never-loaded set to a real <script src=\"/engines/RuntimeWriteLog.js\"> in designer-v4.html, and ssot_runtime_binding_guard.mjs will then require it. Append-only audit log for all DS mutations when active in tests. Throws hard on missing source or UNKNOWN source. Phase guard (off/warn/throw) enforces render-phase ordering. CI gate: audit/runtime_trace_guard.mjs scans engines/ for direct DS.<criticalField>= assignments that bypass this log (this static scan is unaffected by whether the file loads in the browser).",
       "unresolvedAmbiguities": []
     },
     {
@@ -1067,7 +1081,8 @@
         "EngineCoreRoutingPointer.js",
         "EngineCoreRoutingZoom.js",
         "EngineCoreRoutingRegistry.js",
-        "EngineCoreRoutingWorkspace.js"
+        "EngineCoreRoutingWorkspace.js",
+        "EngineCoreRoutingPointerHelpers.js"
       ],
       "legacyFiles": [],
       "writableState": [],
@@ -1084,7 +1099,7 @@
       ],
       "requiredGuardCI": [],
       "risk": "medium",
-      "notes": "Five-file routing layer: EngineCoreRouting.js is the orchestrator (wires Pointer/Zoom/Registry/Workspace factories). EngineCoreRoutingPointer.js dispatches pointer events to SelectionEngine/DragEngine. EngineCoreRoutingZoom.js handles zoom-change events. EngineCoreRoutingRegistry.js registers all global engine instances. EngineCoreRoutingWorkspace.js wires DOM workspace events. All use dependency-injection factories (createEngineCoreRouting*(deps)) — testable without DOM.",
+      "notes": "Five-file routing layer: EngineCoreRouting.js is the orchestrator (wires Pointer/Zoom/Registry/Workspace factories). EngineCoreRoutingPointer.js dispatches pointer events to SelectionEngine/DragEngine. EngineCoreRoutingZoom.js handles zoom-change events. EngineCoreRoutingRegistry.js registers all global engine instances. EngineCoreRoutingWorkspace.js wires DOM workspace events. All use dependency-injection factories (createEngineCoreRouting*(deps)) — testable without DOM. P31C reclaimed (confirmed <script>-loaded in designer-v4.html + real consumer, was a RULE-ORPHAN gap, not a zombie): EngineCoreRoutingPointerHelpers.js (EngineCoreRoutingPointer.js looks it up via `createEngineCoreRoutingPointerHelpers` — typeof guard then globalThis/window/require fallback chain).",
       "unresolvedAmbiguities": []
     },
     {

@@ -24,12 +24,13 @@
 
 const KeyboardEngine = (() => {
   let _enabled  = true;
-  // Handler registry delegated to KeyboardRegistry (SSOT for key bindings).
-  const R = typeof KeyboardRegistry !== 'undefined' ? KeyboardRegistry : (() => {
-    const _h = Object.create(null);
-    return { register: (c, f) => { _h[c] = f; }, off: (c) => { delete _h[c]; },
-             get: (c) => _h[c] || null, trigger: (c, e) => { const f = _h[c]; if (f) f(e); return !!f; }, clear: () => { Object.keys(_h).forEach(k => delete _h[k]); } };
-  })();
+  // Handler registry. KeyboardRegistry.js / KeyboardCombo.js were retired in
+  // P31B (zombies — neither was ever loaded by any designer/*.html <script>
+  // tag, and this inline registry was always the real, only implementation
+  // in production; confirmed identical API/behavior before retirement).
+  const _h = Object.create(null);
+  const R = { register: (c, f) => { _h[c] = f; }, off: (c) => { delete _h[c]; },
+              get: (c) => _h[c] || null, trigger: (c, e) => { const f = _h[c]; if (f) f(e); return !!f; }, clear: () => { Object.keys(_h).forEach(k => delete _h[k]); } };
 
   /** Encode a key combination into a lookup string */
   function _encode(e) {
@@ -165,7 +166,13 @@ const KeyboardEngine = (() => {
 
   function _registerGridShortcuts() {
     _register('ctrl+g', () => { if (typeof GridEngine !== 'undefined') GridEngine.toggle(); });
-    _register('ctrl+;', () => { if (typeof SnapState !== 'undefined') SnapState.toggle(); });
+    // P31B: was `if (typeof SnapState !== 'undefined') SnapState.toggle()` —
+    // SnapState.js was retired (zombie, never loaded; see SS-12 notes), so
+    // this was a permanent no-op despite the shortcut being documented above
+    // ("Ctrl+; → toggle snap"). Delegates to the same real toggle-snap path
+    // the menu item (data-action="toggle-snap") already uses, instead of
+    // duplicating DS.setSnapToGrid logic and risking a #btn-snap UI desync.
+    _register('ctrl+;', () => { if (typeof handleAction === 'function') handleAction('toggle-snap'); });
   }
 
   function _init() {

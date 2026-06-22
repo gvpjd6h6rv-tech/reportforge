@@ -65,22 +65,21 @@ test('findUnboundFiles — empty claimed set produces no violations', () => {
 
 // ── integration: real repo data ──────────────────────────────────────────
 
-test('REAL REPO — KeyboardCombo.js is claimed but neither loaded by HTML nor referenced by any test (known gap, P29B)', () => {
-  // This documents the guard's first real catch: audit/subsystem_ownership_map.json
-  // claims KeyboardCombo.js is covered by reportforge/tests/keyboard_registry.test.mjs
-  // (its existingTests field), but that test file only exercises KeyboardRegistry.js —
-  // it never references KeyboardCombo.js at all. The claim is stale, so the guard
-  // is EXPECTED to exit 1 against the real repo right now (honest FAIL, not a bug
-  // in the guard).
-  let output;
-  try {
-    output = execFileSync('node', ['audit/ssot_runtime_binding_guard.mjs'], {
-      cwd: process.cwd(),
-      encoding: 'utf8',
-    });
-  } catch (err) {
-    assert.equal(err.status, 1, 'guard must exit 1 when a real violation exists');
-    output = err.stdout;
-  }
-  assert.match(output, /KeyboardCombo\.js/);
+test('REAL REPO — 0 violations after P31B (KeyboardCombo.js retired, the only prior real catch)', () => {
+  // P29B/P30B found a real, stale claim here: audit/subsystem_ownership_map.json
+  // claimed KeyboardCombo.js was covered by reportforge/tests/keyboard_registry.test.mjs
+  // (its existingTests field), but that test file only ever exercised
+  // KeyboardRegistry.js — it never referenced KeyboardCombo.js at all. P31A
+  // confirmed both files were full zombies (never loaded by any designer/*.html
+  // <script> tag, with KeyboardEngine.js's inline fallback already being the
+  // real, only implementation). P31B retired both (deleted) rather than
+  // inventing coverage — so this guard now passes clean, not because the gap
+  // was papered over, but because the file it was about no longer exists.
+  const output = execFileSync('node', ['audit/ssot_runtime_binding_guard.mjs'], {
+    cwd: process.cwd(),
+    encoding: 'utf8',
+  });
+  assert.match(output, /PASS/);
+  assert.doesNotMatch(output, /KeyboardCombo\.js/);
+  assert.doesNotMatch(output, /FAIL/);
 });

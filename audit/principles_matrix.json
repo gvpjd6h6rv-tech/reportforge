@@ -11,10 +11,8 @@
       "engines/RuntimeServices.js",
       "engines/ClipboardState.js",
       "engines/DragState.js",
-      "engines/KeyboardRegistry.js",
       "engines/HistoryEngine.js",
       "engines/SelectionState.js",
-      "engines/SnapState.js",
       "engines/RenderSchedulerState.js",
       "audit/subsystem_ssot_guard.mjs",
       "docs/architecture/document-store-contract.md"
@@ -27,10 +25,10 @@
     "ci_gate": true,
     "evidence": [
       "governance test: 'document store split stays modular'; global_state_corruption: setOwner/getOwner round-trip; DS.state is single source asserted in engine_contracts",
-      "Each subsystem with observable state has a dedicated *State.js file: ClipboardState (clipboard contents), DragState (drag session), GuideState (active guides), HistoryState (undo/redo stacks), SelectionState (selection facade over DS), SnapState (grid/snap config), RenderSchedulerState (frame/storm/hotspot state), RuntimeServicesState (owner registry)",
-      "KeyboardEngine delegates handler registry to KeyboardRegistry.js (existing SSOT) — no duplicate _handlers map",
-      "subsystem_ssot_guard: SSOT-EXIST-001 (State files exist), SSOT-STATE-001/002 (no bare let in engines), SSOT-REGISTRY-001 (KeyboardEngine uses KeyboardRegistry), SSOT-API-001 (.state/.registry exposed)",
-      "debuggability.test.mjs: 4 SSOT tests — ClipboardState isolation/mutation, DragState lifecycle, KeyboardRegistry routing, guard runner"
+      "Each subsystem with observable state has a dedicated *State.js file: ClipboardState (clipboard contents), DragState (drag session), GuideState (active guides), HistoryState (undo/redo stacks), SelectionState (selection facade over DS), RenderSchedulerState (frame/storm/hotspot state), RuntimeServicesState (owner registry)",
+      "P31B: KeyboardRegistry.js and SnapState.js retired (deleted) — both were confirmed zombies (never loaded by any designer/*.html <script> tag; their consumers, KeyboardEngine.js and DragEngine.js, always used their own inline fallback / DocumentSelectors.js's DS.snap() respectively, with confirmed identical behavior). KeyboardEngine.js's inline handler registry is now simply the implementation, not a fallback for an absent delegate.",
+      "subsystem_ssot_guard: SSOT-EXIST-001 (State files exist), SSOT-STATE-001/002 (no bare let in engines), SSOT-API-001 (.state exposed)",
+      "debuggability.test.mjs: 3 SSOT tests — ClipboardState isolation/mutation, DragState lifecycle, guard runner"
     ],
     "gap": ""
   },

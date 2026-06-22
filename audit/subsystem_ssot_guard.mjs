@@ -19,16 +19,20 @@
  * RULE-B (SSOT-STATE-002): DragEngine.js must delegate drag session storage
  *   to DragState (via `S = DragState`), not maintain its own `_active/_drag`.
  *
- * RULE-C (SSOT-REGISTRY-001): KeyboardEngine.js must delegate handler lookup
- *   to KeyboardRegistry (SSOT for key bindings), not maintain its own `_handlers`.
+ * RULE-D (SSOT-EXIST-001): ClipboardState.js and DragState.js must exist in
+ *   engines/ — existence confirms the SSOT pattern is wired.
  *
- * RULE-D (SSOT-EXIST-001): ClipboardState.js, DragState.js, and KeyboardRegistry.js
- *   must exist in engines/ — existence confirms the SSOT pattern is wired.
- *
- * RULE-E (SSOT-API-001): ClipboardEngine must expose `state` pointing to ClipboardState;
- *   DragEngine must expose `state` pointing to DragState;
- *   KeyboardEngine must expose `registry` pointing to KeyboardRegistry.
+ * RULE-E (SSOT-API-001): ClipboardEngine must expose `state` pointing to
+ *   ClipboardState; DragEngine must expose `state` pointing to DragState.
  *   These surface the SSOT for consumers and tests.
+ *
+ * KeyboardRegistry.js / KeyboardCombo.js (formerly RULE-C, and part of
+ * RULE-D/E) were retired in P31B: neither was ever loaded by any
+ * designer/*.html <script> tag, and KeyboardEngine.js always ran its own
+ * inline fallback registry in production (confirmed identical API and
+ * behavior). There is no "SSOT pattern" left to verify for keyboard handler
+ * bindings — the inline registry inside KeyboardEngine.js IS the real, only
+ * implementation now, not a fallback for an absent delegate.
  *
  * ⚠  INTERNAL — do not run directly in CI.
  *    CI entry point: npm run test:ssot  (audit/ssot_guard.mjs)
@@ -57,7 +61,7 @@ function check(rule, file, condition, desc) {
   if (!condition) violations.push({ rule, file: `engines/${file}`, desc });
 }
 
-// RULE-D (SSOT-EXIST-001): State/Registry files must exist.
+// RULE-D (SSOT-EXIST-001): State files must exist.
 check('SSOT-EXIST-001', 'ClipboardState.js',
   exists('ClipboardState.js'),
   'ClipboardState.js must exist — SSOT for clipboard contents');
@@ -65,10 +69,6 @@ check('SSOT-EXIST-001', 'ClipboardState.js',
 check('SSOT-EXIST-001', 'DragState.js',
   exists('DragState.js'),
   'DragState.js must exist — SSOT for drag session');
-
-check('SSOT-EXIST-001', 'KeyboardRegistry.js',
-  exists('KeyboardRegistry.js'),
-  'KeyboardRegistry.js must exist — SSOT for keyboard handler bindings');
 
 // RULE-D-ENGINE (SSOT-EXIST-002): Engine files must also exist.
 // If an engine file is absent the SSOT pattern cannot be verified for that subsystem.
@@ -80,10 +80,6 @@ check('SSOT-EXIST-002', 'ClipboardEngine.js',
 check('SSOT-EXIST-002', 'DragEngine.js',
   exists('DragEngine.js'),
   'DragEngine.js must exist — required to verify the drag SSOT pattern');
-
-check('SSOT-EXIST-002', 'KeyboardEngine.js',
-  exists('KeyboardEngine.js'),
-  'KeyboardEngine.js must exist — required to verify the keyboard SSOT pattern');
 
 if (exists('ClipboardEngine.js')) {
   const src = read('ClipboardEngine.js');
@@ -125,24 +121,6 @@ if (exists('DragEngine.js')) {
     'DragEngine.js must expose `state: S` to surface DragState to consumers');
 }
 
-if (exists('KeyboardEngine.js')) {
-  const src = read('KeyboardEngine.js');
-
-  // RULE-C: KeyboardEngine delegates to KeyboardRegistry — no bare `_handlers` object.
-  check('SSOT-REGISTRY-001', 'KeyboardEngine.js',
-    !(/^\s*let _handlers\s*=/.test(src)),
-    'KeyboardEngine.js must not declare its own let _handlers — delegate to KeyboardRegistry');
-
-  check('SSOT-REGISTRY-001', 'KeyboardEngine.js',
-    /KeyboardRegistry/.test(src),
-    'KeyboardEngine.js must reference KeyboardRegistry as handler SSOT');
-
-  // RULE-E: KeyboardEngine exposes .registry
-  check('SSOT-API-001', 'KeyboardEngine.js',
-    /registry\s*:\s*R/.test(src),
-    'KeyboardEngine.js must expose `registry: R` to surface KeyboardRegistry to consumers');
-}
-
 // ── Report ─────────────────────────────────────────────────────────────────────
 
 console.log('── Subsystem SSOT Guard ──────────────────────────────────────────');
@@ -157,10 +135,10 @@ if (violations.length > 0) {
 }
 
 if (violations.length === 0) {
-  console.log('\n✅ subsystem SSOT consistent — ClipboardState, DragState, KeyboardRegistry all wired\n');
+  console.log('\n✅ subsystem SSOT consistent — ClipboardState, DragState wired\n');
   process.exit(0);
 }
 
 console.error('\n❌ SSOT gap — subsystem state leaks into engine IIFE instead of dedicated State file');
-console.error('   Fix: move mutable state to *State.js, have engine reference it, expose via .state/.registry\n');
+console.error('   Fix: move mutable state to *State.js, have engine reference it, expose via .state\n');
 if (!REPORT) process.exit(1);

@@ -657,7 +657,7 @@ function loadDocumentState() {
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
-// 7b. Subsystem SSOT (ClipboardState, DragState, KeyboardRegistry)
+// 7b. Subsystem SSOT (ClipboardState, DragState)
 // ---------------------------------------------------------------------------
 
 function loadModule(relPath) {
@@ -706,22 +706,11 @@ test('subsystem SSOT — DragState tracks begin/end session correctly', () => {
   assert.equal(DS_state.session, null);
 });
 
-test('subsystem SSOT — KeyboardRegistry is independent and routes correctly', () => {
-  const KR = loadModule('engines/KeyboardRegistry.js');
-
-  KR.clear();
-  assert.equal(KR.get('ctrl+z'), null, 'starts empty');
-
-  let fired = false;
-  KR.register('ctrl+z', () => { fired = true; });
-  assert.ok(typeof KR.get('ctrl+z') === 'function', 'handler registered');
-
-  KR.trigger('ctrl+z', {});
-  assert.ok(fired, 'trigger dispatches the handler');
-
-  KR.off('ctrl+z');
-  assert.equal(KR.get('ctrl+z'), null, 'off removes handler');
-});
+// KeyboardRegistry.js / KeyboardCombo.js retired in P31B — both were
+// zombies (never loaded by any designer/*.html <script> tag; KeyboardEngine
+// always ran its own inline fallback registry, confirmed identical API).
+// See reportforge/tests/keyboard_engine_select_all.test.mjs for coverage of
+// the real, only registry implementation now in KeyboardEngine.js itself.
 
 test('subsystem SSOT guard — static wiring verified', () => {
   const result = execFileSync('node', [path.join(ROOT, 'audit/subsystem_ssot_guard.mjs')], {

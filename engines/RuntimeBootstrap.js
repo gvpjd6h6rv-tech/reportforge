@@ -163,10 +163,10 @@ document.addEventListener('DOMContentLoaded', () => {
     DesignZoomEngine._apply._rfV19ZoomPatched = true;
   }
 
-  if (typeof SnapState !== 'undefined') SnapState.init();
-  if (typeof DS !== 'undefined' && typeof SnapCore !== 'undefined' && typeof SnapState !== 'undefined') {
-    DS.snap = (v) => SnapCore.snapValue(v, SnapState.getGrid(), SnapState.isEnabled());
-  }
+  // P31B: SnapCore.js/SnapState.js retired (zombies — never loaded by any
+  // designer/*.html <script> tag; both guards here were always false).
+  // DS.snap() (engines/DocumentSelectors.js) was always the real, only
+  // snapping implementation every actual caller in the repo used.
 
   if (typeof GridEngine !== 'undefined') GridEngine.init();
   if (typeof WorkspaceScrollEngine !== 'undefined') WorkspaceScrollEngine.init();
@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
     DesignZoomEngine.set(DS.zoom || 1.0);
   }
 
-  console.log('[ReportForge v19] Boot complete — RulerEngine, GridEngine, SnapCore/SnapState, WorkspaceScrollEngine');
+  console.log('[ReportForge v19] Boot complete — RulerEngine, GridEngine, WorkspaceScrollEngine');
 });
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -191,31 +191,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  if (typeof GuideEngine !== 'undefined' && GuideEngine.init) GuideEngine.init();
-  if (typeof AlignmentEngine !== 'undefined' && AlignmentEngine.init) AlignmentEngine.init();
-
-  if (typeof DragEngine !== 'undefined' && DragEngine.init) {
-    DragEngine.init({
-      onDragStart: (els) => {
-        if (typeof AlignmentEngine !== 'undefined') AlignmentEngine.beginDrag(els);
-      },
-      onDragMove: (els, dx, dy) => {
-        if (typeof AlignmentEngine !== 'undefined') {
-          const guides = AlignmentEngine.getGuides(els);
-          if (typeof GuideEngine !== 'undefined') GuideEngine.show(guides);
-        }
-        RenderScheduler.handles(() => {
-          if (typeof HandlesEngine !== 'undefined') HandlesEngine.render();
-        });
-      },
-      onDragEnd: () => {
-        if (typeof GuideEngine !== 'undefined') GuideEngine.clear();
-        if (typeof AlignmentEngine !== 'undefined') AlignmentEngine.endDrag();
-      },
-    });
-  }
-
-  if (typeof HandlesEngine !== 'undefined' && HandlesEngine.init) HandlesEngine.init();
+  // P31B: removed dead wiring — GuideEngine.init()/AlignmentEngine.init()/
+  // DragEngine.init({onDragStart,onDragMove,onDragEnd})/HandlesEngine.init()
+  // never ran: none of those 4 engines export an `init` method (confirmed
+  // P31A), so every one of these typeof-guarded calls was always false.
+  // DragEngine.begin()/update() (the only callers that would have reached
+  // AlignmentEngine.compute()/GuideEngine.show() through this onDragMove
+  // callback) have zero callers anywhere in the repo — the real move/resize
+  // pipeline is engines/SelectionInteractionPointer.js +
+  // SelectionInteractionMotion.js (see SS-06 notes), unrelated to DragEngine.
+  // The HandlesEngine.render() zoom-patch below is real and unaffected — it
+  // calls a real exported method, not a nonexistent `.init()`.
 
   if (typeof DesignZoomEngine !== 'undefined' && !DesignZoomEngine._apply._rfPhase2ZoomPatched) {
     const _prevApply = DesignZoomEngine._apply.bind(DesignZoomEngine);
@@ -228,5 +214,11 @@ document.addEventListener('DOMContentLoaded', () => {
     DesignZoomEngine._apply._rfPhase2ZoomPatched = true;
   }
 
-  console.log('[ReportForge v19.2] Phase 2 engines active: RenderScheduler, ZoomEngine, HitTestEngine, DragEngine, HandlesEngine, GuideEngine, AlignmentEngine, SelectionEngine');
+  // P31B: dropped GuideEngine/AlignmentEngine from this list — confirmed
+  // zero reachable callers anywhere (their only attempted entry point was
+  // the dead .init() wiring removed above). DragEngine's only reachable
+  // method is cancel() (via KeyboardEngine's Escape handler), which is a
+  // safe no-op since begin() never runs — kept in the list as "reachable",
+  // not "doing real work".
+  console.log('[ReportForge v19.2] Phase 2 engines active: RenderScheduler, ZoomEngine, HitTestEngine, DragEngine (cancel only), HandlesEngine, SelectionEngine');
 });
