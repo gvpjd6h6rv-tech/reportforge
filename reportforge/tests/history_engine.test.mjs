@@ -260,6 +260,27 @@ test('HistoryEngine — onChange: a throwing listener does not block other liste
   assert.equal(secondCalled, true);
 });
 
+test('HistoryEngine — onChange: repeated registration accumulates listeners (no dedup, no removeListener)', () => {
+  // Migrated from memory_leak_detection.test.mjs's HistoryState test, proxied
+  // through fire-count instead of reading st.listeners.length directly —
+  // HistoryEngine's _listeners array is closure-private and not exposed.
+  const { HistoryEngine } = loadHistoryEngine();
+  const REGISTRATIONS = 50;
+  let fired = 0;
+
+  // Simulates the real-world bug this documents: a widget re-mounting and
+  // re-registering the same onChange callback without ever cleaning up.
+  for (let i = 0; i < REGISTRATIONS; i++) {
+    HistoryEngine.onChange(() => { fired++; });
+  }
+
+  HistoryEngine.push('action'); // single state-changing op → exactly one notify
+
+  assert.equal(fired, REGISTRATIONS,
+    `each of the ${REGISTRATIONS} registered listeners must fire exactly once per notify — ` +
+    'documents accumulation as known behavior (no removeListener API exists to undo over-registration)');
+});
+
 // ---------------------------------------------------------------------------
 // suppress — by effect (push becomes a no-op) and by return value
 // ---------------------------------------------------------------------------
@@ -298,6 +319,33 @@ test('HistoryEngine — suppress: returns the value produced by fn', () => {
   const { HistoryEngine } = loadHistoryEngine();
   const result = HistoryEngine.suppress(() => 42);
   assert.equal(result, 42);
+});
+
+test('HistoryEngine — nested suppress is NOT re-entrant (documents known limitation)', () => {
+  // Migrated from memory_leak_detection.test.mjs's HistoryState test. That
+  // version reads st.suppressed directly at three points in time — not
+  // possible here since _suppressed is closure-private. Proxied through the
+  // observable consequence instead: HistoryEngine.suppress has no depth
+  // counter, so an inner suppress's `finally` releases the flag the instant
+  // it completes, even while an outer suppress is still executing. A push()
+  // issued after the inner call but still inside the outer callback is
+  // therefore NOT blocked — which is the real-world risk this documents
+  // (an unexpected history entry sneaking in during what should still be a
+  // suppressed outer scope).
+  const { HistoryEngine } = loadHistoryEngine();
+  let pushSucceededInsideOuter = null;
+
+  HistoryEngine.suppress(() => {
+    HistoryEngine.suppress(() => {}); // inner releases _suppressed on completion
+    HistoryEngine.push('attempted while outer suppress is still active');
+    pushSucceededInsideOuter = HistoryEngine.canUndo();
+  });
+
+  assert.equal(pushSucceededInsideOuter, true,
+    'KNOWN: nested suppress is not re-entrant — push() succeeds inside the outer ' +
+    'callback once the inner suppress releases the flag (no depth counter)');
+  assert.equal(HistoryEngine.canUndo(), true,
+    'after both callbacks complete: the entry pushed during the gap must remain');
 });
 
 // ---------------------------------------------------------------------------
