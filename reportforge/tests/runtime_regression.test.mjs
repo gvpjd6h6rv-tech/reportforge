@@ -46,7 +46,10 @@ test('canonical runtime anti-regression suite', { timeout: 120000 }, async (t) =
       assert.deepEqual(state.domSelected, ['e101']);
       assert.equal(state.boxCount, 1);
       assert.equal(state.handleCount, 8);
-      assert.equal(state.selectionGuideCount, 4);
+      // CR-PARITY-1: a static selection (no active drag) must show 0 guides,
+      // matching Crystal Reports — guides only appear during an active
+      // move/resize gesture (see 'drag' subtest below).
+      assert.equal(state.selectionGuideCount, 0);
       assert.equal(state.guideLineCount, 0);
       const alignment = await getSingleAlignment(page);
       assertRectClose(alignment.box, alignment.element, 0.5, 'simpleSelection');
@@ -61,7 +64,8 @@ test('canonical runtime anti-regression suite', { timeout: 120000 }, async (t) =
       assert.deepEqual(state.domSelected, ['e101', 'e102']);
       assert.equal(state.boxCount, 1);
       assert.equal(state.handleCount, 0);
-      assert.equal(state.selectionGuideCount, 8);
+      // CR-PARITY-1: static multi-selection, no active drag — 0 guides.
+      assert.equal(state.selectionGuideCount, 0);
       assert.equal(state.guideLineCount, 0);
       const bbox = await getMultiBBox(page);
       assertRectClose(bbox.box, bbox.expected, 0.5, 'multiSelection');
@@ -84,7 +88,10 @@ test('canonical runtime anti-regression suite', { timeout: 120000 }, async (t) =
       const alignment = await getSingleAlignment(page);
       assertRectClose(alignment.box, alignment.element, 0.5, 'drag');
       const state = await getSelectionSnapshot(page);
-      assert.equal(state.selectionGuideCount, 4);
+      // CR-PARITY-1: dragSelectedElement() already releases the mouse
+      // (mouseup) and settles — guides must be gone by the time this is
+      // read, matching CR (guides only exist DURING the gesture).
+      assert.equal(state.selectionGuideCount, 0);
       assert.equal(state.guideLineCount, 0);
     });
 

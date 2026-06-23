@@ -116,11 +116,30 @@
   .el-corner {
     position: absolute;
     display: none;
-    width: 5px;
-    height: 5px;
+    /* CR-PARITY-1-FIX(3): fixed INTEGER geometry (3px box, 1px border —
+       measured directly off real Crystal Reports raster at 100/200/400%
+       zoom: the mark is 3px x 3px, 1px thick, CONSTANT, never scaling with
+       document zoom) counter-scaled via transform, not via calc()/var() on
+       width/border. Two earlier approaches were proven wrong by raster
+       evidence: (a) border-width via calc(1px/zoom) floors to 1 used CSS px
+       for any non-zero sub-1px value (static, var-free repro), so it grew
+       with zoom once amplified by #viewport's transform:scale(zoom); (b)
+       background-gradient at sub-CSS-pixel sizes anti-aliases to near
+       invisible (~98/246 luminance) at zoom>=4 instead of staying opaque.
+       transform:scale(1/zoom) on an element with fixed integer width/border
+       has no fractional CSS length anywhere — it composes with #viewport's
+       scale(zoom) to net scale(1), confirmed by isolated repro to stay
+       exactly 3x3px/1px-thick/fully-opaque (luminance 0) at every zoom. */
+    width: 3px;
+    height: 3px;
     pointer-events: none;
     z-index: 1;
-    opacity: .6;
+    /* CR-PARITY-1-FIX(4): CR's corner mark is pure black (measured
+       luminance 0 at all zoom levels, off real raster). opacity:.6 here
+       (pre-existing, scoped only to .el-corner — not shared with .sel-box
+       or .rf-guide) diluted it to ~luminance 90-98 against the cream/white
+       field background, instead of full black. Removed. */
+    transform: scale(calc(1 / var(--geo-zoom, 1)));
   }
   .cr-element:not(.selected) > .el-corner {
     display: block !important;
@@ -132,10 +151,30 @@
   .cr-element.selected > .el-corner::after {
     display: none !important;
   }
-  .el-corner.tl { top: 0; left: 0; border-top: 1px solid #000; border-left: 1px solid #000; }
-  .el-corner.tr { top: 0; right: 0; border-top: 1px solid #000; border-right: 1px solid #000; }
-  .el-corner.bl { bottom: 0; left: 0; border-bottom: 1px solid #000; border-left: 1px solid #000; }
-  .el-corner.br { bottom: 0; right: 0; border-bottom: 1px solid #000; border-right: 1px solid #000; }
+  .el-corner.tl {
+    top: 0; left: 0;
+    transform-origin: top left;
+    border-top: 1px solid #000;
+    border-left: 1px solid #000;
+  }
+  .el-corner.tr {
+    top: 0; right: 0;
+    transform-origin: top right;
+    border-top: 1px solid #000;
+    border-right: 1px solid #000;
+  }
+  .el-corner.bl {
+    bottom: 0; left: 0;
+    transform-origin: bottom left;
+    border-bottom: 1px solid #000;
+    border-left: 1px solid #000;
+  }
+  .el-corner.br {
+    bottom: 0; right: 0;
+    transform-origin: bottom right;
+    border-bottom: 1px solid #000;
+    border-right: 1px solid #000;
+  }
   .cr-element[data-type="line"] > .el-corner,
   .cr-element[data-type="rect"] > .el-corner {
     display: none !important;
