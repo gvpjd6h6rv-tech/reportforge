@@ -29,6 +29,37 @@ function levelBadge(level) {
   return `<span class="badge" style="background:${color}22;color:${color};border:1px solid ${color}55">${esc(level)}</span>`;
 }
 
+// SPD1G: every <th> gets the same sortable-column markup. Sorting itself is
+// pure client-side DOM reordering (see SCRIPT below) — no score is ever
+// recomputed, only the already-rendered <tr> elements are reordered.
+function th(label) {
+  return `<th role="columnheader" tabindex="0" aria-sort="none">${esc(label)}</th>`;
+}
+
+const LEVEL_DISPLAY = {
+  limpio: { emoji: '🟢', label: 'Limpio' },
+  aceptable: { emoji: '🟡', label: 'Aceptable' },
+  sospechoso: { emoji: '🟠', label: 'Sospechoso' },
+  ensalada_seria: { emoji: '🔴', label: 'Ensalada seria' },
+  ensalada_nivel_dios: { emoji: '🧨', label: 'Ensalada nivel dios' },
+};
+
+// Ranges come from config.levelScale (the real, single source of truth for
+// the score scale) — only the emoji/display label is presentational here.
+function renderScoreScale(levelScale) {
+  const rows = levelScale.map((entry) => {
+    const display = LEVEL_DISPLAY[entry.level] || { emoji: '⬜', label: entry.level };
+    return `<tr><td>${entry.min}-${entry.max}</td><td>${display.emoji} ${esc(display.label)}</td></tr>`;
+  }).join('');
+  return `
+    <h3>📊 Escala SP Score</h3>
+    <table>
+      <thead><tr>${th('Rango')}${th('Nivel')}</tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <p class="hint">score alto = más ensalada</p>`;
+}
+
 function countBy(results, getKeyOrKeys) {
   const counts = new Map();
   for (const r of results) {
@@ -38,7 +69,7 @@ function countBy(results, getKeyOrKeys) {
   return [...counts.entries()].sort((a, b) => b[1] - a[1]);
 }
 
-function renderSummary(results, repoScore) {
+function renderSummary(results, repoScore, levelScale) {
   const byLevel = countBy(results, (r) => [r.level]);
   const cards = byLevel.map(([level, n]) => `
     <div class="card">
@@ -53,6 +84,7 @@ function renderSummary(results, repoScore) {
       <div class="card"><div class="card-label">Archivos escaneados</div><div class="card-value">${results.length}</div></div>
       ${cards}
     </div>
+    ${renderScoreScale(levelScale)}
   </section>`;
 }
 
@@ -69,7 +101,7 @@ function renderTopOfensores(results, top) {
     <h2>🔥 Top Ensalada</h2>
     <p class="hint">Escala 0-100: cuanto más alto, más ensalada (peor).</p>
     <table>
-      <thead><tr><th>SP_TOTAL_SCORE</th><th>Nivel</th><th>Archivo</th></tr></thead>
+      <thead><tr>${th('SP_TOTAL_SCORE')}${th('Nivel')}${th('Archivo')}</tr></thead>
       <tbody>${rows}</tbody>
     </table>
   </section>`;
@@ -91,7 +123,7 @@ function renderArchivos(results) {
     <h2>📁 Archivos</h2>
     <input id="filter-input" type="text" placeholder="Filtrar por path, owner o nivel...">
     <table id="files-table">
-      <thead><tr><th>Score</th><th>Nivel</th><th>Path</th><th>Owner</th><th>LOC</th><th>Responsabilidades</th><th>Reglas violadas</th></tr></thead>
+      <thead><tr>${th('Score')}${th('Nivel')}${th('Path')}${th('Owner')}${th('LOC')}${th('Responsabilidades')}${th('Reglas violadas')}</tr></thead>
       <tbody>${rows}</tbody>
     </table>
   </section>`;
@@ -103,7 +135,7 @@ function renderResponsabilidades(results) {
   return `
   <section id="responsabilidades">
     <h2>🧠 Responsabilidades</h2>
-    <table><thead><tr><th>Categoría</th><th>Archivos</th></tr></thead><tbody>${rows}</tbody></table>
+    <table><thead><tr>${th('Categoría')}${th('Archivos')}</tr></thead><tbody>${rows}</tbody></table>
   </section>`;
 }
 
@@ -113,7 +145,7 @@ function renderReglasVioladas(results) {
   return `
   <section id="reglas-violadas">
     <h2>🧪 Reglas Violadas</h2>
-    <table><thead><tr><th>Regla</th><th>Archivos</th></tr></thead><tbody>${rows}</tbody></table>
+    <table><thead><tr>${th('Regla')}${th('Archivos')}</tr></thead><tbody>${rows}</tbody></table>
   </section>`;
 }
 
@@ -130,7 +162,7 @@ function renderOwnership(results) {
   return `
   <section id="ownership">
     <h2>🧭 Ownership</h2>
-    <table><thead><tr><th>Owner</th><th>Archivos</th><th>Score promedio</th></tr></thead><tbody>${rows}</tbody></table>
+    <table><thead><tr>${th('Owner')}${th('Archivos')}${th('Score promedio')}</tr></thead><tbody>${rows}</tbody></table>
   </section>`;
 }
 
@@ -153,7 +185,7 @@ function renderSugerencias(results) {
   return `
   <section id="sugerencias">
     <h2>🛠️ Sugerencias</h2>
-    <table><thead><tr><th>Archivo</th><th>Sugerencias</th></tr></thead><tbody>${rows}</tbody></table>
+    <table><thead><tr>${th('Archivo')}${th('Sugerencias')}</tr></thead><tbody>${rows}</tbody></table>
   </section>`;
 }
 
@@ -208,6 +240,11 @@ const STYLE = `
   .card-value { font-size: 28px; font-weight: 700; }
   table { width: 100%; border-collapse: collapse; }
   th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #21262d; }
+  th { cursor: pointer; user-select: none; position: relative; }
+  th:hover { background: #21262d; }
+  th[aria-sort="ascending"]::after { content: ' ▲'; color: #58a6ff; }
+  th[aria-sort="descending"]::after { content: ' ▼'; color: #58a6ff; }
+  th[aria-sort="none"]::after { content: ' ⇕'; color: #484f58; }
   .badge { padding: 2px 8px; border-radius: 12px; font-size: 12px; }
   pre { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; overflow: auto; max-height: 500px; }
   input#filter-input { width: 100%; padding: 8px; margin-bottom: 12px; background: #0d1117; color: #c9d1d9; border: 1px solid #30363d; border-radius: 6px; }
@@ -228,6 +265,41 @@ const SCRIPT = `
     var text = document.getElementById('raw-json-content').textContent;
     navigator.clipboard.writeText(text);
   });
+
+  // SPD1G: generic client-side table sorting. Sorts the already-rendered
+  // row elements by comparing cell text (numeric-aware) — never recomputes
+  // any score, never fetches, never executes a string. Applies to every
+  // column header in every table in the document.
+  document.querySelectorAll('table').forEach(function (table) {
+    var headers = Array.prototype.slice.call(table.querySelectorAll('th'));
+    headers.forEach(function (header, columnIndex) {
+      function sortByColumn() {
+        var tbody = table.querySelector('tbody');
+        if (!tbody) return;
+        var ascending = header.getAttribute('aria-sort') !== 'ascending';
+        headers.forEach(function (h) { h.setAttribute('aria-sort', 'none'); });
+        header.setAttribute('aria-sort', ascending ? 'ascending' : 'descending');
+
+        var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr'));
+        rows.sort(function (rowA, rowB) {
+          var cellA = rowA.children[columnIndex] ? rowA.children[columnIndex].textContent.trim() : '';
+          var cellB = rowB.children[columnIndex] ? rowB.children[columnIndex].textContent.trim() : '';
+          var numA = parseFloat(cellA);
+          var numB = parseFloat(cellB);
+          var bothNumeric = /^-?[\\d.]+$/.test(cellA) && /^-?[\\d.]+$/.test(cellB) && !isNaN(numA) && !isNaN(numB);
+          var comparison = bothNumeric ? (numA - numB) : cellA.localeCompare(cellB);
+          return ascending ? comparison : -comparison;
+        });
+        rows.forEach(function (row) { tbody.appendChild(row); });
+      }
+      header.addEventListener('click', sortByColumn);
+      header.addEventListener('keydown', function (event) {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        sortByColumn();
+      });
+    });
+  });
 `;
 
 export function templateDashboard({ results, repoScore, config, generatedAt }) {
@@ -244,7 +316,7 @@ export function templateDashboard({ results, repoScore, config, generatedAt }) {
   <main>
     <h1>🥗 RF Salad Point Score</h1>
     <p class="hint">Generado: ${esc(generatedAt)} — reporte estático, sin backend, sin fetch, sin ejecución.</p>
-    ${renderSummary(results, repoScore)}
+    ${renderSummary(results, repoScore, config.levelScale)}
     ${renderTopOfensores(results, top)}
     ${renderArchivos(results)}
     ${renderResponsabilidades(results)}

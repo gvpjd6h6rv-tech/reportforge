@@ -131,6 +131,9 @@ test('zoom widget manual flow', { timeout: 120000 }, async () => {
     assert.equal(state.sliderValue, '100');
     const shot100 = await shotSlider();
 
+    // SSOT zoom.steps (engines/RuntimeConfig.js) is symmetric 0.25 spacing:
+    // 1.0 -> 1.25 -> 1.5 is 2 steps, not 1.
+    await page.locator('#zw-in').click();
     await page.locator('#zw-in').click();
     await page.waitForFunction(() => document.getElementById('zw-pct')?.textContent === '150%');
     state = await readState();
@@ -150,6 +153,9 @@ test('zoom widget manual flow', { timeout: 120000 }, async () => {
     const shot150 = await shotSlider();
     expectDifferentShots(shot100, shot150, '100% vs 150%');
 
+    // SSOT zoom.steps (engines/RuntimeConfig.js) is symmetric 0.25 spacing:
+    // 1.5 -> 1.25 -> 1.0 is 2 steps, not 1.
+    await page.locator('#zw-out').click();
     await page.locator('#zw-out').click();
     await page.waitForFunction(() => document.getElementById('zw-pct')?.textContent === '100%');
     state = await readState();

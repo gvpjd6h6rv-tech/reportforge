@@ -412,11 +412,14 @@ test('TANDA 5 — INTERACTION-EDGE-001..018', { timeout: 300000 }, async (t) => 
       const selectedId = await page.evaluate(() => [...DS.selection][0]);
       assert.ok(selectedId, 'elemento debe estar seleccionado');
 
-      // Enter preview: selección debe persistir
+      // Enter preview: selección debe persistir en DS, pero el overlay
+      // entra congelado/oculto por diseño (PreviewEngineMode.show ->
+      // freezeSelectionOverlay) hasta una reselección explícita en preview —
+      // ver INTERACTION-EDGE-016, que sí hace selectPreviewSingle.
       await enterPreview(page);
       let snap = await getSelectionSnapshot(page);
       assert.deepEqual(snap.dsSelection, [selectedId], 'DS.selection debe persistir al entrar preview');
-      assert.equal(snap.boxCount, 1, 'overlay debe existir en preview');
+      assert.equal(snap.boxCount, 0, 'overlay entra congelado/oculto en preview hasta reselección explícita');
 
       // Exit preview: selección debe volver
       await exitPreview(page);

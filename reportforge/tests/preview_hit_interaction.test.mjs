@@ -24,10 +24,12 @@ function loadPreview(DS, CFG) {
   };
   ctx.window.PreviewEngineContracts = { assertLayoutContract() {} };
   vm.runInNewContext(fs.readFileSync(resolve(ROOT, 'engines/PreviewPaginationEngine.js'), 'utf8'), ctx);
+  vm.runInNewContext(fs.readFileSync(resolve(ROOT, 'engines/FontStack.js'), 'utf8'), ctx);
   // PreviewEngineData references DS, CFG, SAMPLE_DATA as free globals.
   ctx.DS = DS; ctx.CFG = CFG; ctx.SAMPLE_DATA = {};
   ctx.PreviewEngineContracts = ctx.window.PreviewEngineContracts;
   ctx.PreviewPaginationEngine = ctx.window.PreviewPaginationEngine;
+  ctx.FontStack = ctx.window.FontStack;
   vm.runInNewContext(fs.readFileSync(resolve(ROOT, 'engines/PreviewEngineData.js'), 'utf8'), ctx);
   return ctx.window.PreviewEngineData;
 }

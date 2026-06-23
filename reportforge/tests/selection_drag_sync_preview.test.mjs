@@ -68,6 +68,11 @@ test('_doMove renderHandles executes with allowsDomWrite()=true at runtime', () 
     HistoryEngine: { push() {} },
     PropertiesEngine: { updatePositionFields() {} },
     InsertEngine: { onMouseMove() {} },
+    SelectionDragPreviewSync: {
+      previewRenderElementIndex: () => -1,
+      findPreviewRenderNodes: () => [],
+      dragTransformStyle() {},
+    },
     getCanvasPos: () => ({ x: 50, y: 60 }),
     requestAnimationFrame: (fn) => { fn(); return 1; },
     document: {

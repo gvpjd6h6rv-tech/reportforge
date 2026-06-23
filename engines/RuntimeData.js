@@ -16,7 +16,7 @@ const RuntimeData = (() => {
       MIN_EL_W:        _rc ? _rc.canvas.minElW : 8,
       MIN_EL_H:        _rc ? _rc.canvas.minElH : 6,
       HANDLE_HIT:      _rc ? _rc.canvas.handleHit : 4,
-      ZOOM_LEVELS:     _rc ? [..._rc.zoom.steps] : [0.25,0.5,0.75,1.0,1.25,1.5,2.0,4.0],
+      ZOOM_LEVELS:     _rc ? [..._rc.zoom.steps] : [0.25,0.5,0.75,1.0,1.25,1.5,1.75,2.0,3.0,4.0],
       FONTS: ['Arial','Tahoma','Courier New','Times New Roman','Calibri','Verdana','Georgia'],
       FONT_SIZES: [6,7,8,9,10,11,12,14,16,18,20,24,28,36],
       SECTION_MIN_H:   _rc ? _rc.canvas.sectionMinH : 12,
@@ -25,7 +25,7 @@ const RuntimeData = (() => {
   }
 
   const FORMATS = {
-    currency: v=>isNaN(v)?v:parseFloat(v).toFixed(2),
+    currency: v=>isNaN(v)?v:parseFloat(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
     float2: v=>isNaN(v)?v:parseFloat(v).toFixed(2),
     float6: v=>isNaN(v)?v:parseFloat(v).toFixed(6),
     upper: v=>String(v).toUpperCase(),

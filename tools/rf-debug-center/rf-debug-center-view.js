@@ -35,6 +35,7 @@ export function mountDebugCenter(host) {
       <div><div class="rf-debug-center__title">RF Debug Center</div><div class="rf-debug-center__sub" id="rf-debug-center-sub">waiting for RF_UI_TRACE</div></div>
       <div class="rf-debug-center__head-actions">
         <button type="button" id="rf-debug-center-open-window" title="Open a separate browser window">Open Window</button>
+        <button type="button" id="rf-debug-center-salad-score" title="Abrir SP Dashboard (reporte estático, no ejecuta nada)" aria-label="Abrir SP Dashboard">🥗 SP Dashboard</button>
         <button type="button" id="rf-debug-center-reset" title="Reset panel position">Reset</button>
         <div class="rf-debug-center__badge" id="rf-debug-center-badge">inactive</div>
       </div>
@@ -65,8 +66,13 @@ export function mountDebugCenter(host) {
 export function renderDebugCenter(shadow, state, actions = {}) {
   renderDebugCenterSections(shadow, state, actions);
   const openWindow = shadow.getElementById('rf-debug-center-open-window');
+  const saladScore = shadow.getElementById('rf-debug-center-salad-score');
   const reset = shadow.getElementById('rf-debug-center-reset');
   if (openWindow) openWindow.onclick = typeof actions.openDetachedWindow === 'function' ? () => actions.openDetachedWindow() : null;
+  // Opens the pre-generated static SP Score dashboard. No state to sync, no
+  // backend call, no command execution — unlike "Open Window" above, this
+  // does not go through the actions/runtime layer at all.
+  if (saladScore) saladScore.onclick = () => window.open('reports/salad-score-dashboard.html', '_blank', 'noopener,noreferrer');
   if (reset) reset.onclick = typeof actions.resetPosition === 'function' ? () => actions.resetPosition() : null;
   renderSelectionPanel(shadow, state.selection || {}, actions);
   renderDomScannerPanel(shadow, state.domScanner || {}, actions);

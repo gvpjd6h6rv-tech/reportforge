@@ -98,3 +98,81 @@ test('templateDashboard — client-side filter input exists but contains no eval
   const html = render();
   assert.match(html, /<input[^>]*id="filter-input"/);
 });
+
+// SPD1G — score scale table
+
+test('templateDashboard — score scale table has all 5 mandatory ranges with emoji + label', () => {
+  const html = render();
+  assert.match(html, /0-20[\s\S]{0,40}🟢[\s\S]{0,20}Limpio/i);
+  assert.match(html, /21-40[\s\S]{0,40}🟡[\s\S]{0,20}Aceptable/i);
+  assert.match(html, /41-60[\s\S]{0,40}🟠[\s\S]{0,20}Sospechoso/i);
+  assert.match(html, /61-80[\s\S]{0,40}🔴[\s\S]{0,20}Ensalada seria/i);
+  assert.match(html, /81-100[\s\S]{0,40}🧨[\s\S]{0,20}Ensalada nivel dios/i);
+});
+
+test('templateDashboard — score scale ranges are derived from config.levelScale, not hardcoded separately', () => {
+  const html = render();
+  for (const entry of CONFIG.levelScale) {
+    assert.match(html, new RegExp(`${entry.min}-${entry.max}`), `range ${entry.min}-${entry.max} from config.levelScale must appear in the rendered scale table`);
+  }
+});
+
+test('templateDashboard — includes the literal text "score alto = más ensalada"', () => {
+  assert.match(render(), /score alto = más ensalada/);
+});
+
+test('templateDashboard — score scale table itself has a dedicated heading "📊 Escala SP Score"', () => {
+  assert.match(render(), /📊 Escala SP Score/);
+});
+
+// SPD1G — clickable, sortable table headers
+
+test('templateDashboard — every <th> is marked sortable: cursor pointer (CSS), role=button, tabindex, aria-sort=none initial', () => {
+  const html = render();
+  assert.match(html, /th\s*\{[^}]*cursor\s*:\s*pointer/);
+  const thMatches = html.match(/<th(?=[\s>])[^>]*>/g) || [];
+  assert.ok(thMatches.length > 0, 'dashboard must contain at least one <th>');
+  for (const th of thMatches) {
+    assert.match(th, /role="columnheader"/, `<th> must declare role=columnheader: ${th}`);
+    assert.match(th, /tabindex="0"/, `<th> must be keyboard-focusable: ${th}`);
+    assert.match(th, /aria-sort="none"/, `<th> must declare initial aria-sort=none: ${th}`);
+  }
+});
+
+test('templateDashboard — sorting script: attaches a click handler to every <th>, no fetch/eval/exec inside it', () => {
+  const html = render();
+  const scriptMatch = html.match(/<script>([\s\S]*)<\/script>/);
+  assert.ok(scriptMatch, 'inline script must exist');
+  const script = scriptMatch[1];
+  assert.match(script, /querySelectorAll\(['"]th['"]\)/);
+  assert.match(script, /addEventListener\(['"]click['"]/);
+  assert.doesNotMatch(script, /\bfetch\s*\(/);
+  assert.doesNotMatch(script, /\beval\s*\(/);
+  assert.doesNotMatch(script, /subprocess|child_process/);
+});
+
+test('templateDashboard — sorting script toggles aria-sort between ascending/descending and reorders <tbody> rows client-side', () => {
+  const html = render();
+  const scriptMatch = html.match(/<script>([\s\S]*)<\/script>/);
+  const script = scriptMatch[1];
+  assert.match(script, /ascending/);
+  assert.match(script, /descending/);
+  assert.match(script, /setAttribute\(['"]aria-sort['"]/);
+  assert.match(script, /\.sort\(/);
+  assert.match(script, /appendChild/, 'rows must be reordered via DOM appendChild, not refetched');
+});
+
+test('templateDashboard — visual asc/desc indicator is declared via CSS on aria-sort, not inline JS strings only', () => {
+  const html = render();
+  assert.match(html, /\[aria-sort=['"]ascending['"]\]/);
+  assert.match(html, /\[aria-sort=['"]descending['"]\]/);
+});
+
+test('templateDashboard — sortable headers are keyboard-activatable (Enter/Space), not click-only — tabindex=0 + role=columnheader without this is a dead-end for keyboard users', () => {
+  const html = render();
+  const scriptMatch = html.match(/<script>([\s\S]*)<\/script>/);
+  const script = scriptMatch[1];
+  assert.match(script, /addEventListener\(['"]keydown['"]/);
+  assert.match(script, /event\.key\s*!==\s*['"]Enter['"]/);
+  assert.match(script, /event\.key\s*!==\s*['"] ['"]/);
+});

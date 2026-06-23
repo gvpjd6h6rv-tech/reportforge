@@ -10,7 +10,8 @@ function _canonicalPreviewWriter(){
   return PreviewEngineV19;
 }
 
-const ZOOM_STEPS=[0.25,0.5,0.75,1.0,1.5,2.0,3.0,4.0];
+// SSOT: engines/RuntimeConfig.js zoom.steps — single place to change zoom granularity.
+const ZOOM_STEPS=[...(typeof RF !== 'undefined' && RF.RuntimeConfig ? RF.RuntimeConfig.zoom.steps : [0.25,0.5,0.75,1.0,1.25,1.5,1.75,2.0,3.0,4.0])];
 function _snapZoom(z){return ZOOM_STEPS.reduce((a,b)=>Math.abs(b-z)<Math.abs(a-z)?b:a,ZOOM_STEPS[0]);}
 
 function _zoomDebugMeta() {
@@ -112,7 +113,7 @@ const DesignZoomEngine={
       vp.style.transformBox    = 'border-box';
       vp.style.marginBottom    = CFG.RULER_H + 'px';
       vp.style.display = 'block';
-      vp.style.width   = (PAGE_W * z) + 'px';
+      vp.style.width   = PAGE_W + 'px';
       cl.style.transform = 'none';
       cl.style.transformOrigin = '';
       cl.style.transformBox = '';
@@ -247,7 +248,12 @@ const ZoomWidget={
     const sb=document.getElementById('sb-zoom');if(sb)sb.textContent=pct;
     if(zi)zi.disabled=(z>=4.0);if(zo)zo.disabled=(z<=0.25);
     if(sl){
-      sl.step = DS.previewMode ? '1' : '25';
+      // step must stay '1' regardless of mode: per the range-input value
+      // sanitization algorithm, the browser silently re-snaps an assigned
+      // .value to the nearest multiple of `step` — continuous zoom sources
+      // (Ctrl+wheel, slider drag) produce values that aren't aligned to a
+      // coarser step, which desynced the displayed slider from DS.zoom.
+      sl.step = '1';
       sl.value = Math.round(z*100);
     }
     this._syncZoomSelect(sel, pct);

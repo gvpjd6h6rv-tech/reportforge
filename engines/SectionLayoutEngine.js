@@ -82,9 +82,15 @@ const SectionLayoutEngine = (() => {
       const div = document.querySelector(`.cr-section[data-section-id="${sec.id}"]`);
       if (!div) return;
 
+      // The canvas root (#viewport) is already zoom-transformed, so DOM
+      // pixel values here must be the RAW model size — contract.sections[i]
+      // .height and contract.pageWidth are scaled for external consumers
+      // (e.g. WorkspaceScrollEngine's scroll-region sizing) and would
+      // double-scale if assigned directly to a node inside that transform.
+      const model = DS.getSection(sec.id);
       const nextDisplay = sec.visible === false ? 'none' : '';
-      const nextHeight = _px(_scale(sec.height));
-      const nextWidth = _px(contract.pageWidth);
+      const nextHeight = _px(model ? model.height : sec.height);
+      const nextWidth = _px(CFG.PAGE_W);
       if (div.style.display !== nextDisplay) div.style.display = nextDisplay;
       if (div.style.height !== nextHeight) div.style.height = nextHeight;
       if (div.style.width !== nextWidth) div.style.width = nextWidth;

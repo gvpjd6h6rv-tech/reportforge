@@ -4,7 +4,7 @@ import copy
 import math
 import re
 
-from .advanced_engine_shared import _CHAR_PX, _PT_PX, _ROW_EVEN, _ROW_ODD, _SPECIAL, _esc
+from .advanced_engine_shared import _CHAR_PX, _PT_PX, _ROW_EVEN, _ROW_ODD, _SPECIAL, _esc, _with_element_index
 from .barcode_renderer import _render_barcode_svg
 from .element_embed_renderers import render_chart as _render_chart_el
 from .element_embed_renderers import render_subreport_el as _render_subreport_el
@@ -29,27 +29,27 @@ def render_element(engine, el, res, agg=None, ctx=None) -> str:
             return ""
     t = el.type
     if t == "field":
-        return render_field(engine, el, res, agg, ctx)
+        return _with_element_index(render_field(engine, el, res, agg, ctx), ctx)
     if t == "text":
-        return render_text(engine, el, res, agg)
+        return _with_element_index(render_text(engine, el, res, agg), ctx)
     if t == "line":
-        return render_line(el)
+        return _with_element_index(render_line(el), ctx)
     if t == "rect":
-        return render_rect(el)
+        return _with_element_index(render_rect(el), ctx)
     if t == "image":
-        return render_image(engine, el, res)
+        return _with_element_index(render_image(engine, el, res), ctx)
     if t == "chart":
-        return _render_chart_el(engine, el, res, agg)
+        return _with_element_index(_render_chart_el(engine, el, res, agg), ctx)
     if t == "table":
-        return _render_table_el(engine, el, res, agg)
+        return _with_element_index(_render_table_el(engine, el, res, agg), ctx)
     if t == "subreport":
-        return _render_subreport_el(engine, el, res)
+        return _with_element_index(_render_subreport_el(engine, el, res), ctx)
     if t == "barcode":
-        return render_barcode(engine, el, res)
+        return _with_element_index(render_barcode(engine, el, res), ctx)
     if t == "crosstab":
-        return render_crosstab_el(engine, el, res, agg)
+        return _with_element_index(render_crosstab_el(engine, el, res, agg), ctx)
     if t == "richtext":
-        return render_richtext(engine, el, res)
+        return _with_element_index(render_richtext(engine, el, res), ctx)
     return ""
 
 
