@@ -84,6 +84,12 @@
     --rf-ruler-top:    22px;  /* SSOT: must match RF.RuntimeConfig.ruler.topPx */
     --rf-ruler-side:   22px;  /* SSOT: must match RF.RuntimeConfig.ruler.sidePx */
     --rf-handle-size:  6px;
+    /* CR-parity selection corner ticks (CR-PARITY-1): tiny "L" mark, hairline
+       thickness, short length. Consumed via calc(.../var(--geo-zoom,1)) at
+       the point of use so the rendered, on-screen size stays constant across
+       zoom — these are the pre-scale (zoom=1) source values, SSOT. */
+    --rf-sel-corner-len:   5px;
+    --rf-sel-corner-thick: 1px;
     --rf-panel-l:      clamp(130px, 15vw, 170px);
     --rf-panel-r:      clamp(180px, 18vw, 220px);
 

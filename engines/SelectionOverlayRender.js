@@ -48,7 +48,7 @@ const SelectionOverlayRender = (() => {
       layer.appendChild(h);
     });
   }
-  function renderMultiSelection(layer, selectedElements) {
+  function renderMultiSelection(layer, selectedElements, showGuides) {
     const viewRects = selectedElements.map((item) => selectionRect(item, layer)).filter(Boolean);
     const bounds = G.selectionBoundsFromRects(viewRects);
     if (!bounds) return;
@@ -56,7 +56,9 @@ const SelectionOverlayRender = (() => {
     outline.className = 'sel-box sel-box-multi';
     Object.assign(outline.style, { position: 'absolute', left: bounds.left + 'px', top: bounds.top + 'px', width: bounds.width + 'px', height: bounds.height + 'px', background: 'none', backgroundImage: 'none', border: 'none', outline: 'none', boxShadow: 'none', pointerEvents: 'none' });
     layer.appendChild(outline);
-    _preview().renderSelectionGuides(layer, viewRects);
+    // CR-PARITY-1: guides only during an active move/resize gesture — see
+    // SelectionOverlay._shouldShowGuides, the single owner of this decision.
+    if (showGuides) _preview().renderSelectionGuides(layer, viewRects);
     viewRects.forEach((rect) => {
       const item = document.createElement('div');
       item.className = 'sel-box-multi-item';
