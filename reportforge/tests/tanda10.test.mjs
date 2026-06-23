@@ -134,7 +134,7 @@ test('TANDA 10 — MENU-001..020', { timeout: 300000 }, async (t) => {
       });
 
       // ─── MENU-010 ──────────────────────────────────────────────────────
-      await t.test('MENU-010 clicking Copiar from element menu copies element to DS.clipboard', async () => {
+      await t.test('MENU-010 clicking Copiar from element menu copies element via ClipboardEngine', async () => {
         await reloadRuntime(page, server.baseUrl);
         const elId = await page.evaluate(() => {
           const el = DS.elements[0];
@@ -144,8 +144,16 @@ test('TANDA 10 — MENU-001..020', { timeout: 300000 }, async (t) => {
         await showContextMenu(page, 'element');
         await clickMenuItem(page, 'Copiar');
 
-        const clipLen = await page.evaluate(() => DS.clipboard?.length ?? 0);
-        assert.ok(clipLen > 0, `MENU-010: DS.clipboard must have content after Copiar; got length ${clipLen}`);
+        // DS.clipboard is a documented legacy fallback that ClipboardEngine
+        // (the real implementation, present on this page) deliberately does
+        // not touch — see command_runtime_selection_clipboard.test.mjs's
+        // "DELEGATION" tests. ClipboardState.js is intentionally NOT loaded
+        // in production (P23A/P31A, orphan_test_target_guard.test.mjs) — its
+        // identical-API inline-closure fallback inside ClipboardEngine.js is
+        // the real implementation. hasContent()/state.size() are its public
+        // introspection API, exactly for cases like this.
+        const clipLen = await page.evaluate(() => (typeof ClipboardEngine !== 'undefined' ? ClipboardEngine.state.size() : 0));
+        assert.ok(clipLen > 0, `MENU-010: ClipboardEngine must have content after Copiar; got length ${clipLen}`);
       });
 
       // ─── MENU-011 ──────────────────────────────────────────────────────
@@ -201,10 +209,11 @@ test('TANDA 10 — MENU-001..020', { timeout: 300000 }, async (t) => {
 
         const { countAfter, clipLen } = await page.evaluate(() => ({
           countAfter: DS.elements.length,
-          clipLen: DS.clipboard?.length ?? 0,
+          // ClipboardEngine's own state is the real SSOT — see MENU-010 above.
+          clipLen: typeof ClipboardEngine !== 'undefined' ? ClipboardEngine.state.size() : 0,
         }));
         assert.equal(countAfter, countBefore - 1, `MENU-014: Cortar must remove element; before=${countBefore} after=${countAfter}`);
-        assert.ok(clipLen > 0, `MENU-014: Cortar must populate DS.clipboard; got length ${clipLen}`);
+        assert.ok(clipLen > 0, `MENU-014: Cortar must populate ClipboardEngine; got length ${clipLen}`);
       });
 
       // ─── MENU-015 ──────────────────────────────────────────────────────

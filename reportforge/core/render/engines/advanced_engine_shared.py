@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime
 import html as _html
+import re
 
 _ROW_ODD = "#FFFFFF"
 _ROW_EVEN = "#F4F4F2"
@@ -46,3 +47,16 @@ def _to_float(v) -> float:
         return float(v)
     except Exception:
         return 0.0
+
+
+def _with_element_index(html: str, ctx=None) -> str:
+    ctx = ctx or {}
+    idx = ctx.get("_index")
+    if idx is None or not html.startswith("<"):
+        return html
+    return re.sub(
+        r"^<([A-Za-z0-9:-]+)(\s|>)",
+        lambda m: f'<{m.group(1)} data-el-index="{idx}"{m.group(2)}',
+        html,
+        count=1,
+    )

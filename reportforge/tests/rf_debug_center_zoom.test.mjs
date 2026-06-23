@@ -64,7 +64,14 @@ async function applyFixture(page, fixture = {}) {
     const slider = document.getElementById('zw-slider');
     const pct = document.getElementById('zw-pct');
     const tb = document.getElementById('tb-zoom');
-    const canvas = document.getElementById('canvas-layer');
+    // SPD1E: the real zoom target is #viewport, not #canvas-layer —
+    // DesignZoomEngine._apply() (engines/ZoomEngine.js) always sets the
+    // scale transform on #viewport and explicitly clears #canvas-layer's
+    // transform to 'none', in both design and preview mode. The fixture
+    // must simulate the same element the real diagnostic now reads
+    // (rf-debug-center-zoom.js's readZoomTarget), or every case here would
+    // be asserting against a scenario production never produces.
+    const viewport = document.getElementById('viewport');
     if (slider) {
       if (next.sliderMin != null) slider.min = String(next.sliderMin);
       if (next.sliderMax != null) slider.max = String(next.sliderMax);
@@ -73,9 +80,9 @@ async function applyFixture(page, fixture = {}) {
     }
     if (pct && next.pctText != null) pct.textContent = String(next.pctText);
     if (tb && next.tbZoomValue != null) tb.value = String(next.tbZoomValue);
-    if (canvas && next.transform !== undefined) {
-      canvas.style.transform = next.transform;
-      canvas.style.transformOrigin = 'top left';
+    if (viewport && next.transform !== undefined) {
+      viewport.style.transform = next.transform;
+      viewport.style.transformOrigin = 'top left';
     }
     const before = window.DS ? {
       zoom: window.DS.zoom,
@@ -158,6 +165,18 @@ test('rf debug center zoom diagnostics live preview', { timeout: 120000 }, async
     await page.mouse.wheel(0, -300);
     await page.keyboard.up('Control');
     await page.waitForFunction(() => (window.RFDebugCenter?.getState?.()?.zoom?.traceCount || 0) > 0);
+    // SPD1E: the rendered transform (dom.scale) and the internal model value
+    // (effectiveZoom) are computed by independent code paths (real CSS
+    // matrix() parsing vs. app state) and settle on different rAF ticks.
+    // RFDebugCenter's own zoom diagnostics already implement this exact
+    // dom-vs-model comparison (rf-debug-center-zoom.js) — wait for ITS
+    // verdict to converge instead of asserting immediately after the wheel
+    // gesture, which raced the compositor under real Chromium timing.
+    await page.waitForFunction(
+      () => (window.RFDebugCenter?.getState?.()?.zoom?.divergences?.length ?? 1) === 0,
+      null,
+      { timeout: 5000 }
+    );
     let zoom = await readZoom(page);
     panel = await readPanel(page);
     assert.match(panel.body, /effectiveZoom/i);

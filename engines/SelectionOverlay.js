@@ -29,6 +29,13 @@ const SelectionOverlay = (() => {
   function _syncSelectionDomClasses() { document.querySelectorAll('.cr-element').forEach(d => d.classList.toggle('selected', S.isSelected(d.dataset.id))); }
   function _syncActiveSectionChrome(selectedElements) { const activeSectionIds = new Set(selectedElements.map((el) => el.sectionId)); document.querySelectorAll('.cr-section').forEach((section) => { section.style.boxShadow = activeSectionIds.has(section.dataset.sectionId) ? 'inset 0 0 0 2px rgba(11, 98, 214, 0.6)' : ''; }); }
   function _ensurePreviewOverlay(engine, renderSelectionIds) { const previewOverlayFrozen = DS.previewMode && typeof engine.isSelectionOverlayFrozen === 'function' && engine.isSelectionOverlayFrozen(); const previewOverlayVisible = !DS.previewMode || (typeof engine.isSelectionOverlayVisible === 'function' && engine.isSelectionOverlayVisible() !== false); const hasPreviewSelection = DS.previewMode && renderSelectionIds.length > 0; if (previewOverlayFrozen) return { previewOverlayVisible: false, hasPreviewSelection, previewOverlayFrozen }; if (hasPreviewSelection && !previewOverlayVisible && engine.enableSelectionOverlay) engine.enableSelectionOverlay(); return { previewOverlayVisible, hasPreviewSelection, previewOverlayFrozen: false }; }
+  // Design mode always shows guides on a static selection; preview mode only
+  // shows them while an active move/resize drag is in progress.
+  function _shouldShowGuides(engine) {
+    if (!DS.previewMode) return true;
+    const drag = engine && engine._drag;
+    return !!(drag && (drag.type === 'move' || drag.type === 'resize'));
+  }
 
   function renderHandles(engine) {
     C.assertSelectionState('SelectionEngine.renderHandles.selection');
@@ -64,7 +71,7 @@ const SelectionOverlay = (() => {
       return;
     }
     if (DS.previewMode && !previewOverlayVisible && !hasPreviewSelection) { engine.updateSelectionInfo(); return; }
-    const showGuides = !!(engine && engine._drag && (engine._drag.type === 'move' || engine._drag.type === 'resize'));
+    const showGuides = _shouldShowGuides(engine);
     if (branch === 'single') {
       R.renderSingleSelection(engine, layer, renderSelectionIds[0], showGuides);
     } else {

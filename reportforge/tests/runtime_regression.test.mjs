@@ -230,7 +230,8 @@ test('canonical runtime anti-regression suite', { timeout: 120000 }, async (t) =
       await page.waitForFunction(() => document.getElementById('zw-pct')?.textContent === '100%');
       const at100 = await captureWidget();
 
-      await page.locator('#zw-in').click();
+      // SSOT zoom.steps (engines/RuntimeConfig.js) is symmetric 0.25 spacing:
+      // 1.0 -> 1.25 -> 1.5 is 2 steps, not 3.
       await page.locator('#zw-in').click();
       await page.locator('#zw-in').click();
       await page.waitForFunction(() => document.getElementById('zw-pct')?.textContent === '150%');
@@ -282,7 +283,12 @@ test('canonical runtime anti-regression suite', { timeout: 120000 }, async (t) =
     });
 
     await t.test('preview enter exit', async () => {
+      // The prior subtest (zoom widget manual flow) does a fresh page.goto,
+      // which wipes DS.selection — this subtest verifies a design-mode
+      // selection is hidden in preview and restored on exit, so it must
+      // establish that selection itself rather than assume it survived.
       await setZoom(page, 1);
+      await selectSingle(page, 0);
       await enterPreview(page);
       let state = await runtimeState(page);
       assert.equal(state.previewMode, true);
@@ -356,12 +362,15 @@ test('canonical runtime anti-regression suite', { timeout: 120000 }, async (t) =
       await selectPreviewSingle(page, 0);
       for (const zoom of [0.45, 1, 2]) {
         await setZoom(page, zoom);
-        const state = await page.evaluate(() => ({
-          previewMode: DS.previewMode,
-          zoom: DS.previewZoom || 1,
-          boxCount: document.querySelectorAll('#handles-layer .sel-box').length,
-          handleCount: document.querySelectorAll('#handles-layer .sel-handle').length,
-        }));
+        const state = await page.evaluate(() => {
+          const layer = document.querySelector(DS.previewMode ? '#preview-content .preview-selection-layer' : '#handles-layer');
+          return {
+            previewMode: DS.previewMode,
+            zoom: DS.previewZoom || 1,
+            boxCount: layer ? layer.querySelectorAll('.sel-box').length : 0,
+            handleCount: layer ? layer.querySelectorAll('.sel-handle').length : 0,
+          };
+        });
         assert.equal(state.previewMode, true);
         assert.equal(state.zoom, zoom);
         assert.equal(state.boxCount, 1);
@@ -377,7 +386,11 @@ test('canonical runtime anti-regression suite', { timeout: 120000 }, async (t) =
         DS.selectOnly('e101', 'test');
         SelectionEngine.renderHandles();
       });
-      await page.waitForTimeout(120);
+      // renderHandles() outside the normal flush cycle can be deferred by
+      // RenderScheduler.allowsDomWrite() — wait for the actual DOM effect
+      // instead of a fixed sleep, which raced a busier scheduler queue
+      // right after the preceding subtest's preview enter/exit/zoom churn.
+      await page.waitForFunction(() => document.querySelector('.cr-element.selected[data-id="e101"]'));
       await dragSelectedElement(page, 10, 8);
       await setZoom(page, 2);
       await enterPreview(page);

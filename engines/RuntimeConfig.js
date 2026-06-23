@@ -38,7 +38,8 @@ const _RC = Object.freeze({
   }),
 
   zoom: Object.freeze({
-    steps: Object.freeze([0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0]),
+    // Symmetric 0.25 spacing through the common range, doubling beyond 2x.
+    steps: Object.freeze([0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 3.0, 4.0]),
     min:   0.01,
     max:   64.0,
   }),

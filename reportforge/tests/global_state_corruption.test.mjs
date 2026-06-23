@@ -200,7 +200,9 @@ test('global state — RuntimeData: FORMATS functions are callable and return st
   assert.ok(w.FORMATS && typeof w.FORMATS === 'object', 'FORMATS must be an object');
 
   const cases = [
-    ['currency', 1234.5, '1234.50'],
+    // Thousands separator matches the already-correct Python pipeline
+    // (reportforge/core/render/resolvers/field_resolver.py: f"{value:,.2f}").
+    ['currency', 1234.5, '1,234.50'],
     ['float2', 3.14159, '3.14'],
     ['upper', 'hello', 'HELLO'],
   ];

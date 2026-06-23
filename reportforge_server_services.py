@@ -32,7 +32,7 @@ def handle_get(handler):
         return _get_health(handler)
     if path.startswith("/preview-barcode"):
         return _get_barcode(handler)
-    if path.startswith("/static/") or path.endswith((".js", ".css", ".svg", ".png")):
+    if path.startswith("/static/") or path.startswith("/reports/") or path.endswith((".js", ".css", ".svg", ".png", ".html", ".json")):
         return _serve_static(handler, path)
     _not_found(handler, path)
 

@@ -29,7 +29,15 @@ function readControls(doc) {
     tbZoomVisible: !!tb && tbStyle?.display !== 'none' && tbStyle?.visibility !== 'hidden' && tbStyle?.opacity !== '0',
   };
 }
-function readZoomTarget(doc) { return doc?.getElementById?.('canvas-layer') || doc?.getElementById?.('preview-content') || null; }
+// SPD1E: DesignZoomEngine._apply() (engines/ZoomEngine.js) is the ONLY place
+// zoom scale is ever applied — in BOTH design and preview mode (preview
+// delegates to it: `if (DS.previewMode) DesignZoomEngine._apply(...)`). It
+// always sets the real transform on #viewport and explicitly clears
+// #canvas-layer's transform to 'none' (`cl.style.transform = 'none'`).
+// Querying #canvas-layer first (the prior behavior) meant dom.scale was
+// always null, which silently bypassed the divergence check below (it only
+// runs `if (dom.scale != null)`) — a real bug, not a Chromium quirk.
+function readZoomTarget(doc) { return doc?.getElementById?.('viewport') || doc?.getElementById?.('canvas-layer') || doc?.getElementById?.('preview-content') || null; }
 function readDom(doc, mode) {
   const target = readZoomTarget(doc);
   const view = doc?.defaultView || doc?.ownerDocument?.defaultView || null;

@@ -313,19 +313,28 @@ class AdvancedHtmlEngine:
         bg = _ROW_EVEN if row["alt"] else _ROW_ODD
         sbg = getattr(s, "bgColor", "transparent")
         bgs = f"background:{sbg}" if sbg != "transparent" else f"background:{bg}"
-        inner = "".join(render_element(self, e, res, self._agg, ctx) for e in self._layout.elements_for(s.id))
-        return f'<div class="cr-detail-row" data-stype="det" data-row="{row["i"]}" style="height:{row["h"]}px;{bgs}">{inner}</div>'
+        inner = "".join(
+            render_element(self, e, res, self._agg, {**ctx, "_index": i})
+            for i, e in enumerate(self._layout.elements_for(s.id))
+        )
+        return (
+            f'<div class="cr-detail-row" data-section-id="{s.id}" data-stype="det" '
+            f'data-row="{row["i"]}" style="height:{row["h"]}px;{bgs}">{inner}</div>'
+        )
 
     def _static(self, s, ctx=None) -> str:
         return self._sec(s, self._resolver, self._agg, ctx or {})
 
     def _sec(self, s, res, agg, ctx=None) -> str:
         ctx = ctx or {}
-        inner = "".join(render_element(self, e, res, agg, ctx) for e in self._layout.elements_for(s.id))
+        inner = "".join(
+            render_element(self, e, res, agg, {**ctx, "_index": i})
+            for i, e in enumerate(self._layout.elements_for(s.id))
+        )
         sbg = getattr(s, "bgColor", "transparent")
         bgs = f"background:{sbg};" if sbg != "transparent" else ""
         return (
-            f'<div class="cr-section" data-section="{s.id}" data-stype="{s.stype}" '
+            f'<div class="cr-section" data-section="{s.id}" data-section-id="{s.id}" data-stype="{s.stype}" '
             f'style="height:{s.height}px;{bgs}">{inner}</div>'
         )
 

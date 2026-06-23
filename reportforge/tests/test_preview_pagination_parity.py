@@ -75,6 +75,8 @@ def _js_runtime_rows_per_page(layout, data):
       ctx.resolveField=(path,data,item)=>{{ if(!path) return ''; const src=((path.startsWith('items.')||path.startsWith('item.'))&&item)?item:data; const keys=path.replace(/^items?\\./,'').split('.'); let v=src; for(const k of keys){{ if(v==null) return ''; v=v[k]; }} return v==null?'':v; }};
       ctx.formatValue=(v)=>v==null?'':String(v);
       vm.runInNewContext(fs.readFileSync(root + '/engines/PreviewPaginationEngine.js','utf8'), ctx);
+      vm.runInNewContext(fs.readFileSync(root + '/engines/FontStack.js','utf8'), ctx);
+      ctx.FontStack = ctx.window.FontStack;
       vm.runInNewContext(fs.readFileSync(root + '/engines/PreviewEngineData.js','utf8'), ctx);
       const html = ctx.PreviewEngineData.renderWithData({json.dumps(data)});
       process.stdout.write(JSON.stringify(html.split('<div class="pv-page"').slice(1).map((p) => (p.match(new RegExp('data-section-id="{detail_id}"', 'g')) || []).length)));
@@ -95,6 +97,8 @@ def _js_runtime_html(layout, data):
       ctx.resolveField=(path,data,item)=>{{ if(!path) return ''; const src=((path.startsWith('items.')||path.startsWith('item.'))&&item)?item:data; const keys=path.replace(/^items?\\./,'').split('.'); let v=src; for(const k of keys){{ if(v==null) return ''; v=v[k]; }} return v==null?'':v; }};
       ctx.formatValue=(v)=>v==null?'':String(v);
       vm.runInNewContext(fs.readFileSync(root + '/engines/PreviewPaginationEngine.js','utf8'), ctx);
+      vm.runInNewContext(fs.readFileSync(root + '/engines/FontStack.js','utf8'), ctx);
+      ctx.FontStack = ctx.window.FontStack;
       vm.runInNewContext(fs.readFileSync(root + '/engines/PreviewEngineData.js','utf8'), ctx);
       process.stdout.write(ctx.PreviewEngineData.renderWithData({json.dumps(data)}));
     """

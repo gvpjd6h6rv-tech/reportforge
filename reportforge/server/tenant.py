@@ -9,6 +9,17 @@ from typing import Optional
 _THEMES_DIR = Path(__file__).parent / "themes"
 _REGISTRY_DIR = Path(__file__).parent / "templates_registry"
 
+# Arial/Helvetica are not guaranteed to exist on a Linux host (no msttcorefonts
+# by default) — resolve them to a free, metric-reasonable Linux stack so CSS
+# generated from theme data renders deterministically without depending on a
+# proprietary font being installed. Stored theme data keeps the canonical name.
+# Single-quoted font names: this value may end up interpolated into a
+# double-quoted HTML attribute by a consumer — double quotes would
+# prematurely close it and corrupt every declaration after font-family
+# (see engines/FontStack.js, which hit exactly this bug).
+_LINUX_SAFE_SANS_STACK = "'Liberation Sans', 'DejaVu Sans', 'Noto Sans', sans-serif"
+_PORTABLE_FONT_FALLBACKS = {"Arial": _LINUX_SAFE_SANS_STACK, "Helvetica": _LINUX_SAFE_SANS_STACK}
+
 
 # ── Built-in themes ───────────────────────────────────────────────
 _BUILTIN_THEMES: dict[str, dict] = {
@@ -98,9 +109,10 @@ class TenantConfig:
         t = self.theme
         lines = [":root {"]
         for k, v in t.items():
-            if isinstance(v, str) and (v.startswith("#") or v in ("Arial", "Helvetica")):
+            if isinstance(v, str) and (v.startswith("#") or v in _PORTABLE_FONT_FALLBACKS):
                 css_k = "".join(f"-{c.lower()}" if c.isupper() else c for c in k)
-                lines.append(f"  --tenant-{css_k}: {v};")
+                css_v = _PORTABLE_FONT_FALLBACKS.get(v, v)
+                lines.append(f"  --tenant-{css_k}: {css_v};")
         lines.append("}")
         return "\n".join(lines)
 

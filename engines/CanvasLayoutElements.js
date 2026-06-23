@@ -35,7 +35,7 @@
     div.style.top = _px(el.y);
     div.style.width = _px(el.w);
     div.style.height = _px(el.h);
-    div.style.fontFamily = el.fontFamily || 'Arial';
+    div.style.fontFamily = global.FontStack.resolveCssFontFamily(el.fontFamily);
     div.style.fontSize = _px(el.fontSize * 96 / 72);
     div.style.fontWeight = el.bold ? 'bold' : 'normal';
     div.style.fontStyle = el.italic ? 'italic' : 'normal';

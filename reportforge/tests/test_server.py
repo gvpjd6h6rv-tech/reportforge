@@ -89,6 +89,15 @@ class TestTenantConfig(unittest.TestCase):
         self.assertIn(":root", css)
         self.assertIn("--tenant-", css)
 
+    def test_css_overrides_resolves_arial_to_linux_safe_stack(self):
+        # default theme's fontFamily is "Arial" — css_overrides must not emit
+        # a bare, proprietary-dependent "Arial" value with no fallback.
+        t = TenantConfig("default")
+        self.assertEqual(t.theme.get("fontFamily"), "Arial")
+        css = t.css_overrides()
+        self.assertIn("Liberation Sans", css)
+        self.assertNotIn(": Arial;", css)
+
     def test_builtin_theme_ocean(self):
         t = TenantConfig("ocean")
         self.assertEqual(t.theme.get("primaryColor"), "#0077B6")

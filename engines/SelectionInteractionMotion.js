@@ -56,24 +56,15 @@ const SelectionInteractionMotion = (() => {
       const div = document.querySelector(`.cr-element[data-id="${orig.id}"]`);
       if (div) {
         div.classList.add('dragging');
-        div.style.left = el.x + 'px';
-        div.style.top = el.y + 'px';
-        const snappedAbsX = el.x;
-        const snappedAbsY = sectionBounds.top + el.y;
-        const rawAbsX = orig.x + dx;
-        const rawAbsY = orig.sectionTop + orig.y + dy;
-        div.style.transform = `translate(${(rawAbsX - snappedAbsX).toFixed(3)}px, ${(rawAbsY - snappedAbsY).toFixed(3)}px)`;
+        SelectionDragPreviewSync.dragTransformStyle(div, el, orig, sectionBounds.top, dx, dy);
       }
       if (DS.previewMode) {
         document.querySelectorAll(`.pv-el[data-origin-id="${orig.id}"]`).forEach(pv => {
           pv.classList.add('dragging');
-          pv.style.left = el.x + 'px';
-          pv.style.top = el.y + 'px';
-          const snappedAbsX = el.x;
-          const snappedAbsY = sectionBounds.top + el.y;
-          const rawAbsX = orig.x + dx;
-          const rawAbsY = orig.sectionTop + orig.y + dy;
-          pv.style.transform = `translate(${(rawAbsX - snappedAbsX).toFixed(3)}px, ${(rawAbsY - snappedAbsY).toFixed(3)}px)`;
+          SelectionDragPreviewSync.dragTransformStyle(pv, el, orig, sectionBounds.top, dx, dy);
+        });
+        SelectionDragPreviewSync.findPreviewRenderNodes(orig).forEach(node => {
+          SelectionDragPreviewSync.dragTransformStyle(node, el, orig, sectionBounds.top, dx, dy);
         });
       }
     });
@@ -128,6 +119,12 @@ const SelectionInteractionMotion = (() => {
         pv.style.top = el.y + 'px';
         pv.style.width = el.w + 'px';
         pv.style.height = el.h + 'px';
+      });
+      SelectionDragPreviewSync.findPreviewRenderNodes({ id: d.elId, sectionId: el.sectionId }).forEach(node => {
+        node.style.left = el.x + 'px';
+        node.style.top = el.y + 'px';
+        node.style.width = el.w + 'px';
+        node.style.height = el.h + 'px';
       });
     }
     engine.renderHandles();

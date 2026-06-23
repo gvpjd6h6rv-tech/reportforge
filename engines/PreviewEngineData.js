@@ -23,7 +23,7 @@
   function _formatValue(v, fmt) {
     if (v === null || v === undefined || v === '') return '';
     if (typeof FORMATS !== 'undefined' && FORMATS[fmt]) return FORMATS[fmt](v);
-    if (fmt === 'currency') return '$' + parseFloat(v).toFixed(2);
+    if (fmt === 'currency') return '$' + parseFloat(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     if (fmt === 'number') return parseFloat(v).toFixed(2);
     return String(v);
   }
@@ -70,7 +70,7 @@
       `width:${r.width}px`, `height:${r.height}px`,
       `z-index:${interaction.zIndex}`,
       `pointer-events:${interaction.pointerEvents}`,
-      `font-family:${el.fontFamily}`, `font-size:${fs}px`,
+      `font-family:${global.FontStack.resolveCssFontFamily(el.fontFamily)}`, `font-size:${fs}px`,
       `font-weight:${el.bold ? 'bold' : 'normal'}`,
       `font-style:${el.italic ? 'italic' : 'normal'}`,
       `text-decoration:${el.underline ? 'underline' : 'none'}`,
@@ -110,7 +110,7 @@
     const st = [
       `position:absolute`, `left:${r.left}px`, `top:${r.top}px`,
       `width:${r.width}px`, `height:${r.height}px`,
-      `font-family:${el.fontFamily}`, `font-size:${fs}px`,
+      `font-family:${global.FontStack.resolveCssFontFamily(el.fontFamily)}`, `font-size:${fs}px`,
       `font-weight:${el.bold ? 'bold' : 'normal'}`,
       `font-style:${el.italic ? 'italic' : 'normal'}`,
       `text-decoration:${el.underline ? 'underline' : 'none'}`,
