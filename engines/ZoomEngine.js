@@ -111,9 +111,20 @@ const DesignZoomEngine={
       vp.style.transform       = `scale(${z})`;
       vp.style.transformOrigin = 'top left';
       vp.style.transformBox    = 'border-box';
-      vp.style.marginBottom    = CFG.RULER_H + 'px';
       vp.style.display = 'block';
       vp.style.width   = PAGE_W + 'px';
+      // RF-DESIGN-ZOOM400-SCROLLBAR-CR-PARITY-1: a margin/padding/sibling
+      // reserved OUTSIDE vp's own pre-transform box gets swallowed by vp's
+      // transform:scale(z) once z is large enough — the scrollable-overflow
+      // a transformed descendant contributes to its overflow:auto ancestor
+      // is computed from vp's scaled ink overflow alone, not from layout
+      // siblings/margins placed beside it (proven live: neither
+      // marginBottom nor #workspace padding-bottom nor a real sibling div
+      // changed the visible gap at zoom>1, even though scrollHeight grew
+      // numerically). Folding the gap INTO vp's own pre-transform height
+      // instead means it scales WITH vp's transform like the canvas itself,
+      // giving a real, zoom-proportional gap before the scrollbar.
+      vp.style.height = (cl.offsetHeight + CFG.RULER_H) + 'px';
       cl.style.transform = 'none';
       cl.style.transformOrigin = '';
       cl.style.transformBox = '';

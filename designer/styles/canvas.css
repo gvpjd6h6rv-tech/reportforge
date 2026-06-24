@@ -68,6 +68,30 @@
     scroll-behavior: smooth;
     text-align: left;   /* design mode: canvas flush to ruler (preview overrides below) */
   }
+  /* RF-DESIGN-ZOOM400-SCROLLBAR-CR-PARITY-1: CR's classic scrollbars are
+     thick (~17px) and clearly visible; RF was using the bare browser
+     default (thin on Linux/GTK, near-invisible overlay on some OSes). */
+  #workspace::-webkit-scrollbar {
+    width: 17px;
+    height: 17px;
+  }
+  #workspace::-webkit-scrollbar-track {
+    background: var(--rf-bg-light, #ECECEC);
+  }
+  #workspace::-webkit-scrollbar-thumb {
+    background: var(--rf-border-mid, #ACA899);
+    border: 1px solid var(--rf-border-mid, #ACA899);
+  }
+  #workspace::-webkit-scrollbar-thumb:hover {
+    background: var(--rf-xp-btn-h, #C8C4B8);
+  }
+  #workspace::-webkit-scrollbar-corner {
+    background: var(--rf-bg-light, #ECECEC);
+  }
+  #workspace {
+    scrollbar-width: auto;
+    scrollbar-color: var(--rf-border-mid, #ACA899) var(--rf-bg-light, #ECECEC);
+  }
   /* Tool cursors */
   #workspace.tool-pointer { cursor: default; }
   #workspace.tool-text    { cursor: crosshair; }
