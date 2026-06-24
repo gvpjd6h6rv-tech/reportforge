@@ -546,12 +546,19 @@ class TestAdvancedHtmlEngine(unittest.TestCase):
         # item.qty * item.unit_price for Laptop: 5 * 999.99 = 4,999.95
         self.assertIn("4,999.95", html)
 
-    def test_line_svg(self):
+    def test_line_renders_as_css_border(self):
+        # PARITY-AUDIT-1 (core/render/engines/element_renderers.py
+        # render_line): the line renderer no longer emits an SVG <line> —
+        # under the preview's transform:scale(zoom), Chromium painted the
+        # SVG stroke bleeding into the row below (a paint-layer artifact).
+        # It now renders a plain CSS border on a positioned <div>, which
+        # has no such raster ambiguity.
         extra = [{"id":"test-line","type":"line","sectionId":"s-rh","x":0,"y":50,
-                   "w":400,"h":2,"borderColor":"#999","borderWidth":2}]
+                   "w":400,"h":2,"borderColor":"#999","lineWidth":2}]
         html = self._render(extra_els=extra)
-        self.assertIn("<svg", html)
-        self.assertIn("<line", html)
+        self.assertNotIn("<svg", html)
+        self.assertNotIn("<line", html)
+        self.assertIn("border-top:2px solid #999", html)
 
     def test_rect_rendered(self):
         extra = [{"id":"test-rect","type":"rect","sectionId":"s-rh","x":0,"y":0,

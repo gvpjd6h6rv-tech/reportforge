@@ -142,10 +142,15 @@ async function run() {
       assert.equal(state.previewMode, true);
       assert.equal(state.previewClass, true);
       assert.ok(state.previewPages >= 1);
-      assert.equal(state.boxCount, 0);
-      assert.equal(state.handleCount, 0);
+      // Product decision: a selection active before entering Preview must
+      // stay visible and correctly aligned in Preview's own coordinate
+      // space (PreviewEngineMode.show()'s refresh().then(enableSelectionOverlay
+      // + renderHandles) is the intended behavior, not a bug) — it must NOT
+      // silently drop to an empty/unselected state.
+      assert.equal(state.boxCount, 1);
+      assert.equal(state.handleCount, 8);
       let alignment = await getSingleAlignment(page);
-      assert.equal(alignment, null);
+      assertRectClose(alignment.box, alignment.element, 0.5, 'previewEnterCarriesSelection');
       const previewShot = await takeWorkspaceScreenshot(page);
       await compareSnapshotBuffer('runtime-preview.png', previewShot);
 
