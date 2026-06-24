@@ -5,6 +5,15 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Use the project's declared .venv (requirements.txt) when present, instead of
+# silently falling back to whatever python3 happens to be on PATH — a system
+# interpreter with undeclared global packages is an environment gap, not a
+# substitute for the repo's real dependency manifest.
+if [[ -x "$ROOT/.venv/bin/python3" ]]; then
+  PYBIN="$ROOT/.venv/bin/python3"
+else
+  PYBIN="python3"
+fi
 FAIL=0
 PASS=0
 SKIP=0
@@ -52,7 +61,7 @@ hdr "Python Syntax (py_compile)"
 
 PY_ERRORS=0
 while IFS= read -r -d '' f; do
-  if ! python3 -m py_compile "$f" 2>/dev/null; then
+  if ! "$PYBIN" -m py_compile "$f" 2>/dev/null; then
     fail "py syntax: ${f#$ROOT/}"
     PY_ERRORS=$((PY_ERRORS+1))
   fi
@@ -82,17 +91,17 @@ hdr "Python Unit Tests"
 if [[ "$QUICK" != "--quick" ]]; then
   cd "$ROOT"
   set +e
-  TEST_OUT=$(python3 -m unittest discover -s reportforge/tests -p "test_*.py" 2>&1)
+  TEST_OUT=$("$PYBIN" -m unittest discover -s reportforge/tests -p "test_*.py" 2>&1)
   TEST_EXIT=$?
   set -e
   TEST_SUMMARY=$(echo "$TEST_OUT" | tail -3)
   if [[ "$TEST_EXIT" -eq 0 ]] && echo "$TEST_SUMMARY" | grep -qE "^OK"; then
     TOTAL=$(echo "$TEST_SUMMARY" | grep -oE "Ran [0-9]+" | awk '{print $2}')
-    SKIP_CNT=$(echo "$TEST_SUMMARY" | grep -oE "skipped=[0-9]+" | grep -oE "[0-9]+")
+    SKIP_CNT=$(echo "$TEST_SUMMARY" | grep -oE "skipped=[0-9]+" | grep -oE "[0-9]+" || echo "")
     ok "Unit tests: ${TOTAL:-?} passed${SKIP_CNT:+, $SKIP_CNT skipped}"
   else
-    FAIL_CNT=$(echo "$TEST_SUMMARY" | grep -oE "failures=[0-9]+" | grep -oE "[0-9]+")
-    ERR_CNT=$(echo "$TEST_SUMMARY" | grep -oE "errors=[0-9]+" | grep -oE "[0-9]+")
+    FAIL_CNT=$(echo "$TEST_SUMMARY" | grep -oE "failures=[0-9]+" | grep -oE "[0-9]+" || echo 0)
+    ERR_CNT=$(echo "$TEST_SUMMARY" | grep -oE "errors=[0-9]+" | grep -oE "[0-9]+" || echo 0)
     fail "Unit tests" "failures=${FAIL_CNT:-0} errors=${ERR_CNT:-0}"
     echo "$TEST_OUT" | grep -E "^(FAIL|ERROR):" | head -10 || true
   fi
@@ -105,7 +114,7 @@ hdr "Python Imports"
 
 check_import() {
   local mod="$1"
-  if python3 -c "import sys; sys.path.insert(0,'$ROOT'); import $mod" 2>/dev/null; then
+  if "$PYBIN" -c "import sys; sys.path.insert(0,'$ROOT'); import $mod" 2>/dev/null; then
     ok "import $mod"
   else
     fail "import $mod"
@@ -126,7 +135,7 @@ if [[ "$QUICK" != "--quick" ]]; then
   cd "$ROOT"
   # Start server on a random high port
   PORT=19977
-  python3 reportforge_server.py $PORT &>/dev/null &
+  "$PYBIN" reportforge_server.py $PORT &>/dev/null &
   SRV_PID=$!
   sleep 0.6
 
@@ -150,7 +159,7 @@ if [[ "$QUICK" != "--quick" ]]; then
   VF=$(curl -sf -X POST "http://127.0.0.1:$PORT/validate-formula" \
     -H "Content-Type: application/json" \
     -d '{"formula":"Today()"}' 2>/dev/null)
-  if echo "$VF" | python3 -c "import json,sys; d=json.load(sys.stdin); sys.exit(0 if d.get('valid') else 1)" 2>/dev/null; then
+  if echo "$VF" | "$PYBIN" -c "import json,sys; d=json.load(sys.stdin); sys.exit(0 if d.get('valid') else 1)" 2>/dev/null; then
     ok "POST /validate-formula (Today)"
   else
     fail "POST /validate-formula (Today)" "$VF"
@@ -159,7 +168,7 @@ if [[ "$QUICK" != "--quick" ]]; then
   VF2=$(curl -sf -X POST "http://127.0.0.1:$PORT/validate-formula" \
     -H "Content-Type: application/json" \
     -d '{"formula":"IIf({total}>100,\"High\",\"Low\")","sample":{"total":150}}' 2>/dev/null)
-  if echo "$VF2" | python3 -c "import json,sys; d=json.load(sys.stdin); sys.exit(0 if d.get('valid') else 1)" 2>/dev/null; then
+  if echo "$VF2" | "$PYBIN" -c "import json,sys; d=json.load(sys.stdin); sys.exit(0 if d.get('valid') else 1)" 2>/dev/null; then
     ok "POST /validate-formula (IIf + sample)"
   else
     fail "POST /validate-formula (IIf)" "$VF2"
@@ -574,7 +583,7 @@ hdr "Rate-Limit Guard"
 if [[ "$QUICK" != "--quick" ]]; then
   cd "$ROOT"
   if command -v python3 &>/dev/null; then
-    if python3 audit/rate_limit_guard.py >/tmp/rf_rate_limit.out 2>&1; then
+    if "$PYBIN" audit/rate_limit_guard.py >/tmp/rf_rate_limit.out 2>&1; then
       ok "Rate-limit guard (principle #67)"
     else
       fail "Rate-limit guard (principle #67)" "see /tmp/rf_rate_limit.out"
@@ -1031,7 +1040,7 @@ fi
 hdr "Formula Engine"
 
 cd "$ROOT"
-python3 << 'PYEOF'
+"$PYBIN" << 'PYEOF'
 import sys
 sys.path.insert(0, '.')
 from reportforge.core.render.expressions.formula_parser import FormulaParser
