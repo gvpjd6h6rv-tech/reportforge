@@ -334,30 +334,40 @@
 
 </div><!-- /app -->
 <div id="zoom-widget"><span class="zw-mode" id="zw-mode">DISEÑO</span><span class="zw-sep"></span><button class="zw-btn" id="zw-out" title="Alejar (Ctrl+-)">−</button><input type="range" id="zw-slider" min="25" max="400" step="25" value="100"><span class="zw-pct" id="zw-pct" title="Click: 100%">100%</span><button class="zw-btn" id="zw-in" title="Acercar (Ctrl++)">+</button></div>
-<div id="rf-build-debug" aria-live="polite">
-  <div class="rf-build-debug__row">
-    <span class="rf-build-debug__label">BUILD</span>
-    <span class="rf-build-debug__value" id="rf-build-commit">commit</span>
-    <span class="rf-build-debug__value" id="rf-build-asset">asset</span>
-    <span class="rf-build-debug__value" id="rf-build-htmlts">html ts</span>
+<div id="rf-build-debug" aria-live="polite" data-collapsed="true">
+  <div class="rf-debug-panel__head" id="rf-build-debug-head">
+    <span>Build info</span>
+    <button type="button" id="rf-build-debug-collapse" title="Restaurar">+</button>
   </div>
-  <div class="rf-build-debug__row">
-    <span class="rf-build-debug__label">JS</span>
-    <span class="rf-build-debug__value" id="rf-build-js">/engines/ZoomEngine.js</span>
-    <span class="rf-build-debug__value" id="rf-build-jsts">js ts</span>
-    <span class="rf-build-debug__value" id="rf-build-cache">cache</span>
+  <div class="rf-debug-panel__body">
+    <div class="rf-build-debug__row">
+      <span class="rf-build-debug__label">BUILD</span>
+      <span class="rf-build-debug__value" id="rf-build-commit">commit</span>
+      <span class="rf-build-debug__value" id="rf-build-asset">asset</span>
+      <span class="rf-build-debug__value" id="rf-build-htmlts">html ts</span>
+    </div>
+    <div class="rf-build-debug__row">
+      <span class="rf-build-debug__label">JS</span>
+      <span class="rf-build-debug__value" id="rf-build-js">/engines/ZoomEngine.js</span>
+      <span class="rf-build-debug__value" id="rf-build-jsts">js ts</span>
+      <span class="rf-build-debug__value" id="rf-build-cache">cache</span>
+    </div>
   </div>
 </div>
-<div id="rf-zoom-live-debug" aria-live="polite">
-  <div class="rf-zoom-live-debug__row"><span class="rf-zoom-live-debug__label">ZOOM</span><span class="rf-zoom-live-debug__value" id="rf-zd-zoom">0</span></div>
-  <div class="rf-zoom-live-debug__row"><span class="rf-zoom-live-debug__label">SLIDER</span><span class="rf-zoom-live-debug__value" id="rf-zd-slider">0</span></div>
-  <div class="rf-zoom-live-debug__row"><span class="rf-zoom-live-debug__label">PCT</span><span class="rf-zoom-live-debug__value" id="rf-zd-pct">0%</span></div>
-  <div class="rf-zoom-live-debug__row"><span class="rf-zoom-live-debug__label">TB</span><span class="rf-zoom-live-debug__value" id="rf-zd-tb">0%</span></div>
-  <div class="rf-zoom-live-debug__row"><span class="rf-zoom-live-debug__label">EVENT</span><span class="rf-zoom-live-debug__value" id="rf-zd-event">init</span></div>
-  <div class="rf-zoom-live-debug__row"><span class="rf-zoom-live-debug__label">FN</span><span class="rf-zoom-live-debug__value" id="rf-zd-fn">boot</span></div>
+<div id="rf-zoom-live-debug" aria-live="polite" data-collapsed="true">
+  <div class="rf-debug-panel__head" id="rf-zoom-live-debug-head">
+    <span>Zoom debug</span>
+    <button type="button" id="rf-zoom-live-debug-collapse" title="Restaurar">+</button>
+  </div>
+  <div class="rf-debug-panel__body">
+    <div class="rf-zoom-live-debug__row"><span class="rf-zoom-live-debug__label">ZOOM</span><span class="rf-zoom-live-debug__value" id="rf-zd-zoom">0</span></div>
+    <div class="rf-zoom-live-debug__row"><span class="rf-zoom-live-debug__label">SLIDER</span><span class="rf-zoom-live-debug__value" id="rf-zd-slider">0</span></div>
+    <div class="rf-zoom-live-debug__row"><span class="rf-zoom-live-debug__label">PCT</span><span class="rf-zoom-live-debug__value" id="rf-zd-pct">0%</span></div>
+    <div class="rf-zoom-live-debug__row"><span class="rf-zoom-live-debug__label">TB</span><span class="rf-zoom-live-debug__value" id="rf-zd-tb">0%</span></div>
+    <div class="rf-zoom-live-debug__row"><span class="rf-zoom-live-debug__label">EVENT</span><span class="rf-zoom-live-debug__value" id="rf-zd-event">init</span></div>
+    <div class="rf-zoom-live-debug__row"><span class="rf-zoom-live-debug__label">FN</span><span class="rf-zoom-live-debug__value" id="rf-zd-fn">boot</span></div>
+  </div>
 </div>
-
-<script src="/engines/BuildDebugPanel.js"></script>
 
 
 <!-- Helper overlays -->
@@ -378,6 +388,7 @@
 <script src="/engines/DebugPanelGeometry.js"></script>
 <script src="/engines/DebugPanelUtils.js"></script>
 <script src="/engines/DebugHudLayout.js"></script>
+<script src="/engines/BuildDebugPanel.js"></script>
 <script src="/engines/DebugChannelsPanel.js"></script>
 <script src="/engines/DebugTraceToggle.js"></script>
 <script src="/engines/DebugOverlay.js"></script>

@@ -16,6 +16,15 @@
   .zw-pct:hover{color:var(--rf-accent)}
   .zw-sep{width:1px;height:12px;background:var(--rf-border-mid);margin:0 2px}
   .zw-mode{font-size:9px;font-weight:500;color:var(--rf-accent);letter-spacing:.04em;text-transform:uppercase;padding:0 2px}
+  /* RF-FIELD-EXPLORER-OVERLAY-DRAG-1: shared head/collapse chrome for the
+     two floating debug panels (#rf-build-debug, #rf-zoom-live-debug) — drag
+     via makePanelDraggable (engines/DebugPanelUtils.js), same utility
+     DebugOverlay.js already uses, not a new mechanism. */
+  .rf-debug-panel__head{display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:grab;font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:4px}
+  .rf-debug-panel__head.is-dragging{cursor:grabbing}
+  .rf-debug-panel__head button{appearance:none;border:1px solid rgba(0,0,0,.18);background:rgba(255,255,255,.7);color:inherit;border-radius:999px;width:16px;height:16px;line-height:1;font:inherit;cursor:pointer;padding:0}
+  #rf-build-debug[data-collapsed="true"] .rf-debug-panel__body,
+  #rf-zoom-live-debug[data-collapsed="true"] .rf-debug-panel__body{display:none}
   #rf-build-debug{
     position:fixed;
     right:8px;
@@ -23,7 +32,6 @@
     z-index:var(--rf-z-toast);
     display:flex;
     flex-direction:column;
-    gap:2px;
     padding:6px 8px;
     max-width:340px;
     background:rgba(248,244,229,.95);
@@ -37,6 +45,7 @@
     user-select:text;
   }
   .rf-build-debug__row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .rf-build-debug__row+.rf-build-debug__row{margin-top:2px}
   .rf-build-debug__label{font-size:9px;font-weight:700;letter-spacing:.06em;color:var(--rf-accent)}
   .rf-build-debug__value{padding:1px 4px;border-radius:3px;background:rgba(255,255,255,.7);border:1px solid rgba(0,0,0,.08);font-family:var(--rf-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);white-space:nowrap}
   #rf-zoom-live-debug{
@@ -46,9 +55,8 @@
     z-index:var(--rf-z-toast);
     display:flex;
     flex-direction:column;
-    gap:2px;
     padding:6px 8px;
-    width:220px;
+    width:200px;
     background:rgba(236,242,255,.97);
     border:1px solid #9bb2e8;
     border-radius:var(--rf-radius-sm);
@@ -59,7 +67,8 @@
     color:var(--rf-fg);
     user-select:text;
   }
-  .rf-zoom-live-debug__row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .rf-zoom-live-debug__row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:2px}
+  .rf-zoom-live-debug__row:first-child{margin-top:0}
   .rf-zoom-live-debug__label{font-size:9px;font-weight:700;letter-spacing:.06em;color:#2554b8;min-width:44px}
   .rf-zoom-live-debug__value{padding:1px 4px;border-radius:3px;background:rgba(255,255,255,.8);border:1px solid rgba(0,0,0,.08);font-family:var(--rf-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis}
   /* body[data-render-mode] pointer rules: managed by renderMode CSS above */
