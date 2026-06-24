@@ -12,6 +12,7 @@ const SelectionInteraction = (() => {
   function onHandlePointerDown(engine, e, pos)  { return SelectionInteractionPointer.onHandlePointerDown(engine, e, pos); }
   function attachElementEvents(engine, div, id) { return SelectionInteractionPointer.attachElementEvents(engine, div, id); }
   function startTextEdit(engine, div, el)       { return SelectionInteractionPointer.startTextEdit(engine, div, el); }
+  function handleDoubleClick(e)                 { return SelectionInteractionPointer.handleDoubleClick(e); }
   function startRubberBand(engine, e)           { return SelectionInteractionPointer.startRubberBand(engine, e); }
   function attachHandleEvent(engine, hdiv, pos) { return SelectionInteractionPointer.attachHandleEvent(engine, hdiv, pos); }
 
@@ -28,6 +29,7 @@ const SelectionInteraction = (() => {
     onHandlePointerDown,
     attachElementEvents,
     startTextEdit,
+    handleDoubleClick,
     startRubberBand,
     attachHandleEvent,
     onMouseMove,

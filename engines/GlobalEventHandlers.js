@@ -9,6 +9,13 @@
       ? RuntimeServices.isEngineCoreInteractionEnabled()
       : true;
 
+    // RF-DESIGN-PREVIEW-DBLCLICK-EDIT-PARITY-1: real dblclick — pointerdown's
+    // .detail is always 0 (Pointer Events spec), so double-click-to-edit
+    // cannot be detected from the pointer router and needs its own listener.
+    canvasScroll.addEventListener('dblclick', (e) => {
+      SelectionEngine.handleDoubleClick(e);
+    });
+
     canvasScroll.addEventListener('contextmenu', (e) => {
       if (DS.previewMode) return;
       e.preventDefault();

@@ -37,6 +37,7 @@ const CANONICAL_EXPORTS = [
   'onHandlePointerDown',
   'attachElementEvents',
   'startTextEdit',
+  'handleDoubleClick',
   'startRubberBand',
   'attachHandleEvent',
   'onMouseMove',
@@ -52,6 +53,7 @@ const POINTER_EXPORTS = [
   'onHandlePointerDown',
   'attachElementEvents',
   'startTextEdit',
+  'handleDoubleClick',
   'startRubberBand',
   'attachHandleEvent',
 ].sort();

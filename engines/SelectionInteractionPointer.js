@@ -12,9 +12,6 @@ const SelectionInteractionPointer = (() => {
     if (!div) return;
     const pointerId = SelectionHitTest.resolvePointerId(e);
     if (div.setPointerCapture && typeof pointerId === 'number') div.setPointerCapture(pointerId);
-    if (e.detail === 2 && (el.type === 'text' || el.type === 'field')) {
-      startTextEdit(engine, div, el); return;
-    }
     const shiftKey = SelectionHitTest.isShiftSelection(e);
     if (!shiftKey && !SelectionState.isSelected(id)) {
       SelectionState.clearSelectionState();
@@ -81,7 +78,10 @@ const SelectionInteractionPointer = (() => {
   function startTextEdit(engine, div, el) {
     SelectionState.selectOnly(el.id);
     div.classList.add('editing', 'selected');
-    const span = div.querySelector('.el-content');
+    // Design's .cr-element wraps its text in .el-content (CanvasLayoutElements.js);
+    // the real server-rendered Preview node wraps it in .cr-el-inner (_div() in
+    // element_renderers.py) — both are valid editable targets depending on mode.
+    const span = div.querySelector('.el-content, .cr-el-inner');
     if (!span) return;
     span.contentEditable = 'true';
     span.style.pointerEvents = 'all';
@@ -124,6 +124,35 @@ const SelectionInteractionPointer = (() => {
     span.addEventListener('keydown', ke => { if (ke.key === 'Escape' || ke.key === 'Enter') span.blur(); });
   }
 
+  // RF-DESIGN-PREVIEW-DBLCLICK-EDIT-PARITY-1: pointerdown.detail is always
+  // 0 (Pointer Events spec), so this is wired from a real 'dblclick'
+  // listener (GlobalEventHandlers.js) instead of e.detail===2. In Preview
+  // the clicked .pv-el is the invisible hit-layer proxy — editing it would
+  // show no caret — so this resolves the REAL visible node in
+  // #preview-content .preview-render-layer (kept in sync by
+  // SelectionDragPreviewSync during drag) and edits THAT instead.
+  function resolvePreviewEditableDiv(id, sectionId, rowIndexAttr) {
+    const candidates = SelectionDragPreviewSync.findPreviewRenderNodes({ id, sectionId });
+    if (candidates.length <= 1) return candidates[0] || null;
+    if (rowIndexAttr == null) return candidates[0];
+    return candidates.find((node) => node.closest(`[data-row="${rowIndexAttr}"]`)) || candidates[0];
+  }
+
+  function handleDoubleClick(e) {
+    const pvNode = e.target.closest?.('.pv-el[data-origin-id]');
+    const designNode = e.target.closest?.('.cr-element[data-id]');
+    const id = pvNode ? pvNode.dataset.originId : (designNode ? designNode.dataset.id : null);
+    if (!id) return;
+    const el = SelectionState.getElementById(id);
+    if (!el || (el.type !== 'text' && el.type !== 'field')) return;
+    const div = pvNode
+      ? resolvePreviewEditableDiv(id, el.sectionId, pvNode.dataset.rowIndex)
+      : designNode;
+    if (!div) return;
+    e.preventDefault();
+    startTextEdit(null, div, el);
+  }
+
   function startRubberBand(engine, e) {
     const pos = getCanvasPos(e);
     engine._drag = {
@@ -157,6 +186,7 @@ const SelectionInteractionPointer = (() => {
     onHandlePointerDown,
     attachElementEvents,
     startTextEdit,
+    handleDoubleClick,
     startRubberBand,
     attachHandleEvent,
   };

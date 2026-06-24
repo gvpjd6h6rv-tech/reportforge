@@ -71,9 +71,17 @@ const EngineCoreRoutingPointerHelpers = (() => {
       return targetId || (event.hit.element ? event.hit.element.id : null);
     }
 
-    function dispatchPreviewDown(event, selection, targetId, interactionEngineName) {
+    function dispatchPreviewDown(event, selection, targetId, interactionEngineName, pvElNode) {
       if (!targetId || !selection || typeof selection.onElementPointerDown !== 'function') return;
-      const pv = document.querySelector(`.pv-el[data-origin-id="${targetId}"], .cr-element[data-id="${targetId}"]`);
+      // RF-DESIGN-PREVIEW-DBLCLICK-EDIT-PARITY-1: prefer the ALREADY-resolved
+      // pvElNode (the exact row instance actually under the pointer) over a
+      // fresh querySelector — for a repeating detail-row element there are N
+      // .pv-el[data-origin-id] nodes (one per row), and querySelector always
+      // returns the FIRST one in DOM order regardless of which row was
+      // clicked. That wrong node then gets pointer-captured, retargeting the
+      // matching mouseup/click (and any dblclick built from them) back to
+      // row 0 even when row N was clicked.
+      const pv = pvElNode || document.querySelector(`.pv-el[data-origin-id="${targetId}"], .cr-element[data-id="${targetId}"]`);
       const delegatedEvent = pv ? { ...event, target: pv } : event;
       traceElement('EngineCore', 'dispatch-preview-element-down', {
         id: targetId,
@@ -151,7 +159,7 @@ const EngineCoreRoutingPointerHelpers = (() => {
         selection.onHandlePointerDown(event, handlePos);
         return;
       }
-      dispatchPreviewDown(event, selection, targetId, interactionEngineName);
+      dispatchPreviewDown(event, selection, targetId, interactionEngineName, pvElNode);
     }
 
     function routeDown(event, ctx) {

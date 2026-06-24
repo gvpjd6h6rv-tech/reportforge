@@ -7,6 +7,7 @@ const SelectionEngine = {
   onHandlePointerDown(e, pos) { return SelectionInteraction.onHandlePointerDown(this, e, pos); },
   attachElementEvents(div, id) { return SelectionInteraction.attachElementEvents(this, div, id); },
   startTextEdit(div, el) { return SelectionInteraction.startTextEdit(this, div, el); },
+  handleDoubleClick(e) { return SelectionInteraction.handleDoubleClick(e); },
   startRubberBand(e) { return SelectionInteraction.startRubberBand(this, e); },
   attachHandleEvent(handleDiv, pos) { return SelectionInteraction.attachHandleEvent(this, handleDiv, pos); },
   renderHandles() { return SelectionOverlay.renderHandles(this); },
