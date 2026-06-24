@@ -145,11 +145,11 @@ const DesignZoomEngine={
     if (sel) { for (let o of sel.options) if (o.text === pct) { o.selected = true; break; } }
   },
   set(z, anchorClientX, anchorClientY, meta = {}){
-    z = Math.max(0.01, Math.min(64.0, parseFloat(z)));
+    z = Math.max(0.01, Math.min(4.0, parseFloat(z)));
     this._apply(z, anchorClientX, anchorClientY, meta);
   },
   setFree(z, anchorClientX, anchorClientY, meta = {}){
-    z = Math.max(0.01, Math.min(64.0, parseFloat(z)));
+    z = Math.max(0.01, Math.min(4.0, parseFloat(z)));
     this._apply(z, anchorClientX, anchorClientY, meta);
   },
   get(){ return DS.zoom; },
@@ -160,7 +160,7 @@ const DesignZoomEngine={
 
 const PreviewZoomEngine={
   set(z, meta = {}){
-    z=Math.max(0.01,Math.min(64.0,parseFloat(z)));
+    z=Math.max(0.01,Math.min(4.0,parseFloat(z)));
     const beforeUI = _uiSnapshot('#zw-slider');
     _uiTrace('zoom', {
       phase: 'before',
