@@ -64,6 +64,7 @@ test('PreviewEngineRenderer bridge event triggers selection rerender at runtime'
         if (id === 'preview-content') {
           return {
             style: {},
+            children: [],
             replaceChildren() {},
             appendChild() {},
             querySelectorAll() { return []; },

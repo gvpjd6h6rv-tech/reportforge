@@ -42,11 +42,15 @@
     content.style.maxWidth = 'none';
     content.style.backgroundColor = 'transparent';
     L._preparePreviewStageWidth(content);
-    content.replaceChildren();
-    const loading = document.createElement('div');
-    loading.className = 'preview-loading';
-    loading.textContent = 'Rendering preview…';
-    content.appendChild(loading);
+    // RF-DESIGN-KEYBOARD-FLICKER-1: only blank+placeholder on first render;
+    // later refreshes keep old content until the fetch resolves (no flash).
+    if (!content.children.length) {
+      content.replaceChildren();
+      const loading = document.createElement('div');
+      loading.className = 'preview-loading';
+      loading.textContent = 'Rendering preview…';
+      content.appendChild(loading);
+    }
     const token = ++_renderToken;
     try {
       const resp = await fetch('/designer-preview', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });

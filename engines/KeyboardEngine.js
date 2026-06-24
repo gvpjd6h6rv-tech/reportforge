@@ -42,6 +42,13 @@ const KeyboardEngine = (() => {
     return parts.join('+');
   }
 
+  // RF-DESIGN-KEYBOARD-FLICKER-1: arrow-key nudge combos. A held key
+  // (autorepeat) fires _onKeyDown many times for one user gesture; any
+  // OTHER shortcut firing mid-nudge flushes the pending coalesced history
+  // commit first (see _scheduleNudgeCommit/_flushPendingNudgeCommit below),
+  // so e.g. Ctrl+Z right after a nudge sees it in history.
+  const _nudgeCombos = new Set();
+
   function _onKeyDown(e) {
     if (!_enabled) return;
     // Don't intercept when typing in an input / contentEditable
@@ -53,6 +60,7 @@ const KeyboardEngine = (() => {
     const fn  = R.get(key);
     if (fn) {
       e.preventDefault();
+      if (!_nudgeCombos.has(key)) _flushPendingNudgeCommit();
       fn(e);
     }
   }
@@ -113,6 +121,52 @@ const KeyboardEngine = (() => {
     });
   }
 
+  // RF-DESIGN-KEYBOARD-FLICKER-1: a held arrow key autorepeats _onKeyDown
+  // many times for ONE user gesture. DS.saveHistory() used to be called on
+  // every one of those keydowns — and engines/CommandRuntimeInit.js patches
+  // DS.saveHistory to also trigger a full PreviewEngineRenderer.refresh()
+  // (blank #preview-content, fetch, rebuild) whenever DS.previewMode is
+  // true, so a held key produced a full-page Preview blank/rebuild on every
+  // autorepeat tick — the reported flicker. Mouse drag never had this
+  // because it only calls saveHistory() once, on mouseup.
+  //
+  // Fix: coalesce the nudge's saveHistory() call to fire once per gesture.
+  // First attempt used a short (250ms) idle debounce as the ONLY trigger —
+  // but a real held key has an OS-level "initial repeat delay" before
+  // autorepeat kicks in (commonly 500-650ms), which is LONGER than 250ms.
+  // So the debounce timer fired on its own after the very FIRST keydown,
+  // before the second (repeated) keydown ever arrived — committing/
+  // refreshing once near the start of the hold, then again at release: two
+  // flickers per gesture instead of one. (A synthetic test that fires
+  // repeat keydowns every ~35ms from the start, with no initial-delay gap,
+  // never reproduces this — confirmed live, see
+  // design_keyboard_nudge_preview_hold_single_commit.test.mjs.)
+  //
+  // Real fix, mirroring mouse drag's mousedown→...→mouseup model exactly:
+  // the deterministic "gesture ended" signal is the arrow key's keyup
+  // (_onNudgeKeyUp below) — no timer, no polling (Principle #59). A lost
+  // keyup (e.g. focus left the page mid-hold) is still covered by the
+  // window 'blur' listener below, and by _onKeyDown flushing on any other
+  // shortcut.
+  let _nudgeCommitPending = false;
+
+  function _flushPendingNudgeCommit() {
+    if (!_nudgeCommitPending) return;
+    _nudgeCommitPending = false;
+    if (typeof DS !== 'undefined' && typeof DS.saveHistory === 'function') DS.saveHistory();
+  }
+
+  function _scheduleNudgeCommit() {
+    _nudgeCommitPending = true;
+  }
+
+  function _onNudgeKeyUp(e) {
+    const k = (e.key || '').toLowerCase();
+    if (k === 'arrowleft' || k === 'arrowright' || k === 'arrowup' || k === 'arrowdown') {
+      _flushPendingNudgeCommit();
+    }
+  }
+
   function _renderHandlesAfterNudge() {
     if (typeof SelectionEngine === 'undefined' || typeof SelectionEngine.renderHandles !== 'function') return;
     if (typeof RenderScheduler !== 'undefined' && typeof RenderScheduler.flushSync === 'function') {
@@ -120,6 +174,33 @@ const KeyboardEngine = (() => {
       return;
     }
     SelectionEngine.renderHandles();
+  }
+
+  // RF-DESIGN-KEYBOARD-FLICKER-1: the coalesced DS.saveHistory() above only
+  // fires once per gesture, so the canonical full Preview refresh it
+  // triggers (CommandRuntimeInit's patch) is also once per gesture — same
+  // as a mouse drag's mouseup. But mouse drag stays visually live in
+  // Preview WHILE dragging via SelectionDragPreviewSync (engines/
+  // SelectionInteractionMotion.js _doMove), which restyles the existing
+  // preview nodes directly instead of refreshing. Without the equivalent
+  // here, the Preview pane sat frozen for the whole held-key gesture and
+  // only snapped to the final position once the debounced commit fired —
+  // a worse regression (freeze + big jump) than the flicker being fixed.
+  // Mirror the same direct-restyle step (matching _doResize's pattern,
+  // since nudge — like resize — sets the model's exact x/y with no
+  // raw-vs-snapped gap to bridge, so no transform offset is needed).
+  function _syncPreviewForNudge(el) {
+    if (typeof DS === 'undefined' || !DS.previewMode || typeof document === 'undefined') return;
+    document.querySelectorAll(`.pv-el[data-origin-id="${el.id}"]`).forEach(pv => {
+      pv.style.left = el.x + 'px';
+      pv.style.top = el.y + 'px';
+    });
+    if (typeof SelectionDragPreviewSync !== 'undefined') {
+      SelectionDragPreviewSync.findPreviewRenderNodes({ id: el.id, sectionId: el.sectionId }).forEach(node => {
+        node.style.left = el.x + 'px';
+        node.style.top = el.y + 'px';
+      });
+    }
   }
 
   function _nudgeSelected(dx, dy) {
@@ -137,9 +218,10 @@ const KeyboardEngine = (() => {
       } else {
         el.x += dx; el.y += dy;
       }
+      _syncPreviewForNudge(el);
     });
     _renderHandlesAfterNudge();
-    if (typeof DS.saveHistory === 'function') DS.saveHistory();
+    _scheduleNudgeCommit();
   }
 
   function _registerNudgeShortcuts() {
@@ -155,6 +237,7 @@ const KeyboardEngine = (() => {
       ['shift+arrowup',    0, -NUDGE_BIG],
       ['shift+arrowdown',  0,  NUDGE_BIG],
     ].forEach(([k, dx, dy]) => {
+      _nudgeCombos.add(k);
       _register(k, () => _nudgeSelected(dx, dy));
     });
   }
@@ -202,6 +285,16 @@ const KeyboardEngine = (() => {
     _registerGridShortcuts();
 
     document.addEventListener('keydown', _onKeyDown);
+    // The arrow key's own keyup is the real "gesture ended" signal (mouse
+    // drag's equivalent of mouseup) — see _onNudgeKeyUp / the comment above
+    // _scheduleNudgeCommit for why the debounce timer alone is not enough.
+    document.addEventListener('keyup', _onNudgeKeyUp);
+    // Safety net: if focus leaves the page mid-hold (e.g. alt-tab) and no
+    // further keydown ever arrives to flush it via _onKeyDown, the pending
+    // nudge commit must still happen rather than rely solely on its timer.
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+      window.addEventListener('blur', _flushPendingNudgeCommit);
+    }
   }
 
   function _deleteSelected() {

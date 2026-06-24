@@ -9,6 +9,9 @@ function loadKeyboardEngineRuntime() {
   const element = { id: 'el-1', x: 10, y: 20, w: 30, h: 12 };
   const calls = [];
 
+  // RF-DESIGN-KEYBOARD-FLICKER-1: KeyboardEngine.js coalesces the nudge's
+  // DS.saveHistory() call to once per gesture, flushed deterministically on
+  // the arrow key's keyup (no timer — see Principle #59 polling guard).
   const context = {
     console,
     KeyboardRegistry: undefined,
@@ -69,6 +72,10 @@ function loadKeyboardEngineRuntime() {
     listeners,
     element,
     calls,
+    releaseArrowKey(key = 'ArrowRight') {
+      const keyup = listeners.find((item) => item.type === 'keyup');
+      if (keyup) keyup.fn({ key });
+    },
   };
 }
 
@@ -101,12 +108,17 @@ test('KeyboardEngine arrow nudge refreshes selection overlay after moving elemen
   // the move — that call was redundant once HistoryEngine.push() delegates
   // to DS.saveHistory() (the post-mutation DS.saveHistory() call below
   // already covers it; see engines/KeyboardEngine.js _nudgeSelected).
+  //
+  // RF-DESIGN-KEYBOARD-FLICKER-1: DS.saveHistory() is no longer called
+  // synchronously here — it's debounced (coalesced to once per gesture) so
+  // a held key doesn't retrigger Preview's full-page refresh on every
+  // keydown. The selection overlay still re-renders synchronously (the
+  // visual nudge feedback this test guards).
   assert.deepEqual(events, [
     'ElementLayoutEngine.moveElement',
     'ElementLayoutEngine.moveElement.after',
     'RenderScheduler.flushSync',
     'SelectionEngine.renderHandles',
-    'DS.saveHistory',
   ]);
 
   const render = runtime.calls.find((call) => call.event === 'SelectionEngine.renderHandles');
@@ -118,4 +130,16 @@ test('KeyboardEngine arrow nudge refreshes selection overlay after moving elemen
 
   const flush = runtime.calls.find((call) => call.event === 'RenderScheduler.flushSync');
   assert.equal(flush.source, 'KeyboardEngine.nudge.renderHandles');
+
+  assert.equal(
+    runtime.calls.some((call) => call.event === 'DS.saveHistory'),
+    false,
+    'DS.saveHistory() must not fire synchronously on keydown — it is coalesced to the keyup',
+  );
+  runtime.releaseArrowKey('ArrowRight');
+  assert.equal(
+    runtime.calls.at(-1).event,
+    'DS.saveHistory',
+    'once the arrow key is released, the coalesced DS.saveHistory() must fire exactly once',
+  );
 });
