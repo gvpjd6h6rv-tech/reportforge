@@ -34,14 +34,23 @@
     return { zIndex, pointerEvents };
   }
 
-  function renderBand(sec, rowData, alt, rootData, rowIndex) {
+  function renderBand(sec, rowData, alt, rootData, rowIndex, heightOverride) {
+    // RF-PREVIEW-FOOTER-OVERLAY-OFFSET-1: detail rows can grow taller than
+    // sec.height (canGrow fields — see _rowHeight below, mirroring
+    // enterprise_engine_layout.py's build_row_h on the real render). The
+    // caller already computes that grown height for pagination
+    // bookkeeping; it must also become this band's actual DOM height, or
+    // the hit-layer drifts upward relative to the real rendered content
+    // for every section after a grown row — worst at the report footer,
+    // being last.
+    const h = heightOverride != null ? heightOverride : sec.height;
     const cls = alt ? ' pv-section-bg-alt' : '';
     const ri = rowIndex !== null ? ` data-row-index="${rowIndex}"` : '';
     const inner = DS.elements
       .filter((e) => e.sectionId === sec.id)
       .map((el) => global.PreviewEngineData.renderInstanceElement(el, rowData, rootData, rowIndex))
       .join('');
-    return `<div class="pv-section${cls}" data-section-id="${sec.id}" style="position:relative;height:${sec.height}px;width:${CFG.PAGE_W}px;border-bottom:1px solid #DDD;box-sizing:border-box"${ri}>${inner}</div>`;
+    return `<div class="pv-section${cls}" data-section-id="${sec.id}" style="position:relative;height:${h}px;width:${CFG.PAGE_W}px;border-bottom:1px solid #DDD;box-sizing:border-box"${ri}>${inner}</div>`;
   }
 
   function renderSectionData(sec, itemData, altRow, rootData) {
@@ -196,7 +205,7 @@
       for (const sec of phSecs) addBand(renderBand(sec, null, false, data, null), sec.height);
       for (let i = page.rowStart; i < page.rowEnd; i++) {
         const r = bodyRows[i];
-        addBand(renderBand(r.sec, r.rowData, r.alt, data, r.rowIndex), r.height);
+        addBand(renderBand(r.sec, r.rowData, r.alt, data, r.rowIndex, r.height), r.height);
       }
       if (page.last) for (const sec of rfSecs) addBand(renderBand(sec, null, false, data, null), sec.height);
       for (const sec of pfSecs) addBand(renderBand(sec, null, false, data, null), sec.height);
