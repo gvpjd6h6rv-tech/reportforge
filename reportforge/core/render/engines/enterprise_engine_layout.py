@@ -67,7 +67,7 @@ def build_pages(engine)->str:
             cy = 0.0
     pages.append(cur)
     n = len(pages)
-    return "\n".join(build_page(engine,rows,i==0,i==n-1)for i,rows in enumerate(pages))
+    return "\n".join(build_page(engine,rows,i==0,i==n-1,i+1,n)for i,rows in enumerate(pages))
 
 
 def build_body_rows(engine) -> list[dict]:
@@ -124,51 +124,52 @@ def build_body_rows(engine) -> list[dict]:
     return rows
 
 
-def build_page(engine,rows,first: bool,last: bool)->str:
+def build_page(engine,rows,first: bool,last: bool,page_num=1,total_pages=1)->str:
     pw = engine._layout.page_width
+    ctx = {"page_number": page_num, "total_pages": total_pages, "report_name": engine._layout.name}
     out=[f'<div class="rpt-page" style="width:{pw}px">']
     if first:
         for s in engine._secs("rh"):
             if build_visible(engine, s, engine._resolver):
-                out.append(build_static(engine, s))
+                out.append(build_static(engine, s, ctx))
     for s in engine._secs("ph"):
         if build_visible(engine, s, engine._resolver):
-            out.append(build_static(engine, s))
+            out.append(build_static(engine, s, ctx))
     for row in rows:
-        out.append(build_row(engine, row))
+        out.append(build_row(engine, row, ctx))
     if last:
         for s in engine._secs("rf"):
             if build_visible(engine, s, engine._resolver):
-                out.append(build_static(engine, s))
+                out.append(build_static(engine, s, ctx))
     for s in engine._secs("pf"):
         if build_visible(engine, s, engine._resolver):
-            out.append(build_static(engine, s))
+            out.append(build_static(engine, s, ctx))
     out.append("</div>")
     return "\n".join(out)
 
 
-def build_row(engine,row:dict)->str:
+def build_row(engine,row:dict,ctx=None)->str:
     s = row["s"]
     item = row["item"]
     if row["gtype"] in ("gh","gf"):
         from ..expressions.aggregator import Aggregator
         agg = Aggregator(row["gitems"])
         res = engine._resolver.with_item(item) if item else engine._resolver
-        return build_section(engine,s,res,agg)
+        return build_section(engine,s,res,agg,ctx)
     res = engine._resolver.with_item(item)
     bg = _ROW_EVEN if row["alt"] else _ROW_ODD
     sbg = getattr(s, "bgColor", "transparent")
     bgs = f"background:{sbg}" if sbg != "transparent" else f"background:{bg}"
-    inner = "".join(render_element(engine, e, res, engine._agg) for e in engine._layout.elements_for(s.id))
+    inner = "".join(render_element(engine, e, res, engine._agg, ctx) for e in engine._layout.elements_for(s.id))
     return f'<div class="cr-detail-row" data-stype="det" data-row="{row["i"]}" style="height:{row["h"]}px;{bgs}">{inner}</div>'
 
 
-def build_static(engine, s) -> str:
-    return build_section(engine,s,engine._resolver,engine._agg)
+def build_static(engine, s, ctx=None) -> str:
+    return build_section(engine,s,engine._resolver,engine._agg,ctx)
 
 
-def build_section(engine,s,res,agg)->str:
-    inner = "".join(render_element(engine, e, res, agg) for e in engine._layout.elements_for(s.id))
+def build_section(engine,s,res,agg,ctx=None)->str:
+    inner = "".join(render_element(engine, e, res, agg, ctx) for e in engine._layout.elements_for(s.id))
     sbg = getattr(s, "bgColor", "transparent")
     bgs = f"background:{sbg};" if sbg != "transparent" else ""
     kt = " keep-together" if getattr(s, "keepTogether", False) else ""

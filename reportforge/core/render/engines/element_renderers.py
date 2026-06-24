@@ -59,7 +59,7 @@ def element_value(engine, el, res, agg, ctx=None) -> str:
     if p:
         sp_key = p.strip()
         if sp_key in _SPECIAL:
-            return _SPECIAL[sp_key](ctx)
+            return _SPECIAL[sp_key](ctx, engine)
         is_expr = any(c in p for c in ("*", "/", "+", "-", ">", "<", "?", "=", "(", "!"))
         if is_expr:
             gitems = getattr(agg, "_items", None) if agg is not engine._agg else None

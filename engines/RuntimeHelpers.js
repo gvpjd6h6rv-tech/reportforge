@@ -59,11 +59,28 @@ const RuntimeHelpers = (() => {
     if(!path)return'';
     if(path.startsWith('_special.')){
       const k=path.slice(9);
-      if(k==='page_num')return'1';
-      if(k==='total_pages')return'1';
-      if(k==='print_date')return new Date().toLocaleDateString('es-EC');
-      if(k==='report_name')return'Factura Electrónica';
-      return'';
+      const now=new Date();
+      // RF-FIELD-EXPLORER-SPECIAL-FIELDS-PARITY-1: preview-only mock values
+      // for every CR Special Field, so dragging any of them onto the canvas
+      // shows something instead of silently rendering blank.
+      // Same 3-way classification as core/render/engines/advanced_engine_shared.py
+      // _SPECIAL — real value / legitimately-empty / "(no disponible)" gap
+      // marker must match exactly between Design-canvas mock and real
+      // Preview render, or the two would silently disagree.
+      const NA='(no disponible)';
+      const mocks={
+        page_num:'1', total_pages:'1', page_n_of_m:'Página 1 de 1',
+        group_number:'1', record_number:'1', horizontal_page_num:'1',
+        print_date:now.toLocaleDateString('es-EC'), print_time:now.toLocaleTimeString('es-EC'),
+        report_name:'Factura Electrónica',
+        report_comments:'', group_selection_formula:'', record_selection_formula:'',
+        file_author:NA, file_creation_date:NA, data_date:NA, data_time:NA,
+        modification_date:NA, modification_time:NA, file_path_name:NA,
+        selection_locale:NA, content_locale:NA,
+        ce_user_id:NA, ce_user_name:NA,
+        print_time_zone:NA, data_time_zone:NA, ce_user_time_zone:NA,
+      };
+      return mocks[k]!==undefined?mocks[k]:'';
     }
     if(itemData&&(path.startsWith('item.')||!path.includes('.'))){
       const k=path.startsWith('item.')?path.slice(5):path;

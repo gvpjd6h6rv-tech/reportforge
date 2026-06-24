@@ -809,7 +809,12 @@ test('critical boundary files stay below growth thresholds', () => {
     [path.join(ROOT, 'reportforge/core/render/engines/enterprise_engine.py'), 12_000],
     [path.join(ROOT, 'reportforge/core/render/engines/enterprise_engine_shared.py'), 4_000],
     [path.join(ROOT, 'reportforge/core/render/engines/enterprise_engine_data.py'), 5_000],
-    [path.join(ROOT, 'reportforge/core/render/engines/enterprise_engine_layout.py'), 9_000],
+    // RF-FIELD-EXPLORER-SPECIAL-FIELDS-PARITY-1: +200B to thread a real
+    // per-page ctx (page_number/total_pages/report_name) through
+    // build_page/build_static/build_row/build_section into render_element,
+    // so _SPECIAL-backed special fields resolve real values instead of an
+    // always-empty ctx={} default.
+    [path.join(ROOT, 'reportforge/core/render/engines/enterprise_engine_layout.py'), 9_200],
     [path.join(ROOT, 'engines/SelectionEngine.js'), 3_000],
     [path.join(ROOT, 'engines/SelectionEngineContracts.js'), 3_500],
     [path.join(ROOT, 'engines/SelectionState.js'), 4_000],
