@@ -159,17 +159,18 @@ def render_barcode(engine, el, res) -> str:
     show_text = getattr(el, "showText", True)
     font_family = getattr(el, "barcodeFontFamily", "") or ""
     font_size = getattr(el, "barcodeFontSize", 8) or 8
+    align = getattr(el, "align", None) or "center"
     if font_family and _barcode_font_source(engine, el, font_family):
+        justify = {"left": "flex-start", "right": "flex-end"}.get(align, "center")
         text_style = (
-            f"{style};display:flex;align-items:flex-end;justify-content:center;"
-            f"font-family:'{font_family}';font-size:{font_size}pt;"
-            f"line-height:1;color:#000;overflow:hidden"
+            f"{style};display:flex;align-items:flex-end;justify-content:{justify};"
+            f"font-family:'{font_family}';font-size:{font_size}pt;line-height:1;color:#000;overflow:hidden"
         )
         return (
             f'<div class="cr-barcode barcode-font" style="{text_style}">'
             f'<span>{_esc(value)}</span></div>'
         )
-    svg = _render_barcode_svg(value, bc_type, el.w, el.h, show_text)
+    svg = _render_barcode_svg(value, bc_type, el.w, el.h, show_text, align)
     return f'<div class="cr-barcode" style="{style}">{svg}</div>'
 
 

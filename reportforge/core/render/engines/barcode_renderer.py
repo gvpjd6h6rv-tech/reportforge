@@ -2,22 +2,24 @@ from __future__ import annotations
 
 from .advanced_engine_shared import _esc
 
+def _text_anchor_pos(align: str, w: int, quiet: int) -> tuple:
+    """(x, text-anchor) for the label, honoring el.align like other types."""
+    if align == "left":
+        return quiet, "start"
+    if align == "right":
+        return w - quiet, "end"
+    return w / 2, "middle"
 
-def _render_barcode_svg(value: str, bc_type: str, w: int, h: int, show_text: bool) -> str:
+def _render_barcode_svg(value: str, bc_type: str, w: int, h: int, show_text: bool, align: str = "center") -> str:
     if bc_type in ("qr", "qrcode"):
-        return _svg_qr_placeholder(value, w, h, show_text)
-    return _svg_linear_barcode(value, w, h, show_text)
+        return _svg_qr_placeholder(value, w, h, show_text, align)
+    return _svg_linear_barcode(value, w, h, show_text, align)
 
+def _svg_linear_barcode(value: str, w: int, h: int, show_text: bool, align: str = "center") -> str:
+    return _svg_code128b(value, w, h, show_text, align)
 
-def _svg_linear_barcode(value: str, w: int, h: int, show_text: bool) -> str:
-    return _svg_code128b(value, w, h, show_text)
-
-
-# ---------------------------------------------------------------------------
-# Real Code128B encoder
-# Binary patterns (11 modules each) derived from ISO/IEC 15417.
-# Indices 0-105 = data symbols; 106=StartA, 107=StartB, 108=StartC; STOP separate.
-# ---------------------------------------------------------------------------
+# Real Code128B encoder (ISO/IEC 15417). Indices 0-105=data symbols;
+# 106=StartA, 107=StartB, 108=StartC; STOP separate.
 _C128_BIN = (
     "11011001100","11001101100","11001100110","10010011000","10010001100",
     "10001001100","10011001000","10011000100","10001100100","11001001000",
@@ -45,7 +47,6 @@ _C128_BIN = (
 )
 _C128_STOP_BIN = "1100011101011"  # 13 modules
 
-
 def _c128_widths(b: str) -> tuple:
     runs, cnt, prev = [], 1, b[0]
     for c in b[1:]:
@@ -58,11 +59,9 @@ def _c128_widths(b: str) -> tuple:
     runs.append(cnt)
     return tuple(runs)
 
-
 _C128_PAT = tuple(_c128_widths(b) for b in _C128_BIN)
 _C128_STOP = _c128_widths(_C128_STOP_BIN)
 _START_B = 104  # symbol value
-
 
 def _c128_pat(sym: int) -> tuple:
     if sym <= 105:
@@ -76,8 +75,7 @@ def _c128_pat(sym: int) -> tuple:
     # fallback: use closest valid symbol
     return _C128_PAT[min(sym, 105)]
 
-
-def _svg_code128b(value: str, w: int, h: int, show_text: bool) -> str:
+def _svg_code128b(value: str, w: int, h: int, show_text: bool, align: str = "center") -> str:
     if not value:
         value = "0"
     data = [ord(c) - 32 for c in value if 32 <= ord(c) <= 127]
@@ -108,26 +106,30 @@ def _svg_code128b(value: str, w: int, h: int, show_text: bool) -> str:
 
     text_el = ""
     if show_text:
+        tx, anchor = _text_anchor_pos(align, w, quiet)
         text_el = (
-            f'<text x="{w / 2:.1f}" y="{h - 1}" text-anchor="middle" '
+            f'<text x="{tx:.1f}" y="{h - 1}" text-anchor="{anchor}" '
             f'font-family="monospace" font-size="7.5">{_esc(value)}</text>'
         )
+    # 100%/none (not literal {w}/{h} px): lets a live resize-drag stretch
+    # this SVG via the viewBox instead of staying stale until re-render.
     return (
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">'
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" '
+        f'viewBox="0 0 {w} {h}" preserveAspectRatio="none">'
         f'<rect width="{w}" height="{h}" fill="white"/>'
         + "".join(bars)
         + text_el
         + "</svg>"
     )
 
-
-def _svg_qr_placeholder(value: str, w: int, h: int, show_text: bool) -> str:
+def _svg_qr_placeholder(value: str, w: int, h: int, show_text: bool, align: str = "center") -> str:
     size = min(w, h) - (12 if show_text else 4)
     x0 = (w - size) // 2
     text_el = ""
     if show_text:
+        tx, anchor = _text_anchor_pos(align, w, 4)
         text_el = (
-            f'<text x="{w/2}" y="{h-2}" text-anchor="middle" '
+            f'<text x="{tx}" y="{h-2}" text-anchor="{anchor}" '
             f'font-family="monospace" font-size="7">{_esc(value[:20])}</text>'
         )
     cell = size // 7
@@ -146,7 +148,8 @@ def _svg_qr_placeholder(value: str, w: int, h: int, show_text: bool) -> str:
                     f'<rect x="{x0+col*cell}" y="{2+row*cell}" width="{cell-1}" height="{cell-1}" fill="#000"/>'
                 )
     return (
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">'
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" '
+        f'viewBox="0 0 {w} {h}" preserveAspectRatio="none">'
         f'<rect width="{w}" height="{h}" fill="white"/>'
         + "".join(rects)
         + text_el
