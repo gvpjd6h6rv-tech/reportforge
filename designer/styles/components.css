@@ -25,6 +25,14 @@
   .rf-debug-panel__head button{appearance:none;border:1px solid rgba(0,0,0,.18);background:rgba(255,255,255,.7);color:inherit;border-radius:999px;width:16px;height:16px;line-height:1;font:inherit;cursor:pointer;padding:0}
   #rf-build-debug[data-collapsed="true"] .rf-debug-panel__body,
   #rf-zoom-live-debug[data-collapsed="true"] .rf-debug-panel__body{display:none}
+  /* RF-BARCODE-RESIZE-ALIGNMENT-PARITY-1: #rf-zoom-live-debug's expanded
+     width:200px (below) was unconditional, so its collapsed (header-only)
+     footprint stayed 200px wide too — unlike #rf-build-debug, which has no
+     fixed width and naturally shrinks to its header content when collapsed.
+     At narrow viewports that 200px collapsed header still reached far
+     enough left to overlap #workspace, the exact regression 1ae0aec meant
+     to close. Collapsed must shrink to content like #rf-build-debug does. */
+  #rf-zoom-live-debug[data-collapsed="true"]{width:auto}
   #rf-build-debug{
     position:fixed;
     right:8px;
