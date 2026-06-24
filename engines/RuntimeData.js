@@ -97,11 +97,38 @@ const RuntimeData = (() => {
       parameter:{label:'Campos de parámetro',icon:'?',children:{}},
       running:{label:'Totales acumulados',icon:'Σ',children:{}},
       group:{label:'Campos de grupo',icon:'G',children:{}},
+      // RF-FIELD-EXPLORER-SPECIAL-FIELDS-PARITY-1: full CR Special Fields
+      // list, in CR's own alphabetical (Spanish) order. page_num/total_pages/
+      // print_date/report_name keys+paths predate this fix and are kept
+      // stable for layouts already referencing them — only 2 of their
+      // labels changed to match CR's wording exactly.
       special:{label:'Campos especiales',icon:'★',children:{
-        page_num:{path:'_special.page_num',label:'Número de página',vtype:'number'},
-        total_pages:{path:'_special.total_pages',label:'Total de páginas',vtype:'number'},
+        file_author:{path:'_special.file_author',label:'Autor del archivo',vtype:'string'},
+        report_comments:{path:'_special.report_comments',label:'Comentarios de Informe',vtype:'string'},
+        selection_locale:{path:'_special.selection_locale',label:'Configuración regional de la selección',vtype:'string'},
+        content_locale:{path:'_special.content_locale',label:'Configuración regional del contenido',vtype:'string'},
+        file_creation_date:{path:'_special.file_creation_date',label:'Fecha de creación del archivo',vtype:'date'},
         print_date:{path:'_special.print_date',label:'Fecha de impresión',vtype:'date'},
-        report_name:{path:'_special.report_name',label:'Nombre del informe',vtype:'string'},
+        data_date:{path:'_special.data_date',label:'Fecha de los datos',vtype:'date'},
+        modification_date:{path:'_special.modification_date',label:'Fecha de modificación',vtype:'date'},
+        group_selection_formula:{path:'_special.group_selection_formula',label:'Fórmula de selección de grupos',vtype:'string'},
+        record_selection_formula:{path:'_special.record_selection_formula',label:'Fórmula de selección de registros',vtype:'string'},
+        print_time:{path:'_special.print_time',label:'Hora de impresión',vtype:'string'},
+        data_time:{path:'_special.data_time',label:'Hora de los datos',vtype:'string'},
+        modification_time:{path:'_special.modification_time',label:'Hora de modificación',vtype:'string'},
+        ce_user_id:{path:'_special.ce_user_id',label:'Id. de usuario actual de CE',vtype:'string'},
+        ce_user_name:{path:'_special.ce_user_name',label:'Nombre de usuario actual de CE',vtype:'string'},
+        group_number:{path:'_special.group_number',label:'Número de grupo',vtype:'number'},
+        page_num:{path:'_special.page_num',label:'Número de página',vtype:'number'},
+        horizontal_page_num:{path:'_special.horizontal_page_num',label:'Número de página horizontal',vtype:'number'},
+        record_number:{path:'_special.record_number',label:'Número de registro',vtype:'number'},
+        total_pages:{path:'_special.total_pages',label:'Número total de páginas',vtype:'number'},
+        page_n_of_m:{path:'_special.page_n_of_m',label:'Página N de M',vtype:'string'},
+        file_path_name:{path:'_special.file_path_name',label:'Ruta y nombre del archivo',vtype:'string'},
+        report_name:{path:'_special.report_name',label:'Título del informe',vtype:'string'},
+        print_time_zone:{path:'_special.print_time_zone',label:'Zona horaria de impresión',vtype:'string'},
+        data_time_zone:{path:'_special.data_time_zone',label:'Zona horaria de los datos',vtype:'string'},
+        ce_user_time_zone:{path:'_special.ce_user_time_zone',label:'Zona horaria del usuario de CE actual',vtype:'string'},
       }},
     };
     window.SAMPLE_DATA = {
