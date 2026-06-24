@@ -41,7 +41,15 @@
     div.style.fontStyle = el.italic ? 'italic' : 'normal';
     div.style.textDecoration = el.underline ? 'underline' : 'none';
     div.style.textAlign = el.align || 'left';
-    div.style.zIndex = el.zIndex || 0;
+    // Only set an inline z-index for an EXPLICIT document order — an
+    // inline `z-index:0` fallback otherwise permanently wins over
+    // `.cr-element.selected`'s stylesheet z-index, burying a
+    // selected/dragged element behind a later unselected sibling.
+    if (el.zIndex) {
+      div.style.zIndex = el.zIndex;
+    } else {
+      div.style.removeProperty('z-index');
+    }
   }
 
   function _setBorder(div, el) {
@@ -94,13 +102,20 @@
     div.style.overflow = 'visible';
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.style.cssText = 'position:absolute;overflow:visible;pointer-events:none';
-    svg.setAttribute('width', el.w);
+    svg.setAttribute('width', Math.max(el.w, 1));
     svg.setAttribute('height', Math.max(el.h, 1));
     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
     const lc = el.borderColor === 'transparent' ? '#000' : (el.borderColor || '#000');
-    const mid = Math.max(el.h / 2, 1);
-    line.setAttribute('x1', 0); line.setAttribute('y1', mid);
-    line.setAttribute('x2', el.w); line.setAttribute('y2', mid);
+    // Design mode now respects el.lineDir==='v', matching export/preview.
+    if (el.lineDir === 'v') {
+      const mid = Math.max(el.w / 2, 1);
+      line.setAttribute('x1', mid); line.setAttribute('y1', 0);
+      line.setAttribute('x2', mid); line.setAttribute('y2', el.h);
+    } else {
+      const mid = Math.max(el.h / 2, 1);
+      line.setAttribute('x1', 0); line.setAttribute('y1', mid);
+      line.setAttribute('x2', el.w); line.setAttribute('y2', mid);
+    }
     line.setAttribute('stroke', lc);
     line.setAttribute('stroke-width', el.lineWidth || 1);
     svg.appendChild(line);

@@ -12,7 +12,20 @@
  *   [H-02] _record captures state.field (stored value), not the raw parameter
  *          Proof via setPageMarginLeft(-5) → recorded value is 0, not -5
  *   [C-02] DocumentHistory.undo/redo routes through getApi().setSections/setElements/clearSelectionState
- *   [H-01] HistoryEngine.push() does NOT call DS.saveHistory() — no double-save
+ *   [H-01] No production call site invokes BOTH HistoryEngine.push() AND
+ *          DS.saveHistory() for the same mutation — no double-save.
+ *          RF-PARITY-AUDIT-1: this used to be enforced by forbidding
+ *          HistoryEngine.js from ever calling DS.saveHistory() at all — but
+ *          that was the root cause of Ctrl+Z silently no-opping after
+ *          resize/align/format/properties/section edits (anything that
+ *          only called DS.saveHistory() directly, never the old
+ *          independent HistoryEngine.push()). HistoryEngine.push() now
+ *          delegates to DS.saveHistory() (engines/HistoryEngine.js), which
+ *          is safe specifically BECAUSE the 3 call sites that used to call
+ *          both (drag-start, nudge, paste — SelectionInteractionMotion.js,
+ *          KeyboardEngine.js, ClipboardEngine.js) had their redundant
+ *          pre-push removed. This test now guards the real invariant: no
+ *          call site does both.
  */
 
 import test   from 'node:test';
@@ -512,13 +525,37 @@ test('[C-02] DocumentHistory.undo() re-syncs canvas and section layout before re
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// [H-01] HistoryEngine.push() must NOT call DS.saveHistory() — prevents double-save
+// [H-01] No production call site invokes HistoryEngine.push() — prevents
+// double-save now that push() delegates to DS.saveHistory()
 // ═══════════════════════════════════════════════════════════════════════════════
 
-test('[H-01] HistoryEngine.js has no DS.saveHistory() call — static proof of no double-save', () => {
+test('[H-01] HistoryEngine.push() delegates to DS.saveHistory() (RF-PARITY-AUDIT-1 fix, not the old independent stack)', () => {
   const src = readFileSync(path.join(ROOT, 'engines/HistoryEngine.js'), 'utf8');
-  const lines = src.split('\n');
-  const hits = lines.filter((l) => /DS\.saveHistory\s*\(/.test(l) && !l.trimStart().startsWith('//'));
-  assert.deepEqual(hits, [],
-    `HistoryEngine must not call DS.saveHistory() — creates double history entries:\n  ${hits.join('\n  ')}`);
+  assert.match(src, /DS\.saveHistory\s*\(/,
+    'HistoryEngine.push must delegate to DS.saveHistory — otherwise Ctrl+Z silently no-ops for every mutation that only calls DS.saveHistory directly (resize/align/format/properties/sections), the exact bug RF-PARITY-AUDIT-1 found');
+});
+
+test('[H-01] no engine calls HistoryEngine.push() anymore — static proof of no double-save', () => {
+  // Now that HistoryEngine.push() delegates to DS.saveHistory(), the
+  // double-save risk this guard originally existed for would resurface if
+  // ANY call site invoked both HistoryEngine.push() and DS.saveHistory()
+  // for the same mutation. The 3 call sites that used to do exactly that
+  // (drag-start, nudge, paste) had their redundant HistoryEngine.push()
+  // removed — engines/SelectionInteractionMotion.js,
+  // engines/KeyboardEngine.js, engines/ClipboardEngine.js. This statically
+  // proves no engine reintroduces it.
+  const engineFiles = readdirSync(path.join(ROOT, 'engines')).filter((f) => f.endsWith('.js'));
+  const offenders = [];
+  for (const file of engineFiles) {
+    if (file === 'HistoryEngine.js') continue; // the delegate itself, not a caller
+    const src = readFileSync(path.join(ROOT, 'engines', file), 'utf8');
+    const lines = src.split('\n');
+    lines.forEach((l, i) => {
+      if (/HistoryEngine\.push\s*\(/.test(l) && !l.trimStart().startsWith('//')) {
+        offenders.push(`${file}:${i + 1}: ${l.trim()}`);
+      }
+    });
+  }
+  assert.deepEqual(offenders, [],
+    `no engine should call HistoryEngine.push() — it is now redundant with DS.saveHistory() and would double-save:\n  ${offenders.join('\n  ')}`);
 });

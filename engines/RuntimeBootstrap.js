@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
   DebugTraceToggle.init();
   DebugOverlay.init();
   SectionEngine.init();
+  PreviewHoverOutline.init();
   FieldExplorerEngine.init();
   FieldExplorerEngine.setupCanvasDrop();
   initMenuBindings();

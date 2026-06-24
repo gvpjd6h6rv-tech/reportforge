@@ -2,111 +2,64 @@
  * HistoryEngine — ReportForge v19 Phase 3
  * ─────────────────────────────────────────────────────────────────
  * Undo / redo action stack.
- * Delegates to DS.saveHistory / DS.undo / DS.redo when available.
- * Extends with named-action tracking and state diffing.
+ * Delegates to DS.saveHistory / DS.undo / DS.redo (the SAME stack
+ * DocumentHistory.js maintains and the menu/toolbar #btn-undo/#btn-redo
+ * buttons use — engines/CommandRuntimeHandlersSelectionDispatch.js:8-9).
  *
- * Architecture rule:
+ * RF-PARITY-AUDIT-1 root cause (proven live, not hypothesis): this file
+ * used to keep its OWN independent `_undoStack`/`_redoStack` with its own
+ * `_snapshot()`/`_restore()`, completely disconnected from DS.saveHistory's
+ * stack — despite this exact docstring already claiming it delegated.
+ * Only drag-start, nudge, and paste ever called HistoryEngine.push(), so
+ * Ctrl+Z/Ctrl+Shift+Z (bound to HistoryEngine.undo/redo in
+ * KeyboardEngine.js) silently no-opped after EVERY other mutation (resize,
+ * align, format, properties, section resize, formula save, field-explorer
+ * edits — anything that only ever called DS.saveHistory()), while the menu
+ * buttons (bound to DS.undo/redo) worked for all of them. Now both input
+ * paths share one stack, so they always agree.
+ *
+ * Architecture rule (unchanged):
  *   History stores MODEL SPACE snapshots only.
  *   View-space derived values are never persisted.
  */
 'use strict';
 
 const HistoryEngine = (() => {
-  const MAX_STACK = 100;
-
-  const _undoStack = [];   // { label, snapshot }
-  const _redoStack = [];   // { label, snapshot }
-
-  let _listeners  = [];
   let _suppressed = false;
 
-  function _notify() {
-    const state = {
-      canUndo: _undoStack.length > 0,
-      canRedo: _redoStack.length > 0,
-      undoLabel: _undoStack.length ? _undoStack[_undoStack.length - 1].label : null,
-      redoLabel: _redoStack.length ? _redoStack[_redoStack.length - 1].label : null,
-    };
-    _listeners.forEach(fn => { try { fn(state); } catch (e) {} });
-  }
-
-  /**
-   * Snapshot current DS state (model only).
-   */
-  function _snapshot() {
-    if (typeof DS === 'undefined') return null;
-    return JSON.stringify({
-      elements: DS.elements,
-      sections: DS.sections,
-      zoom:     DS.zoom,
-    });
-  }
-
-  /**
-   * Restore a snapshot to DS.
-   */
-  function _restore(snap) {
-    if (!snap || typeof DS === 'undefined') return;
-    try {
-      const state = JSON.parse(snap);
-      DS.setElements(state.elements, 'HistoryEngine.restore');
-      DS.setSections(state.sections, 'HistoryEngine.restore');
-      // Trigger re-render: renderAll removes stale element DOM nodes and rebuilds
-      // from DS.elements — required after undo/redo to remove deleted elements.
-      if (typeof CanvasLayoutEngine !== 'undefined') CanvasLayoutEngine.update();
-      if (typeof SectionLayoutEngine !== 'undefined') SectionLayoutEngine.update();
-      if (typeof CanvasLayoutEngine !== 'undefined') CanvasLayoutEngine.renderAll();
-      if (typeof OverlayEngine !== 'undefined') OverlayEngine.render();
-    } catch (e) {
-      console.error('[HistoryEngine] restore failed:', e);
-    }
+  function _undoRedoDisabled(id) {
+    const btn = typeof document !== 'undefined' && document.getElementById(id);
+    return !!(btn && btn.classList.contains('disabled'));
   }
 
   return {
     /**
-     * Push the current state to the undo stack.
-     * Call BEFORE making a model change.
-     * @param {string} label  — human-readable action name
+     * Save the CURRENT state to the undo stack. Call AFTER making a model
+     * change (same convention as every other caller of DS.saveHistory —
+     * AlignEngine, PropertiesEngine, FormatEngine, SelectionInteractionMotion
+     * resize/move-end, ClipboardEngine paste-end, etc.).
+     * @param {string} _label  — unused (DS.saveHistory does not track
+     *   labels); kept for call-site compatibility.
      */
-    push(label = 'action') {
+    push(_label = 'action') {
       if (_suppressed) return;
-      const snap = _snapshot();
-      if (!snap) return;
-      _undoStack.push({ label, snapshot: snap });
-      if (_undoStack.length > MAX_STACK) _undoStack.shift();
-      _redoStack.length = 0;   // invalidate redo on new action
-      _notify();
+      if (typeof DS !== 'undefined' && typeof DS.saveHistory === 'function') DS.saveHistory();
     },
 
     undo() {
-      const entry = _undoStack.pop();
-      if (!entry) return false;
-      // Push current state to redo
-      const redoSnap = _snapshot();
-      if (redoSnap) {
-        _redoStack.push({ label: entry.label, snapshot: redoSnap });
-        if (_redoStack.length > MAX_STACK) _redoStack.shift();
-      }
-      _restore(entry.snapshot);
-      _notify();
+      if (typeof DS === 'undefined' || typeof DS.undo !== 'function') return false;
+      DS.undo();
       return true;
     },
 
     redo() {
-      const entry = _redoStack.pop();
-      if (!entry) return false;
-      const undoSnap = _snapshot();
-      if (undoSnap) {
-        _undoStack.push({ label: entry.label, snapshot: undoSnap });
-        if (_undoStack.length > MAX_STACK) _undoStack.shift();
-      }
-      _restore(entry.snapshot);
-      _notify();
+      if (typeof DS === 'undefined' || typeof DS.redo !== 'function') return false;
+      DS.redo();
       return true;
     },
 
-    canUndo() { return _undoStack.length > 0; },
-    canRedo() { return _redoStack.length > 0; },
+    canUndo() { return !_undoRedoDisabled('btn-undo'); },
+    canRedo() { return !_undoRedoDisabled('btn-redo'); },
 
     /** Suppress push() calls (e.g. during programmatic batch updates) */
     suppress(fn) {
@@ -114,11 +67,11 @@ const HistoryEngine = (() => {
       try { return fn(); } finally { _suppressed = false; }
     },
 
-    /** Subscribe to stack changes */
-    onChange(fn) { _listeners.push(fn); },
-
-    /** Clear all history */
-    clear() { _undoStack.length = 0; _redoStack.length = 0; _notify(); },
+    /** No-op compatibility stubs — nothing in production code subscribes to
+     *  these (verified: only push/undo/redo are called from outside this
+     *  file), kept so any future caller doesn't throw. */
+    onChange() {},
+    clear() {},
   };
 })();
 

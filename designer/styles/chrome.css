@@ -310,9 +310,13 @@
   .file-tab .close-tab { font-size: 9px; opacity: .6; margin-inline-start: var(--rf-gap-sm); }
   .file-tab .close-tab:hover { opacity: 1; color: red; }
   .sub-tabs {
+    /* RF-CR-PARITY-MENU-TABS-1: real Crystal Reports pins Diseño/Vista
+       previa at the LEFT (immediately after the file tabs), not pushed to
+       the far right — removed the margin-inline-start:auto right-push so
+       both modes match CR, instead of matching each other at the wrong
+       (right) position. */
     display: flex;
     align-items: center;
-    margin-inline-start: auto;
     gap: var(--rf-gap-xs);
   }
   .sub-tab {

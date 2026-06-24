@@ -40,7 +40,9 @@ const SelectionInteractionMotion = (() => {
 
   function _doMove(engine, pos, e) {
     const d = engine._drag;
-    if (!d.moved && typeof HistoryEngine !== 'undefined') HistoryEngine.push('move');
+    // RF-PARITY-AUDIT-1: no pre-push — HistoryEngine.push delegates to
+    // DS.saveHistory() now; the post-drag SelectionState.saveHistory()
+    // below already covers this, a pre-push would just double-save.
     d.moved = true;
     const dx = pos.x - d.startX;
     const dy = pos.y - d.startY;

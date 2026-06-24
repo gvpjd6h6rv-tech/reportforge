@@ -161,12 +161,16 @@ test('TANDA 2 — interacción format + selección + zoom + overlay', { timeout:
         assert.equal(pv.fontStyle, 'italic', `pv-el ${pv.id}: fontStyle debe ser italic`);
       }
 
-      // El overlay entra congelado/oculto por diseño al entrar a preview
-      // (PreviewEngineMode.show -> freezeSelectionOverlay) hasta una
-      // reselección explícita en preview — DS.selection sí persiste, que es
-      // lo que ya valida pvStyles arriba (italic reflejado en cada pv-el).
+      // RF-PREVIEW-SELECTION-OFFSET-1: the overlay used to stay frozen
+      // forever after entering preview (boxCount:0 here was that bug, not
+      // a real "frozen until reselection" design) — it now unfreezes and
+      // re-renders once the new preview DOM is ready, aligned to the
+      // multiselect bbox, same as a selection made fresh inside preview.
       const snap = await getSelectionSnapshot(page);
-      assert.equal(snap.boxCount, 0, 'overlay entra congelado/oculto en preview hasta reselección explícita');
+      assert.equal(snap.boxCount, 1, 'overlay must show one multiselect box carried over from design into preview');
+      const bbox = await getMultiBBox(page);
+      assert.ok(bbox, 'multiselect bbox must be measurable in preview');
+      assertRectClose(bbox.box, bbox.expected, 1, 'previewCarriedMultiselect');
       await exitPreview(page);
     });
 

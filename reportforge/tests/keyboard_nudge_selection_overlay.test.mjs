@@ -97,8 +97,11 @@ test('KeyboardEngine arrow nudge refreshes selection overlay after moving elemen
   assert.equal(runtime.element.y, 20);
 
   const events = runtime.calls.map((call) => call.event);
+  // RF-PARITY-AUDIT-1: no longer pre-pushes via HistoryEngine.push() before
+  // the move — that call was redundant once HistoryEngine.push() delegates
+  // to DS.saveHistory() (the post-mutation DS.saveHistory() call below
+  // already covers it; see engines/KeyboardEngine.js _nudgeSelected).
   assert.deepEqual(events, [
-    'HistoryEngine.push',
     'ElementLayoutEngine.moveElement',
     'ElementLayoutEngine.moveElement.after',
     'RenderScheduler.flushSync',

@@ -41,12 +41,21 @@ export function createDebugCenterApi() {
     document.body.appendChild(host);
     state.host = host;
     state.shadow = mountDebugCenter(host);
-    const head = state.shadow.getElementById('rf-debug-center-head');
-    if (head && typeof window.makePanelDraggable === 'function') {
-      state.draggable = window.makePanelDraggable(host, head, 'RF_DEBUG_CENTER_POS', { left: Math.max(12, window.innerWidth - 460), top: 72 });
-    }
-    syncHostLayout();
-    host.classList.add('is-on');
+    // The shadow root's CSS loads async via <link> — measuring `host`
+    // before it parses gets the unstyled (~full body width) box instead
+    // of ~420px, driving clampPosition's left to its floor (8). Gate
+    // position/visibility setup on stylesheet readiness.
+    const link = state.shadow.querySelector('link[rel="stylesheet"]');
+    const finishMount = () => {
+      const head = state.shadow.getElementById('rf-debug-center-head');
+      if (head && typeof window.makePanelDraggable === 'function') {
+        state.draggable = window.makePanelDraggable(host, head, 'RF_DEBUG_CENTER_POS', { left: Math.max(12, window.innerWidth - 460), top: 72 });
+      }
+      syncHostLayout();
+      host.classList.add('is-on');
+    };
+    if (!link || link.sheet) finishMount();
+    else link.addEventListener('load', finishMount, { once: true });
     return host;
   }
   function syncHostLayout() {

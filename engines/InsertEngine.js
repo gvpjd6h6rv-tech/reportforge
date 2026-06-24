@@ -58,6 +58,7 @@ const InsertEngine = {
     if(tool==='text') newEl=mkEl('text',secId,x,relY,w,h,{content:'Texto',bgColor:'transparent',borderColor:'transparent'});
     else if(tool==='field') newEl=mkEl('field',secId,x,relY,w,h,{fieldPath:'',content:'Seleccione campo'});
     else if(tool==='line') newEl=mkEl('line',secId,x,relY,w,Math.max(h,2),{borderColor:'#000',lineWidth:1});
+    else if(tool==='line-v') newEl=mkEl('line',secId,x,relY,2,Math.max(h,20),{borderColor:'#000',lineWidth:1,lineDir:'v'});
     else if(tool==='box') newEl=mkEl('rect',secId,x,relY,w,h,{bgColor:'transparent',borderColor:'#000',borderWidth:1});
     if(!newEl)return;
     DS.setElements([...DS.elements, newEl], 'InsertEngine.onMouseUp');

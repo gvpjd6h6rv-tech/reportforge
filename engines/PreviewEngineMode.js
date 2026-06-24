@@ -55,7 +55,13 @@
     _active = true;
     freezeSelectionOverlay();
     global.PreviewEngineRenderer.clear?.();
-    global.PreviewEngineRenderer.refresh();
+    // RF-PREVIEW-SELECTION-OFFSET-1: unfreeze + re-render once refresh()'s
+    // async preview DOM is ready, instead of leaving the stale Design box.
+    global.PreviewEngineRenderer.refresh().then(() => {
+      if (!_active) return;
+      enableSelectionOverlay();
+      if (typeof SelectionEngine !== 'undefined') SelectionEngine.renderHandles();
+    });
     if (typeof PreviewZoomEngine !== 'undefined') PreviewZoomEngine.set(DS.previewZoom || 1.0);
     if (typeof ZoomWidget !== 'undefined') ZoomWidget.sync();
     console.debug(`[PreviewEngineV19] ON in ${(performance.now() - t0).toFixed(1)}ms`);

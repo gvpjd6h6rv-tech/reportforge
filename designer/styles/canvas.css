@@ -73,6 +73,7 @@
   #workspace.tool-text    { cursor: crosshair; }
   #workspace.tool-field   { cursor: crosshair; }
   #workspace.tool-line    { cursor: crosshair; }
+  #workspace.tool-line-v  { cursor: crosshair; }
   #workspace.tool-box     { cursor: crosshair; }
 
   /* canvas-layer: FIXED coordinate system — zoom is applied to #viewport parent, NOT here */

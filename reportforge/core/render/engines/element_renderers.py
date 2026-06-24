@@ -85,21 +85,30 @@ def render_text(engine, el, res, agg) -> str:
 def render_line(el) -> str:
     color = el.borderColor if el.borderColor not in ("transparent", "") else "#000"
     lw = max(1, el.lineWidth)
-    style = f"position:absolute;left:{el.x}px;top:{el.y}px;width:{el.w}px;height:{max(el.h,lw)}px;overflow:visible"
+    # PARITY-AUDIT-1: was an SVG <line> with overflow:visible. Proven live
+    # (geometry diff=0.0 vs expected pos; elementFromPoint + full-tree rect
+    # scan found no element over the visible-stroke pixels): under the
+    # preview viewport's transform:scale(zoom), Chromium painted this SVG's
+    # stroke bleeding into the text row below — a paint-layer artifact, not
+    # a layout bug. overflow:hidden made it vanish (painted outside its own
+    # box), confirming it. Replaced with a CSS border (no such raster
+    # ambiguity), centered like design's SVG mid=h/2 convention
+    # (CanvasLayoutElements.js:115) to avoid a new divergence. Centering
+    # offset is rounded to an integer px — a fractional one anti-aliases a
+    # 1px ink fringe just outside the box (caught by the raster smoke test).
     if el.lineDir == "v":
-        svg = (
-            f'<svg width="{max(el.w,1)}" height="{el.h}" style="overflow:visible">'
-            f'<line x1="0" y1="0" x2="0" y2="{el.h}" stroke="{color}" stroke-width="{lw}"/>'
-            f"</svg>"
+        left = el.x + round((el.w - lw) / 2)
+        style = (
+            f"position:absolute;left:{left}px;top:{el.y}px;width:{lw}px;"
+            f"height:{el.h}px;border-left:{lw}px solid {color};box-sizing:border-box"
         )
     else:
-        mid = max(el.h / 2, lw / 2)
-        svg = (
-            f'<svg width="{el.w}" height="{max(el.h,lw)}" style="overflow:visible">'
-            f'<line x1="0" y1="{mid}" x2="{el.w}" y2="{mid}" stroke="{color}" stroke-width="{lw}"/>'
-            f"</svg>"
+        top = el.y + round((el.h - lw) / 2)
+        style = (
+            f"position:absolute;left:{el.x}px;top:{top}px;width:{el.w}px;"
+            f"height:{lw}px;border-top:{lw}px solid {color};box-sizing:border-box"
         )
-    return f'<div style="{style}">{svg}</div>'
+    return f'<div style="{style}"></div>'
 
 
 def render_rect(el) -> str:

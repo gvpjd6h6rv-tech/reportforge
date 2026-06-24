@@ -291,9 +291,16 @@ test('canonical runtime anti-regression suite', { timeout: 120000 }, async (t) =
 
     await t.test('preview enter exit', async () => {
       // The prior subtest (zoom widget manual flow) does a fresh page.goto,
-      // which wipes DS.selection — this subtest verifies a design-mode
-      // selection is hidden in preview and restored on exit, so it must
-      // establish that selection itself rather than assume it survived.
+      // which wipes DS.selection — this subtest establishes a design-mode
+      // selection itself rather than assume it survived, then verifies it
+      // carries over into preview ALIGNED to the relocated element
+      // (RF-PREVIEW-SELECTION-OFFSET-1 — the overlay used to stay frozen
+      // forever after entering preview, which this test's old
+      // boxCount:0/handleCount:0/alignment:null expectations had measured
+      // as if "hidden by design"; the very next subtest below already
+      // expects a visible, aligned box for a selection made while already
+      // in preview, so "hidden when carried over from Design" was never a
+      // real, consistent contract — just this same bug's other symptom).
       await setZoom(page, 1);
       await selectSingle(page, 0);
       await enterPreview(page);
@@ -301,10 +308,10 @@ test('canonical runtime anti-regression suite', { timeout: 120000 }, async (t) =
       assert.equal(state.previewMode, true);
       assert.equal(state.previewClass, true);
       assert.ok(state.previewPages >= 1);
-      assert.equal(state.boxCount, 0);
-      assert.equal(state.handleCount, 0);
+      assert.equal(state.boxCount, 1);
+      assert.equal(state.handleCount, 8);
       let alignment = await getSingleAlignment(page);
-      assert.equal(alignment, null);
+      assertRectClose(alignment.box, alignment.element, 1, 'previewEnterCarriedSelection');
       const previewShot = await takeWorkspaceScreenshot(page);
       await compareSnapshotBuffer('runtime-preview.png', previewShot);
 

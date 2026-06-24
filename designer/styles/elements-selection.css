@@ -6,8 +6,18 @@
     box-sizing: border-box;
     overflow: hidden;
   }
+  /* CR-HOVER-OUTLINE-PARITY-1: CR shows a thin orange hairline box around
+     whatever element the mouse is hovering, in both Design and Preview —
+     no text, no tooltip. Single owner for both modes via the shared
+     .cr-element class (.pv-el also carries it, see components.css).
+     `outline` (not `border`) so it adds zero layout box (no shift to
+     siblings/box-sizing). `:not(.selected)` makes the active selection's
+     blue box win outright — SelectionOverlay.js:_syncSelectionDomClasses()
+     keeps `.selected` in sync on every renderHandles() call, in both
+     Design's own .cr-element nodes and Preview's hit-layer .pv-el nodes. */
   .cr-element:hover:not(.selected) {
-    outline: none;
+    outline: 1px solid #F08000;
+    outline-offset: 0;
   }
   /* GPU composited drag */
   .cr-element.dragging {

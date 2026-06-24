@@ -412,14 +412,18 @@ test('TANDA 5 — INTERACTION-EDGE-001..018', { timeout: 300000 }, async (t) => 
       const selectedId = await page.evaluate(() => [...DS.selection][0]);
       assert.ok(selectedId, 'elemento debe estar seleccionado');
 
-      // Enter preview: selección debe persistir en DS, pero el overlay
-      // entra congelado/oculto por diseño (PreviewEngineMode.show ->
-      // freezeSelectionOverlay) hasta una reselección explícita en preview —
-      // ver INTERACTION-EDGE-016, que sí hace selectPreviewSingle.
+      // Enter preview: selección debe persistir en DS, y el overlay debe
+      // re-renderizar alineado al elemento reubicado (RF-PREVIEW-SELECTION-
+      // OFFSET-1 — antes quedaba congelado para siempre, lo que este
+      // boxCount:0 medía como si fuera un "congelado hasta reselección"
+      // intencional; ver INTERACTION-EDGE-016 para selectPreviewSingle).
       await enterPreview(page);
       let snap = await getSelectionSnapshot(page);
       assert.deepEqual(snap.dsSelection, [selectedId], 'DS.selection debe persistir al entrar preview');
-      assert.equal(snap.boxCount, 0, 'overlay entra congelado/oculto en preview hasta reselección explícita');
+      assert.equal(snap.boxCount, 1, 'overlay debe mostrar la caja alineada al entrar a preview con selección heredada');
+      const enterAlignment = await getSingleAlignment(page);
+      assert.ok(enterAlignment, 'alignment no debe ser null al entrar a preview con selección heredada');
+      assertRectClose(enterAlignment.box, enterAlignment.element, 1, 'previewEnterCarriedSelectionEdge015');
 
       // Exit preview: selección debe volver
       await exitPreview(page);

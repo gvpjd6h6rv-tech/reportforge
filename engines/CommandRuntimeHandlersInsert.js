@@ -8,6 +8,7 @@
       'insert-text': () => InsertEngine.setTool('text'),
       'insert-field': () => InsertEngine.setTool('field'),
       'insert-line': () => InsertEngine.setTool('line'),
+      'insert-line-v': () => InsertEngine.setTool('line-v'),
       'insert-box': () => InsertEngine.setTool('box'),
     });
   }

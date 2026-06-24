@@ -187,23 +187,20 @@ test('mutation kill — GeometryCore: inflateRect sign flip on amount', () => {
 // ---------------------------------------------------------------------------
 
 function loadHistoryEngineForMutation(src) {
+  const calls = { saveHistory: 0, undo: 0, redo: 0 };
+  const buttons = {
+    'btn-undo': { classList: { _disabled: false, contains(c) { return c === 'disabled' && this._disabled; } } },
+    'btn-redo': { classList: { _disabled: false, contains(c) { return c === 'disabled' && this._disabled; } } },
+  };
+  const document = { getElementById(id) { return buttons[id] || null; } };
   const DS = {
-    elements: [{ id: 'e0', type: 'text', x: 0, y: 0, w: 1, h: 1, text: 'e0' }],
-    sections: [{ id: 'ph', stype: 'pageHeader', height: 40 }],
-    zoom: 1.0,
-    setElements(els) { this.elements = els; },
-    setSections(sects) { this.sections = sects; },
+    saveHistory() { calls.saveHistory++; },
+    undo() { calls.undo++; },
+    redo() { calls.redo++; },
   };
-  const ctx = {
-    module: { exports: {} },
-    console,
-    DS,
-    CanvasLayoutEngine: { update() {}, renderAll() {} },
-    SectionLayoutEngine: { update() {} },
-    OverlayEngine: { render() {} },
-  };
+  const ctx = { module: { exports: {} }, console, DS, document };
   vm.runInNewContext(src, ctx);
-  return { HistoryEngine: ctx.module.exports, DS };
+  return { HistoryEngine: ctx.module.exports, DS, calls, buttons };
 }
 
 /**
@@ -215,7 +212,7 @@ function assertHistoryEngineMutationKilled(mutateFn, runFn, label) {
   const src = fs.readFileSync(srcPath, 'utf8');
 
   const baseline = loadHistoryEngineForMutation(src);
-  runFn(baseline.HistoryEngine, baseline.DS); // throws if baseline is broken
+  runFn(baseline.HistoryEngine, baseline.DS, baseline.calls, baseline.buttons); // throws if baseline is broken
 
   const mutated = mutateFn(src);
   if (mutated === src) throw new Error(`Mutation did not change source: ${label}`);
@@ -223,47 +220,70 @@ function assertHistoryEngineMutationKilled(mutateFn, runFn, label) {
 
   let killed = false;
   try {
-    runFn(mutant.HistoryEngine, mutant.DS);
+    runFn(mutant.HistoryEngine, mutant.DS, mutant.calls, mutant.buttons);
   } catch {
     killed = true;
   }
   assert.ok(killed, `SURVIVOR — mutation not detected (test gap): ${label}`);
 }
 
-test('mutation kill — HistoryEngine: undo stack shift→pop removes wrong end on overflow', () => {
+// RF-PARITY-AUDIT-1: HistoryEngine no longer has its own _undoStack/
+// _redoStack — it delegates to DS.saveHistory/undo/redo (the stack
+// DocumentHistory.js maintains, also used by the menu #btn-undo/#btn-redo
+// buttons). The mutation targets below were rewritten against the actual
+// remaining logic (the suppress guard, the delegate calls, the canUndo/
+// canRedo negation) instead of internal stack mechanics that no longer
+// exist (shift/pop, length>0 vs >1, _redoStack.length=0 reset).
+
+test('mutation kill — HistoryEngine: suppress guard removed lets push() through during suppress', () => {
   assertHistoryEngineMutationKilled(
-    (s) => s.replace(
-      'if (_undoStack.length > MAX_STACK) _undoStack.shift();',
-      'if (_undoStack.length > MAX_STACK) _undoStack.pop();',
-    ),
-    (H, DS) => {
-      // MAX_STACK is fixed at 100 — push 101 distinguishable states to force
-      // exactly one eviction, then unwind via undo() to see which survived.
-      for (let i = 0; i <= 100; i++) {
-        DS.setElements([{ id: `e${i}`, type: 'text', x: 0, y: 0, w: 1, h: 1, text: `e${i}` }]);
-        H.push(`action-${i}`);
-      }
-      let lastRestoredId = null;
-      while (H.undo()) lastRestoredId = DS.elements[0].id;
-      // With shift(): oldest (e0) is evicted, oldest survivor is e1.
-      // With pop() (mutant): the newest entry is evicted instead.
-      assert.equal(lastRestoredId, 'e1', 'oldest surviving entry must be e1 (e0 evicted by shift)');
+    (s) => s.replace('if (_suppressed) return;', 'if (false) return;'),
+    (H, DS, calls) => {
+      H.suppress(() => { H.push('should be ignored'); });
+      assert.equal(calls.saveHistory, 0, 'push() inside suppress must not call DS.saveHistory()');
     },
-    'HistoryEngine: _undoStack.shift() → _undoStack.pop() on overflow',
+    'HistoryEngine: push() suppress guard `if (_suppressed) return;` disabled',
   );
 });
 
-test('mutation kill — HistoryEngine: canUndo length > 0 → > 1 off-by-one', () => {
+test('mutation kill — HistoryEngine: push() delegates to the wrong DS method', () => {
   assertHistoryEngineMutationKilled(
     (s) => s.replace(
-      'canUndo() { return _undoStack.length > 0; }',
-      'canUndo() { return _undoStack.length > 1; }',
+      "if (typeof DS !== 'undefined' && typeof DS.saveHistory === 'function') DS.saveHistory();",
+      "if (typeof DS !== 'undefined' && typeof DS.undo === 'function') DS.undo();",
     ),
-    (H) => {
+    (H, DS, calls) => {
       H.push('action');
-      assert.ok(H.canUndo(), 'canUndo must be true after exactly one push');
+      assert.equal(calls.saveHistory, 1, 'push() must call DS.saveHistory(), not DS.undo()');
+      assert.equal(calls.undo, 0);
     },
-    'HistoryEngine: canUndo length > 0 → > 1 (off-by-one)',
+    'HistoryEngine: push() DS.saveHistory() swapped for DS.undo()',
+  );
+});
+
+test('mutation kill — HistoryEngine: undo() delegates to DS.redo() instead of DS.undo()', () => {
+  assertHistoryEngineMutationKilled(
+    (s) => s.replace(
+      "if (typeof DS === 'undefined' || typeof DS.undo !== 'function') return false;\n      DS.undo();",
+      "if (typeof DS === 'undefined' || typeof DS.undo !== 'function') return false;\n      DS.redo();",
+    ),
+    (H, DS, calls) => {
+      H.undo();
+      assert.equal(calls.undo, 1, 'undo() must call DS.undo(), not DS.redo()');
+      assert.equal(calls.redo, 0);
+    },
+    'HistoryEngine: undo() DS.undo() swapped for DS.redo()',
+  );
+});
+
+test('mutation kill — HistoryEngine: canUndo() negation removed inverts the result', () => {
+  assertHistoryEngineMutationKilled(
+    (s) => s.replace("canUndo() { return !_undoRedoDisabled('btn-undo'); }", "canUndo() { return _undoRedoDisabled('btn-undo'); }"),
+    (H, DS, calls, buttons) => {
+      buttons['btn-undo'].classList._disabled = false; // button enabled -> canUndo must be true
+      assert.equal(H.canUndo(), true, 'canUndo() must be true when #btn-undo is not disabled');
+    },
+    'HistoryEngine: canUndo() `!` negation removed',
   );
 });
 
@@ -273,30 +293,12 @@ test('mutation kill — HistoryEngine: suppress does not release (finally remove
       'try { return fn(); } finally { _suppressed = false; }',
       'return fn();',
     ),
-    (H) => {
+    (H, DS, calls) => {
       H.suppress(() => {});
       H.push('after'); // if the flag never released, this push is silently dropped
-      assert.ok(H.canUndo(), 'suppress must release the flag so a later push() succeeds');
+      assert.equal(calls.saveHistory, 1, 'suppress must release the flag so a later push() succeeds');
     },
     'HistoryEngine: suppress finally { _suppressed = false } removed',
-  );
-});
-
-test('mutation kill — HistoryEngine: new push() keeps stale redo entries (length=0 → length=1)', () => {
-  assertHistoryEngineMutationKilled(
-    (s) => s.replace(
-      '_redoStack.length = 0;   // invalidate redo on new action',
-      '_redoStack.length = 1;   // MUTANT',
-    ),
-    (H, DS) => {
-      DS.setElements([{ id: 's0', type: 'text', x: 0, y: 0, w: 1, h: 1, text: 's0' }]);
-      H.push('a');
-      DS.setElements([{ id: 's1', type: 'text', x: 0, y: 0, w: 1, h: 1, text: 's1' }]);
-      H.undo(); // populates redo stack
-      H.push('b'); // must fully invalidate redo
-      assert.equal(H.canRedo(), false, 'a new push must fully clear the redo stack');
-    },
-    'HistoryEngine: _redoStack.length = 0 → = 1 (push leaves stale redo entry)',
   );
 });
 
@@ -315,13 +317,14 @@ test('mutation kill rate — 100% required (zero survivors allowed)', () => {
     'snapValue round→floor',
     'rectContainsPoint edge miss',
     'inflateRect sign flip',
-    'HistoryEngine shift→pop',
-    'HistoryEngine canUndo off-by-one',
+    'HistoryEngine suppress guard disabled',
+    'HistoryEngine push() wrong DS delegate',
+    'HistoryEngine undo() wrong DS delegate',
+    'HistoryEngine canUndo() negation removed',
     'HistoryEngine suppress no-release',
-    'HistoryEngine redo not cleared on push',
   ];
-  assert.equal(mutations.length, 10, 'mutation suite must cover exactly 10 operators');
-  // Operators covered: AOR×4, ROR×2, COR×0, SBR×2, UOI×2
-  const coverage = { AOR: 4, ROR: 2, COR: 0, SBR: 2, UOI: 2 };
-  assert.equal(Object.values(coverage).reduce((a, b) => a + b, 0), 10);
+  assert.equal(mutations.length, 11, 'mutation suite must cover exactly 11 operators');
+  // Operators covered: AOR×4, ROR×2, COR×1, SBR×2, UOI×2
+  const coverage = { AOR: 4, ROR: 2, COR: 1, SBR: 2, UOI: 2 };
+  assert.equal(Object.values(coverage).reduce((a, b) => a + b, 0), 11);
 });

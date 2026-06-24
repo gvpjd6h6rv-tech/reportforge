@@ -83,7 +83,16 @@
   #canvas-layer.preview-mode .section-label         { display: none !important; }
   #canvas-layer.preview-mode .cr-section            { border-block-end: none !important; }
   #canvas-layer.preview-mode .cr-element            { cursor: pointer !important; }
-  #canvas-layer.preview-mode .cr-element:hover:not(.selected) { outline: none !important; }
+  /* CR-HOVER-OUTLINE-PARITY-1: was `outline: none !important` — a 3rd,
+     !important owner that fully blocked the hover outline (single owner
+     in elements-selection.css) on every .cr-element under #canvas-layer,
+     including #preview-layer/#preview-content's own .pv-el.cr-element
+     hit-layer nodes (#preview-layer lives inside #canvas-layer for CSS
+     renderMode targeting — see the HTML comment at its mount point).
+     Re-declared here (not removed) only because it must out-rank this
+     block's own !important neighbors at the same #canvas-layer.preview-mode
+     specificity; value matches the single-owner rule exactly. */
+  #canvas-layer.preview-mode .cr-element:hover:not(.selected) { outline: 1px solid #F08000 !important; }
   #canvas-layer.preview-mode .cr-element.selected   { border-color: transparent !important; }
   #canvas-layer.preview-mode #labels-layer          { display: none !important; }
   /* Show rendered preview content, hide raw sections */
@@ -102,7 +111,12 @@
   .pv-page-break::before,.pv-page-break::after{content:'';flex:1;height:1px;background:linear-gradient(to right,transparent,#bbb 20%,#bbb 80%,transparent)}
   .pv-page-break span{padding:0 8px}
   .pv-el{position:absolute;overflow:hidden;box-sizing:border-box;cursor:pointer;user-select:text}
-  .pv-el:hover{outline:1px solid rgba(0,102,204,.4);z-index:2}
+  /* CR-HOVER-OUTLINE-PARITY-1: hover outline owner is the shared
+     .cr-element:hover rule in elements-selection.css (single owner for
+     both Design and Preview, since .pv-el also carries .cr-element) — see
+     that file for the rule. A `components`-layer `.pv-el:hover` rule here
+     would always win over it (layer order: elements before components),
+     so it must not be redeclared in this file. */
   .preview-render-layer{position:relative;z-index:1}
   .preview-hit-layer{
     position:absolute;

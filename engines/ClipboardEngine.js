@@ -41,7 +41,9 @@ const ClipboardEngine = (() => {
    */
   function paste() {
     if (!S.hasContent() || typeof DS === 'undefined') return [];
-    if (typeof HistoryEngine !== 'undefined') HistoryEngine.push('paste');
+    // RF-PARITY-AUDIT-1: no pre-push — HistoryEngine.push now delegates to
+    // DS.saveHistory() (post-mutation), already called below; a pre-push
+    // here would double-save.
 
     const newIds = [];
     const newEls = S.snapshot().map(src => {

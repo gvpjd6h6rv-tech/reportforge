@@ -126,7 +126,9 @@ const KeyboardEngine = (() => {
     if (typeof DS === 'undefined') return;
     const sel = [...DS.selection];
     if (!sel.length) return;
-    if (typeof HistoryEngine !== 'undefined') HistoryEngine.push('nudge');
+    // RF-PARITY-AUDIT-1: no pre-push — HistoryEngine.push now delegates to
+    // DS.saveHistory() (post-mutation), already called below; a pre-push
+    // here would double-save.
     sel.forEach(id => {
       const el = DS.getElementById(id);
       if (!el) return;
@@ -173,6 +175,20 @@ const KeyboardEngine = (() => {
     // the menu item (data-action="toggle-snap") already uses, instead of
     // duplicating DS.setSnapToGrid logic and risking a #btn-snap UI desync.
     _register('ctrl+;', () => { if (typeof handleAction === 'function') handleAction('toggle-snap'); });
+    // Was never registered at all — the menu item (data-action="new")
+    // already advertises "Ctrl+N" as its shortcut label, but with no
+    // listener for this combo, e.preventDefault() never ran, so Ctrl+N
+    // fell through to the browser's native "open new window" shortcut.
+    // KNOWN PLATFORM LIMITATION (confirmed live in real Firefox, not
+    // fixable here): Ctrl+N is one of a handful of combos (with Ctrl+T,
+    // Ctrl+W) that browsers reserve at the chrome/OS level and never let
+    // page JS preventDefault() — registering it below is still correct
+    // (it makes "Nuevo" work via Ctrl+N inside any embedding that DOES
+    // forward the keydown, e.g. a packaged Electron/webview shell), but in
+    // a real browser tab the native new-window action will keep firing
+    // alongside it. The menu/toolbar "Nuevo" button is the reliable path
+    // in-browser — see reportforge/tests/file_new_document_contract.test.mjs.
+    _register('ctrl+n', () => { if (typeof handleAction === 'function') handleAction('new'); });
   }
 
   function _init() {

@@ -11,16 +11,21 @@ const SelectionOverlayPreview = (() => {
     return typeof PreviewEngineMode !== 'undefined' ? PreviewEngineMode : null;
   }
 
-  function ensurePreviewSelectionLayer() {
+  // Shared by selection's and hover's overlay layers — .preview-hit-layer
+  // is opacity:0 by design, so styling its .pv-el directly composites to
+  // invisible regardless of computedStyle; both instead get their own
+  // visible sibling layer, geometry-synced to the hit-layer, stacked by
+  // z-index (hover below selection so an active selection wins).
+  function _ensurePreviewOverlayLayer(className, datasetKey, zIndex) {
     if (typeof document === 'undefined') return null;
     const content = document.querySelector('#preview-content');
     const hitLayer = document.querySelector('#preview-content .preview-hit-layer');
     if (!content || !hitLayer) return null;
-    let layer = content.querySelector(':scope > .preview-selection-layer');
+    let layer = content.querySelector(`:scope > .${className}`);
     if (!layer) {
       layer = document.createElement('div');
-      layer.className = 'preview-selection-layer';
-      layer.dataset.selectionLayer = 'preview';
+      layer.className = className;
+      layer.dataset[datasetKey] = 'preview';
       content.appendChild(layer);
     }
     content.style.position = 'relative';
@@ -33,7 +38,7 @@ const SelectionOverlayPreview = (() => {
     layer.style.height = _positiveCssLength(hitLayerStyle.height, contentStyle.height);
     layer.style.overflow = 'visible';
     layer.style.pointerEvents = 'none';
-    layer.style.zIndex = '9999';
+    layer.style.zIndex = zIndex;
     layer.style.opacity = '1';
     layer.style.visibility = 'visible';
     layer.style.display = 'block';
@@ -41,6 +46,8 @@ const SelectionOverlayPreview = (() => {
     layer.style.transformOrigin = hitLayer.style.transformOrigin || 'top left';
     return layer;
   }
+  function ensurePreviewSelectionLayer() { return _ensurePreviewOverlayLayer('preview-selection-layer', 'selectionLayer', '9999'); }
+  function ensurePreviewHoverLayer() { return _ensurePreviewOverlayLayer('preview-hover-layer', 'hoverLayer', '9998'); }
 
   function findPreviewHitElement(el) {
     if (!el || typeof document === 'undefined') return null;
@@ -130,6 +137,7 @@ const SelectionOverlayPreview = (() => {
 
   return {
     ensurePreviewSelectionLayer,
+    ensurePreviewHoverLayer,
     findPreviewHitElement,
     domRectRelativeToLayer,
     selectionOverlayZoom,

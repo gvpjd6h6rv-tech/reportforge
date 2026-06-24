@@ -158,7 +158,13 @@
     const styles = [...doc.head.querySelectorAll('style')].map((node) => node.textContent || '').join('\n');
     const styleEl = document.getElementById(PREVIEW_STYLE_ID) || document.createElement('style');
     styleEl.id = PREVIEW_STYLE_ID;
-    styleEl.textContent = styles;
+    // RF-CR-PARITY-MENU-TABS-1: server CSS for a standalone preview doc
+    // (advanced_engine.py:_css) includes an unscoped `*{margin:0;
+    // padding:0}` reset. Injected bare (no @layer) it always beats
+    // @layer-declared rules regardless of specificity, overriding
+    // .menu-item padding and .sub-tabs alignment in the main app shell
+    // (proven live). @scope confines it to #preview-content.
+    styleEl.textContent = `@scope (#preview-content) {\n${styles}\n}`;
     if (!styleEl.isConnected) document.head.appendChild(styleEl);
 
     const renderLayer = _ensureLayer(content, 'preview-render-layer');
