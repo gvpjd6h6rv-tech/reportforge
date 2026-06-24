@@ -58,6 +58,10 @@ const BODY_INJECT_EXEMPT = new Set([
   'FormulaEditorDialog.js',
   'AlignmentGuides.js',
   'RuntimeBootstrap.js',    // injects #rf-command-registry (display:none, non-visual)
+  'CommandRuntimeFileIO.js', // hidden display:none <input type="file"> trigger for
+                              // the native OS file-picker dialog — no CSS, no
+                              // innerHTML, no visual content; the browser requires
+                              // the input be attached to the DOM for .click() to work.
 ]);
 
 // Shadow-internal ID/class prefixes per file (for RULE-B).
