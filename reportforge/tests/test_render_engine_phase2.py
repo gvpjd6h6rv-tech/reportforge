@@ -310,9 +310,10 @@ class TestBarcodeSVG(unittest.TestCase):
         svg = _render_barcode_svg("test", "code128", 150, 60, True)
         self.assertIn("<svg", svg)
 
-    def test_barcode_dispatch_unknown_falls_back(self):
-        svg = _render_barcode_svg("test", "futuristic_symbology", 150, 60, False)
-        self.assertIn("<svg", svg)
+    def test_barcode_dispatch_unknown_raises(self):
+        # Unknown types must raise ValueError — no silent fallback (RF-BARCODE-ALIAS-1)
+        with self.assertRaises(ValueError):
+            _render_barcode_svg("test", "futuristic_symbology", 150, 60, False)
 
 
 # ── Crosstab renderer ─────────────────────────────────────────────────────

@@ -1,25 +1,41 @@
+"""Barcode dispatcher — routes to the correct encoder by symbology.
+
+Supported types (anything else raises ValueError):
+  code128  — ISO/IEC 15417 Code128B (full encoder, real bars)
+  code39   — ISO/IEC 16388 Code39   (full encoder, real bars)
+  qr       — ISO/IEC 18004 QR Code  (full encoder, scannable)
+  qrcode   — alias for qr
+"""
 from __future__ import annotations
 
 from .advanced_engine_shared import _esc
+from .barcode_encoder_code39 import svg_code39
+from .barcode_encoder_qr import svg_qr
+
+_SUPPORTED = frozenset({"code128", "code39", "qr", "qrcode"})
+
 
 def _text_anchor_pos(align: str, w: int, quiet: int) -> tuple:
-    """(x, text-anchor) for the label, honoring el.align like other types."""
-    if align == "left":
-        return quiet, "start"
-    if align == "right":
-        return w - quiet, "end"
+    if align == "left":   return quiet, "start"
+    if align == "right":  return w - quiet, "end"
     return w / 2, "middle"
 
-def _render_barcode_svg(value: str, bc_type: str, w: int, h: int, show_text: bool, align: str = "center") -> str:
-    if bc_type in ("qr", "qrcode"):
-        return _svg_qr_placeholder(value, w, h, show_text, align)
-    return _svg_linear_barcode(value, w, h, show_text, align)
 
-def _svg_linear_barcode(value: str, w: int, h: int, show_text: bool, align: str = "center") -> str:
+def _render_barcode_svg(value: str, bc_type: str, w: int, h: int,
+                        show_text: bool, align: str = "center") -> str:
+    t = (bc_type or "code128").lower().strip() or "code128"
+    if t not in _SUPPORTED:
+        raise ValueError(
+            f"Barcode type {bc_type!r} is not supported. Supported: {sorted(_SUPPORTED)}"
+        )
+    if t in ("qr", "qrcode"):
+        return svg_qr(value, w, h, show_text, align)
+    if t == "code39":
+        return svg_code39(value, w, h, show_text, align)
     return _svg_code128b(value, w, h, show_text, align)
 
-# Real Code128B encoder (ISO/IEC 15417). Indices 0-105=data symbols;
-# 106=StartA, 107=StartB, 108=StartC; STOP separate.
+
+# ── Code128B (ISO/IEC 15417) ──────────────────────────────────────────────────
 _C128_BIN = (
     "11011001100","11001101100","11001100110","10010011000","10010001100",
     "10001001100","10011001000","10011000100","10001100100","11001001000",
@@ -43,56 +59,41 @@ _C128_BIN = (
     "10101111000","10100011110","10001011110","10111101000","10111100010",
     "11110101000","11110100010","10111011110","10111101110","11101011110",
     "11110101110",
-    "11010000100","11010010000","11010011100",  # 106=StartA, 107=StartB, 108=StartC
+    "11010000100","11010010000","11010011100",
 )
-_C128_STOP_BIN = "1100011101011"  # 13 modules
+_C128_STOP_BIN = "1100011101011"
+_START_B = 104
 
 def _c128_widths(b: str) -> tuple:
     runs, cnt, prev = [], 1, b[0]
     for c in b[1:]:
-        if c == prev:
-            cnt += 1
-        else:
-            runs.append(cnt)
-            prev = c
-            cnt = 1
+        if c == prev: cnt += 1
+        else: runs.append(cnt); prev = c; cnt = 1
     runs.append(cnt)
     return tuple(runs)
 
 _C128_PAT = tuple(_c128_widths(b) for b in _C128_BIN)
 _C128_STOP = _c128_widths(_C128_STOP_BIN)
-_START_B = 104  # symbol value
 
 def _c128_pat(sym: int) -> tuple:
-    if sym <= 105:
-        return _C128_PAT[sym]
-    if sym == 103:
-        return _C128_PAT[106]
-    if sym == 104:
-        return _C128_PAT[107]
-    if sym == 105:
-        return _C128_PAT[108]
-    # fallback: use closest valid symbol
+    if sym <= 105: return _C128_PAT[sym]
+    if sym == 103: return _C128_PAT[106]
+    if sym == 104: return _C128_PAT[107]
+    if sym == 105: return _C128_PAT[108]
     return _C128_PAT[min(sym, 105)]
 
 def _svg_code128b(value: str, w: int, h: int, show_text: bool, align: str = "center") -> str:
-    if not value:
-        value = "0"
+    if not value: value = "0"
     data = [ord(c) - 32 for c in value if 32 <= ord(c) <= 127]
-    if not data:
-        data = [0]
+    if not data: data = [0]
     check = (_START_B + sum((i + 1) * v for i, v in enumerate(data))) % 103
     sym_seq = [_START_B] + data + [check]
     widths_seq = [_c128_pat(s) for s in sym_seq] + [_C128_STOP]
-
     total_mods = sum(sum(p) for p in widths_seq)
     quiet = 8
-    usable = w - 2 * quiet
-    mod_w = max(0.5, usable / total_mods)
-
+    mod_w = max(0.5, (w - 2 * quiet) / total_mods)
     text_h = 11 if show_text else 0
     bar_h = max(4, h - text_h - 3)
-
     bars = []
     x = float(quiet)
     for widths in widths_seq:
@@ -103,55 +104,20 @@ def _svg_code128b(value: str, w: int, h: int, show_text: bool, align: str = "cen
                 bars.append(f'<rect x="{x:.2f}" y="1" width="{pw:.2f}" height="{bar_h}" fill="#000"/>')
             x += pw
             is_bar = not is_bar
-
     text_el = ""
     if show_text:
         tx, anchor = _text_anchor_pos(align, w, quiet)
-        text_el = (
-            f'<text x="{tx:.1f}" y="{h - 1}" text-anchor="{anchor}" '
-            f'font-family="monospace" font-size="7.5">{_esc(value)}</text>'
-        )
-    # 100%/none (not literal {w}/{h} px): lets a live resize-drag stretch
-    # this SVG via the viewBox instead of staying stale until re-render.
-    return (
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" '
-        f'viewBox="0 0 {w} {h}" preserveAspectRatio="none">'
-        f'<rect width="{w}" height="{h}" fill="white"/>'
-        + "".join(bars)
-        + text_el
-        + "</svg>"
-    )
+        text_el = (f'<text x="{tx:.1f}" y="{h - 1}" text-anchor="{anchor}" '
+                   f'font-family="monospace" font-size="7.5">{_esc(value)}</text>')
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" '
+            f'viewBox="0 0 {w} {h}" preserveAspectRatio="none">'
+            f'<rect width="{w}" height="{h}" fill="white"/>' + "".join(bars) + text_el + "</svg>")
+
+
+# Backward-compat aliases (imported by advanced_engine.py and tests).
+def _svg_linear_barcode(value: str, w: int, h: int, show_text: bool, align: str = "center") -> str:
+    return _svg_code128b(value, w, h, show_text, align)
 
 def _svg_qr_placeholder(value: str, w: int, h: int, show_text: bool, align: str = "center") -> str:
-    size = min(w, h) - (12 if show_text else 4)
-    x0 = (w - size) // 2
-    text_el = ""
-    if show_text:
-        tx, anchor = _text_anchor_pos(align, w, 4)
-        text_el = (
-            f'<text x="{tx}" y="{h-2}" text-anchor="{anchor}" '
-            f'font-family="monospace" font-size="7">{_esc(value[:20])}</text>'
-        )
-    cell = size // 7
-    rects = [
-        f'<rect x="{x0}" y="2" width="{size}" height="{size}" fill="none" stroke="#000" stroke-width="1"/>'
-    ]
-    for fx, fy in [(0, 0), (4 * cell, 0), (0, 4 * cell)]:
-        rects.append(f'<rect x="{x0+fx}" y="{2+fy}" width="{3*cell}" height="{3*cell}" fill="#000"/>')
-        rects.append(
-            f'<rect x="{x0+fx+cell//2}" y="{2+fy+cell//2}" width="{2*cell}" height="{2*cell}" fill="white"/>'
-        )
-    for row in range(7):
-        for col in range(7):
-            if (row + col) % 3 == 0 and not (row < 3 and col < 3):
-                rects.append(
-                    f'<rect x="{x0+col*cell}" y="{2+row*cell}" width="{cell-1}" height="{cell-1}" fill="#000"/>'
-                )
-    return (
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" '
-        f'viewBox="0 0 {w} {h}" preserveAspectRatio="none">'
-        f'<rect width="{w}" height="{h}" fill="white"/>'
-        + "".join(rects)
-        + text_el
-        + "</svg>"
-    )
+    """Retained for import compatibility — delegates to real QR encoder."""
+    return svg_qr(value, w, h, show_text, align)

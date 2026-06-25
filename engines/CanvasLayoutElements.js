@@ -137,17 +137,15 @@
     div.appendChild(img);
   }
 
-  // 'barcode' had no branch here — empty div, invisible in Design while
-  // Preview renders a real SVG. Same labeled-placeholder pattern as
-  // field/image-no-src (Design never resolves a live barcode render).
-  function _barcodeLabel(el) { return el.fieldPath ? `{${el.fieldPath}}` : '⬚ código de barras'; }
+  function _barcodeLabel(el) { return el.fieldPath ? `{${el.fieldPath}}` : 'BARCODE'; }
+  function _barcodeSrc(el) { return `/preview-barcode?value=${encodeURIComponent(_barcodeLabel(el))}&barcodeType=${encodeURIComponent(el.barcodeType||'code128')}&width=${el.w||200}&height=${el.h||60}&showText=${el.showText!==false}`; }
   function _buildBarcode(div, el) {
-    div.style.background = '#F9F9F9';
-    div.style.border = '1px dashed #999';
-    const icon = document.createElement('span');
-    icon.className = 'el-field-icon'; icon.textContent = '|||';
-    div.appendChild(icon);
-    _appendContentSpan(div, _barcodeLabel(el));
+    const img = document.createElement('img');
+    img.className = 'el-content';
+    img.style.display = 'block'; img.style.width = '100%'; img.style.height = '100%'; img.style.pointerEvents = 'none';
+    img.title = _barcodeLabel(el);
+    img.src = _barcodeSrc(el);
+    div.appendChild(img);
   }
 
   function _buildElementContent(div, el) {
@@ -165,7 +163,7 @@
     if (el.type === 'field') span.textContent = _fieldLabel(el);
     else if (el.type === 'text') span.textContent = el.content || '';
     else if (el.type === 'image') _updateImageContent(div, el, span);
-    else if (el.type === 'barcode') span.textContent = _barcodeLabel(el);
+    else if (el.type === 'barcode') { const img = div.querySelector('img.el-content'); if (img) { img.src = _barcodeSrc(el); img.title = _barcodeLabel(el); } }
   }
 
   function _updateImageContent(div, el, span) {
