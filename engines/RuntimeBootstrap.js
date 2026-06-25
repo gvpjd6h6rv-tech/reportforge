@@ -171,6 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (typeof GridEngine !== 'undefined') GridEngine.init();
   if (typeof WorkspaceScrollEngine !== 'undefined') WorkspaceScrollEngine.init();
+  if (typeof SyntheticScrollbarEngine !== 'undefined') SyntheticScrollbarEngine.init();
 
   if (typeof DesignZoomEngine !== 'undefined') {
     DesignZoomEngine.set(DS.zoom || 1.0);

@@ -68,29 +68,43 @@
     scroll-behavior: smooth;
     text-align: left;   /* design mode: canvas flush to ruler (preview overrides below) */
   }
-  /* RF-DESIGN-ZOOM400-SCROLLBAR-CR-PARITY-1: CR's classic scrollbars are
-     thick (~17px) and clearly visible; RF was using the bare browser
-     default (thin on Linux/GTK, near-invisible overlay on some OSes). */
-  #workspace::-webkit-scrollbar {
-    width: 17px;
-    height: 17px;
+  /* RF-CR-SCROLLBAR-PARITY-1: a real-window X11 capture (not a headless
+     screenshot — those never paint overlay scrollbars at all) showed
+     Chromium's ::-webkit-scrollbar styling DOES render ~17px as
+     intended, but Firefox's scrollbar-width only accepts auto|thin|none
+     — no numeric control — and measured ~1px on this desktop, nowhere
+     near CR's bold native scrollbar. SyntheticScrollbarEngine.js draws
+     one identical overlay scrollbar in every browser instead; the
+     native one is hidden everywhere so there is only one visual source. */
+  #workspace.rf-synthetic-scrollbars {
+    scrollbar-width: none;
   }
-  #workspace::-webkit-scrollbar-track {
+  #workspace.rf-synthetic-scrollbars::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
+  /* position:fixed + JS-synced rect (SyntheticScrollbarEngine._syncRects):
+     #workspace's own children are a flow/absolute mix (#viewport,
+     #guide-layer, #snap-layer) with no flex/grid column to dock a sticky
+     sidebar into without disturbing scrollWidth/Height — fixed+JS avoids
+     that entirely and only needs resyncing when #workspace's own screen
+     position changes (resize/panel toggle), not on every scroll tick. */
+  .rf-scrollbar-track {
+    position: fixed;
+    z-index: 150;
     background: var(--rf-bg-light, #ECECEC);
   }
-  #workspace::-webkit-scrollbar-thumb {
+  .rf-scrollbar-thumb {
+    position: absolute;
     background: var(--rf-border-mid, #ACA899);
     border: 1px solid var(--rf-border-mid, #ACA899);
+    cursor: pointer;
   }
-  #workspace::-webkit-scrollbar-thumb:hover {
+  .rf-scrollbar-thumb--v { inset-inline: 0; top: 0; }
+  .rf-scrollbar-thumb--h { inset-block: 0; left: 0; }
+  .rf-scrollbar-thumb:hover, .rf-scrollbar-thumb--active {
     background: var(--rf-xp-btn-h, #C8C4B8);
-  }
-  #workspace::-webkit-scrollbar-corner {
-    background: var(--rf-bg-light, #ECECEC);
-  }
-  #workspace {
-    scrollbar-width: auto;
-    scrollbar-color: var(--rf-border-mid, #ACA899) var(--rf-bg-light, #ECECEC);
   }
   /* Tool cursors */
   #workspace.tool-pointer { cursor: default; }
