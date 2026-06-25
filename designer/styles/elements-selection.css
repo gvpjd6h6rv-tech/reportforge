@@ -118,6 +118,22 @@
     pointer-events: none;
   }
 
+  /* Barcode element — design-time placeholder (no live SVG render) */
+  .cr-element[data-type="barcode"] {
+    display: flex;
+    align-items: center;
+    padding-inline: var(--rf-gap-xs);
+    overflow: hidden;
+  }
+  .cr-element[data-type="barcode"] .el-content {
+    font-size: 9px;
+    color: #666;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
   /* Selected state — selection rect is sel-box in handles-layer (single source) */
   .cr-element.selected {
     z-index: var(--rf-z-selected);

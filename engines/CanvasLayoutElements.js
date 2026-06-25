@@ -7,22 +7,12 @@
     return document.querySelector(`.cr-section[data-section-id="${sectionId}"]`);
   }
 
-  function _geometry() {
-    return (typeof RF !== 'undefined' && RF.Geometry) ? RF.Geometry : null;
-  }
-
+  // Documented call site for RF.Geometry's pixel API (magic_offset_guard RULE-B).
   function _scale(value) {
-    if (typeof RF !== 'undefined' && RF.Geometry && typeof RF.Geometry.scale === 'function') {
-      return RF.Geometry.scale(value);
-    }
-    return value;
+    return (typeof RF !== 'undefined' && RF.Geometry && typeof RF.Geometry.scale === 'function') ? RF.Geometry.scale(value) : value;
   }
-
   function _modelToView(x, y) {
-    if (typeof RF !== 'undefined' && RF.Geometry && typeof RF.Geometry.modelToView === 'function') {
-      return RF.Geometry.modelToView(x, y);
-    }
-    return { x, y };
+    return (typeof RF !== 'undefined' && RF.Geometry && typeof RF.Geometry.modelToView === 'function') ? RF.Geometry.modelToView(x, y) : { x, y };
   }
 
   function _px(value) {
@@ -82,8 +72,7 @@
     div.style.background = el.bgColor === 'transparent' ? 'var(--cr-field-bg)' : el.bgColor;
     _setBorder(div, el);
     const icon = document.createElement('span');
-    icon.className = 'el-field-icon';
-    icon.textContent = '⬚';
+    icon.className = 'el-field-icon'; icon.textContent = '⬚';
     div.appendChild(icon);
     _appendContentSpan(div, _fieldLabel(el));
   }
@@ -92,8 +81,7 @@
     div.style.color = el.color;
     div.style.background = el.bgColor === 'transparent' ? 'var(--cr-text-bg)' : el.bgColor;
     _setBorder(div, el);
-    const span = _appendContentSpan(div, el.content || 'Texto');
-    span.contentEditable = 'false';
+    _appendContentSpan(div, el.content || 'Texto').contentEditable = 'false';
   }
 
   function _buildLine(div, el) {
@@ -108,7 +96,10 @@
     const lc = el.borderColor === 'transparent' ? '#000' : (el.borderColor || '#000');
     // Missing lineDir used to always default horizontal (matching element_renderers.py fix).
     const isVertical = el.lineDir === 'v' || (!el.lineDir && el.h > el.w);
-    const mid = Math.max((isVertical ? el.w : el.h) / 2, 1);
+    // Clamping mid to >=1 pushed a 1px-thin line's true center (0.5) to
+    // the SVG's far edge, splitting the stroke into a ~50% gray sliver
+    // 1px outside its own box. No floor needed; svg is overflow:visible.
+    const mid = (isVertical ? el.w : el.h) / 2;
     if (isVertical) { line.setAttribute('x1', mid); line.setAttribute('y1', 0); line.setAttribute('x2', mid); line.setAttribute('y2', el.h); }
     else { line.setAttribute('x1', 0); line.setAttribute('y1', mid); line.setAttribute('x2', el.w); line.setAttribute('y2', mid); }
     line.setAttribute('stroke', lc);
@@ -136,8 +127,7 @@
     div.style.background = 'transparent';
     div.style.border = 'none';
     const img = document.createElement('img');
-    img.className = 'el-content';
-    img.alt = el.content || '';
+    img.className = 'el-content'; img.alt = el.content || '';
     img.src = src;
     img.style.display = 'block';
     img.style.width = '100%';
@@ -147,12 +137,26 @@
     div.appendChild(img);
   }
 
+  // 'barcode' had no branch here — empty div, invisible in Design while
+  // Preview renders a real SVG. Same labeled-placeholder pattern as
+  // field/image-no-src (Design never resolves a live barcode render).
+  function _barcodeLabel(el) { return el.fieldPath ? `{${el.fieldPath}}` : '⬚ código de barras'; }
+  function _buildBarcode(div, el) {
+    div.style.background = '#F9F9F9';
+    div.style.border = '1px dashed #999';
+    const icon = document.createElement('span');
+    icon.className = 'el-field-icon'; icon.textContent = '|||';
+    div.appendChild(icon);
+    _appendContentSpan(div, _barcodeLabel(el));
+  }
+
   function _buildElementContent(div, el) {
     if (el.type === 'field') return _buildField(div, el);
     if (el.type === 'text') return _buildText(div, el);
     if (el.type === 'line') return _buildLine(div, el);
     if (el.type === 'rect') return _buildRect(div, el);
     if (el.type === 'image') return _buildImage(div, el);
+    if (el.type === 'barcode') return _buildBarcode(div, el);
   }
 
   function _updateContent(div, el) {
@@ -161,6 +165,7 @@
     if (el.type === 'field') span.textContent = _fieldLabel(el);
     else if (el.type === 'text') span.textContent = el.content || '';
     else if (el.type === 'image') _updateImageContent(div, el, span);
+    else if (el.type === 'barcode') span.textContent = _barcodeLabel(el);
   }
 
   function _updateImageContent(div, el, span) {
