@@ -75,6 +75,11 @@
     _restoreCanvasLayerDesignGeometry('PreviewEngineRenderer._resetPreviewStageWidth');
   }
 
+  // Was: stageRect.left - workspaceRect.left — a screen-space read that
+  // shifts by -scrollLeft as the user scrolls, baked into the persistent
+  // marginLeft below; every refresh() while scrolled right widened
+  // #preview-content (and #workspace.scrollWidth) more. Model-space
+  // widths only — never the live scroll offset or a post-transform rect.
   function _centerPreviewPageInWorkspace(content, firstPage) {
     const workspace = document.getElementById('workspace');
     const stage = document.getElementById('preview-layer') || document.getElementById('canvas-layer');
@@ -82,15 +87,14 @@
 
     _preparePreviewStageWidth(content);
 
-    const workspaceRect = workspace.getBoundingClientRect();
-    const stageRect = stage.getBoundingClientRect();
-    const pageRect = firstPage.getBoundingClientRect();
+    const zoom = _previewLayerZoom();
+    const workspaceModelWidth = workspace.clientWidth / zoom;
+    const pageModelWidth = firstPage.getBoundingClientRect().width / zoom;
     const contentStyle = getComputedStyle(content);
     const paddingLeft = Number.parseFloat(contentStyle.paddingLeft) || 0;
 
-    const targetPageLeftInWorkspace = Math.max(0, (workspaceRect.width - pageRect.width) / 2);
-    const stageLeftInWorkspace = stageRect.left - workspaceRect.left;
-    const contentMarginLeft = Math.max(0, targetPageLeftInWorkspace - stageLeftInWorkspace - paddingLeft);
+    const targetPageLeftModel = Math.max(0, (workspaceModelWidth - pageModelWidth) / 2);
+    const contentMarginLeft = Math.max(0, targetPageLeftModel - paddingLeft);
 
     content.style.marginLeft = `${Math.round(contentMarginLeft * 100) / 100}px`;
     content.style.marginRight = '0px';
