@@ -3,14 +3,10 @@
 (function initCommandRuntimeFile(global) {
   const { renderSectionsAndSelection, setStatus } = global.CommandRuntimeShared;
   let _currentLayout = {
-    name: 'Factura Electrónica',
-    version: '1.0',
-    pageWidth: typeof CFG !== 'undefined' ? CFG.PAGE_W : 754,
-    pageSize: 'A4',
-    docType: typeof DS !== 'undefined' ? DS._docType || null : null,
-    margins: null,
+    name: 'Factura Electrónica', version: '1.0',
+    pageWidth: typeof CFG !== 'undefined' ? CFG.PAGE_W : 754, pageSize: 'A4',
+    docType: typeof DS !== 'undefined' ? DS._docType || null : null, margins: null,
   };
-
   let _currentLayoutFileHandle = null;
 
   function _cloneSection(section) { return { ...section }; }
@@ -86,10 +82,7 @@
     _applyLayoutChrome(layout);
     if (layout.docType) _syncDocTypeUi(layout.docType);
 
-    if (DS.state && Array.isArray(DS.state.history)) {
-      DS.state.history.length = 0;
-      DS.state.historyIndex = -1;
-    }
+    if (DS.state && Array.isArray(DS.state.history)) { DS.state.history.length = 0; DS.state.historyIndex = -1; }
     DS.setSections(layout.sections, 'CommandRuntimeFile.loadLayoutIntoEditor');
     DS.setElements(layout.elements, 'CommandRuntimeFile.loadLayoutIntoEditor');
     DS.clearSelectionState('CommandRuntimeFile.loadLayoutIntoEditor');
@@ -118,17 +111,11 @@
   }
 
   function _slugifyName(name) {
-    return String(name || 'reporte')
-      .replace(/\.json$/i, '')
-      .replace(/[^a-zA-Z0-9-_ ]/g, '')
-      .trim()
-      .replace(/\s+/g, '_') || 'reporte';
+    return String(name || 'reporte').replace(/\.json$/i, '').replace(/[^a-zA-Z0-9-_ ]/g, '').trim().replace(/\s+/g, '_') || 'reporte';
   }
 
   function _liveMargins() {
-    const margins = _currentLayout.margins && typeof _currentLayout.margins === 'object'
-      ? { ..._currentLayout.margins }
-      : {};
+    const margins = _currentLayout.margins && typeof _currentLayout.margins === 'object' ? { ..._currentLayout.margins } : {};
     if (Number.isFinite(DS.pageMarginLeft)) margins.left = DS.pageMarginLeft;
     if (Number.isFinite(DS.pageMarginTop)) margins.top = DS.pageMarginTop;
     return Object.keys(margins).length ? margins : null;
@@ -156,6 +143,10 @@
   }
 
   function _currentLayoutName() { return _currentLayout.name; }
+  function _setFileHandle(fileHandle, name) {
+    _currentLayoutFileHandle = fileHandle;
+    if (name) _currentLayout = { ..._currentLayout, name };
+  }
 
   global.CommandRuntimeFile = {
     toJSON,
@@ -164,10 +155,12 @@
     get exportJSON() { return global.CommandRuntimeFileIO.exportJSON; },
     get exportPDF() { return global.CommandRuntimeFileIO.exportPDF; },
     get importJSON() { return global.CommandRuntimeFileIO.importJSON; },
+    get saveAs() { return global.CommandRuntimeFileIO.saveAs; },
     _normalizeLayout,
     _applyLoadedLayout,
     _slugifyName,
     _currentLayoutName,
+    _setFileHandle,
     get _currentLayoutFileHandle() { return _currentLayoutFileHandle; },
   };
 })(window);

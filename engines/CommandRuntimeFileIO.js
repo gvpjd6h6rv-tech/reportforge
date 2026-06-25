@@ -21,8 +21,7 @@
 
   function _releaseOpenLayoutPickerOnFocus(input) {
     window.setTimeout(() => {
-      if (_openLayoutPickerInput !== input) return;
-      if (input.files && input.files.length > 0) return;
+      if (_openLayoutPickerInput !== input || (input.files && input.files.length > 0)) return;
       _resetOpenLayoutPicker(input);
     }, 250);
   }
@@ -40,8 +39,7 @@
     if (!fileHandle) return false;
     if (typeof fileHandle.queryPermission !== 'function') return true;
     const options = { mode: 'readwrite' };
-    const current = await fileHandle.queryPermission(options);
-    if (current === 'granted') return true;
+    if (await fileHandle.queryPermission(options) === 'granted') return true;
     if (typeof fileHandle.requestPermission !== 'function') return false;
     return await fileHandle.requestPermission(options) === 'granted';
   }
@@ -60,21 +58,14 @@
     try {
       const [fileHandle] = await window.showOpenFilePicker({
         multiple: false,
-        types: [{
-          description: 'ReportForge JSON',
-          accept: { 'application/json': ['.json'] },
-        }],
+        types: [{ description: 'ReportForge JSON', accept: { 'application/json': ['.json'] } }],
       });
       if (!fileHandle) return;
       const file = await fileHandle.getFile();
-      const text = await _readFileAsText(file);
-      const parsed = JSON.parse(text);
-      const layout = CRF._normalizeLayout(parsed);
+      const layout = CRF._normalizeLayout(JSON.parse(await _readFileAsText(file)));
       CRF._applyLoadedLayout(layout, file, fileHandle, `✓ Abierto: ${file.name}`);
     } catch (error) {
-      if (error && error.name !== 'AbortError') {
-        alert(`Error al cargar: ${error.message}`);
-      }
+      if (error && error.name !== 'AbortError') alert(`Error al cargar: ${error.message}`);
     } finally {
       _resetOpenLayoutPicker(null);
     }
@@ -85,8 +76,7 @@
     const handle = CRF._currentLayoutFileHandle;
     if (handle && typeof handle.createWritable === 'function') {
       try {
-        const allowed = await _ensureWritablePermission(handle);
-        if (!allowed) { setStatus('Guardado cancelado'); return false; }
+        if (!(await _ensureWritablePermission(handle))) { setStatus('Guardado cancelado'); return false; }
         await _writeTextToFileHandle(handle, CRF.toJSON());
         setStatus(`✓ Guardado: ${handle.name || CRF._currentLayoutName() || 'reporte'}`);
         return true;
@@ -96,24 +86,15 @@
       }
     }
 
-    const name = prompt('Nombre del reporte:', CRF._currentLayoutName() || 'Factura Electrónica') || 'reporte';
-    const safe = CRF._slugifyName(name);
-    const key = `rfd_${safe}`;
-    try {
-      localStorage.setItem(key, CRF.toJSON());
-      setStatus(`✓ Guardado: ${safe}`);
-      return true;
-    } catch (error) {
-      alert('No se pudo guardar en localStorage. Descarga el JSON en su lugar.');
-      exportJSON();
-      return false;
-    }
+    // No file handle yet (never opened/saved a real file) — "Guardar" must
+    // behave like "Guardar como" (real picker/download), not silently
+    // write to localStorage, which gives no actual file on disk at all.
+    return saveAs();
   }
 
   function load() {
     const CRF = global.CommandRuntimeFile;
     if (_isOpenLayoutPickerBlocked()) return false;
-
     if (typeof window.showOpenFilePicker === 'function') {
       _openLayoutPickerActive = true;
       _loadWithFileSystemPicker();
@@ -126,10 +107,8 @@
     input.type = 'file';
     input.accept = '.json,application/json';
     input.style.display = 'none';
-
     _openLayoutPickerActive = true;
     _openLayoutPickerInput = input;
-
     const releaseOnFocus = () => _releaseOpenLayoutPickerOnFocus(input);
     window.addEventListener('focus', releaseOnFocus, { once: true });
 
@@ -138,8 +117,7 @@
       if (!file) return;
       try {
         const text = await _readFileAsText(file);
-        const parsed = JSON.parse(text);
-        const layout = CRF._normalizeLayout(parsed);
+        const layout = CRF._normalizeLayout(JSON.parse(text));
         CRF._applyLoadedLayout(layout, file, null, `✓ Abierto: ${file.name}`);
       } catch (error) {
         alert(`Error al cargar: ${error.message}`);
@@ -151,7 +129,6 @@
 
     document.body.appendChild(input);
     input.value = '';
-
     try {
       input.click();
     } catch (error) {
@@ -159,7 +136,6 @@
       _resetOpenLayoutPicker(input);
       throw error;
     }
-
     return true;
   }
 
@@ -172,6 +148,26 @@
     a.click();
     URL.revokeObjectURL(a.href);
     setStatus('✓ JSON exportado');
+  }
+
+  // "Guardar como" was a blind anchor-download — no dialog, no overwrite
+  // confirmation. showSaveFilePicker() gives both; falls back to exportJSON().
+  async function saveAs() {
+    const CRF = global.CommandRuntimeFile;
+    if (typeof window.showSaveFilePicker !== 'function') { exportJSON(); return true; }
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: `${CRF._slugifyName(CRF._currentLayoutName() || 'reporte')}.rfd.json`,
+        types: [{ description: 'ReportForge JSON', accept: { 'application/json': ['.json'] } }],
+      });
+      await _writeTextToFileHandle(handle, CRF.toJSON());
+      CRF._setFileHandle(handle, handle.name.replace(/\.(rfd\.)?json$/i, ''));
+      setStatus(`✓ Guardado como: ${handle.name}`);
+      return true;
+    } catch (error) {
+      if (error && error.name !== 'AbortError') alert(`No se pudo guardar: ${error.message}`);
+      return false;
+    }
   }
 
   async function exportPDF() {
@@ -210,5 +206,5 @@
       });
   }
 
-  global.CommandRuntimeFileIO = { save, load, exportJSON, exportPDF, importJSON };
+  global.CommandRuntimeFileIO = { save, load, saveAs, exportJSON, exportPDF, importJSON };
 })(window);

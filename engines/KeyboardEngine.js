@@ -274,6 +274,16 @@ const KeyboardEngine = (() => {
     _register('ctrl+n', () => { if (typeof handleAction === 'function') handleAction('new'); });
   }
 
+  // RF-PRODUCTION-CERTIFICATION-DESIGN-PREVIEW-1: the menu/toolbar already
+  // advertise "Ctrl+S"/"Ctrl+O" as shortcut labels, but neither was ever
+  // registered here — pressing them did nothing (confirmed live: zero
+  // FileEngine.save()/load() calls). Delegates to the same handlers the
+  // Guardar/Abrir buttons already use.
+  function _registerFileShortcuts() {
+    _register('ctrl+s', () => { if (typeof FileEngine !== 'undefined') FileEngine.save(); });
+    _register('ctrl+o', () => { if (typeof FileEngine !== 'undefined') FileEngine.load(); });
+  }
+
   function _init() {
     _registerUndoRedoShortcuts();
     _registerClipboardShortcuts();
@@ -283,6 +293,7 @@ const KeyboardEngine = (() => {
     _registerNudgeShortcuts();
     _registerZoomShortcuts();
     _registerGridShortcuts();
+    _registerFileShortcuts();
 
     document.addEventListener('keydown', _onKeyDown);
     // The arrow key's own keyup is the real "gesture ended" signal (mouse

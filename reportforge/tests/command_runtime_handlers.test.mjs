@@ -91,6 +91,7 @@ function loadHandlers(options = {}) {
     FileEngine: {
       load: makeSpy(calls, 'file'),
       save: makeSpy(calls, 'file'),
+      saveAs: makeSpy(calls, 'file'),
       exportJSON: makeSpy(calls, 'file'),
       exportPDF: makeSpy(calls, 'file', () => {
         if (options.exportPdfReject) return Promise.reject(new Error('pdf-fail'));

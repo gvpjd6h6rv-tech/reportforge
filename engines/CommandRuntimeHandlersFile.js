@@ -11,7 +11,7 @@
     return dispatchActionMap(action, {
       open() { FileEngine.load(); },
       save() { FileEngine.save(); },
-      'save-as': () => FileEngine.exportJSON(),
+      'save-as': () => FileEngine.saveAs(),
       'export-json': () => FileEngine.exportJSON(),
       'export-pdf': runExportPdf,
     });
