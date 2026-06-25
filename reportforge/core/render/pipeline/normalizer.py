@@ -83,14 +83,22 @@ def _norm_el(raw):
     etype = _ETYPE.get(str(_p(raw,"type","elementType","kind") or "text").lower())
     if not etype: return None
     content = _p(raw,"content","text","label","caption")
+    w = max(1,int(_p(raw,"w","width") or 100))
+    h = max(1,int(_p(raw,"h","height") or 14))
+    # RF-PRODUCTION-CERTIFICATION-DESIGN-PREVIEW-1: real-world layouts can
+    # omit lineDir/direction entirely. Defaulting unconditionally to "h"
+    # made a tall, narrow (h>w) vertical divider render as an
+    # imperceptible 1px sliver. Infer from aspect ratio when unset.
+    _line_dir_raw = str(_p(raw,"lineDir","direction") or "").lower()
+    _default_dir = "v" if h > w else "h"
     return {
         "id":               str(_p(raw,"id","elementId") or ""),
         "sectionId":        str(_p(raw,"sectionId","section","bandId") or ""),
         "type":             etype,
         "x":                int(_p(raw,"x","left") or 0),
         "y":                int(_p(raw,"y","top") or 0),
-        "w":                max(1,int(_p(raw,"w","width") or 100)),
-        "h":                max(1,int(_p(raw,"h","height") or 14)),
+        "w":                w,
+        "h":                h,
         "fontFamily":       str(_p(raw,"fontFamily","font","fontName") or "Arial"),
         "fontSize":         int(_p(raw,"fontSize","size","textSize") or 8),
         "bold":             bool(_p(raw,"bold","fontBold","isBold")),
@@ -102,7 +110,7 @@ def _norm_el(raw):
         "borderColor":      _p(raw,"borderColor","border_color") or "transparent",
         "borderWidth":      int(_p(raw,"borderWidth","borderSize") or 0),
         "borderStyle":      _p(raw,"borderStyle","border_style") or "solid",
-        "lineDir":          "v" if str(_p(raw,"lineDir","direction") or "h").lower() in("v","vertical","vert") else "h",
+        "lineDir":          "v" if (_line_dir_raw in ("v","vertical","vert") or (not _line_dir_raw and _default_dir == "v")) else "h",
         "lineWidth":        int(_p(raw,"lineWidth","strokeWidth") or 1),
         "zIndex":           int(_p(raw,"zIndex","z","layer") or 0),
         "content":          content if content is not None else "",

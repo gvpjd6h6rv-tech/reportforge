@@ -106,16 +106,11 @@
     svg.setAttribute('height', Math.max(el.h, 1));
     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
     const lc = el.borderColor === 'transparent' ? '#000' : (el.borderColor || '#000');
-    // Design mode now respects el.lineDir==='v', matching export/preview.
-    if (el.lineDir === 'v') {
-      const mid = Math.max(el.w / 2, 1);
-      line.setAttribute('x1', mid); line.setAttribute('y1', 0);
-      line.setAttribute('x2', mid); line.setAttribute('y2', el.h);
-    } else {
-      const mid = Math.max(el.h / 2, 1);
-      line.setAttribute('x1', 0); line.setAttribute('y1', mid);
-      line.setAttribute('x2', el.w); line.setAttribute('y2', mid);
-    }
+    // Missing lineDir used to always default horizontal (matching element_renderers.py fix).
+    const isVertical = el.lineDir === 'v' || (!el.lineDir && el.h > el.w);
+    const mid = Math.max((isVertical ? el.w : el.h) / 2, 1);
+    if (isVertical) { line.setAttribute('x1', mid); line.setAttribute('y1', 0); line.setAttribute('x2', mid); line.setAttribute('y2', el.h); }
+    else { line.setAttribute('x1', 0); line.setAttribute('y1', mid); line.setAttribute('x2', el.w); line.setAttribute('y2', mid); }
     line.setAttribute('stroke', lc);
     line.setAttribute('stroke-width', el.lineWidth || 1);
     svg.appendChild(line);

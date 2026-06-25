@@ -134,7 +134,11 @@ class Element:
         self.borderColor= raw.get("borderColor","transparent")
         self.borderWidth= int(raw.get("borderWidth",0))
         self.borderStyle= raw.get("borderStyle","solid")
-        self.lineDir   = raw.get("lineDir","h")
+        # RF-PRODUCTION-CERTIFICATION-DESIGN-PREVIEW-1: real-world layouts
+        # can omit lineDir entirely. Defaulting unconditionally to "h" made
+        # a tall, narrow (h>w) vertical divider render as an imperceptible
+        # 1px sliver. Infer from aspect ratio when unset.
+        self.lineDir   = raw.get("lineDir") or ("v" if self.h > self.w else "h")
         self.lineWidth = int(raw.get("lineWidth",1))
         self.zIndex    = int(raw.get("zIndex",0))
         self.content   = raw.get("content","")

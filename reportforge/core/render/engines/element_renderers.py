@@ -96,18 +96,14 @@ def render_line(el) -> str:
     # (CanvasLayoutElements.js:115) to avoid a new divergence. Centering
     # offset is rounded to an integer px — a fractional one anti-aliases a
     # 1px ink fringe just outside the box (caught by the raster smoke test).
-    if el.lineDir == "v":
+    # Missing lineDir used to always default horizontal (matching CanvasLayoutElements.js fix).
+    is_vertical = el.lineDir == "v" or (not el.lineDir and el.h > el.w)
+    if is_vertical:
         left = el.x + round((el.w - lw) / 2)
-        style = (
-            f"position:absolute;left:{left}px;top:{el.y}px;width:{lw}px;"
-            f"height:{el.h}px;border-left:{lw}px solid {color};box-sizing:border-box"
-        )
+        style = f"position:absolute;left:{left}px;top:{el.y}px;width:{lw}px;height:{el.h}px;border-left:{lw}px solid {color};box-sizing:border-box"
     else:
         top = el.y + round((el.h - lw) / 2)
-        style = (
-            f"position:absolute;left:{el.x}px;top:{top}px;width:{el.w}px;"
-            f"height:{lw}px;border-top:{lw}px solid {color};box-sizing:border-box"
-        )
+        style = f"position:absolute;left:{el.x}px;top:{top}px;width:{el.w}px;height:{lw}px;border-top:{lw}px solid {color};box-sizing:border-box"
     return f'<div style="{style}"></div>'
 
 
