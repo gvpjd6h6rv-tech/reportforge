@@ -9,8 +9,19 @@
   };
   let _currentLayoutFileHandle = null;
 
+  // mkEl fills these for in-app elements; a loaded external JSON skipping
+  // a field (e.g. borderStyle) stayed undefined, breaking _setBorder()'s
+  // CSS. lineDir excluded: must stay falsy for aspect-ratio inference.
+  const _ELEMENT_DEFAULTS = {
+    fontFamily: 'Arial', fontSize: 8, bold: false, italic: false, underline: false,
+    align: 'left', color: '#000000', bgColor: 'transparent',
+    borderColor: 'transparent', borderWidth: 0, borderStyle: 'solid',
+    content: '', fieldPath: '', fieldFmt: null,
+    lineWidth: 1, zIndex: 0,
+  };
+
   function _cloneSection(section) { return { ...section }; }
-  function _cloneElement(element) { return { ...element }; }
+  function _cloneElement(element) { return { ..._ELEMENT_DEFAULTS, ...element }; }
 
   function _syncDocTypeUi(docType) {
     if (!docType) return;
