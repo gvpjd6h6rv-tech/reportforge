@@ -139,7 +139,7 @@
     return true;
   }
 
-  function exportJSON() {
+  function _downloadJSON(statusMessage) {
     const CRF = global.CommandRuntimeFile;
     const blob = new Blob([CRF.toJSON()], { type: 'application/json' });
     const a = document.createElement('a');
@@ -147,14 +147,19 @@
     a.download = `${CRF._slugifyName(CRF._currentLayoutName() || 'reporte')}.rfd.json`;
     a.click();
     URL.revokeObjectURL(a.href);
-    setStatus('✓ JSON exportado');
+    setStatus(statusMessage);
   }
 
-  // "Guardar como" was a blind anchor-download — no dialog, no overwrite
-  // confirmation. showSaveFilePicker() gives both; falls back to exportJSON().
+  function exportJSON() { _downloadJSON('✓ JSON exportado'); }
+
+  // Firefox has no File System Access API (confirmed live) — a browser
+  // limitation, not an RF bug. Must say so, not reuse the "Guardado como"
+  // wording a real save dialog gets in Chromium/Ungoogled.
+  const NO_PICKER_STATUS = '⬇ Descargado a Descargas — tu navegador no soporta elegir ubicación (sin File System Access API)';
+
   async function saveAs() {
     const CRF = global.CommandRuntimeFile;
-    if (typeof window.showSaveFilePicker !== 'function') { exportJSON(); return true; }
+    if (typeof window.showSaveFilePicker !== 'function') { _downloadJSON(NO_PICKER_STATUS); return true; }
     try {
       const handle = await window.showSaveFilePicker({
         suggestedName: `${CRF._slugifyName(CRF._currentLayoutName() || 'reporte')}.rfd.json`,
