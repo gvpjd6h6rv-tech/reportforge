@@ -78,6 +78,7 @@
       try {
         if (!(await _ensureWritablePermission(handle))) { setStatus('Guardado cancelado'); return false; }
         await _writeTextToFileHandle(handle, CRF.toJSON());
+        if (typeof global.DocumentTabManager !== 'undefined') global.DocumentTabManager.markCurrentSaved();
         setStatus(`✓ Guardado: ${handle.name || CRF._currentLayoutName() || 'reporte'}`);
         return true;
       } catch (error) {
@@ -147,6 +148,7 @@
     a.download = `${CRF._slugifyName(CRF._currentLayoutName() || 'reporte')}.rfd.json`;
     a.click();
     URL.revokeObjectURL(a.href);
+    if (typeof global.DocumentTabManager !== 'undefined') global.DocumentTabManager.markCurrentSaved();
     setStatus(statusMessage);
   }
 
@@ -167,6 +169,10 @@
       });
       await _writeTextToFileHandle(handle, CRF.toJSON());
       CRF._setFileHandle(handle, handle.name.replace(/\.(rfd\.)?json$/i, ''));
+      if (typeof global.DocumentTabManager !== 'undefined') {
+        global.DocumentTabManager.updateCurrent({ name: handle.name.replace(/\.(rfd\.)?json$/i, ''), fileHandle: handle });
+        global.DocumentTabManager.markCurrentSaved();
+      }
       setStatus(`✓ Guardado como: ${handle.name}`);
       return true;
     } catch (error) {

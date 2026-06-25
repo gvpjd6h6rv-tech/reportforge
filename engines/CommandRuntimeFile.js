@@ -108,17 +108,25 @@
   }
 
   function _applyLoadedLayout(layout, file, fileHandle = null, statusMessage = null) {
+    const name = layout.name || (file && file.name ? file.name.replace(/\.json$/i, '') : 'Reporte');
     _currentLayout = {
       ..._currentLayout,
       ...layout,
-      name: layout.name || file.name.replace(/\.json$/i, ''),
+      name,
       version: layout.version || _currentLayout.version,
       docType: layout.docType || null,
       margins: layout.margins && typeof layout.margins === 'object' ? { ...layout.margins } : _currentLayout.margins,
     };
     _currentLayoutFileHandle = fileHandle;
+    if (typeof DocumentTabManager !== 'undefined' && typeof DocumentTabManager._switchToNewTab === 'function') {
+      DocumentTabManager._switchToNewTab(name, fileHandle);
+    }
     _refreshEditor(_currentLayout);
-    setStatus(statusMessage || `✓ Abierto: ${file.name}`);
+    if (typeof DocumentTabManager !== 'undefined') {
+      DocumentTabManager.updateCurrent({ name, fileHandle });
+      DocumentTabManager.markCurrentSaved();
+    }
+    setStatus(statusMessage || `✓ Abierto: ${file ? file.name : name}`);
   }
 
   function _slugifyName(name) {
@@ -172,6 +180,9 @@
     _slugifyName,
     _currentLayoutName,
     _setFileHandle,
-    get _currentLayoutFileHandle() { return _currentLayoutFileHandle; },
+    get _currentLayout()             { return _currentLayout; },
+    set _currentLayout(v)            { _currentLayout = v; },
+    get _currentLayoutFileHandle()   { return _currentLayoutFileHandle; },
+    set _currentLayoutFileHandle(v)  { _currentLayoutFileHandle = v; },
   };
 })(window);

@@ -5,6 +5,7 @@
     DS._sampleData = SAMPLE_DATA;
     const items = SAMPLE_DATA.items || [];
     document.getElementById('sb-records').textContent = `Items: ${items.length}`;
+    if (typeof DocumentTabManager !== 'undefined') DocumentTabManager._registerInitialTab();
     console.log('[ReportForge] Multi-doc engine listo — 5 tipos: factura, remision, nota_credito, retencion, liquidacion');
   }
 

@@ -14,6 +14,7 @@
 
   global.CommandEngine = CommandEngine;
   global.FileEngine = FileEngine;
+  global.TabManager = global.DocumentTabManager;
   global.handleAction = handlers.handleAction;
   global.switchDocType = switchDocType;
   global.handleToolSelection = handlers.handleToolSelection;
