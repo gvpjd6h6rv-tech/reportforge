@@ -31,6 +31,21 @@ const PropertiesEngine = {
       if(el.type==='text'){
         form.appendChild(this._inputRow('Texto:','prop-text-content',el.content,'text','content'));
       }
+      if(el.type==='barcode'){
+        form.appendChild(this._selectRow('Tipo código:','prop-barcode-type',
+          ['code128','code39','qr'],el.barcodeType||'code128','barcodeType',
+          ['Code 128','Code 39','QR Code']));
+        const stRow=document.createElement('div');stRow.className='prop-check-row';
+        stRow.innerHTML=`<label class="prop-check-label"><input type="checkbox" id="prop-barcode-showtext"${el.showText!==false?' checked':''}> Mostrar texto</label>`;
+        form.appendChild(stRow);
+        setTimeout(()=>{
+          document.getElementById('prop-barcode-showtext')?.addEventListener('change',e=>{
+            const el=DS.getSelectedElements()[0];if(!el)return;
+            el.showText=e.target.checked;
+            _canonicalCanvasWriter().updateElement(el.id);DS.saveHistory();
+          });
+        },0);
+      }
     }
 
     const div1=document.createElement('div');div1.className='prop-section';div1.textContent='Posición y tamaño';
