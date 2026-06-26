@@ -4,6 +4,7 @@ const InsertEngine = {
   _startPos:null,
 
   setTool(tool){
+    if(tool !== 'pointer' && DS.previewMode && typeof PreviewEngineMode !== 'undefined') PreviewEngineMode.hide();
     DS.setTool(tool, 'InsertEngine.setTool');
     document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));
     const cs=document.getElementById('workspace');
@@ -59,7 +60,8 @@ const InsertEngine = {
     else if(tool==='field') newEl=mkEl('field',secId,x,relY,w,h,{fieldPath:'',content:'Seleccione campo'});
     else if(tool==='line') newEl=mkEl('line',secId,x,relY,w,Math.max(h,2),{borderColor:'#000',lineWidth:1});
     else if(tool==='line-v') newEl=mkEl('line',secId,x,relY,2,Math.max(h,20),{borderColor:'#000',lineWidth:1,lineDir:'v'});
-    else if(tool==='box') newEl=mkEl('rect',secId,x,relY,w,h,{bgColor:'transparent',borderColor:'#000',borderWidth:1});
+    else if(tool==='box')     newEl=mkEl('rect',secId,x,relY,w,h,{bgColor:'transparent',borderColor:'#000',borderWidth:1});
+    else if(tool==='barcode') newEl=mkEl('barcode',secId,x,relY,Math.max(w,120),Math.max(h,40),{barcodeType:'code128',showText:true});
     if(!newEl)return;
     DS.setElements([...DS.elements, newEl], 'InsertEngine.onMouseUp');
     _canonicalCanvasWriter().renderElement(newEl);
