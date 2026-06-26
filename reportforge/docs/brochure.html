@@ -196,7 +196,7 @@ hr{border:none;border-top:2px solid var(--border);margin:3rem 0}
     <span class="badge green">🟢 25 CI stages PASS</span>
     <span class="badge orange">⚡ Zero dependencies</span>
     <span class="badge">🐍 Python 3.10+</span>
-    <span class="badge">🌐 http://localhost:8080</span>
+    <span class="badge">🌐 http://localhost:5001</span>
   </div>
   <div class="stats-grid">
     <div class="stat"><div class="num">864</div><div class="lbl">🧪 Tests</div></div>
@@ -594,7 +594,7 @@ git clone https://github.com/tu-org/reportforge &amp;&amp; cd reportforge
 ./run.sh
 
 <span class="cmt"># 3. Abrir en el browser</span>
-open http://localhost:8080/
+open http://localhost:5001/
 
 <span class="cmt"># Opciones</span>
 ./run.sh 9000          <span class="cmt"># puerto personalizado</span>
@@ -641,12 +641,12 @@ open http://localhost:8080/
   </table>
   <div class="code-block">
 <span class="cmt"># Ejemplo: validar fórmula</span>
-curl -X POST http://localhost:8080/validate-formula \
+curl -X POST http://localhost:5001/validate-formula \
   -H <span class="str">"Content-Type: application/json"</span> \
   -d <span class="str">'{"formula":"ToText({order.total}, 2)"}'</span>
 
 <span class="cmt"># Ejemplo: preview con datos</span>
-curl -X POST http://localhost:8080/preview \
+curl -X POST http://localhost:5001/preview \
   -H <span class="str">"Content-Type: application/json"</span> \
   -d <span class="str">'{"report":{...},"data":{"items":[...]}}'</span>
   </div>

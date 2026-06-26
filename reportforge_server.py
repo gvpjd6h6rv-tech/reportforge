@@ -2,7 +2,7 @@
 """
 reportforge_server.py — standalone dev server (stdlib only, no FastAPI needed)
 Serves: designer UI + render/preview/validate-formula/preview-barcode API
-Usage:  python3 reportforge_server.py [port]   (default 8080)
+Usage:  python3 reportforge_server.py [port]   (default 5001)
 """
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ class RFHandler(BaseHTTPRequestHandler):
 
 def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
-    port = int(argv[0]) if argv else 8080
+    port = int(argv[0]) if argv else 5001
     server = HTTPServer(("0.0.0.0", port), RFHandler)
     print(f"\n{'='*60}")
     print("  ReportForge Server — Crystal Reports Parity")

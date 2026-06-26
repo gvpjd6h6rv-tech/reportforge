@@ -1,11 +1,11 @@
 /**
  * LIVE SMOKE — ReportForge Preview CR parity.
  *
- * Corre contra la app REAL en http://127.0.0.1:8080/classic.
+ * Corre contra la app REAL en http://127.0.0.1:5001/classic.
  * No usa mocks. Captura geometría forense de preview, hoja A4, viewport y reglas.
  *
  * Uso:
- *   RF_LIVE_URL="http://127.0.0.1:8080" \
+ *   RF_LIVE_URL="http://127.0.0.1:5001" \
  *   npx playwright test tests/e2e/live_smoke_preview_cr_parity.spec.js -c pw.rf-live.config.mjs --reporter=line
  */
 

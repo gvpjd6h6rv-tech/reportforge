@@ -10,8 +10,8 @@ uvicorn reportforge.server.main:app --port 8000
 # → Open http://localhost:8000/designer/
 
 # Standalone static mode
-cd reportforge/designer && python3 -m http.server 8080
-# → Open http://localhost:8080
+cd reportforge/designer && python3 -m http.server 5001
+# → Open http://localhost:5001
 ```
 
 ---

@@ -4,13 +4,13 @@
 
 **Current version:** v19.0 — Modular Engine Architecture  
 **Designer:** `designer/crystal-reports-designer-v4.html`  
-**Server:** `reportforge_server.py` (stdlib only, port 8080)
+**Server:** `reportforge_server.py` (stdlib only, port 5001)
 
 ## Quick start
 
 ```bash
 python3 reportforge_server.py
-# Open: http://localhost:8080/classic
+# Open: http://localhost:5001/classic
 ```
 
 ## Engine Architecture (v19)
@@ -74,13 +74,13 @@ All coordinate conversions go through `RF.Geometry`. Canvas, sections, elements,
 ```bash
 cd reportforge-complete
 python3 reportforge_server.py
-# Open http://localhost:8080
+# Open http://localhost:5001
 ```
 
 ## Docker
 
 ```bash
-docker compose up -d && open http://localhost:8080
+docker compose up -d && open http://localhost:5001
 ```
 
 ## Project Structure
