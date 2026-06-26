@@ -2,7 +2,7 @@
 # ═══════════════════════════════════════════════════════════════════════════
 #  run.sh — ReportForge v5.0 Smart Launcher + Live Dashboard
 #  ──────────────────────────────────────────────────────────
-#  ./run.sh [port]       Iniciar con dashboard (default: 8080)
+#  ./run.sh [port]       Iniciar con dashboard (default: 5001)
 #  ./run.sh --reset      Eliminar .venv y recrear
 #  ./run.sh --check-only Solo verificar entorno
 #
@@ -22,7 +22,7 @@ LOG_FILE="/tmp/rf_server.log"
 BROWSER_PREF_FILE="$SCRIPT_DIR/.rf_browser_pref"
 
 # ── Parámetros ───────────────────────────────────────────────────────────────
-PORT="${1:-8080}"
+PORT="${1:-5001}"
 RESET=false; CHECK_ONLY=false
 for arg in "$@"; do
   case $arg in
@@ -30,7 +30,7 @@ for arg in "$@"; do
     --check-only) CHECK_ONLY=true ;;
     --help|-h)
       echo ""; echo "  ReportForge v5.0 — Smart Launcher"
-      echo "  ./run.sh [port]       Iniciar (default: 8080)"
+      echo "  ./run.sh [port]       Iniciar (default: 5001)"
       echo "  ./run.sh --reset      Recrear .venv"
       echo "  ./run.sh --check-only Solo verificar entorno"
       echo ""; exit 0 ;;

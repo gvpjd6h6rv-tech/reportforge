@@ -15,7 +15,7 @@ echo ""
 run_and_report() {
   local LABEL="$1"; local SCRIPT="$2"
   local LOG="/tmp/rf-super-$(echo "$LABEL" | tr ' /' '--').log"
-  kill $(fuser 8080/tcp 2>/dev/null) 2>/dev/null || true; sleep 1
+  kill $(fuser 5001/tcp 2>/dev/null) 2>/dev/null || true; sleep 1
   printf "  %-36s" "$LABEL"
   if [[ -f "./$SCRIPT" ]] && timeout 120 bash "./$SCRIPT" > "$LOG" 2>&1; then
     echo -e "${G}PASS${N}"; PASS_COUNT=$((PASS_COUNT+1))
@@ -103,7 +103,7 @@ run_and_report "MASTER DESIGNER GOD"      "repo-designer-god.sh"
 
 # ════ REPORT ════════════════════════════════════════════════════════════
 T1=$(date +%s%N); ELAPSED=$(( (T1-T0)/1000000000 ))
-kill $(fuser 8080/tcp 2>/dev/null) 2>/dev/null || true
+kill $(fuser 5001/tcp 2>/dev/null) 2>/dev/null || true
 
 echo ""
 echo "════════════════════════════════════════════════════════════"

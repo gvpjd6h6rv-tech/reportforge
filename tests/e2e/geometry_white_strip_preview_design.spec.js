@@ -5,7 +5,7 @@ const { enterPreview, returnDesign } = require('./support/rf_live_preview_cycle'
 const { captureCanvasGeometry } = require('./support/rf_live_geometry_snapshot');
 const { WHITE_STRIP_ZOOM } = require('./support/rf_live_zoom_cases');
 
-const URL = process.env.RF_URL || 'http://127.0.0.1:8080/classic';
+const URL = process.env.RF_URL || 'http://127.0.0.1:5001/classic';
 
 test.describe('RF live geometry contract: canvas anti double-scale', () => {
   test.setTimeout(90000);

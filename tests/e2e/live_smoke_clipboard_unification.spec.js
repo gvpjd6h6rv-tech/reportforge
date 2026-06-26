@@ -1,7 +1,7 @@
 /**
  * LIVE SMOKE — Clipboard unification (P23B).
  *
- * Corre contra la app REAL en http://127.0.0.1:8080/classic. No usa mocks.
+ * Corre contra la app REAL en http://127.0.0.1:5001/classic. No usa mocks.
  *
  * Hasta P23A, copy/cut/paste tenían DOS rutas independientes que no
  * compartían almacenamiento:
@@ -17,7 +17,7 @@
  * una simulación.
  *
  * Uso:
- *   RF_LIVE_URL="http://127.0.0.1:8080" \
+ *   RF_LIVE_URL="http://127.0.0.1:5001" \
  *   npx playwright test tests/e2e/live_smoke_clipboard_unification.spec.js -c pw.rf-live.config.mjs --reporter=line
  */
 

@@ -10,7 +10,7 @@ async function launch(headless = true) {
   const page    = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   const errors  = [];
   page.on('pageerror', e => errors.push(e.message));
-  await page.goto('http://localhost:8080/classic');
+  await page.goto('http://localhost:5001/classic');
   await page.waitForTimeout(2000);
   return { browser, page, errors };
 }
