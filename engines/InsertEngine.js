@@ -12,9 +12,13 @@ const InsertEngine = {
 
   setTool(tool){
     if(tool !== 'pointer' && DS.previewMode && typeof PreviewEngineMode !== 'undefined'){
-      PreviewEngineMode.hide();
-      // insert-section does not place an element — leave in draw mode after hide
-      if(tool !== 'section') this.insertAtDefaultPosition(tool);
+      // insert-section uses its own route (CommandRuntimeSections) — keep legacy exit-to-design
+      if(tool === 'section'){ PreviewEngineMode.hide(); return; }
+      // CR PARITY (RF-CR-PARITY-PREVIEW-INSERT-STAY-IN-PREVIEW): stay in Preview.
+      // insertAtDefaultPosition() calls DS.saveHistory(), whose CommandRuntimeInit patch
+      // auto-refreshes #preview-content while DS.previewMode stays true. Chain proven by
+      // tools/diagnostics/rf-preview-insert/rf_preview_insert_stay_experiment.mjs (gate a–h).
+      this.insertAtDefaultPosition(tool);
       return;
     }
     DS.setTool(tool, 'InsertEngine.setTool');
@@ -75,7 +79,8 @@ const InsertEngine = {
         if(div) div.scrollIntoView({behavior:'auto',block:'center',inline:'nearest'});
       },'insert-scroll-to-'+_elId);
     }
-    if(tool==='text'){
+    if(tool==='text' && !DS.previewMode){
+      // In Preview the design node is display:none; inline edit uses preview double-click parity.
       const div=document.querySelector(`.cr-element[data-id="${newEl.id}"]`);
       if(div) setTimeout(()=>SelectionEngine.startTextEdit(div,newEl),50);
     }

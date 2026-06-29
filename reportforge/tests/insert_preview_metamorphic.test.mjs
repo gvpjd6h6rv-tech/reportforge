@@ -1,24 +1,28 @@
 'use strict';
 /**
- * METAMORPHIC TEST — Preview → Insert parity
+ * METAMORPHIC TEST — Preview → Insert (CR PARITY: stay in Preview)
+ *
+ * Contract (RF-CR-PARITY-PREVIEW-INSERT-STAY-IN-PREVIEW):
+ *   Inserting an element from Preview must add it to the report WITHOUT leaving
+ *   Preview, and refresh #preview-content with the new element. The merged
+ *   stability fix (section-grow / no contain:paint clip + FIX-3) must still hold
+ *   when the user later switches to Design.
+ *
+ * Live-server test (needs localhost:5001). NOT wired into CI; run manually:
+ *   node reportforge/tests/insert_preview_metamorphic.test.mjs
  *
  * Three-phase validation (6 element types, headless):
- *   Phase 1 (FIX APPLIED):    production InsertEngine.js has the fix → all PASS
- *   Phase 2 (BUG INJECTED):   inject pre-fix state via page.evaluate → DS+1 FAIL (bug reproduced)
- *   Phase 3 (FIX REINJECTED): re-inject fix via page.evaluate → all PASS
- *
- * Acceptance criteria per element:
- *   ✔ DS +1      — element in model
- *   ✔ DOM +1     — element rendered
- *   ✔ inSection  — element in .cr-section (not #preview-content)
- *   ✔ visible    — element bottom ≤ section height (not clipped by contain:paint)
- *   ✔ hittable   — elementFromPoint at element center returns .cr-element OR sel-handle
- *                  (sel-handle on top of a 2px line IS correct; it confirms render + selection)
- *   ✔ wsClass    — #workspace retains 'workspace' class (FIX-3)
- *   ✔ overlay    — canvas-layer has no 'preview-mode' class
+ *   Phase 1 (FIX APPLIED, production):
+ *     PARITY    — after Insertar X from Preview: previewMode stays true,
+ *                 #canvas-layer keeps preview-mode, element present in #preview-content.
+ *     STABILITY — then switch to Design: element in .cr-section, fits section
+ *                 height (not clipped by contain:paint), hittable, #workspace class kept.
+ *   Phase 2 (BUG INJECTED): inject legacy setTool that hides + does NOT insert
+ *     → DS+1 FALSE (element not created) = bug reproduced.
+ *   Phase 3 (RELOAD, production fix) → repeat Phase 1.
  *
  * insert-section: CLASSIFIED SEPARATELY — routed through CommandRuntimeSections.insertSection(),
- * which never calls PreviewEngineMode.hide(). Overlay bug is a separate fix, not blocked here.
+ * not InsertEngine.setTool. Not covered here.
  */
 
 import { chromium } from 'playwright';
@@ -34,163 +38,84 @@ const TOOLS = [
   { action: 'insert-barcode', label: 'Barcode'    },
 ];
 
-// ── Bug injection — pre-fix state (no insertAtDefaultPosition, old cs.className='') ──
+// ── Bug injection — legacy state: hide() + NO insertAtDefaultPosition ──────────
+//    Reproduces "element not created on Preview→Insert" (the pre-fix failure).
 const INJECT_BUG = `(function() {
   if (window.__META_bug) return;
-  window.__META_bug  = true;
-  window.__META_fix  = false;
+  window.__META_bug = true;
   const IE = window.InsertEngine;
   IE.setTool = function(tool) {
     if (tool !== 'pointer' && DS.previewMode && typeof PreviewEngineMode !== 'undefined') {
-      PreviewEngineMode.hide();
-      // NO insertAtDefaultPosition — mimics pre-fix state
+      PreviewEngineMode.hide();        // legacy: exit preview, create nothing
       DS.setTool(tool, 'InsertEngine.setTool');
       document.querySelectorAll('[data-tool]').forEach(b => b.classList.toggle('active', b.dataset.tool === tool));
-      const cs = document.getElementById('workspace');
-      cs.className = '';                // C9 bug: destroys workspace + rf-synthetic-scrollbars
-      cs.classList.add('tool-' + tool);
       return;
     }
     DS.setTool(tool, 'InsertEngine.setTool');
-    document.querySelectorAll('[data-tool]').forEach(b => b.classList.toggle('active', b.dataset.tool === tool));
-    const cs = document.getElementById('workspace');
-    cs.className = '';
-    cs.classList.add('tool-' + tool);
-    if (tool === 'pointer') SelectionEngine._drag = null;
-  };
-  delete IE.insertAtDefaultPosition;
-})();`;
-
-// ── Fix injection — re-apply fix without file change ─────────────────────────
-const INJECT_FIX = `(function() {
-  if (window.__META_fix) return;
-  window.__META_fix  = true;
-  window.__META_bug  = false;
-  const IE = window.InsertEngine;
-  const _TC = [
-    'tool-pointer','tool-text','tool-field',
-    'tool-line','tool-line-v','tool-box','tool-barcode','tool-section',
-  ];
-  IE.insertAtDefaultPosition = function(tool) {
-    const W = {text:200,field:200,line:200,'line-v':2,box:200,barcode:200};
-    const H = {text:16, field:16, line:2, 'line-v':60, box:40, barcode:60};
-    const w = W[tool]||120, h = H[tool]||20;
-    const relY = DS.snap(4);
-    const needed = DS.snap(relY + h + 4);
-    let sec = DS.sections.find(s => s.stype==='det' && s.height>=needed);
-    if (!sec) sec = DS.sections.reduce((b,s) => (!b||s.height>b.height)?s:b, null);
-    if (!sec) return;
-    if (sec.height < needed) {
-      sec.height = needed;
-      const sd = document.querySelector('.cr-section[data-section-id="'+sec.id+'"]');
-      if (sd) sd.style.height = sec.height + 'px';
-      if (typeof SectionLayoutEngine !== 'undefined') SectionLayoutEngine.update();
-      if (typeof SectionEngine !== 'undefined') SectionEngine.updateSectionsList();
-    }
-    const pageW = (typeof CFG!=='undefined' && CFG.PAGE_W) || 754;
-    const x = DS.snap(Math.max(0, Math.round((pageW-w)/2)));
-    let newEl;
-    if (tool==='text')    newEl=mkEl('text',   sec.id,x,relY,w,h,{content:'Texto',bgColor:'transparent',borderColor:'transparent'});
-    else if (tool==='field')   newEl=mkEl('field',  sec.id,x,relY,w,h,{fieldPath:'',content:'Seleccione campo'});
-    else if (tool==='line')    newEl=mkEl('line',   sec.id,x,relY,w,Math.max(h,2),{borderColor:'#000',lineWidth:1});
-    else if (tool==='line-v')  newEl=mkEl('line',   sec.id,x,relY,2,Math.max(h,20),{borderColor:'#000',lineWidth:1,lineDir:'v'});
-    else if (tool==='box')     newEl=mkEl('rect',   sec.id,x,relY,w,h,{bgColor:'transparent',borderColor:'#000',borderWidth:1});
-    else if (tool==='barcode') newEl=mkEl('barcode',sec.id,x,relY,w,h,{barcodeType:'code128',showText:true});
-    if (!newEl) return;
-    DS.setElements([...DS.elements, newEl], 'IE.insertAtDefaultPosition');
-    _canonicalCanvasWriter().renderElement(newEl);
-    DS.selectOnly(newEl.id, 'IE.insertAtDefaultPosition');
-    SelectionEngine.renderHandles();
-    PropertiesEngine.render(); FormatEngine.updateToolbar();
-    DS.saveHistory();
-    this.setTool('pointer');
-    const _elId = newEl.id;
-    if (typeof RenderScheduler !== 'undefined') {
-      RenderScheduler.post(() => {
-        const div = document.querySelector('.cr-element[data-id="'+_elId+'"]');
-        if (div) div.scrollIntoView({behavior:'auto',block:'center',inline:'nearest'});
-      }, 'insert-scroll-to-'+_elId);
-    }
-    if (tool === 'text') {
-      const div = document.querySelector('.cr-element[data-id="'+newEl.id+'"]');
-      if (div) setTimeout(() => SelectionEngine.startTextEdit(div, newEl), 50);
-    }
-    if (tool === 'field') {
-      const sb = document.getElementById('sb-msg');
-      if (sb) sb.textContent = 'Arrastre un campo desde el Explorador para asignarlo';
-    }
-  };
-  IE.setTool = function(tool) {
-    if (tool !== 'pointer' && DS.previewMode && typeof PreviewEngineMode !== 'undefined') {
-      PreviewEngineMode.hide();
-      if (tool !== 'section') this.insertAtDefaultPosition(tool);
-      return;
-    }
-    DS.setTool(tool, 'InsertEngine.setTool');
-    document.querySelectorAll('[data-tool]').forEach(b => b.classList.toggle('active', b.dataset.tool === tool));
-    const cs = document.getElementById('workspace');
-    cs.classList.remove(..._TC);
-    if (tool !== 'pointer') cs.classList.add('tool-'+tool);
     if (tool === 'pointer') SelectionEngine._drag = null;
   };
 })();`;
 
-// ── Probe ─────────────────────────────────────────────────────────────────────
-async function probe(page, lastId, dsBefore) {
+// ── Probe: PARITY (preview state + element in #preview-content) ────────────────
+async function probeParity(page, lastId, dsBefore) {
   return page.evaluate(({ id, before }) => {
-    const ws  = document.getElementById('workspace');
-    const cl  = document.getElementById('canvas-layer');
+    const cl = document.getElementById('canvas-layer');
+    const pc = document.getElementById('preview-content');
     const dsEls = typeof DS !== 'undefined' ? DS.elements : [];
-    const div = id ? document.querySelector(`.cr-element[data-id="${id}"]`) : null;
+    return {
+      dsPlus1:           dsEls.length > before,
+      previewMode:       !!DS.previewMode,
+      canvasPreviewMode: cl ? cl.classList.contains('preview-mode') : false,
+      inPreviewContent:  pc ? !!pc.querySelector(`[data-id="${id}"],[data-origin-id="${id}"]`) : false,
+    };
+  }, { id: lastId, before: dsBefore });
+}
 
-    let hittable = false, visible = false;
+// ── Probe: STABILITY (after switching to Design — no-clip / hittable) ──────────
+async function probeStability(page, lastId) {
+  return page.evaluate((id) => {
+    const ws  = document.getElementById('workspace');
+    const div = id ? document.querySelector(`.cr-element[data-id="${id}"]`) : null;
+    let inSection = false, visible = false, hittable = false;
     if (div) {
-      // visible: element fits within its section (not clipped by contain:paint)
+      inSection = !!div.closest('.cr-section') && !div.closest('#preview-content');
       const sec = div.closest('.cr-section');
       if (sec) {
         const sh = parseFloat(sec.style.height) || 0;
         visible = (div.offsetTop + div.offsetHeight) <= sh;
       }
-      // hittable: elementFromPoint at element center returns the element, a child,
-      // OR a selection handle (sel-handle on a 2px line IS correct behaviour)
       const r = div.getBoundingClientRect();
       if (r.width > 0 && r.height > 0) {
-        const ex = r.left + r.width  / 2;
-        const ey = r.top  + r.height / 2;
+        const ex = r.left + r.width / 2, ey = r.top + r.height / 2;
         const efp = document.elementFromPoint(ex, ey);
-        hittable = efp ? (
-          efp === div || div.contains(efp) ||
-          efp.classList.contains('sel-handle')   // selection handle on thin element = OK
-        ) : false;
+        hittable = efp ? (efp === div || div.contains(efp) || efp.classList.contains('sel-handle')) : false;
       }
     }
-
-    return {
-      dsPlus1:  dsEls.length > before,
-      domPlus1: document.querySelectorAll('.cr-element:not(#preview-content .cr-element)').length > before,
-      inSection: div ? (!!div.closest('.cr-section') && !div.closest('#preview-content')) : false,
-      visible,
-      hittable,
-      wsClass:  ws ? ws.classList.contains('workspace') : false,
-      overlay:  cl ? !cl.classList.contains('preview-mode') : false,
-    };
-  }, { id: lastId, before: dsBefore });
+    return { inSection, visible, hittable, wsClass: ws ? ws.classList.contains('workspace') : false };
+  }, lastId);
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 async function ensureDesign(page) {
   const inPrev = await page.evaluate(() => typeof DS !== 'undefined' && DS.previewMode);
-  if (inPrev) { await page.locator('#tab-design').click(); await page.waitForTimeout(400); }
+  if (inPrev) { await page.locator('#tab-design').click(); await page.waitForTimeout(500); }
 }
 async function triggerInsert(page, action) {
   await page.locator('.menu-item[data-menu="insertar"]').click();
   await page.waitForSelector('#dd-insertar', { state: 'visible', timeout: 3000 });
   await page.locator(`#dd-insertar .dd-item[data-action="${action}"]`).click();
-  await page.waitForTimeout(600);
+  await page.waitForTimeout(1200); // allow async preview refresh to settle
 }
 async function undo(page, before) {
   const n = await page.evaluate(() => typeof DS !== 'undefined' ? DS.elements.length : 0);
   if (n > before) { await page.keyboard.press('Control+z'); await page.waitForTimeout(300); }
+}
+async function lastId(page) { return page.evaluate(() => { const e = DS.elements; return e.length ? e[e.length - 1].id : null; }); }
+async function bootReady(page) {
+  await page.goto(TARGET, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => document.documentElement?.dataset?.rfRuntimeReady === '1', null, { timeout: 15000 });
+  await page.waitForFunction(() => typeof DS !== 'undefined' && DS.elements.length > 0, null, { timeout: 10000 });
+  await page.waitForTimeout(800);
 }
 
 // ── Assertion ─────────────────────────────────────────────────────────────────
@@ -200,9 +125,42 @@ function assert(cond, msg) {
   if (!cond) failures++;
 }
 
+// Run one production-fix phase (PARITY in preview + STABILITY in design)
+async function runProductionPhase(page) {
+  for (const t of TOOLS) {
+    console.log(`\n  ${t.label} (${t.action})`);
+    await ensureDesign(page);
+    await page.keyboard.press('Escape');
+    const before = await page.evaluate(() => DS.elements.length);
+
+    await page.locator('#tab-preview').click();
+    await page.waitForTimeout(1200);
+    await triggerInsert(page, t.action);
+
+    const id = await lastId(page);
+    const par = await probeParity(page, id, before);
+    assert(par.dsPlus1,           'PARITY  · DS +1');
+    assert(par.previewMode,       'PARITY  · DS.previewMode stays true');
+    assert(par.canvasPreviewMode, 'PARITY  · #canvas-layer keeps preview-mode');
+    assert(par.inPreviewContent,  'PARITY  · element present in #preview-content');
+
+    // Switch to Design and verify the stability (no-clip) property holds
+    await page.locator('#tab-design').click();
+    await page.waitForTimeout(500);
+    const st = await probeStability(page, id);
+    assert(st.inSection, 'STABLE  · element in .cr-section (Design)');
+    assert(st.visible,   'STABLE  · element fits section height (no contain:paint clip)');
+    assert(st.hittable,  'STABLE  · elementFromPoint hits element / sel-handle');
+    assert(st.wsClass,   'STABLE  · #workspace retains "workspace" class (FIX-3)');
+
+    await ensureDesign(page);
+    await undo(page, before);
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 console.log('\n' + '═'.repeat(72));
-console.log('METAMORPHIC TEST — Preview → Insert (3-phase, 6 element types)');
+console.log('METAMORPHIC — Preview → Insert (CR PARITY: stay in Preview)');
 console.log(`Target: ${TARGET}`);
 console.log('═'.repeat(72) + '\n');
 
@@ -210,124 +168,50 @@ const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] }
 const page    = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 page.on('pageerror', e => console.error('PAGEERROR:', e.message));
 
-await page.goto(TARGET, { waitUntil: 'domcontentloaded' });
-try {
-  await page.waitForFunction(() => document.documentElement?.dataset?.rfRuntimeReady === '1', null, { timeout: 15000 });
-  await page.waitForFunction(() => typeof DS !== 'undefined' && DS.elements.length > 0, null, { timeout: 10000 });
-} catch { console.error('App not ready.'); await browser.close(); process.exit(1); }
-await page.waitForTimeout(800);
+await bootReady(page);
+console.log(`Base DS.elements: ${await page.evaluate(() => DS.elements.length)}\n`);
 
-const base = await page.evaluate(() => DS.elements.length);
-console.log(`Base DS.elements: ${base}\n`);
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// PHASE 1 — FIX IN PRODUCTION InsertEngine.js
-// ═══════════════════════════════════════════════════════════════════════════════
+// ── PHASE 1 — production fix ───────────────────────────────────────────────────
 console.log('─'.repeat(72));
-console.log('PHASE 1 — FIX APPLIED  (expect all PASS)');
+console.log('PHASE 1 — FIX APPLIED (production)  → PARITY + STABILITY, expect all PASS');
 console.log('─'.repeat(72));
+await runProductionPhase(page);
 
-for (const tool of TOOLS) {
-  console.log(`\n  ${tool.label} (${tool.action})`);
-  await ensureDesign(page);
-  await page.keyboard.press('Escape');
-  const before = await page.evaluate(() => DS.elements.length);
-  await page.locator('#tab-preview').click();
-  await page.waitForTimeout(1200);
-  await triggerInsert(page, tool.action);
-  const lastId = await page.evaluate(() => { const e=DS.elements; return e.length?e[e.length-1].id:null; });
-  const p = await probe(page, lastId, before);
-  assert(p.dsPlus1,   'DS +1');
-  assert(p.domPlus1,  'DOM +1');
-  assert(p.inSection, 'element in .cr-section (not preview)');
-  assert(p.visible,   'element fits section height (not clipped by contain:paint)');
-  assert(p.hittable,  'elementFromPoint returns .cr-element or sel-handle');
-  assert(p.wsClass,   '#workspace retains "workspace" class (FIX-3)');
-  assert(p.overlay,   'canvas-layer: no "preview-mode" class');
-  await ensureDesign(page);
-  await undo(page, before);
-}
-
-console.log('\n  Sección (insert-section) — CLASSIFIED SEPARATELY');
-console.log('  Route: CommandRuntimeSections.insertSection() (not InsertEngine.setTool)');
-console.log('  Overlay bug in this path is a separate fix — not asserted here.');
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// PHASE 2 — BUG INJECTED  (no insertAtDefaultPosition + cs.className='')
-// ═══════════════════════════════════════════════════════════════════════════════
+// ── PHASE 2 — bug injected (element not created) ───────────────────────────────
 console.log('\n' + '─'.repeat(72));
-console.log('PHASE 2 — BUG INJECTED  (expect DS+1 = false for all = bug reproduced)');
+console.log('PHASE 2 — BUG INJECTED (legacy hide, no insert)  → expect DS+1 FALSE');
 console.log('─'.repeat(72));
-
 await page.evaluate(INJECT_BUG);
-let bugReproduced = 0;
-
-for (const tool of TOOLS) {
-  console.log(`\n  ${tool.label} (${tool.action})`);
+let reproduced = 0;
+for (const t of TOOLS) {
+  console.log(`\n  ${t.label} (${t.action})`);
   await ensureDesign(page);
   await page.keyboard.press('Escape');
   const before = await page.evaluate(() => DS.elements.length);
   await page.locator('#tab-preview').click();
   await page.waitForTimeout(1200);
-  await triggerInsert(page, tool.action);
-  const lastId = await page.evaluate(() => { const e=DS.elements; return e.length?e[e.length-1].id:null; });
-  const p = await probe(page, lastId, before);
-  // Bug = no element created
-  if (!p.dsPlus1) {
-    console.log('  \x1b[32mPASS\x1b[0m  Bug confirmed: DS +1 = false (element not created)');
-    bugReproduced++;
-  } else {
-    console.log('  \x1b[31mFAIL\x1b[0m  Bug injection gap: element WAS created — injection did not override');
-    failures++;
-  }
+  await triggerInsert(page, t.action);
+  const after = await page.evaluate(() => DS.elements.length);
+  if (after === before) { console.log('  \x1b[32mPASS\x1b[0m  bug reproduced: DS +1 = false (element not created)'); reproduced++; }
+  else { console.log('  \x1b[31mFAIL\x1b[0m  injection did not reproduce the bug'); failures++; }
   await ensureDesign(page);
   await undo(page, before);
 }
-console.log(`\n  Bug reproduced for ${bugReproduced}/${TOOLS.length} tools`);
+console.log(`\n  Bug reproduced for ${reproduced}/${TOOLS.length} tools`);
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// PHASE 3 — RELOAD PAGE + PRODUCTION FIX (clean state, no injection needed)
-// ═══════════════════════════════════════════════════════════════════════════════
+// ── PHASE 3 — reload production fix ────────────────────────────────────────────
 console.log('\n' + '─'.repeat(72));
-console.log('PHASE 3 — PAGE RELOAD + PRODUCTION FIX  (expect all PASS)');
+console.log('PHASE 3 — RELOAD (production fix)  → PARITY + STABILITY, expect all PASS');
 console.log('─'.repeat(72));
-
-// Reload restores workspace class to initial state; production InsertEngine.js
-// (the fix) is loaded fresh from disk — no page.evaluate injection needed.
-await page.reload({ waitUntil: 'domcontentloaded' });
-try {
-  await page.waitForFunction(() => document.documentElement?.dataset?.rfRuntimeReady === '1', null, { timeout: 15000 });
-  await page.waitForFunction(() => typeof DS !== 'undefined' && DS.elements.length > 0, null, { timeout: 10000 });
-} catch { console.error('Page not ready after reload.'); await browser.close(); process.exit(1); }
-await page.waitForTimeout(800);
-console.log('  Page reloaded — production fix active.\n');
-
-for (const tool of TOOLS) {
-  console.log(`\n  ${tool.label} (${tool.action})`);
-  await ensureDesign(page);
-  await page.keyboard.press('Escape');
-  const before = await page.evaluate(() => DS.elements.length);
-  await page.locator('#tab-preview').click();
-  await page.waitForTimeout(1200);
-  await triggerInsert(page, tool.action);
-  const lastId = await page.evaluate(() => { const e=DS.elements; return e.length?e[e.length-1].id:null; });
-  const p = await probe(page, lastId, before);
-  assert(p.dsPlus1,   'DS +1');
-  assert(p.domPlus1,  'DOM +1');
-  assert(p.inSection, 'element in .cr-section (not preview)');
-  assert(p.visible,   'element fits section height (not clipped by contain:paint)');
-  assert(p.hittable,  'elementFromPoint returns .cr-element or sel-handle');
-  assert(p.wsClass,   '#workspace retains "workspace" class (FIX-3)');
-  assert(p.overlay,   'canvas-layer: no "preview-mode" class');
-  await ensureDesign(page);
-  await undo(page, before);
-}
+await bootReady(page);
+console.log('  Page reloaded — production fix active.');
+await runProductionPhase(page);
 
 // ─────────────────────────────────────────────────────────────────────────────
 console.log('\n' + '═'.repeat(72));
 if (failures === 0) {
   console.log('\x1b[32m✔ ALL ASSERTIONS PASSED\x1b[0m');
-  console.log('Phase 1: PASS  |  Phase 2: bug reproduced  |  Phase 3: PASS');
+  console.log('Phase 1: PARITY+STABILITY  |  Phase 2: bug reproduced  |  Phase 3: PARITY+STABILITY');
 } else {
   console.log(`\x1b[31m✘ ${failures} assertion(s) FAILED\x1b[0m`);
 }
