@@ -15,6 +15,7 @@
       'export-json': () => FileEngine.exportJSON(),
       'export-pdf': runExportPdf,
       'load-document': () => global.DocumentLoadModal.open(),
+      'sql-conn': () => global.SQLModal.open(),
     });
   }
 

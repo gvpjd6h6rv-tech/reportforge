@@ -26,8 +26,9 @@
     liquidacion:  'Liquidación de Compras',
   };
 
-  let _modal = null;
+  let _modal    = null;
   let _statusEl = null;
+  let _dsSelEl  = null;
 
   // ── DOM helpers ───────────────────────────────────────────────────────────
 
@@ -136,8 +137,20 @@
     rowNum.appendChild(lblNum);
     rowNum.appendChild(inpNum);
 
+    /* Datasource row */
+    const rowDs = _el('div', { style: 'display:flex;align-items:center;gap:8px;' });
+    const lblDs = _el('label', { for: 'dlm-datasource', text: 'Conexión:', style: 'min-width:60px;' });
+    const selDs = _el('select', {
+      id:    'dlm-datasource',
+      style: 'flex:1;border:1px inset #808080;background:white;padding:1px 2px;font-family:inherit;font-size:11px;',
+    });
+    selDs.appendChild(_option('default', 'default', true));
+    rowDs.appendChild(lblDs);
+    rowDs.appendChild(selDs);
+
     body.appendChild(rowType);
     body.appendChild(rowNum);
+    body.appendChild(rowDs);
 
     /* Status row */
     const statusEl = _el('div', {
@@ -183,7 +196,23 @@
     backdrop.appendChild(dialog);
 
     _statusEl = statusEl;
+    _dsSelEl  = selDs;
     return backdrop;
+  }
+
+  // ── Datasource loader (non-critical: fails silently) ─────────────────────
+
+  async function _fetchDatasources(selEl) {
+    if (!selEl || typeof global.fetch !== 'function') return;
+    try {
+      const res = await global.fetch('/datasources');
+      const items = await res.json();
+      if (Array.isArray(items)) {
+        items.forEach(ds => {
+          if (ds.alias && ds.alias !== 'default') selEl.appendChild(_option(ds.alias, ds.alias));
+        });
+      }
+    } catch (_) { /* non-critical — default stays selected */ }
   }
 
   // ── Status renderer ───────────────────────────────────────────────────────
@@ -234,7 +263,8 @@
       return;
     }
 
-    const result = await provider.load(type, num);
+    const dsAlias = (_modal && _modal.querySelector('#dlm-datasource'))?.value || 'default';
+    const result = await provider.load(type, num, { datasource: dsAlias });
 
     if (result.ok) {
       _setStatus({ type: 'success', docType: type, docNumber: num });
@@ -262,6 +292,8 @@
     if (loadBtn)   loadBtn.addEventListener('click',   _handleLoad);
 
     if (numInput && typeof numInput.focus === 'function') numInput.focus();
+
+    _fetchDatasources(_dsSelEl);
   }
 
   function close() {
@@ -269,6 +301,7 @@
     _modal.remove();
     _modal    = null;
     _statusEl = null;
+    _dsSelEl  = null;
   }
 
   // ── Export ────────────────────────────────────────────────────────────────

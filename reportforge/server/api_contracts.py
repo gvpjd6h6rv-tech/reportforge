@@ -111,3 +111,22 @@ class DatasourceRegisterRequest(BaseModel):
     query: str = Field("", description="Default SQL query")
     params: dict = Field({})
     ttl: int = Field(300, description="Cache TTL in seconds")
+
+
+class SQLConnTestRequest(BaseModel):
+    host: str
+    port: int = Field(1433)
+    database: str
+    username: str
+    password: str
+    driver: str = Field("ODBC Driver 17 for SQL Server")
+
+
+class SQLConnRegisterRequest(BaseModel):
+    alias: str
+    host: str
+    port: int = Field(1433)
+    database: str
+    username: str
+    password: str
+    driver: str = Field("ODBC Driver 17 for SQL Server")

@@ -18,6 +18,16 @@ def list_registered() -> list[dict]:
     return [{"alias": k, **v} for k, v in _REGISTRY.items()]
 
 
+def list_registered_safe() -> list[dict]:
+    """Return datasource metadata without credentials (no URL/password)."""
+    result = []
+    for k, v in _REGISTRY.items():
+        url = v.get("url", "")
+        hint = url.split("@")[-1].split("?")[0] if "@" in url else url.split("//")[-1].split("?")[0]
+        result.append({"alias": k, "type": v.get("type", "db"), "hint": hint})
+    return result
+
+
 def get_registered(alias: str) -> dict | None:
     return _REGISTRY.get(alias)
 

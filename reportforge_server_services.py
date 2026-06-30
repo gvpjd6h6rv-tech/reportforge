@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import urllib.parse
 
-from reportforge_server_datasources import _post_ds_query, _post_register_ds
+from reportforge_server_datasources import (
+    _delete_ds, _get_ds_list, _post_ds_connect, _post_ds_query, _post_ds_test, _post_register_ds,
+)
 from reportforge_server_http_utils import _cors_headers, _not_found
 from reportforge_server_route_barcode import _get_barcode, _post_barcode
 from reportforge_server_route_audit import _post_audit
@@ -32,6 +34,8 @@ def handle_get(handler):
         return _get_health(handler)
     if path.startswith("/preview-barcode"):
         return _get_barcode(handler)
+    if path == "/datasources":
+        return _get_ds_list(handler)
     if path.startswith("/static/") or path.startswith("/reports/") or path.endswith((".js", ".css", ".svg", ".png", ".html", ".json")):
         return _serve_static(handler, path)
     _not_found(handler, path)
@@ -58,9 +62,22 @@ def handle_post(handler):
         return _post_tests_full(handler, body)
     if path == "/datasources":
         return _post_register_ds(handler, body)
+    if path == "/datasources/_test":
+        return _post_ds_test(handler, body)
+    if path.startswith("/datasources/") and path.endswith("/connect"):
+        alias = path.split("/")[2]
+        return _post_ds_connect(handler, alias, body)
     if path.startswith("/datasources/") and path.endswith("/query"):
         alias = path.split("/")[2]
         return _post_ds_query(handler, alias, body)
+    _not_found(handler, path)
+
+
+def handle_delete(handler):
+    path = _path(handler)
+    if path.startswith("/datasources/"):
+        alias = path.split("/")[2]
+        return _delete_ds(handler, alias)
     _not_found(handler, path)
 
 

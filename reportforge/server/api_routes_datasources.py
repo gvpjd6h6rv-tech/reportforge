@@ -1,13 +1,28 @@
 from __future__ import annotations
 
-from .api_contracts import DatasourceRegisterRequest, HTTPException
+from .api_contracts import DatasourceRegisterRequest, SQLConnTestRequest, SQLConnRegisterRequest, HTTPException
 
 
 def register_datasource_routes(app):
-    @app.get("/datasources", tags=["Datasources"], summary="List registered datasources")
+    @app.get("/datasources", tags=["Datasources"], summary="List registered datasources (no credentials)")
     async def _get_datasources():
-        from reportforge.core.render.datasource.db_source import list_registered
-        return list_registered()
+        from reportforge.core.render.datasource.db_source_registry import list_registered_safe
+        return list_registered_safe()
+
+    @app.post("/datasources/_test", tags=["Datasources"], summary="Test a SQL connection without registering")
+    async def _post_ds_test(req: SQLConnTestRequest):
+        from reportforge.core.render.datasource.db_source_introspection import ping_structured
+        return ping_structured(req.host, req.port, req.database, req.username, req.password, req.driver)
+
+    @app.post("/datasources/{alias}/connect", tags=["Datasources"], summary="Register a SQL connection from structured params")
+    async def _post_ds_connect(alias: str, req: SQLConnRegisterRequest):
+        from reportforge.core.render.datasource.db_source_introspection import build_mssql_url, ping
+        from reportforge.core.render.datasource.db_source_registry import register
+        url = build_mssql_url(req.host, req.port, req.database, req.username, req.password, req.driver)
+        spec = {"type": "db", "url": url, "query": "", "params": {}, "ttl": 300}
+        register(alias, spec)
+        reachable = ping(url)
+        return {"alias": alias, "registered": True, "reachable": reachable}
 
     @app.post("/datasources", tags=["Datasources"], status_code=201, summary="Register a named datasource connection")
     async def _post_register_ds(req: DatasourceRegisterRequest):
