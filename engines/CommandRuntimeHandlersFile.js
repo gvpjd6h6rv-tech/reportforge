@@ -14,6 +14,7 @@
       'save-as': () => FileEngine.saveAs(),
       'export-json': () => FileEngine.exportJSON(),
       'export-pdf': runExportPdf,
+      'load-document': () => global.DocumentLoadModal.open(),
     });
   }
 
