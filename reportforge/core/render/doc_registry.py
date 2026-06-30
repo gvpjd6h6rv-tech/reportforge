@@ -12,7 +12,7 @@ def _factura_layout_raw():
         import json
         return json.loads(layout_path.read_text(encoding="utf-8"))
     return __import__(
-        "core.render.resolvers.layout_loader",
+        "reportforge.core.render.resolvers.layout_loader",
         fromlist=["_default_invoice_raw"]
     )._default_invoice_raw()
 
@@ -55,7 +55,7 @@ REGISTRY: dict[str, DocType] = {
         layout_raw_fn=_factura_layout_raw,
         sample_data=None,   # uses SAMPLE_DATA from layout_loader default
         field_tree=None,    # uses FIELD_TREE from designer
-        builder_module="core.models.invoice_model",
+        builder_module="reportforge.core.models.invoice_model",
         builder_fn="build_invoice_model",
     ),
 
@@ -67,7 +67,7 @@ REGISTRY: dict[str, DocType] = {
         layout_raw_fn=remision_layout_raw,
         sample_data=REMISION_SAMPLE,
         field_tree=REMISION_FIELD_TREE,
-        builder_module="core.models.remision_model",
+        builder_module="reportforge.core.models.remision_model",
         builder_fn="build_remision_model",
     ),
 
@@ -79,7 +79,7 @@ REGISTRY: dict[str, DocType] = {
         layout_raw_fn=nota_credito_layout_raw,
         sample_data=NOTA_CREDITO_SAMPLE,
         field_tree=NOTA_CREDITO_FIELD_TREE,
-        builder_module="core.models.nota_credito_model",
+        builder_module="reportforge.core.models.nota_credito_model",
         builder_fn="build_nota_credito_model",
     ),
 
@@ -91,7 +91,7 @@ REGISTRY: dict[str, DocType] = {
         layout_raw_fn=retencion_layout_raw,
         sample_data=RETENCION_SAMPLE,
         field_tree=RETENCION_FIELD_TREE,
-        builder_module="core.models.retencion_model",
+        builder_module="reportforge.core.models.retencion_model",
         builder_fn="build_retencion_model",
     ),
 
@@ -103,7 +103,7 @@ REGISTRY: dict[str, DocType] = {
         layout_raw_fn=liquidacion_layout_raw,
         sample_data=LIQUIDACION_SAMPLE,
         field_tree=LIQUIDACION_FIELD_TREE,
-        builder_module="core.models.liquidacion_model",
+        builder_module="reportforge.core.models.liquidacion_model",
         builder_fn="build_liquidacion_model",
     ),
 }

@@ -160,14 +160,14 @@ def test_schema_mismatch_422(client):
     Mapper retorna dataset incompleto → SCHEMA_MISMATCH → 422.
 
     Se parchea build_invoice_model en el módulo cargado por call_builder
-    (importlib key 'core.models.invoice_model'). El core llama al validator
-    real → detecta paths faltantes → DocumentQueryError(422).
+    (importlib key 'reportforge.core.models.invoice_model'). El core llama al
+    validator real → detecta paths faltantes → DocumentQueryError(422).
     """
     incomplete = {
         "meta": {"doc_entry": 1, "doc_num": 1},
         # faltan: empresa, cliente, fiscal, pago, items, totales
     }
-    mod = importlib.import_module("core.models.invoice_model")
+    mod = importlib.import_module("reportforge.core.models.invoice_model")
     with patch.object(mod, "build_invoice_model", return_value=incomplete):
         r = client.get("/document/factura/1")
 
@@ -189,6 +189,44 @@ def test_factura_inexistente_404_smoke(client):
 
     assert r.status_code == 404, r.text
     _assert_error_envelope(r.json(), "DOC_NOT_FOUND")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Grupo C — builder_module import resolution
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_call_builder_module_is_importable():
+    """
+    REGISTRY['factura'].builder_module must resolve via importlib without
+    raising ModuleNotFoundError.  Catches the 'No module named core' regression
+    where builder_module used a bare 'core.*' path instead of
+    'reportforge.core.*'.
+    """
+    import importlib
+    from reportforge.core.render.doc_registry import REGISTRY
+
+    for key, doc_type in REGISTRY.items():
+        try:
+            mod = importlib.import_module(doc_type.builder_module)
+        except ModuleNotFoundError as exc:
+            pytest.fail(
+                f"REGISTRY['{key}'].builder_module='{doc_type.builder_module}' "
+                f"cannot be imported: {exc}"
+            )
+        assert hasattr(mod, doc_type.builder_fn), (
+            f"Module '{doc_type.builder_module}' has no attribute '{doc_type.builder_fn}'"
+        )
+
+
+def test_call_builder_module_has_no_bare_core_prefix():
+    """builder_module must start with 'reportforge.' — never bare 'core.'."""
+    from reportforge.core.render.doc_registry import REGISTRY
+
+    for key, doc_type in REGISTRY.items():
+        assert doc_type.builder_module.startswith("reportforge."), (
+            f"REGISTRY['{key}'].builder_module='{doc_type.builder_module}' "
+            f"must start with 'reportforge.' — bare 'core.*' fails at runtime"
+        )
 
 
 # ─────────────────────────────────────────────────────────────────────────────

@@ -79,11 +79,10 @@ def _patch_registered():
     return patch(_GET_REGISTERED_TARGET, return_value=_SPEC)
 
 
-# For §5 endpoint tests, call_builder loads the module as core.models.invoice_model
-# (a different sys.modules identity than reportforge.core.models.invoice_model).
-# Patching _GET_REGISTERED_TARGET only affects the reportforge.* copy.
+# For §5 endpoint tests, call_builder loads 'reportforge.core.models.invoice_model'
+# via importlib — same sys.modules key as the module patched by _SA_QUERY_TARGET.
 # We manipulate the shared _REGISTRY dict directly so get_registered() returns
-# the test spec regardless of which module copy calls it.
+# the test spec regardless of call site.
 @contextlib.contextmanager
 def _register_datasource():
     from reportforge.core.render.datasource.db_source_registry import register, unregister
