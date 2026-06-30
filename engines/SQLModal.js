@@ -117,7 +117,7 @@
     /* Status */
     const statusEl = _el('div', {
       id:    'sqlm-status',
-      style: 'min-height:16px;font-size:10px;word-break:break-word;margin-top:2px;',
+      style: 'min-height:16px;font-size:10px;word-break:break-word;margin-top:2px;user-select:text;cursor:text;',
     });
     statusEl.setAttribute('data-status-type', 'idle');
     body.appendChild(statusEl);
@@ -264,6 +264,13 @@
     if (cancelBtn) cancelBtn.addEventListener('click', close);
     if (testBtn)   testBtn.addEventListener('click',   _handleTest);
     if (saveBtn)   saveBtn.addEventListener('click',   _handleSave);
+
+    _modal.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+        e.preventDefault();
+        _handleTest();
+      }
+    });
   }
 
   function close() {

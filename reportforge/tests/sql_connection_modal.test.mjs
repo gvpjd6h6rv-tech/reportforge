@@ -31,6 +31,7 @@ const DLM_SRC = fs.readFileSync(resolve(ROOT, 'engines/DocumentLoadModal.js'), '
 class MockElement {
   constructor(tag) {
     this.tag         = tag.toUpperCase();
+    this.tagName     = tag.toUpperCase();   // required for keydown target checks
     this.id          = '';
     this.className   = '';
     this.textContent = '';
@@ -121,6 +122,15 @@ function _statusText(doc) { return _find(doc, 'sqlm-status')?.textContent || '';
 
 function _setField(doc, id, val) { const el = _find(doc, id); if (el) el.value = val; }
 function _click(doc, id) { const el = _find(doc, id); if (el) el._fire('click'); }
+
+function _fireKeydown(doc, targetId, key) {
+  const root   = _root(doc);
+  if (!root) return { prevented: [] };
+  const target = _find(doc, targetId);
+  const prevented = [];
+  root._fire('keydown', { key, target, preventDefault: () => prevented.push(true) });
+  return { prevented };
+}
 
 // ── §1 — open() ──────────────────────────────────────────────────────────────
 
@@ -386,6 +396,103 @@ test('§9 test: password value NOT in Content-Type or other headers', async () =
 
   const headers = JSON.stringify(calls[0]?.headers || {});
   assert.ok(!headers.includes('super_secret'), 'Password must NOT appear in request headers');
+});
+
+// ── §11 — Enter key on inputs triggers test ───────────────────────────────────
+
+test('§11 Enter in password field triggers handleTest → fetch called', async () => {
+  const fetchCalls = [];
+  const fakeResult = { ok: true, message: 'Conectado', latency_ms: 5 };
+  const fetchImpl = async (url, opts) => { fetchCalls.push({ url, opts }); return { json: async () => fakeResult }; };
+
+  const { modal, doc } = _loadSQLModal({ fetchImpl });
+  modal.open();
+  _setField(doc, 'sqlm-host', 'srv');
+  _setField(doc, 'sqlm-db', 'DB');
+  _setField(doc, 'sqlm-user', 'u');
+  _setField(doc, 'sqlm-pass', 'pw');
+  _fireKeydown(doc, 'sqlm-pass', 'Enter');
+  await new Promise(r => setTimeout(r, 10));
+
+  assert.ok(fetchCalls.length > 0, 'Enter in password must trigger handleTest → fetch');
+  assert.equal(_statusType(doc), 'ok');
+});
+
+test('§11 Enter in host field also triggers handleTest', async () => {
+  const fetchCalls = [];
+  const fetchImpl = async (url, opts) => { fetchCalls.push({ url, opts }); return { json: async () => ({ ok: false, message: 'fail', latency_ms: 1 }) }; };
+
+  const { modal, doc } = _loadSQLModal({ fetchImpl });
+  modal.open();
+  _setField(doc, 'sqlm-host', 'srv');
+  _setField(doc, 'sqlm-db', 'DB');
+  _setField(doc, 'sqlm-user', 'u');
+  _setField(doc, 'sqlm-pass', 'pw');
+  _fireKeydown(doc, 'sqlm-host', 'Enter');
+  await new Promise(r => setTimeout(r, 10));
+
+  assert.ok(fetchCalls.length > 0, 'Enter in any input must trigger test');
+});
+
+test('§11 Enter calls preventDefault', () => {
+  const { modal, doc } = _loadSQLModal();
+  modal.open();
+  const { prevented } = _fireKeydown(doc, 'sqlm-pass', 'Enter');
+  assert.ok(prevented.length > 0, 'Enter must call preventDefault()');
+});
+
+test('§11 non-Enter keydown does NOT trigger test', async () => {
+  const fetchCalls = [];
+  const fetchImpl = async (url, opts) => { fetchCalls.push(url); return { json: async () => ({}) }; };
+
+  const { modal, doc } = _loadSQLModal({ fetchImpl });
+  modal.open();
+  _setField(doc, 'sqlm-host', 'srv');
+  _setField(doc, 'sqlm-db', 'DB');
+  _setField(doc, 'sqlm-user', 'u');
+  _setField(doc, 'sqlm-pass', 'pw');
+  _fireKeydown(doc, 'sqlm-pass', 'Tab');
+  await new Promise(r => setTimeout(r, 10));
+
+  assert.equal(fetchCalls.length, 0, 'Tab must not trigger test');
+});
+
+test('§11 click "Probar conexión" still works (regression)', async () => {
+  const fetchCalls = [];
+  const fakeResult = { ok: true, message: 'ok', latency_ms: 1 };
+  const fetchImpl = async (url, opts) => { fetchCalls.push(url); return { json: async () => fakeResult }; };
+
+  const { modal, doc } = _loadSQLModal({ fetchImpl });
+  modal.open();
+  _setField(doc, 'sqlm-host', 'srv');
+  _setField(doc, 'sqlm-db', 'DB');
+  _setField(doc, 'sqlm-user', 'u');
+  _setField(doc, 'sqlm-pass', 'pw');
+  _click(doc, 'sqlm-test');
+  await new Promise(r => setTimeout(r, 10));
+
+  assert.ok(fetchCalls.length > 0, 'Click must still trigger test');
+  assert.equal(_statusType(doc), 'ok');
+});
+
+// ── §12 — Status log: selectable / copyable ───────────────────────────────────
+
+test('§12 status element has user-select:text in style', () => {
+  const { modal, doc } = _loadSQLModal();
+  modal.open();
+  const statusEl = _find(doc, 'sqlm-status');
+  assert.ok(statusEl, 'sqlm-status must exist');
+  const css = statusEl.style.cssText || '';
+  assert.ok(css.includes('user-select:text'), `Expected user-select:text in style, got: "${css}"`);
+});
+
+test('§12 status element has cursor:text in style', () => {
+  const { modal, doc } = _loadSQLModal();
+  modal.open();
+  const statusEl = _find(doc, 'sqlm-status');
+  assert.ok(statusEl, 'sqlm-status must exist');
+  const css = statusEl.style.cssText || '';
+  assert.ok(css.includes('cursor:text'), `Expected cursor:text in style, got: "${css}"`);
 });
 
 // ── §10 — DocumentLoadModal datasource selector ───────────────────────────────
