@@ -36,6 +36,10 @@ def handle_get(handler):
         return _get_barcode(handler)
     if path == "/datasources":
         return _get_ds_list(handler)
+    parts = path.split("/")
+    if len(parts) == 4 and parts[1] == "document":
+        from reportforge_server_route_document import _get_document
+        return _get_document(handler, parts[2], parts[3])
     if path.startswith("/static/") or path.startswith("/reports/") or path.endswith((".js", ".css", ".svg", ".png", ".html", ".json")):
         return _serve_static(handler, path)
     _not_found(handler, path)
