@@ -331,3 +331,81 @@ test('align actions never reorder, add, or remove entries in the selection array
     }
   }
 });
+
+// ── sameSize ──────────────────────────────────────────────────────────────────
+
+test('sameSize — non-reference elements adopt both width and height of the first element', () => {
+  const { CRS, elements } = load([
+    makeEl('ref', 0, 0, 100, 80),
+    makeEl('b',  10, 10,  40, 20),
+    makeEl('c',  20, 20,  60, 30),
+  ]);
+  CRS.sameSize();
+  assert.equal(elements[0].w, 100, 'ref.w must be unchanged');
+  assert.equal(elements[0].h, 80,  'ref.h must be unchanged');
+  assert.equal(elements[1].w, 100, 'b.w must match ref.w');
+  assert.equal(elements[1].h, 80,  'b.h must match ref.h');
+  assert.equal(elements[2].w, 100, 'c.w must match ref.w');
+  assert.equal(elements[2].h, 80,  'c.h must match ref.h');
+});
+
+test('sameSize — does not touch x or y coordinates', () => {
+  const { CRS, elements } = load([
+    makeEl('ref',  5, 10, 100, 80),
+    makeEl('b',   30, 40,  40, 20),
+  ]);
+  CRS.sameSize();
+  assert.equal(elements[0].x, 5,  'ref.x must be unchanged');
+  assert.equal(elements[0].y, 10, 'ref.y must be unchanged');
+  assert.equal(elements[1].x, 30, 'b.x must be unchanged');
+  assert.equal(elements[1].y, 40, 'b.y must be unchanged');
+});
+
+test('sameSize — is a no-op with a single selected element', () => {
+  const { CRS, elements, calls } = load([makeEl('solo', 0, 0, 50, 50)]);
+  CRS.sameSize();
+  assert.deepEqual(elements[0], makeEl('solo', 0, 0, 50, 50), 'lone element must not be mutated');
+  assert.equal(calls.saveHistory, 0, 'must not save history when it is a no-op');
+});
+
+test('sameSize — is a no-op with an empty selection', () => {
+  const { CRS, calls } = load([]);
+  assert.doesNotThrow(() => CRS.sameSize());
+  assert.equal(calls.saveHistory, 0);
+});
+
+test('sameSize — calls DS.saveHistory() exactly once', () => {
+  const { CRS, calls } = load([makeEl('a', 0, 0, 100, 80), makeEl('b', 0, 0, 40, 20)]);
+  CRS.sameSize();
+  assert.equal(calls.saveHistory, 1);
+});
+
+test('sameSize — calls syncSelectionPanels() exactly once', () => {
+  const { CRS, calls } = load([makeEl('a', 0, 0, 100, 80), makeEl('b', 0, 0, 40, 20)]);
+  CRS.sameSize();
+  assert.equal(calls.syncSelectionPanels, 1);
+});
+
+test('sameSize — routes mutations through DS.updateElementLayout with source tag', () => {
+  const { CRS, calls } = load([makeEl('a', 0, 0, 100, 80), makeEl('b', 0, 0, 40, 20)]);
+  CRS.sameSize();
+  assert.ok(calls.updateElementLayout.length > 0);
+  for (const call of calls.updateElementLayout) {
+    assert.equal(call.source, 'CommandRuntimeSelection.sameSize');
+  }
+});
+
+test('sameSize — updates canvas position once per non-reference element', () => {
+  const { CRS, calls } = load([makeEl('ref', 0, 0, 100, 80), makeEl('b', 0, 0, 40, 20), makeEl('c', 0, 0, 30, 10)]);
+  CRS.sameSize();
+  assert.deepEqual(calls.updateElementPosition, ['b', 'c']);
+});
+
+test('sameSize — applies both w and h in a single updateElementLayout call per element', () => {
+  const { CRS, calls } = load([makeEl('a', 0, 0, 100, 80), makeEl('b', 0, 0, 40, 20)]);
+  CRS.sameSize();
+  const bCall = calls.updateElementLayout.find((c) => c.id === 'b');
+  assert.ok(bCall, 'must have an updateElementLayout call for b');
+  assert.equal(bCall.partial.w, 100, 'partial must include w');
+  assert.equal(bCall.partial.h, 80,  'partial must include h');
+});

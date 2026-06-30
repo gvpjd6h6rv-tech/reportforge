@@ -150,6 +150,15 @@
     DS.saveHistory();
   }
 
+  function sameSize() {
+    const sel = DS.getSelectedElements();
+    if (sel.length < 2) return;
+    const ref = sel[0];
+    sel.slice(1).forEach((e) => { DS.updateElementLayout(e.id, { w: ref.w, h: ref.h }, 'CommandRuntimeSelection.sameSize'); _canonicalCanvasWriter().updateElementPosition(e.id); });
+    syncSelectionPanels();
+    DS.saveHistory();
+  }
+
   function bringFront() {
     const sel = DS.getSelectedElements();
     if (!sel.length) return;
@@ -226,6 +235,7 @@
     alignMiddles,
     sameWidth,
     sameHeight,
+    sameSize,
     bringFront,
     sendBack,
     bringForward,

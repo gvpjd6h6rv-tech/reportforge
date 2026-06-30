@@ -20,6 +20,7 @@
       'align-bottoms': () => CommandEngine.alignBottoms(),
       'same-width': () => CommandEngine.sameWidth(),
       'same-height': () => CommandEngine.sameHeight(),
+      'same-size': () => CommandEngine.sameSize(),
       'bring-front': () => CommandEngine.bringFront(),
       'send-back': () => CommandEngine.sendBack(),
       'bring-forward': () => CommandEngine.bringForward && CommandEngine.bringForward(),
