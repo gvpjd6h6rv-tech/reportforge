@@ -4,8 +4,21 @@
   const { dispatchActionMap } = global.CommandRuntimeShared;
 
   function runFormatField() {
-    if (DS.selection.size > 0) PropertiesEngine.render();
-    document.getElementById('panel-right').scrollTop = 9999;
+    if (!DS.selection.size) return;
+    PropertiesEngine.render();
+    const panelRight = document.getElementById('panel-right');
+    if (panelRight) panelRight.scrollTop = 9999;
+    const propsBody = document.getElementById('props-body');
+    if (propsBody) propsBody.scrollTop = 9999;
+  }
+
+  function runOpenProperties() {
+    if (!DS.selection.size) return;
+    PropertiesEngine.render();
+    const panelRight = document.getElementById('panel-right');
+    if (panelRight) panelRight.scrollTop = 9999;
+    const propsBody = document.getElementById('props-body');
+    if (propsBody) propsBody.scrollTop = 0;
   }
 
   function runColorPicker(id, value, format, swatchVar) {
@@ -25,10 +38,11 @@
 
   function handleFormatCommands(action) {
     return dispatchActionMap(action, {
-      'format-field': runFormatField,
-      'color-font': runColorFont,
-      'color-bg': () => runColorPicker('color-picker-bg', '#ffffff', 'bgColor', '--swatch-bg'),
-      'color-border': () => runColorPicker('color-picker-border', '#000000', 'borderColor', '--swatch-border'),
+      'format-field':    runFormatField,
+      'open-properties': runOpenProperties,
+      'color-font':      runColorFont,
+      'color-bg':        () => runColorPicker('color-picker-bg', '#ffffff', 'bgColor', '--swatch-bg'),
+      'color-border':    () => runColorPicker('color-picker-border', '#000000', 'borderColor', '--swatch-border'),
     });
   }
 

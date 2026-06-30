@@ -47,6 +47,7 @@ function loadHandlers(options = {}) {
 
   const elements = new Map();
   const panelRight = { scrollTop: 0 };
+  const propsBody  = { scrollTop: 0 };
   const gridButton = { classList: { toggle: makeSpy(calls, 'classToggles') } };
   const snapButton = { classList: { toggle: makeSpy(calls, 'classToggles') } };
   const fontPicker = { id: 'color-picker-font', value: '', click() { calls.dialog.push(['click', 'color-picker-font']); }, oninput: null };
@@ -63,6 +64,7 @@ function loadHandlers(options = {}) {
     },
     getElementById(id) {
       if (id === 'panel-right') return panelRight;
+      if (id === 'props-body')  return propsBody;
       if (id === 'btn-grid') return gridButton;
       if (id === 'btn-snap') return snapButton;
       if (id === 'color-picker-font') return fontPicker;
@@ -235,6 +237,15 @@ function loadHandlers(options = {}) {
     alert(message) {
       calls.alerts.push(message);
     },
+    DocumentTabManager: {
+      create() {
+        if (!context.confirm('¿Crear nuevo informe? Los cambios no guardados se perderán.')) return;
+        calls.dialog.push(['DocumentTabManager.create']);
+        context.DS.setElements([], 'CommandRuntimeHandlers.new');
+        context.SectionEngine.render();
+        context.SelectionEngine.clearSelection();
+      },
+    },
     print() {
       calls.print.push([]);
     },
@@ -269,12 +280,12 @@ function loadHandlers(options = {}) {
     vm.runInContext(source, context, { filename: rel });
   }
 
-  return { handlers: context.CommandRuntimeHandlers, calls, context, panelRight, fontPicker, bgPicker, borderPicker };
+  return { handlers: context.CommandRuntimeHandlers, calls, context, panelRight, propsBody, fontPicker, bgPicker, borderPicker };
 }
 
 test('CommandRuntimeHandlers.handleAction dispatches each family and preserves side effects', async () => {
   const runtime = loadHandlers({ exportPdfReject: true, promptValue: '88' });
-  const { handlers, calls, context, panelRight, fontPicker, bgPicker, borderPicker } = runtime;
+  const { handlers, calls, context, panelRight, propsBody, fontPicker, bgPicker, borderPicker } = runtime;
 
   handlers.handleAction('open');
   handlers.handleAction('save');
@@ -286,6 +297,7 @@ test('CommandRuntimeHandlers.handleAction dispatches each family and preserves s
   handlers.handleAction('zoom-fit-page');
   handlers.handleAction('cut');
   handlers.handleAction('format-field');
+  handlers.handleAction('open-properties');
   handlers.handleAction('color-font');
   handlers.handleAction('color-bg');
   handlers.handleAction('color-border');
@@ -336,8 +348,10 @@ test('CommandRuntimeHandlers.handleAction dispatches each family and preserves s
   assert.deepEqual(calls.preview.map((args) => args.length), [0, 0]);
   assert.deepEqual(calls.zoom[0].slice(0, 2), [1, 'plus']);
   assert.equal(calls.command.length >= 1, true);
-  assert.deepEqual(calls.format[0], []);
+  assert.deepEqual(calls.format[0], []);   // format-field → PropertiesEngine.render()
+  assert.deepEqual(calls.format[1], []);   // open-properties → PropertiesEngine.render()
   assert.equal(panelRight.scrollTop, 9999);
+  assert.equal(propsBody.scrollTop, 0);    // open-properties called last → scrolled to top
   assert.equal(fontPicker.value, '#445566');
   assert.equal(bgPicker.value, '#ffffff');
   assert.equal(borderPicker.value, '#000000');

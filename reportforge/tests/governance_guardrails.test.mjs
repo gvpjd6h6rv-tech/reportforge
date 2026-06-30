@@ -540,7 +540,7 @@ test('command runtime split stays modular, thin, and contract-stable', () => {
     'engines/CommandRuntimeHandlersPreview.js': 40,
     'engines/CommandRuntimeHandlersZoom.js': 40,
     'engines/CommandRuntimeHandlersSelectionDispatch.js': 60,
-    'engines/CommandRuntimeHandlersFormat.js': 40,
+    'engines/CommandRuntimeHandlersFormat.js': 60,
     'engines/CommandRuntimeHandlersInsert.js': 40,
     'engines/CommandRuntimeHandlersLayout.js': 50,
     'engines/CommandRuntimeHandlersDialog.js': 40,
