@@ -19,6 +19,7 @@
  *   Ctrl+0        → zoom reset
  *   Ctrl+G        → toggle grid
  *   Ctrl+;        → toggle snap
+ *   F5            → toggle preview
  */
 'use strict';
 
@@ -284,6 +285,10 @@ const KeyboardEngine = (() => {
     _register('ctrl+o', () => { if (typeof FileEngine !== 'undefined') FileEngine.load(); });
   }
 
+  function _registerPreviewShortcuts() {
+    _register('f5', () => { if (typeof handleAction === 'function') handleAction('preview'); });
+  }
+
   function _init() {
     _registerUndoRedoShortcuts();
     _registerClipboardShortcuts();
@@ -294,6 +299,7 @@ const KeyboardEngine = (() => {
     _registerZoomShortcuts();
     _registerGridShortcuts();
     _registerFileShortcuts();
+    _registerPreviewShortcuts();
 
     document.addEventListener('keydown', _onKeyDown);
     // The arrow key's own keyup is the real "gesture ended" signal (mouse
