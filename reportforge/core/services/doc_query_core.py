@@ -33,13 +33,14 @@ def fetch_document(
     from reportforge.core.render.datasource.db_source_errors import (
         DbConnectionError,
         DbDocNotFoundError,
+        DbQueryError,
         DbTimeoutError,
     )
 
     doc_type_entry = REGISTRY[doc_type]
 
     try:
-        dataset = doc_type_entry.call_builder(doc_number)
+        dataset = doc_type_entry.call_builder(doc_number, datasource_alias=datasource_alias)
     except NotImplementedError as exc:
         raise DocumentQueryError(
             code="MAPPER_NOT_IMPLEMENTED",
@@ -67,6 +68,13 @@ def fetch_document(
             message="La consulta SQL superó el timeout configurado.",
             details=str(exc),
             http_status=504,
+        ) from exc
+    except DbQueryError as exc:
+        raise DocumentQueryError(
+            code="DB_QUERY_FAILED",
+            message="Error en la consulta SQL al datasource.",
+            details=str(exc),
+            http_status=500,
         ) from exc
 
     validation = validate_dataset_shape(dataset)

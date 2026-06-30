@@ -6,6 +6,7 @@ from reportforge.core.render.datasource.db_source_pymssql import query as pymssq
 from reportforge.core.render.datasource.db_source_errors import (
     DbConnectionError,
     DbDocNotFoundError,
+    DbQueryError,
     DbSourceError,
     DbTimeoutError,
 )
@@ -15,7 +16,7 @@ SELECT
     T0.DocEntry            AS doc_entry,
     T0.DocNum              AS doc_num,
     T0.ObjType             AS obj_type,
-    T0.DocCurrency         AS currency,
+    T0.DocCur              AS currency,
     T1.CardName            AS cliente_nombre,
     T1.LicTradNum          AS cliente_ruc,
     T1.E_Mail              AS cliente_email,
@@ -82,12 +83,24 @@ def fetch_company_info(spec: dict) -> dict:
     return rows[0] if rows else {}
 
 
+_QUERY_ERROR_PATTERNS = (
+    "Invalid column name",
+    "Invalid object name",
+    "Incorrect syntax near",
+    "Conversion failed when converting",
+    "Column name or number of supplied values",
+)
+
+
 def _reclassify(exc: Exception) -> NoReturn:
-    if isinstance(exc, (DbDocNotFoundError, DbConnectionError, DbTimeoutError)):
+    if isinstance(exc, (DbDocNotFoundError, DbConnectionError, DbTimeoutError, DbQueryError)):
         raise exc
     if isinstance(exc, DbSourceError):
         raise DbConnectionError(str(exc)) from exc
     msg = str(exc).lower()
     if "timeout" in msg or "timed out" in msg:
         raise DbTimeoutError(str(exc)) from exc
+    # pymssql raises ProgrammingError for SQL schema/syntax errors
+    if type(exc).__name__ == "ProgrammingError" or any(p in str(exc) for p in _QUERY_ERROR_PATTERNS):
+        raise DbQueryError(str(exc)) from exc
     raise DbConnectionError(str(exc)) from exc

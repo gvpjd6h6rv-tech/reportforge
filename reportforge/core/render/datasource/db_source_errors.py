@@ -18,3 +18,8 @@ class DbTimeoutError(DbSourceError):
 class DbDocNotFoundError(DbSourceError):
     """Raised by a mapper when the requested document does not exist."""
     pass
+
+
+class DbQueryError(DbSourceError):
+    """Raised when a SQL query fails due to schema or syntax errors (not connection)."""
+    pass
