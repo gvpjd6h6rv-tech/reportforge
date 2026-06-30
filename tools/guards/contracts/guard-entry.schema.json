@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://reportforge/tools/guards/contracts/guard-entry.schema.json",
+  "title": "RF Guard Entry Contract",
+  "description": "Phase 2 SSOT contract for one row of guards-map.json. One entry = one responsibility in one layer.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "layer", "rule", "ruleReviewed", "pathCurrent", "owner", "state", "test", "blocking"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Unique kebab-case identifier."
+    },
+    "layer": {
+      "type": "string",
+      "enum": ["guard", "checker", "runner", "map", "cli"],
+      "description": "Architectural layer. guard=1 responsibility, checker=1 rule, runner=orchestration only, map=data only, cli=I/O only."
+    },
+    "rule": {
+      "type": "string",
+      "minLength": 8,
+      "description": "Single-responsibility statement. Exactly one rule — no ' and ' joining two distinct rules."
+    },
+    "ruleReviewed": {
+      "type": "boolean",
+      "description": "false = rule text auto-derived from filename, pending human confirmation in a later phase. Honest evidence flag (no fake-green)."
+    },
+    "pathCurrent": {
+      "type": ["string", "null"],
+      "description": "Existing path on disk for state=existing; null only for state=planned."
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Accountable owner. No entry without an owner."
+    },
+    "state": {
+      "type": "string",
+      "enum": ["existing", "planned", "deprecated"]
+    },
+    "test": {
+      "type": ["string", "null"],
+      "description": "Path to the 1:1 architecture contract test, or null if not yet written."
+    },
+    "blocking": {
+      "type": "boolean",
+      "const": false,
+      "description": "Phase 2 invariant: every entry MUST be non-blocking."
+    },
+    "scope": {
+      "type": ["string", "null"],
+      "description": "What files/dirs the guard inspects. Set when reviewed or planned."
+    },
+    "pathPlanned": {
+      "type": ["string", "null"],
+      "description": "Target path for state=planned guards not yet on disk."
+    },
+    "reviewNote": {
+      "type": ["string", "null"],
+      "description": "Reviewer finding (e.g. why it can't be single-rule yet)."
+    },
+    "recommendation": {
+      "type": ["string", "null"],
+      "enum": ["clean", "split", "merge", "reclassify", "keep", null],
+      "description": "Outcome of rule review. 'clean' = already 1 rule; 'split' = multiple rules; 'reclassify' = wrong layer."
+    }
+  }
+}
