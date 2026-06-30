@@ -63,11 +63,12 @@ def _resolve_db_spec(alias: str | None = None) -> dict:
 
 
 def _build_numero_documento(header: dict) -> str:
-    """Construct SRI document number from U_SER_EST, U_SER_PE, FolioNum."""
+    """Construct SRI number: U_SER_EST-U_SER_PE-seq(9).
+    seq priority: U_CORRELATIVO → FolioNum → fallback empty."""
     est = str(header.get("ser_est") or "").strip()
     pto = str(header.get("ser_pe") or "").strip()
-    folio = header.get("folio_num")
-    sec = str(int(folio)).zfill(9) if folio not in (None, "", 0) else ""
+    raw_seq = header.get("correlativo") or header.get("folio_num")
+    sec = str(int(raw_seq)).zfill(9) if raw_seq not in (None, "", 0) else ""
     if est and pto and sec:
         return f"{est}-{pto}-{sec}"
     return sec or str(header.get("doc_num") or "")
@@ -109,9 +110,12 @@ def build_invoice_model(doc_entry: int, datasource_alias: str | None = None) -> 
         },
         "empresa": {
             "razon_social": str(company.get("razon_social") or ""),
-            "nombre_comercial": str(company.get("razon_social") or ""),
+            "nombre_comercial": str(company.get("nombre_comercial") or company.get("razon_social") or ""),
             "ruc": str(company.get("ruc") or ""),
             "direccion_matriz": str(company.get("direccion_matriz") or ""),
+            "pais": str(company.get("pais") or ""),
+            "telefono": str(company.get("telefono") or ""),
+            "email": str(company.get("email") or ""),
             "direccion_sucursal": None,
             "obligado_contabilidad": "SI",
             "agente_retencion": "NO",
@@ -129,6 +133,10 @@ def build_invoice_model(doc_entry: int, datasource_alias: str | None = None) -> 
             "tipo_comprobante": str(header.get("tipo_comprobante") or ""),
             "tipo_emision": str(header.get("tipo_emision") or ""),
             "estado_fe": str(header.get("estado_fe") or "") or None,
+            "codigo_error": str(header.get("codigo_error") or "") or None,
+            "descripcion_error": str(header.get("descripcion_error") or "") or None,
+            "pdf_generado": str(header.get("pdf_generado") or "") or None,
+            "mail_enviado": str(header.get("mail_enviado") or "") or None,
             "numero_documento": _build_numero_documento(header),
             "numero_autorizacion": str(header.get("numero_autorizacion") or ""),
             "fecha_autorizacion": str(header.get("fecha_autorizacion") or ""),
@@ -136,6 +144,7 @@ def build_invoice_model(doc_entry: int, datasource_alias: str | None = None) -> 
         },
         "pago": {
             "forma_pago_fe": str(header.get("forma_pago_fe") or "01"),
+            "plazo": str(header.get("plazo") or "") or None,
             "total": total,
         },
         "items": items,

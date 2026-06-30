@@ -172,49 +172,67 @@ def test_db_query_failed_500(client):
     _assert_error_envelope(r.json(), "DB_QUERY_FAILED")
 
 
-def test_no_doc_currency_in_header_sql():
-    """Regression: OINV.DocCurrency does not exist; must use DocCur."""
-    import inspect
-    from reportforge.core.models import invoice_queries
-    src = inspect.getsource(invoice_queries)
-    assert "DocCurrency" not in src, (
-        "DocCurrency is not a valid SAP B1 column — use DocCur"
-    )
-    assert "DocCur" in src, "header SQL must select DocCur from OINV"
+def test_invoice_queries_column_audit():
+    """
+    Authoritative column audit for invoice_queries.py.
 
+    Source: docs/ Mapeo definitivo de UDF para ReportForge.md (2026-06-30)
+    All columns validated against SAP B1 Ecuador production database.
 
-def test_no_u_ambiente_in_header_sql():
-    """Regression: U_Ambiente renamed to U_EXX_FE_TIPAMB in this SAP installation."""
-    import inspect
-    from reportforge.core.models import invoice_queries
-    src = inspect.getsource(invoice_queries)
-    assert "U_Ambiente" not in src, (
-        "U_Ambiente is not valid here — use U_EXX_FE_TIPAMB"
-    )
-    assert "U_EXX_FE_TIPAMB" in src
-
-
-def test_header_sql_udf_column_names():
-    """Regression: all six UDF column names in _HEADER_SQL must be the real SAP B1 Ecuador names."""
+      OINV  — DocEntry, DocNum, ObjType, DocCur, DocTotal, VatSum, CardCode,
+               U_EXX_FE_TIPAMB, U_EXX_FE_TIPCOM, U_EXX_FE_TIPEMI, U_EXX_FE_Estado,
+               U_EXX_FE_ClaAcc (clave_acceso), U_EXX_FE_FECAUT,
+               U_SER_EST, U_SER_PE, U_CORRELATIVO, U_EXX_FPAGO_VENTAS
+      INV1  — ItemCode, Dscription, Quantity, Price, DiscPrcnt, LineTotal, TaxCode,
+               U_DescLineal, U_EXX_FE_PorICEVta, U_EXX_FE_ValICEVta
+      OCRD  — CardCode, CardName, LicTradNum, E_Mail, Address, U_TIPO_ID
+      OADM  — CompnyName, AliasName, TaxIdNum, CompnyAddr
+      [@EXX_FPAGO_VENT_DET] — Code, LineId, U_Exx_Forma_Pago
+    """
     import inspect
     from reportforge.core.models import invoice_queries
     src = inspect.getsource(invoice_queries)
 
-    wrong = {
-        "U_TipoEmision":       "use U_EXX_FE_TIPEMI",
-        "U_NumDocumento":      "derived from U_SER_EST+U_SER_PE+FolioNum",
-        "U_ClaveAcceso":       "use U_NUM_AUTOR",
-        "U_NumAutorizacion":   "use U_NUM_AUTOR",
-        "U_FechaAutorizacion": "use U_EXX_FE_FECAUT",
-        "U_FormaPagoFE":       "join [@EXX_FPAGO_VENT_DET] via U_EXX_FPAGO_VENTAS",
+    # ── columns that must NOT appear (historical wrong names) ──────────────────
+    MUST_BE_ABSENT = {
+        "DocCurrency":         "OINV has DocCur, not DocCurrency",
+        "CompanyName":         "OADM has CompnyName, not CompanyName",
+        "U_Ambiente":          "confirmed column is U_EXX_FE_TIPAMB",
+        "U_TipoEmision":       "confirmed column is U_EXX_FE_TIPEMI",
+        "U_NumDocumento":      "derived from U_SER_EST + U_SER_PE + U_CORRELATIVO",
+        "U_ClaveAcceso":       "confirmed column is U_EXX_FE_ClaAcc",
+        "U_NumAutorizacion":   "confirmed column is U_EXX_FE_ClaAcc",
+        "U_FechaAutorizacion": "confirmed column is U_EXX_FE_FECAUT",
+        "U_FormaPagoFE":       "comes from [@EXX_FPAGO_VENT_DET].U_Exx_Forma_Pago",
+        "TaxOffice":           "OADM.TaxOffice is the tax authority name, not company RUC",
     }
-    for col, hint in wrong.items():
-        assert col not in src, f"{col} is not a valid SAP B1 column — {hint}"
+    for col, reason in MUST_BE_ABSENT.items():
+        assert col not in src, f"Stale column '{col}' found — {reason}"
 
-    correct = ["U_EXX_FE_TIPEMI", "U_SER_EST", "U_SER_PE", "FolioNum",
-               "U_NUM_AUTOR", "U_EXX_FE_FECAUT", "EXX_FPAGO_VENT_DET"]
-    for col in correct:
-        assert col in src, f"Expected column/table {col} missing from header SQL"
+    # ── confirmed column names that must appear (per MD 2026-06-30) ──────────
+    MUST_BE_PRESENT = [
+        # OINV standard
+        "DocCur", "DocTotal", "VatSum",
+        # OINV UDFs — FE info
+        "U_EXX_FE_TIPAMB", "U_EXX_FE_TIPCOM", "U_EXX_FE_TIPEMI", "U_EXX_FE_Estado",
+        "U_EXX_FE_ClaAcc", "U_EXX_FE_FECAUT",
+        # OINV UDFs — FE supplementary status
+        "U_EXX_FE_CODERR", "U_EXX_FE_DESERR", "U_EXX_FE_PdfCreado", "U_EXX_FE_MailEnviado",
+        # OINV UDFs — Ecuador numbering
+        "U_SER_EST", "U_SER_PE", "U_CORRELATIVO",
+        # OINV UDFs — payment
+        "U_EXX_FPAGO_VENTAS",
+        # INV1 UDFs
+        "U_DescLineal", "U_EXX_FE_PorICEVta", "U_EXX_FE_ValICEVta",
+        # OCRD UDFs
+        "U_TIPO_ID", "U_Exx_Plazo",
+        # OADM confirmed
+        "CompnyName", "AliasName", "TaxIdNum", "CompnyAddr", "Phone1",
+        # UDO join for forma_pago
+        "EXX_FPAGO_VENT_DET", "U_Exx_Forma_Pago",
+    ]
+    for col in MUST_BE_PRESENT:
+        assert col in src, f"Confirmed column/table '{col}' missing from invoice_queries.py"
 
 
 def test_numero_documento_derived_from_ser_est_ser_pe_folio(client):
@@ -310,10 +328,12 @@ _HEADER_ROW = {
     "doc_entry": 1001, "doc_num": 42, "obj_type": "13", "currency": "USD",
     "cliente_nombre": "TEST", "cliente_ruc": "0991234567001",
     "cliente_email": "x@x.com", "cliente_direccion": "Av. Test 1",
-    "cliente_tipo_id": "04",
+    "cliente_tipo_id": "04", "plazo": None,
     "total": 112.00, "iva": 12.00, "ambiente": "2",
     "tipo_comprobante": "01", "tipo_emision": "1", "estado_fe": "A",
-    "ser_est": "001", "ser_pe": "001", "folio_num": 42,
+    "codigo_error": None, "descripcion_error": None,
+    "pdf_generado": None, "mail_enviado": None,
+    "ser_est": "001", "ser_pe": "001", "correlativo": 42, "folio_num": 42,
     "clave_acceso": "0102202001991234567001010010010000000421234567811",
     "numero_autorizacion": "0102202001991234567001010010010000000421234567811",
     "fecha_autorizacion": "2024-01-02T10:00:00", "forma_pago_fe": "01",
@@ -324,8 +344,9 @@ _LINE_ROW = {
     "subtotal": 100.00, "ice_porcentaje": 0.0, "ice_valor": 0.0,
 }
 _COMPANY_ROW = {
-    "razon_social": "EMPRESA DEMO", "ruc": "0991111111001",
-    "direccion_matriz": "Av. Principal 100",
+    "razon_social": "EMPRESA DEMO", "nombre_comercial": "DEMO COMERCIAL",
+    "ruc": "0991111111001", "direccion_matriz": "Av. Principal 100",
+    "pais": "EC", "telefono": "04-2000000", "email": "demo@empresa.com",
 }
 _LINUX_SPEC = {
     "type": "mssql", "host": "srv", "port": 1433,

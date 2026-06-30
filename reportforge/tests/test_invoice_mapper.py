@@ -30,15 +30,21 @@ _HEADER_ROW = {
     "cliente_email": "cliente@test.com",
     "cliente_direccion": "Av. Siempre Viva 742",
     "cliente_tipo_id": "04",
+    "plazo": "30",
     "total": 112.00,
     "iva": 12.00,
     "ambiente": "2",
     "tipo_comprobante": "01",
     "tipo_emision": "1",
     "estado_fe": "A",
-    # numero_documento is NOT a DB column; derived from ser_est+ser_pe+folio_num
+    "codigo_error": None,
+    "descripcion_error": None,
+    "pdf_generado": None,
+    "mail_enviado": None,
+    # numero_documento: U_CORRELATIVO preferred, FolioNum as fallback
     "ser_est": "001",
     "ser_pe": "001",
+    "correlativo": 42,
     "folio_num": 42,
     "clave_acceso": "0102202001991234567001010010010000000421234567811",
     "numero_autorizacion": "0102202001991234567001010010010000000421234567811",
@@ -61,8 +67,12 @@ _LINE_ROW = {
 
 _COMPANY_ROW = {
     "razon_social": "EMPRESA DEMO S.A.",
+    "nombre_comercial": "DEMO COMERCIAL",
     "ruc": "0991111111001",
     "direccion_matriz": "Av. Principal 100, Guayaquil",
+    "pais": "EC",
+    "telefono": "04-2000000",
+    "email": "demo@empresa.com",
 }
 
 _SPEC = {
@@ -129,6 +139,7 @@ class TestValidInvoiceReturnsDataset(unittest.TestCase):
         result = self._call()
         emp = result["empresa"]
         self.assertEqual(emp["razon_social"], "EMPRESA DEMO S.A.")
+        self.assertEqual(emp["nombre_comercial"], "DEMO COMERCIAL")
         self.assertEqual(emp["ruc"], "0991111111001")
         self.assertIn("direccion_matriz", emp)
         self.assertEqual(emp["obligado_contabilidad"], "SI")
@@ -149,6 +160,26 @@ class TestValidInvoiceReturnsDataset(unittest.TestCase):
         self.assertEqual(fis["ambiente"], "Producción")
         self.assertEqual(fis["tipo_emision"], "1")
         self.assertIn("clave_acceso", fis)
+
+    def test_numero_documento_falls_back_to_folio_num_when_correlativo_null(self):
+        from reportforge.core.models.invoice_model import build_invoice_model
+
+        header = {**_HEADER_ROW, "correlativo": None, "folio_num": 21660,
+                  "ser_est": "002", "ser_pe": "101"}
+        mock_sa = MagicMock(side_effect=[[header], [_LINE_ROW], [_COMPANY_ROW]])
+        with _patch_registered(), patch(_SA_QUERY_TARGET, mock_sa):
+            result = build_invoice_model(1001)
+        self.assertEqual(result["fiscal"]["numero_documento"], "002-101-000021660")
+
+    def test_numero_documento_prefers_correlativo_over_folio_num(self):
+        from reportforge.core.models.invoice_model import build_invoice_model
+
+        header = {**_HEADER_ROW, "correlativo": 21660, "folio_num": 99999,
+                  "ser_est": "002", "ser_pe": "101"}
+        mock_sa = MagicMock(side_effect=[[header], [_LINE_ROW], [_COMPANY_ROW]])
+        with _patch_registered(), patch(_SA_QUERY_TARGET, mock_sa):
+            result = build_invoice_model(1001)
+        self.assertEqual(result["fiscal"]["numero_documento"], "002-101-000021660")
 
     def test_fiscal_ambiente_mapping(self):
         from reportforge.core.models.invoice_model import build_invoice_model

@@ -22,17 +22,23 @@ SELECT
     T1.E_Mail                          AS cliente_email,
     T1.Address                         AS cliente_direccion,
     ISNULL(T1.U_TIPO_ID, '')           AS cliente_tipo_id,
+    ISNULL(T1.U_Exx_Plazo, '')         AS plazo,
     T0.DocTotal                        AS total,
     T0.VatSum                          AS iva,
     T0.U_EXX_FE_TIPAMB                 AS ambiente,
     T0.U_EXX_FE_TIPCOM                 AS tipo_comprobante,
     T0.U_EXX_FE_TIPEMI                 AS tipo_emision,
     ISNULL(T0.U_EXX_FE_Estado, '')     AS estado_fe,
+    ISNULL(T0.U_EXX_FE_CODERR, '')     AS codigo_error,
+    ISNULL(T0.U_EXX_FE_DESERR, '')     AS descripcion_error,
+    ISNULL(T0.U_EXX_FE_PdfCreado, '')  AS pdf_generado,
+    ISNULL(T0.U_EXX_FE_MailEnviado,'') AS mail_enviado,
     T0.U_SER_EST                       AS ser_est,
     T0.U_SER_PE                        AS ser_pe,
+    T0.U_CORRELATIVO                   AS correlativo,
     T0.FolioNum                        AS folio_num,
-    T0.U_NUM_AUTOR                     AS clave_acceso,
-    T0.U_NUM_AUTOR                     AS numero_autorizacion,
+    T0.U_EXX_FE_ClaAcc                 AS clave_acceso,
+    T0.U_EXX_FE_ClaAcc                 AS numero_autorizacion,
     T0.U_EXX_FE_FECAUT                 AS fecha_autorizacion,
     ISNULL(FP.U_Exx_Forma_Pago, '')    AS forma_pago_fe
 FROM OINV T0
@@ -61,8 +67,13 @@ ORDER BY LineNum
 
 _COMPANY_SQL = """
 SELECT
-    CompanyName AS razon_social,
-    Address     AS direccion_matriz
+    CompnyName AS razon_social,
+    AliasName  AS nombre_comercial,
+    TaxIdNum   AS ruc,
+    CompnyAddr AS direccion_matriz,
+    Country    AS pais,
+    Phone1     AS telefono,
+    E_Mail     AS email
 FROM OADM
 """
 
