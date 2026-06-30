@@ -89,21 +89,61 @@ class TestPymssqlConnectSpec(unittest.TestCase):
         source = inspect.getsource(mod)
         self.assertNotIn("mssql+pyodbc", source)
 
+    def test_connect_passes_correct_kwargs_to_pymssql(self):
+        """pymssql.connect must receive server, port(int), user, password, database, login_timeout, timeout."""
+        import sys
+        from reportforge.core.render.datasource.db_source_pymssql import connect
+        spec = {"host": "myhost", "port": 1433, "database": "SBO_DEMO",
+                "username": "sa", "password": "s3cr3t"}
+        mock_pymssql = MagicMock()
+        mock_pymssql.connect.return_value = MagicMock()
+        with patch.dict(sys.modules, {"pymssql": mock_pymssql}):
+            connect(spec)
+        kw = mock_pymssql.connect.call_args.kwargs
+        self.assertEqual(kw["server"], "myhost")
+        self.assertIsInstance(kw["port"], int, "port must be int, not str")
+        self.assertEqual(kw["port"], 1433)
+        self.assertEqual(kw["user"], "sa")
+        self.assertEqual(kw["password"], "s3cr3t")
+        self.assertEqual(kw["database"], "SBO_DEMO")
+        self.assertIn("login_timeout", kw)
+        self.assertIn("timeout", kw)
+
+    def test_connect_works_after_stale_import_cache(self):
+        """connect() must succeed even when pymssql was absent at module load time."""
+        import sys
+        from reportforge.core.render.datasource.db_source_pymssql import connect
+        spec = {"host": "h", "port": 1433, "database": "DB", "username": "u", "password": "p"}
+        mock_pymssql = MagicMock()
+        mock_pymssql.connect.return_value = MagicMock()
+        original = sys.modules.pop("pymssql", None)
+        try:
+            sys.modules["pymssql"] = mock_pymssql
+            connect(spec)
+            mock_pymssql.connect.assert_called_once()
+        finally:
+            if original is not None:
+                sys.modules["pymssql"] = original
+            else:
+                sys.modules.pop("pymssql", None)
+
     def test_pymssql_ping_returns_bool_on_mock(self):
+        import sys
         from reportforge.core.render.datasource.db_source_pymssql import ping
         spec = {"host": "h", "port": 1433, "database": "DB", "username": "u", "password": "p"}
-        conn_mock = MagicMock()
-        conn_mock.cursor.return_value = MagicMock()
-        with patch("reportforge.core.render.datasource.db_source_pymssql.pymssql") as mock_mssql:
-            mock_mssql.connect.return_value = conn_mock
+        mock_pymssql = MagicMock()
+        mock_pymssql.connect.return_value = MagicMock()
+        with patch.dict(sys.modules, {"pymssql": mock_pymssql}):
             result = ping(spec)
         self.assertIsInstance(result, bool)
 
     def test_pymssql_ping_false_on_connection_error(self):
+        import sys
         from reportforge.core.render.datasource.db_source_pymssql import ping
         spec = {"host": "h", "port": 1433, "database": "DB", "username": "u", "password": "p"}
-        with patch("reportforge.core.render.datasource.db_source_pymssql.pymssql") as mock_mssql:
-            mock_mssql.connect.side_effect = Exception("Connection refused")
+        mock_pymssql = MagicMock()
+        mock_pymssql.connect.side_effect = Exception("Connection refused")
+        with patch.dict(sys.modules, {"pymssql": mock_pymssql}):
             result = ping(spec)
         self.assertFalse(result)
 
@@ -137,6 +177,44 @@ class TestPingStructured(unittest.TestCase):
         result = ping_structured("myhost", 1433, "SBO", "sa", "s3cr3t_p@ss")
         msg = result.get("message", "")
         self.assertNotIn("s3cr3t_p@ss", msg, "Password must not appear in message")
+
+    def test_error_response_has_debugCode(self):
+        """On failure, details.debugCode must contain the real exception info."""
+        import sys
+        from reportforge.core.render.datasource.db_source_introspection import ping_structured
+        mock_pymssql = MagicMock()
+        mock_pymssql.connect.side_effect = Exception("server not found: badhost")
+        with patch.dict(sys.modules, {"pymssql": mock_pymssql}):
+            result = ping_structured("badhost", 1433, "DB", "u", "p")
+        self.assertFalse(result["ok"])
+        self.assertIn("details", result, "details key must be present on failure")
+        self.assertIn("debugCode", result["details"])
+        self.assertIn("server not found", result["details"]["debugCode"])
+
+    def test_password_not_in_debugCode(self):
+        """debugCode must have password replaced with *** — never raw."""
+        import sys
+        from reportforge.core.render.datasource.db_source_introspection import ping_structured
+        mock_pymssql = MagicMock()
+        mock_pymssql.connect.side_effect = Exception("Login failed. Password: ultra_secret")
+        with patch.dict(sys.modules, {"pymssql": mock_pymssql}):
+            result = ping_structured("h", 1433, "DB", "sa", "ultra_secret")
+        debug_code = result.get("details", {}).get("debugCode", "")
+        self.assertNotIn("ultra_secret", debug_code, "Raw password must not appear in debugCode")
+        self.assertIn("***", debug_code, "Password placeholder must appear in debugCode")
+
+    def test_ok_response_has_no_details(self):
+        """On success there must be no details key."""
+        import sys
+        from reportforge.core.render.datasource.db_source_introspection import ping_structured
+        mock_pymssql = MagicMock()
+        conn_mock = MagicMock()
+        conn_mock.cursor.return_value.__enter__ = MagicMock(return_value=MagicMock())
+        mock_pymssql.connect.return_value = conn_mock
+        with patch.dict(sys.modules, {"pymssql": mock_pymssql}):
+            result = ping_structured("h", 1433, "DB", "u", "p")
+        self.assertTrue(result["ok"])
+        self.assertNotIn("details", result)
 
 
 # ── §4 — POST /datasources/_test via stdlib ───────────────────────────────────

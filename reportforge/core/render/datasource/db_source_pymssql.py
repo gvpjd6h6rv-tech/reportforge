@@ -8,24 +8,26 @@ from __future__ import annotations
 
 import re
 
-try:
-    import pymssql
-    HAS_PYMSSQL = True
-except ImportError:
-    HAS_PYMSSQL = False
-
 
 def connect(spec: dict):
     """
     Open a pymssql connection from a structured spec dict.
     Required keys: host, database, username, password
     Optional keys: port (default 1433), timeout (default 10)
+
+    Import happens here (not at module level) so that a server process started
+    before pymssql was installed can still connect after a pip install, without
+    needing a restart.  Python's import system caches successes in sys.modules,
+    so the cost after the first successful import is a single dict lookup.
+
     Password is passed directly to the driver — never logged.
     """
-    if not HAS_PYMSSQL:
+    try:
+        import pymssql as _pymssql
+    except ImportError:
         raise RuntimeError("pymssql not installed. Run: pip install pymssql")
     timeout = int(spec.get("timeout", 10))
-    return pymssql.connect(
+    return _pymssql.connect(
         server=spec["host"],
         port=int(spec.get("port", 1433)),
         user=spec["username"],
@@ -59,7 +61,7 @@ def ping(spec: dict) -> bool:
     try:
         conn = connect(spec)
         cursor = conn.cursor()
-        cursor.execute("SELECT 1")
+        cursor.execute("SELECT 1 AS ok")
         conn.close()
         return True
     except Exception:

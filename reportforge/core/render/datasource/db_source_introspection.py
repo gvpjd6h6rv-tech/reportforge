@@ -1,22 +1,46 @@
 from __future__ import annotations
 
+import logging
+
 from .db_source_engine import HAS_SA
 from .db_source_queries import sqlite_query, sqlite_target_path
-from .db_source_pymssql import ping as pymssql_ping
+
+_log = logging.getLogger(__name__)
 
 
 def ping_structured(host: str, port: int, database: str, username: str, password: str,
                     **_kwargs) -> dict:
-    """Test a SQL Server connection via pymssql. Returns {ok, message, latency_ms}."""
+    """
+    Test a SQL Server connection via pymssql. Returns {ok, message, latency_ms[, details]}.
+
+    Uses connect() directly so the actual exception type and message are captured
+    and returned in details.debugCode (sanitized — password replaced with ***).
+    """
     import time
-    spec = {"host": host, "port": port, "database": database,
+    from .db_source_pymssql import connect as _connect
+
+    spec = {"host": host, "port": int(port), "database": database,
             "username": username, "password": password}
     t0 = time.monotonic()
-    ok = pymssql_ping(spec)
-    latency_ms = round((time.monotonic() - t0) * 1000, 1)
-    if ok:
+    try:
+        conn = _connect(spec)
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1 AS ok")
+        conn.close()
+        latency_ms = round((time.monotonic() - t0) * 1000, 1)
         return {"ok": True, "message": f"Conectado a {host}/{database}", "latency_ms": latency_ms}
-    return {"ok": False, "message": f"No se pudo conectar a {host}:{port}/{database}", "latency_ms": latency_ms}
+    except Exception as exc:
+        latency_ms = round((time.monotonic() - t0) * 1000, 1)
+        exc_type = type(exc).__name__
+        raw_msg = str(exc)
+        safe_msg = raw_msg.replace(password, "***") if password else raw_msg
+        _log.warning("SQL ping [%s:%s/%s] %s: %s", host, port, database, exc_type, safe_msg)
+        return {
+            "ok": False,
+            "message": f"No se pudo conectar a {host}:{port}/{database}",
+            "latency_ms": latency_ms,
+            "details": {"debugCode": f"{exc_type}: {safe_msg}"},
+        }
 
 
 def ping(url: str) -> bool:
