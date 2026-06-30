@@ -155,6 +155,79 @@ def test_db_timeout_504(client):
     _assert_error_envelope(r.json(), "DB_TIMEOUT")
 
 
+def test_db_query_failed_500(client):
+    """
+    SQL schema error (e.g. Invalid column name) → DB_QUERY_FAILED → 500.
+    Not classified as DB_CONNECTION_FAILED — the connection was fine.
+    """
+    class FakeProgrammingError(Exception):
+        pass
+    FakeProgrammingError.__name__ = "ProgrammingError"
+
+    with _register_datasource(_DUMMY_URL):
+        with patch(_SA_QUERY_TARGET, side_effect=FakeProgrammingError("Invalid column name 'DocCurrency'")):
+            r = client.get("/document/factura/1")
+
+    assert r.status_code == 500, r.text
+    _assert_error_envelope(r.json(), "DB_QUERY_FAILED")
+
+
+def test_no_doc_currency_in_header_sql():
+    """Regression: OINV.DocCurrency does not exist; must use DocCur."""
+    import inspect
+    from reportforge.core.models import invoice_queries
+    src = inspect.getsource(invoice_queries)
+    assert "DocCurrency" not in src, (
+        "DocCurrency is not a valid SAP B1 column — use DocCur"
+    )
+    assert "DocCur" in src, "header SQL must select DocCur from OINV"
+
+
+def test_no_u_ambiente_in_header_sql():
+    """Regression: U_Ambiente renamed to U_EXX_FE_TIPAMB in this SAP installation."""
+    import inspect
+    from reportforge.core.models import invoice_queries
+    src = inspect.getsource(invoice_queries)
+    assert "U_Ambiente" not in src, (
+        "U_Ambiente is not valid here — use U_EXX_FE_TIPAMB"
+    )
+    assert "U_EXX_FE_TIPAMB" in src
+
+
+def test_header_sql_udf_column_names():
+    """Regression: all six UDF column names in _HEADER_SQL must be the real SAP B1 Ecuador names."""
+    import inspect
+    from reportforge.core.models import invoice_queries
+    src = inspect.getsource(invoice_queries)
+
+    wrong = {
+        "U_TipoEmision":       "use U_EXX_FE_TIPEMI",
+        "U_NumDocumento":      "derived from U_SER_EST+U_SER_PE+FolioNum",
+        "U_ClaveAcceso":       "use U_NUM_AUTOR",
+        "U_NumAutorizacion":   "use U_NUM_AUTOR",
+        "U_FechaAutorizacion": "use U_EXX_FE_FECAUT",
+        "U_FormaPagoFE":       "join [@EXX_FPAGO_VENT_DET] via U_EXX_FPAGO_VENTAS",
+    }
+    for col, hint in wrong.items():
+        assert col not in src, f"{col} is not a valid SAP B1 column — {hint}"
+
+    correct = ["U_EXX_FE_TIPEMI", "U_SER_EST", "U_SER_PE", "FolioNum",
+               "U_NUM_AUTOR", "U_EXX_FE_FECAUT", "EXX_FPAGO_VENT_DET"]
+    for col in correct:
+        assert col in src, f"Expected column/table {col} missing from header SQL"
+
+
+def test_numero_documento_derived_from_ser_est_ser_pe_folio(client):
+    """numero_documento in fiscal is constructed as ser_est-ser_pe-folio_num(zfill9)."""
+    mock_sa = MagicMock(side_effect=[[_HEADER_ROW], [_LINE_ROW], [_COMPANY_ROW]])
+    with _register_alias("sap_b1_linux", _LINUX_SPEC):
+        with patch(_SA_QUERY_TARGET, mock_sa):
+            r = client.get("/document/factura/1001?datasource=sap_b1_linux")
+    assert r.status_code == 200, r.text
+    fiscal = r.json()["dataset"]["fiscal"]
+    assert fiscal["numero_documento"] == "001-001-000000042"
+
+
 def test_schema_mismatch_422(client):
     """
     Mapper retorna dataset incompleto → SCHEMA_MISMATCH → 422.
@@ -227,6 +300,80 @@ def test_call_builder_module_has_no_bare_core_prefix():
             f"REGISTRY['{key}'].builder_module='{doc_type.builder_module}' "
             f"must start with 'reportforge.' — bare 'core.*' fails at runtime"
         )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Grupo D — ?datasource= alias routing
+# ─────────────────────────────────────────────────────────────────────────────
+
+_HEADER_ROW = {
+    "doc_entry": 1001, "doc_num": 42, "obj_type": "13", "currency": "USD",
+    "cliente_nombre": "TEST", "cliente_ruc": "0991234567001",
+    "cliente_email": "x@x.com", "cliente_direccion": "Av. Test 1",
+    "cliente_tipo_id": "04",
+    "total": 112.00, "iva": 12.00, "ambiente": "2",
+    "tipo_comprobante": "01", "tipo_emision": "1", "estado_fe": "A",
+    "ser_est": "001", "ser_pe": "001", "folio_num": 42,
+    "clave_acceso": "0102202001991234567001010010010000000421234567811",
+    "numero_autorizacion": "0102202001991234567001010010010000000421234567811",
+    "fecha_autorizacion": "2024-01-02T10:00:00", "forma_pago_fe": "01",
+}
+_LINE_ROW = {
+    "codigo": "P001", "descripcion": "Producto", "cantidad": 2.0,
+    "precio_unitario": 50.00, "descuento": 0.0, "desc_lineal": 0.0,
+    "subtotal": 100.00, "ice_porcentaje": 0.0, "ice_valor": 0.0,
+}
+_COMPANY_ROW = {
+    "razon_social": "EMPRESA DEMO", "ruc": "0991111111001",
+    "direccion_matriz": "Av. Principal 100",
+}
+_LINUX_SPEC = {
+    "type": "mssql", "host": "srv", "port": 1433,
+    "database": "SBO_DEMO", "username": "sa", "password": "secret",
+}
+
+
+@contextlib.contextmanager
+def _register_alias(alias: str, spec: dict):
+    from reportforge.core.render.datasource.db_source_registry import register, unregister
+    register(alias, spec)
+    try:
+        yield
+    finally:
+        unregister(alias)
+
+
+def test_explicit_datasource_does_not_fall_back_to_sap_b1(client):
+    """
+    ?datasource=nonexistent_xyz → error must mention that alias, not 'sap_b1'.
+    Verifies _resolve_db_spec raises with the requested alias name.
+    """
+    r = client.get("/document/factura/1?datasource=nonexistent_xyz")
+    assert r.status_code == 503, r.text
+    body = r.json()
+    _assert_error_envelope(body, "DB_CONNECTION_FAILED")
+    details = body["error"]["details"]
+    assert "nonexistent_xyz" in details, (
+        f"error details should name the requested alias, got: {details}"
+    )
+    assert "sap_b1" not in details, (
+        f"error details must not fall back to sap_b1, got: {details}"
+    )
+
+
+def test_explicit_datasource_bypasses_default(client):
+    """
+    When only sap_b1_linux is registered (not sap_b1), ?datasource=sap_b1_linux → 200.
+    Verifies the alias flows all the way to _resolve_db_spec without defaulting.
+    """
+    mock_sa = MagicMock(side_effect=[[_HEADER_ROW], [_LINE_ROW], [_COMPANY_ROW]])
+    with _register_alias("sap_b1_linux", _LINUX_SPEC):
+        with patch(_SA_QUERY_TARGET, mock_sa):
+            r = client.get("/document/factura/1001?datasource=sap_b1_linux")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["contract"] == _CONTRACT
+    assert body["validation"]["schemaOk"] is True
 
 
 # ─────────────────────────────────────────────────────────────────────────────

@@ -65,7 +65,7 @@ from copy import deepcopy
 from reportforge.core.render.doc_registry_remision import REMISION_SAMPLE
 
 
-def build_remision_model(doc_entry: int) -> dict:
+def build_remision_model(doc_entry: int, datasource_alias=None) -> dict:
     """
     Construye un dict canónico de Guía de Remisión listo para render local.
 

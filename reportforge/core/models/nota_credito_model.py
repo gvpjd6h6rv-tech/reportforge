@@ -66,7 +66,7 @@
 # ─────────────────────────────────────────────────────────────────
 
 
-def build_nota_credito_model(doc_entry: int) -> dict:
+def build_nota_credito_model(doc_entry: int, datasource_alias=None) -> dict:
     """
     Construye el dict canónico de Nota de Crédito desde SAP B1.
 

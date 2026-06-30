@@ -13,37 +13,47 @@ from reportforge.core.render.datasource.db_source_errors import (
 
 _HEADER_SQL = """
 SELECT
-    T0.DocEntry            AS doc_entry,
-    T0.DocNum              AS doc_num,
-    T0.ObjType             AS obj_type,
-    T0.DocCur              AS currency,
-    T1.CardName            AS cliente_nombre,
-    T1.LicTradNum          AS cliente_ruc,
-    T1.E_Mail              AS cliente_email,
-    T1.Address             AS cliente_direccion,
-    T0.DocTotal            AS total,
-    T0.VatSum              AS iva,
-    T0.U_Ambiente          AS ambiente,
-    T0.U_TipoEmision       AS tipo_emision,
-    T0.U_NumDocumento      AS numero_documento,
-    T0.U_ClaveAcceso       AS clave_acceso,
-    T0.U_NumAutorizacion   AS numero_autorizacion,
-    T0.U_FechaAutorizacion AS fecha_autorizacion,
-    T0.U_FormaPagoFE       AS forma_pago_fe
+    T0.DocEntry                        AS doc_entry,
+    T0.DocNum                          AS doc_num,
+    T0.ObjType                         AS obj_type,
+    T0.DocCur                          AS currency,
+    T1.CardName                        AS cliente_nombre,
+    T1.LicTradNum                      AS cliente_ruc,
+    T1.E_Mail                          AS cliente_email,
+    T1.Address                         AS cliente_direccion,
+    ISNULL(T1.U_TIPO_ID, '')           AS cliente_tipo_id,
+    T0.DocTotal                        AS total,
+    T0.VatSum                          AS iva,
+    T0.U_EXX_FE_TIPAMB                 AS ambiente,
+    T0.U_EXX_FE_TIPCOM                 AS tipo_comprobante,
+    T0.U_EXX_FE_TIPEMI                 AS tipo_emision,
+    ISNULL(T0.U_EXX_FE_Estado, '')     AS estado_fe,
+    T0.U_SER_EST                       AS ser_est,
+    T0.U_SER_PE                        AS ser_pe,
+    T0.FolioNum                        AS folio_num,
+    T0.U_NUM_AUTOR                     AS clave_acceso,
+    T0.U_NUM_AUTOR                     AS numero_autorizacion,
+    T0.U_EXX_FE_FECAUT                 AS fecha_autorizacion,
+    ISNULL(FP.U_Exx_Forma_Pago, '')    AS forma_pago_fe
 FROM OINV T0
 INNER JOIN OCRD T1 ON T0.CardCode = T1.CardCode
+LEFT JOIN [@EXX_FPAGO_VENT_DET] FP
+       ON FP.Code = T0.U_EXX_FPAGO_VENTAS AND FP.LineId = 1
 WHERE T0.DocEntry = :doc_entry
 """
 
 _LINES_SQL = """
 SELECT
-    ItemCode   AS codigo,
-    Dscription AS descripcion,
-    Quantity   AS cantidad,
-    Price      AS precio_unitario,
-    DiscPrcnt  AS descuento,
-    LineTotal  AS subtotal,
-    TaxCode    AS tax_code
+    ItemCode                                  AS codigo,
+    Dscription                                AS descripcion,
+    Quantity                                  AS cantidad,
+    Price                                     AS precio_unitario,
+    DiscPrcnt                                 AS descuento,
+    ISNULL(U_DescLineal, 0)                   AS desc_lineal,
+    LineTotal                                 AS subtotal,
+    TaxCode                                   AS tax_code,
+    ISNULL(U_EXX_FE_PorICEVta, 0)            AS ice_porcentaje,
+    ISNULL(U_EXX_FE_ValICEVta, 0)            AS ice_valor
 FROM INV1
 WHERE DocEntry = :doc_entry
 ORDER BY LineNum
@@ -52,7 +62,6 @@ ORDER BY LineNum
 _COMPANY_SQL = """
 SELECT
     CompanyName AS razon_social,
-    TaxOffice   AS ruc,
     Address     AS direccion_matriz
 FROM OADM
 """

@@ -36,11 +36,11 @@ class DocType:
     def default_layout(self):
         return layout_from_dict(self._layout_raw_fn())
 
-    def call_builder(self, doc_entry: int) -> dict:
+    def call_builder(self, doc_entry: int, datasource_alias: str = "default") -> dict:
         import importlib
         mod = importlib.import_module(self.builder_module)
         fn  = getattr(mod, self.builder_fn)
-        return fn(doc_entry)
+        return fn(doc_entry, datasource_alias=datasource_alias)
 
     def __repr__(self):
         return f"<DocType {self.key} '{self.label}'>"

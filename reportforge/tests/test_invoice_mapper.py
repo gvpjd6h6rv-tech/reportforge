@@ -29,11 +29,17 @@ _HEADER_ROW = {
     "cliente_ruc": "0991234567001",
     "cliente_email": "cliente@test.com",
     "cliente_direccion": "Av. Siempre Viva 742",
+    "cliente_tipo_id": "04",
     "total": 112.00,
     "iva": 12.00,
     "ambiente": "2",
+    "tipo_comprobante": "01",
     "tipo_emision": "1",
-    "numero_documento": "001-001-000000042",
+    "estado_fe": "A",
+    # numero_documento is NOT a DB column; derived from ser_est+ser_pe+folio_num
+    "ser_est": "001",
+    "ser_pe": "001",
+    "folio_num": 42,
     "clave_acceso": "0102202001991234567001010010010000000421234567811",
     "numero_autorizacion": "0102202001991234567001010010010000000421234567811",
     "fecha_autorizacion": "2024-01-02T10:00:00",
@@ -46,8 +52,11 @@ _LINE_ROW = {
     "cantidad": 2.0,
     "precio_unitario": 50.00,
     "descuento": 0.0,
+    "desc_lineal": 0.0,
     "subtotal": 100.00,
     "tax_code": "IVA12",
+    "ice_porcentaje": 0.0,
+    "ice_valor": 0.0,
 }
 
 _COMPANY_ROW = {
@@ -136,9 +145,33 @@ class TestValidInvoiceReturnsDataset(unittest.TestCase):
         result = self._call()
         fis = result["fiscal"]
         self.assertEqual(fis["numero_documento"], "001-001-000000042")
-        self.assertEqual(fis["ambiente"], "2")
+        self.assertEqual(fis["ambiente_raw"], "2")
+        self.assertEqual(fis["ambiente"], "Producción")
         self.assertEqual(fis["tipo_emision"], "1")
         self.assertIn("clave_acceso", fis)
+
+    def test_fiscal_ambiente_mapping(self):
+        from reportforge.core.models.invoice_model import build_invoice_model
+
+        for raw, label in [("1", "Pruebas"), ("2", "Producción")]:
+            header = {**_HEADER_ROW, "ambiente": raw}
+            mock_sa = MagicMock(side_effect=[[header], [_LINE_ROW], [_COMPANY_ROW]])
+            with _patch_registered(), patch(_SA_QUERY_TARGET, mock_sa):
+                result = build_invoice_model(1001)
+            fis = result["fiscal"]
+            self.assertEqual(fis["ambiente_raw"], raw)
+            self.assertEqual(fis["ambiente"], label)
+
+    def test_fiscal_ambiente_unknown_value_passes_through(self):
+        from reportforge.core.models.invoice_model import build_invoice_model
+
+        header = {**_HEADER_ROW, "ambiente": "9"}
+        mock_sa = MagicMock(side_effect=[[header], [_LINE_ROW], [_COMPANY_ROW]])
+        with _patch_registered(), patch(_SA_QUERY_TARGET, mock_sa):
+            result = build_invoice_model(1001)
+        fis = result["fiscal"]
+        self.assertEqual(fis["ambiente_raw"], "9")
+        self.assertEqual(fis["ambiente"], "9")
 
     def test_items_list(self):
         result = self._call()

@@ -60,7 +60,7 @@
 # ─────────────────────────────────────────────────────────────────
 
 
-def build_retencion_model(doc_entry: int) -> dict:
+def build_retencion_model(doc_entry: int, datasource_alias=None) -> dict:
     """
     Construye el dict canónico de Comprobante de Retención desde SAP B1.
 

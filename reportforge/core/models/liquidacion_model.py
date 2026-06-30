@@ -60,7 +60,7 @@
 # ─────────────────────────────────────────────────────────────────
 
 
-def build_liquidacion_model(doc_entry: int) -> dict:
+def build_liquidacion_model(doc_entry: int, datasource_alias=None) -> dict:
     """
     Construye el dict canónico de Liquidación de Compras desde SAP B1.
 
