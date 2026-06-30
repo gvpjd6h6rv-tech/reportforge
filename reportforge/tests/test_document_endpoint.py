@@ -153,22 +153,23 @@ class TestMapperNotImplemented(unittest.TestCase):
         self.client = _make_client()
 
     def test_returns_501(self):
-        r = self.client.get("/document/factura/1")
+        # nota_credito is still a stub (factura now has a real implementation)
+        r = self.client.get("/document/nota_credito/1")
         self.assertEqual(r.status_code, 501)
 
     def test_error_code_mapper_not_implemented(self):
-        r = self.client.get("/document/factura/1")
+        r = self.client.get("/document/nota_credito/1")
         self.assertEqual(r.json()["error"]["code"], "MAPPER_NOT_IMPLEMENTED")
 
     def test_envelope_has_contract(self):
-        r = self.client.get("/document/factura/1")
+        r = self.client.get("/document/nota_credito/1")
         body = r.json()
         self.assertEqual(body["contract"], _CONTRACT)
         self.assertEqual(body["schemaVersion"], _SCHEMA_VERSION)
 
     def test_unimplemented_doc_types_return_501(self):
-        # remision has a working (minimal) implementation — only these 4 are stubs
-        for doc_type in ("factura", "nota_credito", "retencion", "liquidacion"):
+        # remision has a working implementation; factura now has a real mapper
+        for doc_type in ("nota_credito", "retencion", "liquidacion"):
             with self.subTest(doc_type=doc_type):
                 r = self.client.get(f"/document/{doc_type}/1")
                 self.assertEqual(r.status_code, 501, f"{doc_type} should be 501")
@@ -383,7 +384,7 @@ class TestErrorEnvelopeInvariants(unittest.TestCase):
         self._assert_contract_fields(r.json())
 
     def test_mapper_not_implemented_error_envelope(self):
-        r = self.client.get("/document/factura/1")
+        r = self.client.get("/document/nota_credito/1")
         self._assert_contract_fields(r.json())
 
 
