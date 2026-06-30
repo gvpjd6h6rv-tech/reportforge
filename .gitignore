@@ -19,6 +19,10 @@ Thumbs.db
 # component, not just generated trace/log dumps. If a real trace-dump
 # artifact needs ignoring, use a specific, anchored pattern instead, e.g.
 # *.trace.log or /trace-dumps/ — never a bare substring wildcard.
+# encrypted credential store (never commit — contains password_enc blobs and Fernet key)
+reportforge/server/.conn_key
+reportforge/server/.connections.enc.json
+
 .rf_browser_pref
 .venv/
 .debug-archive/

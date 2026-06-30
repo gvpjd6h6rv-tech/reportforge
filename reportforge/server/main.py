@@ -21,6 +21,11 @@ from reportforge.server.api import create_app
 
 try:
     app = create_app()
+    try:
+        from reportforge.server.connections_store import load_persisted_connections
+        load_persisted_connections()
+    except Exception as _ce:
+        logger.warning("connections_store unavailable at startup: %s", _ce)
 except ImportError as _e:
     # FastAPI not installed — app is None; uvicorn will not be invoked
     import logging as _logging

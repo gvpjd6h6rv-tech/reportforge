@@ -18,9 +18,15 @@ def register_datasource_routes(app):
     async def _post_ds_connect(alias: str, req: SQLConnRegisterRequest):
         from reportforge.core.render.datasource.db_source_pymssql import ping as pymssql_ping
         from reportforge.core.render.datasource.db_source_registry import register
+        import logging as _logging
         spec = {"type": "mssql", "host": req.host, "port": req.port,
                 "database": req.database, "username": req.username, "password": req.password}
         register(alias, spec)
+        try:
+            from reportforge.server.connections_store import save as _cs_save
+            _cs_save(alias, spec)
+        except Exception as _exc:
+            _logging.getLogger("reportforge").warning("connections_store: failed to persist %r: %s", alias, _exc)
         reachable = pymssql_ping(spec)
         return {"alias": alias, "registered": True, "reachable": reachable}
 
@@ -37,6 +43,11 @@ def register_datasource_routes(app):
         from reportforge.core.render.datasource.db_source import unregister
         if not unregister(alias):
             raise HTTPException(status_code=404, detail=f"Datasource '{alias}' not found")
+        try:
+            from reportforge.server.connections_store import remove as _cs_remove
+            _cs_remove(alias)
+        except Exception:
+            pass
         return {"deleted": alias}
 
     @app.post("/datasources/{alias}/query", tags=["Datasources"], summary="Execute a query against a registered datasource")

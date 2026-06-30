@@ -52,6 +52,12 @@ def _post_ds_connect(handler, alias: str, body: dict):
     spec = {"type": "mssql", "host": host, "port": port,
             "database": database, "username": username, "password": password}
     register(alias, spec)
+    try:
+        from reportforge.server.connections_store import save as _cs_save
+        _cs_save(alias, spec)
+    except Exception as _exc:
+        import logging as _logging
+        _logging.getLogger("reportforge").warning("connections_store: failed to persist %r: %s", alias, _exc)
     reachable = pymssql_ping(spec)
     _json(handler, {"alias": alias, "registered": True, "reachable": reachable})
 
@@ -62,6 +68,11 @@ def _delete_ds(handler, alias: str):
     if not ok:
         _error(handler, 404, f"Datasource '{alias}' not found")
         return
+    try:
+        from reportforge.server.connections_store import remove as _cs_remove
+        _cs_remove(alias)
+    except Exception:
+        pass
     _json(handler, {"deleted": alias})
 
 

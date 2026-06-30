@@ -12,10 +12,14 @@ Coverage:
   §6  GET /datasources (FastAPI) — no credentials in response
   §7  stdlib server routing — GET /datasources, POST _test, POST connect, DELETE
   §8  Security: password never in logs, URL never in GET /datasources response
+  §9  ConnectionsStore — save/load/remove + password never in plaintext on disk
+  §10 load_persisted_connections — startup populates _REGISTRY from store
+  §11 Integration — _post_ds_connect persists; _delete_ds removes
 """
 from __future__ import annotations
 
 import json
+import os
 import sys
 import unittest
 from pathlib import Path
@@ -440,6 +444,249 @@ class TestSecurityInvariants(unittest.TestCase):
             self.assertNotIn("mssql+pyodbc://", safe_str)
         finally:
             unregister("test_ds")
+
+
+# ── §9 — ConnectionsStore: save / load / remove / security ───────────────────
+
+class _StoreTestBase(unittest.TestCase):
+    """Mixin: patches _KEY_PATH and _STORE_PATH to a tmpdir for isolation."""
+
+    def setUp(self):
+        import tempfile
+        import shutil
+        self._tmpdir = Path(tempfile.mkdtemp())
+        self._shutil = shutil
+        import reportforge.server.connections_store as cs
+        self._cs = cs
+        self._orig_key = cs._KEY_PATH
+        self._orig_store = cs._STORE_PATH
+        cs._KEY_PATH = self._tmpdir / ".conn_key"
+        cs._STORE_PATH = self._tmpdir / ".connections.enc.json"
+
+    def tearDown(self):
+        self._cs._KEY_PATH = self._orig_key
+        self._cs._STORE_PATH = self._orig_store
+        self._shutil.rmtree(self._tmpdir, ignore_errors=True)
+
+
+class TestConnectionsStore(_StoreTestBase):
+
+    def test_load_all_empty_when_no_file(self):
+        self.assertEqual(self._cs.load_all(), {})
+
+    def test_save_and_load_roundtrip(self):
+        spec = {"type": "mssql", "host": "srv", "port": 1433,
+                "database": "SBO", "username": "sa", "password": "s3cr3t"}
+        self._cs.save("sap_b1_linux", spec)
+        loaded = self._cs.load_all()
+        self.assertIn("sap_b1_linux", loaded)
+        self.assertEqual(loaded["sap_b1_linux"]["password"], "s3cr3t")
+        self.assertEqual(loaded["sap_b1_linux"]["host"], "srv")
+        self.assertEqual(loaded["sap_b1_linux"]["database"], "SBO")
+
+    def test_password_not_in_plaintext_on_disk(self):
+        spec = {"type": "mssql", "host": "h", "port": 1433,
+                "database": "D", "username": "u", "password": "super_secret_pw"}
+        self._cs.save("alias1", spec)
+        raw = (self._tmpdir / ".connections.enc.json").read_text(encoding="utf-8")
+        self.assertNotIn("super_secret_pw", raw)
+
+    def test_remove_deletes_alias(self):
+        spec = {"type": "mssql", "host": "h", "port": 1433,
+                "database": "D", "username": "u", "password": "pw"}
+        self._cs.save("to_remove", spec)
+        self._cs.remove("to_remove")
+        self.assertNotIn("to_remove", self._cs.load_all())
+
+    def test_remove_nonexistent_is_noop(self):
+        self._cs.remove("does_not_exist")  # must not raise
+
+    def test_wrong_key_skips_alias_no_crash(self):
+        from cryptography.fernet import Fernet
+        spec = {"type": "mssql", "host": "h", "port": 1433,
+                "database": "D", "username": "u", "password": "pw"}
+        self._cs.save("alias_bad", spec)
+        # replace key with a different one (simulates lost key)
+        (self._tmpdir / ".conn_key").write_bytes(Fernet.generate_key())
+        loaded = self._cs.load_all()  # must not raise
+        self.assertNotIn("alias_bad", loaded)
+
+    def test_key_file_chmod600(self):
+        import stat as stat_mod
+        self._cs._get_or_create_key()
+        mode = stat_mod.S_IMODE(os.stat(self._cs._KEY_PATH).st_mode)
+        self.assertEqual(mode, 0o600, f"Expected 0o600 but got {oct(mode)}")
+
+    def test_store_file_chmod600(self):
+        import stat as stat_mod
+        spec = {"type": "mssql", "host": "h", "port": 1433,
+                "database": "D", "username": "u", "password": "pw"}
+        self._cs.save("alias1", spec)
+        mode = stat_mod.S_IMODE(os.stat(self._cs._STORE_PATH).st_mode)
+        self.assertEqual(mode, 0o600, f"Expected 0o600 but got {oct(mode)}")
+
+    def test_multiple_aliases_roundtrip(self):
+        for i in range(3):
+            self._cs.save(f"alias_{i}", {"type": "mssql", "host": f"h{i}", "port": 1433,
+                                          "database": "D", "username": "u", "password": f"pw_{i}"})
+        loaded = self._cs.load_all()
+        self.assertEqual(set(loaded.keys()), {"alias_0", "alias_1", "alias_2"})
+        for i in range(3):
+            self.assertEqual(loaded[f"alias_{i}"]["password"], f"pw_{i}")
+
+    def test_save_overwrites_existing_alias(self):
+        spec = {"type": "mssql", "host": "h", "port": 1433,
+                "database": "D", "username": "u", "password": "old_pw"}
+        self._cs.save("alias_upd", spec)
+        spec2 = dict(spec, password="new_pw", host="h2")
+        self._cs.save("alias_upd", spec2)
+        loaded = self._cs.load_all()
+        self.assertEqual(loaded["alias_upd"]["password"], "new_pw")
+        self.assertEqual(loaded["alias_upd"]["host"], "h2")
+
+    def test_password_enc_field_not_returned_in_load_all(self):
+        spec = {"type": "mssql", "host": "h", "port": 1433,
+                "database": "D", "username": "u", "password": "pw"}
+        self._cs.save("alias1", spec)
+        loaded = self._cs.load_all()
+        self.assertNotIn("password_enc", loaded["alias1"])
+
+    def test_no_plaintext_passwords_in_file_with_multiple_saves(self):
+        passwords = ["alpha_secret", "beta_secret", "gamma_secret"]
+        for i, pw in enumerate(passwords):
+            self._cs.save(f"alias_{i}", {"type": "mssql", "host": "h", "port": 1433,
+                                          "database": "D", "username": "u", "password": pw})
+        raw = (self._tmpdir / ".connections.enc.json").read_text(encoding="utf-8")
+        for pw in passwords:
+            self.assertNotIn(pw, raw)
+
+
+# ── §10 — load_persisted_connections: startup populates _REGISTRY ─────────────
+
+class TestLoadPersistedConnections(_StoreTestBase):
+
+    def setUp(self):
+        super().setUp()
+        from reportforge.core.render.datasource import db_source_registry as reg
+        reg._REGISTRY.clear()
+
+    def tearDown(self):
+        super().tearDown()
+        from reportforge.core.render.datasource import db_source_registry as reg
+        reg._REGISTRY.clear()
+
+    def test_registers_persisted_alias_in_registry(self):
+        spec = {"type": "mssql", "host": "myhost", "port": 1433,
+                "database": "SBO", "username": "sa", "password": "s3cr3t"}
+        self._cs.save("sap_b1_linux", spec)
+        count = self._cs.load_persisted_connections()
+        self.assertEqual(count, 1)
+        from reportforge.core.render.datasource.db_source_registry import get_registered
+        loaded = get_registered("sap_b1_linux")
+        self.assertIsNotNone(loaded)
+        self.assertEqual(loaded["host"], "myhost")
+        self.assertEqual(loaded["password"], "s3cr3t")
+
+    def test_returns_zero_when_no_store(self):
+        count = self._cs.load_persisted_connections()
+        self.assertEqual(count, 0)
+
+    def test_skips_bad_alias_no_crash(self):
+        from cryptography.fernet import Fernet
+        spec = {"type": "mssql", "host": "h", "port": 1433,
+                "database": "D", "username": "u", "password": "pw"}
+        self._cs.save("bad_alias", spec)
+        (self._tmpdir / ".conn_key").write_bytes(Fernet.generate_key())
+        count = self._cs.load_persisted_connections()  # must not raise
+        self.assertEqual(count, 0)
+        from reportforge.core.render.datasource.db_source_registry import get_registered
+        self.assertIsNone(get_registered("bad_alias"))
+
+    def test_password_in_registry_is_plaintext(self):
+        spec = {"type": "mssql", "host": "h", "port": 1433,
+                "database": "D", "username": "u", "password": "cleartext_in_memory"}
+        self._cs.save("alias_mem", spec)
+        self._cs.load_persisted_connections()
+        from reportforge.core.render.datasource.db_source_registry import get_registered
+        reg_spec = get_registered("alias_mem")
+        self.assertEqual(reg_spec["password"], "cleartext_in_memory")
+
+    def test_get_datasources_never_exposes_password_after_startup(self):
+        spec = {"type": "mssql", "host": "srv", "port": 1433,
+                "database": "SBO", "username": "sa", "password": "never_expose_me"}
+        self._cs.save("check_alias", spec)
+        self._cs.load_persisted_connections()
+        from reportforge.core.render.datasource.db_source_registry import list_registered_safe
+        safe_str = json.dumps(list_registered_safe())
+        self.assertNotIn("never_expose_me", safe_str)
+        self.assertNotIn("password", safe_str)
+
+
+# ── §11 — Integration: stdlib connect/delete round-trip with store ─────────────
+
+class TestDsConnectPersistence(_StoreTestBase):
+
+    def setUp(self):
+        super().setUp()
+        from reportforge.core.render.datasource import db_source_registry as reg
+        reg._REGISTRY.clear()
+
+    def tearDown(self):
+        super().tearDown()
+        from reportforge.core.render.datasource import db_source_registry as reg
+        reg._REGISTRY.clear()
+
+    def test_connect_persists_to_store(self):
+        from reportforge_server_datasources import _post_ds_connect
+        handler = MagicMock()
+        with patch("reportforge_server_datasources._json"):
+            with patch("reportforge_server_datasources._error"):
+                with patch("reportforge.core.render.datasource.db_source_pymssql.ping", return_value=False):
+                    _post_ds_connect(handler, "persist_alias",
+                                     {"host": "h", "database": "D",
+                                      "username": "u", "password": "persist_pw"})
+        loaded = self._cs.load_all()
+        self.assertIn("persist_alias", loaded)
+        self.assertEqual(loaded["persist_alias"]["password"], "persist_pw")
+
+    def test_delete_removes_from_store(self):
+        from reportforge_server_datasources import _post_ds_connect, _delete_ds
+        handler = MagicMock()
+        with patch("reportforge_server_datasources._json"):
+            with patch("reportforge_server_datasources._error"):
+                with patch("reportforge.core.render.datasource.db_source_pymssql.ping", return_value=False):
+                    _post_ds_connect(handler, "del_alias",
+                                     {"host": "h", "database": "D",
+                                      "username": "u", "password": "del_pw"})
+        self.assertIn("del_alias", self._cs.load_all())
+        with patch("reportforge_server_datasources._json"):
+            with patch("reportforge_server_datasources._error"):
+                _delete_ds(handler, "del_alias")
+        self.assertNotIn("del_alias", self._cs.load_all())
+
+    def test_connect_password_not_in_api_response(self):
+        from reportforge_server_datasources import _post_ds_connect
+        handler = MagicMock()
+        json_sent = []
+        with patch("reportforge_server_datasources._json", side_effect=lambda h, d: json_sent.append(d)):
+            with patch("reportforge_server_datasources._error"):
+                with patch("reportforge.core.render.datasource.db_source_pymssql.ping", return_value=False):
+                    _post_ds_connect(handler, "resp_alias",
+                                     {"host": "h", "database": "D",
+                                      "username": "u", "password": "resp_secret"})
+        self.assertNotIn("resp_secret", json.dumps(json_sent))
+
+    def test_persisted_file_has_no_plaintext_password(self):
+        from reportforge_server_datasources import _post_ds_connect
+        handler = MagicMock()
+        with patch("reportforge_server_datasources._json"):
+            with patch("reportforge_server_datasources._error"):
+                with patch("reportforge.core.render.datasource.db_source_pymssql.ping", return_value=False):
+                    _post_ds_connect(handler, "file_alias",
+                                     {"host": "h", "database": "D",
+                                      "username": "u", "password": "file_secret"})
+        raw = (self._tmpdir / ".connections.enc.json").read_text(encoding="utf-8")
+        self.assertNotIn("file_secret", raw)
 
 
 if __name__ == "__main__":

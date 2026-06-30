@@ -46,6 +46,13 @@ def main(argv=None):
     print(f"  Preview:   POST http://localhost:{port}/preview")
     print(f"{'='*60}\n")
     try:
+        from reportforge.server.connections_store import load_persisted_connections
+        n = load_persisted_connections()
+        if n:
+            print(f"  Connections: {n} persisted datasource(s) loaded")
+    except Exception as _exc:
+        print(f"  Warning: could not load persisted connections: {_exc}")
+    try:
         server.serve_forever()
     except KeyboardInterrupt:
         print("\n  Server stopped.")
