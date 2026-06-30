@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import NoReturn
 
-from reportforge.core.render.datasource.db_source_queries import sa_query
+from reportforge.core.render.datasource.db_source_pymssql import query as pymssql_query
 from reportforge.core.render.datasource.db_source_errors import (
     DbConnectionError,
     DbDocNotFoundError,
@@ -57,9 +57,9 @@ FROM OADM
 """
 
 
-def fetch_invoice_header(url: str, doc_entry: int) -> dict:
+def fetch_invoice_header(spec: dict, doc_entry: int) -> dict:
     try:
-        rows = sa_query(url, _HEADER_SQL, {"doc_entry": doc_entry})
+        rows = pymssql_query(spec, _HEADER_SQL, {"doc_entry": doc_entry})
     except Exception as exc:
         _reclassify(exc)
     if not rows:
@@ -67,16 +67,16 @@ def fetch_invoice_header(url: str, doc_entry: int) -> dict:
     return rows[0]
 
 
-def fetch_invoice_lines(url: str, doc_entry: int) -> list[dict]:
+def fetch_invoice_lines(spec: dict, doc_entry: int) -> list[dict]:
     try:
-        return sa_query(url, _LINES_SQL, {"doc_entry": doc_entry})
+        return pymssql_query(spec, _LINES_SQL, {"doc_entry": doc_entry})
     except Exception as exc:
         _reclassify(exc)
 
 
-def fetch_company_info(url: str) -> dict:
+def fetch_company_info(spec: dict) -> dict:
     try:
-        rows = sa_query(url, _COMPANY_SQL, {})
+        rows = pymssql_query(spec, _COMPANY_SQL, {})
     except Exception as exc:
         _reclassify(exc)
     return rows[0] if rows else {}

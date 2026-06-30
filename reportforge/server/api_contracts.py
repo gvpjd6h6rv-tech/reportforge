@@ -119,7 +119,6 @@ class SQLConnTestRequest(BaseModel):
     database: str
     username: str
     password: str
-    driver: str = Field("ODBC Driver 17 for SQL Server")
 
 
 class SQLConnRegisterRequest(BaseModel):
@@ -129,4 +128,3 @@ class SQLConnRegisterRequest(BaseModel):
     database: str
     username: str
     password: str
-    driver: str = Field("ODBC Driver 17 for SQL Server")

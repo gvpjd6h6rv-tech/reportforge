@@ -22,9 +22,12 @@ def list_registered_safe() -> list[dict]:
     """Return datasource metadata without credentials (no URL/password)."""
     result = []
     for k, v in _REGISTRY.items():
-        url = v.get("url", "")
-        hint = url.split("@")[-1].split("?")[0] if "@" in url else url.split("//")[-1].split("?")[0]
-        result.append({"alias": k, "type": v.get("type", "db"), "hint": hint})
+        if v.get("host") and v.get("database"):
+            hint = f"{v['host']}/{v['database']}"
+        else:
+            url = v.get("url", "")
+            hint = url.split("@")[-1].split("?")[0] if "@" in url else url.split("//")[-1].split("?")[0]
+        result.append({"alias": k, "type": v.get("type", "mssql"), "hint": hint})
     return result
 
 

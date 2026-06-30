@@ -13,25 +13,43 @@ from reportforge.core.models.invoice_queries import (
 _DB_ALIAS = os.environ.get("SAP_B1_DATASOURCE", "sap_b1")
 
 
-def _resolve_db_url() -> str:
+def _url_to_spec(url: str) -> dict:
+    """Parse a mssql+pyodbc://user:pass@host:port/db URL into a pymssql spec dict."""
+    from urllib.parse import urlparse, unquote
+    parsed = urlparse(url)
+    return {
+        "type": "mssql",
+        "host": parsed.hostname or "",
+        "port": parsed.port or 1433,
+        "database": (parsed.path or "").lstrip("/"),
+        "username": unquote(parsed.username or ""),
+        "password": unquote(parsed.password or ""),
+    }
+
+
+def _resolve_db_spec() -> dict:
+    """Return a pymssql connection spec from the registry or SAP_B1_DB_URL env var."""
     for alias in (_DB_ALIAS, "default"):
         spec = get_registered(alias)
-        if spec and spec.get("url"):
-            return spec["url"]
+        if spec:
+            if spec.get("host"):
+                return spec
+            if spec.get("url"):
+                return _url_to_spec(spec["url"])
     url = os.environ.get("SAP_B1_DB_URL", "")
     if not url:
         raise DbConnectionError(
             f"No hay datasource registrado bajo '{_DB_ALIAS}' "
             "ni variable de entorno SAP_B1_DB_URL."
         )
-    return url
+    return _url_to_spec(url)
 
 
 def build_invoice_model(doc_entry: int) -> dict:
-    url = _resolve_db_url()
-    header = fetch_invoice_header(url, doc_entry)
-    lines = fetch_invoice_lines(url, doc_entry)
-    company = fetch_company_info(url)
+    spec = _resolve_db_spec()
+    header = fetch_invoice_header(spec, doc_entry)
+    lines = fetch_invoice_lines(spec, doc_entry)
+    company = fetch_company_info(spec)
 
     iva = float(header.get("iva") or 0)
     total = float(header.get("total") or 0)

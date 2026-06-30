@@ -17,7 +17,7 @@ from unittest.mock import MagicMock, patch
 _ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_ROOT))
 
-_SA_QUERY_TARGET = "reportforge.core.models.invoice_queries.sa_query"
+_SA_QUERY_TARGET = "reportforge.core.models.invoice_queries.pymssql_query"
 _GET_REGISTERED_TARGET = "reportforge.core.models.invoice_model.get_registered"
 
 _HEADER_ROW = {
@@ -56,11 +56,18 @@ _COMPANY_ROW = {
     "direccion_matriz": "Av. Principal 100, Guayaquil",
 }
 
-_DB_URL = "mssql+pyodbc://user:pass@host/SBO_DEMO"
+_SPEC = {
+    "type": "mssql",
+    "host": "host",
+    "port": 1433,
+    "database": "SBO_DEMO",
+    "username": "user",
+    "password": "pass",
+}
 
 
 def _patch_sa(header=None, lines=None, company=None):
-    """Return sa_query mock with pre-programmed side_effects per call order."""
+    """Return pymssql_query mock with pre-programmed side_effects per call order."""
     header_rows = [header if header is not None else _HEADER_ROW]
     line_rows = lines if lines is not None else [_LINE_ROW]
     company_rows = [company if company is not None else _COMPANY_ROW]
@@ -68,19 +75,19 @@ def _patch_sa(header=None, lines=None, company=None):
     return patch(_SA_QUERY_TARGET, mock)
 
 
-def _patch_registered(url=_DB_URL):
-    return patch(_GET_REGISTERED_TARGET, return_value={"url": url})
+def _patch_registered():
+    return patch(_GET_REGISTERED_TARGET, return_value=_SPEC)
 
 
 # For §5 endpoint tests, call_builder loads the module as core.models.invoice_model
 # (a different sys.modules identity than reportforge.core.models.invoice_model).
 # Patching _GET_REGISTERED_TARGET only affects the reportforge.* copy.
 # We manipulate the shared _REGISTRY dict directly so get_registered() returns
-# the test URL regardless of which module copy calls it.
+# the test spec regardless of which module copy calls it.
 @contextlib.contextmanager
-def _register_datasource(url=_DB_URL):
+def _register_datasource():
     from reportforge.core.render.datasource.db_source_registry import register, unregister
-    register("sap_b1", {"url": url, "type": "db"})
+    register("sap_b1", _SPEC)
     try:
         yield
     finally:
@@ -206,7 +213,7 @@ class TestPreparedParams(unittest.TestCase):
             build_invoice_model(1001)
 
         header_call = mock_sa.call_args_list[0]
-        _url, _query, params = header_call[0]
+        _spec, _query, params = header_call[0]
         self.assertIsInstance(params, dict)
         self.assertIn("doc_entry", params)
         self.assertEqual(params["doc_entry"], 1001)
@@ -219,7 +226,7 @@ class TestPreparedParams(unittest.TestCase):
             build_invoice_model(1001)
 
         for c in mock_sa.call_args_list:
-            _url, query, _params = c[0]
+            _spec, query, _params = c[0]
             self.assertNotIn("1001", query, "doc_entry must not be concatenated into SQL")
 
     def test_lines_query_passes_doc_entry_as_param(self):
@@ -230,7 +237,7 @@ class TestPreparedParams(unittest.TestCase):
             build_invoice_model(42)
 
         lines_call = mock_sa.call_args_list[1]
-        _url, _query, params = lines_call[0]
+        _spec, _query, params = lines_call[0]
         self.assertEqual(params["doc_entry"], 42)
 
 
@@ -299,15 +306,17 @@ class TestEndpoint200WithRealMapper(unittest.TestCase):
     def test_endpoint_200_when_mapper_returns_valid_dataset(self):
         client = self._make_client()
         mock_sa = MagicMock(side_effect=[[_HEADER_ROW], [_LINE_ROW], [_COMPANY_ROW]])
-        with _register_datasource(), patch(_SA_QUERY_TARGET, mock_sa):
-            r = client.get("/document/factura/1001")
+        with _register_datasource():
+            with patch(_SA_QUERY_TARGET, mock_sa):
+                r = client.get("/document/factura/1001")
         self.assertEqual(r.status_code, 200)
 
     def test_endpoint_response_contract(self):
         client = self._make_client()
         mock_sa = MagicMock(side_effect=[[_HEADER_ROW], [_LINE_ROW], [_COMPANY_ROW]])
-        with _register_datasource(), patch(_SA_QUERY_TARGET, mock_sa):
-            r = client.get("/document/factura/1001")
+        with _register_datasource():
+            with patch(_SA_QUERY_TARGET, mock_sa):
+                r = client.get("/document/factura/1001")
         body = r.json()
         self.assertEqual(body["contract"], "rf.document.dataset.v1")
         self.assertTrue(body["validation"]["schemaOk"])
@@ -315,8 +324,9 @@ class TestEndpoint200WithRealMapper(unittest.TestCase):
     def test_endpoint_404_when_doc_not_found(self):
         client = self._make_client()
         empty_sa = MagicMock(return_value=[])
-        with _register_datasource(), patch(_SA_QUERY_TARGET, empty_sa):
-            r = client.get("/document/factura/9999")
+        with _register_datasource():
+            with patch(_SA_QUERY_TARGET, empty_sa):
+                r = client.get("/document/factura/9999")
         self.assertEqual(r.status_code, 404)
         self.assertEqual(r.json()["error"]["code"], "DOC_NOT_FOUND")
 

@@ -42,9 +42,9 @@ _DB_URL = os.environ.get("SAP_B1_DB_URL", "")
 _TEST_DOC_ENTRY = os.environ.get("SAP_B1_TEST_DOC_ENTRY", "")
 _LIVE_DB = bool(_DB_URL and _TEST_DOC_ENTRY)
 
-_SA_QUERY_TARGET = "reportforge.core.models.invoice_queries.sa_query"
+_SA_QUERY_TARGET = "reportforge.core.models.invoice_queries.pymssql_query"
 
-# Dummy URL used when we only need the datasource registered but mock sa_query.
+# Dummy URL used when we only need the datasource registered but mock pymssql_query.
 _DUMMY_URL = "mssql+pyodbc://test:x@localhost:1433/TEST"
 
 # URL that guarantees a real connection failure (port 9 is discard/reserved).
@@ -127,7 +127,7 @@ def test_db_connection_failed_503(client):
     """
     Datasource inválido → DB_CONNECTION_FAILED → 503.
 
-    La cadena real: _resolve_db_url() → sa_query(_BAD_URL, ...) falla
+    La cadena real: _resolve_db_spec() → pymssql_query(spec, ...) falla
     (sin SA: RuntimeError; con SA: OperationalError) →
     _reclassify() → DbConnectionError → DocumentQueryError(503).
     """
@@ -141,7 +141,7 @@ def test_db_timeout_504(client):
     """
     Timeout en query → DB_TIMEOUT → 504.
 
-    Inyección en la frontera sa_query: DbTimeoutError ya tipado →
+    Inyección en la frontera pymssql_query: DbTimeoutError ya tipado →
     _reclassify lo reconoce y re-raises →
     fetch_invoice_header → fetch_document → DocumentQueryError(504).
     """

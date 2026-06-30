@@ -67,31 +67,45 @@ class TestListRegisteredSafe(unittest.TestCase):
         self.assertEqual(aliases, {"ds1", "ds2"})
 
 
-# ── §2 — build_mssql_url() ────────────────────────────────────────────────────
+# ── §2 — pymssql connect spec and ping ───────────────────────────────────────
 
-class TestBuildMssqlUrl(unittest.TestCase):
+class TestPymssqlConnectSpec(unittest.TestCase):
 
-    def test_url_format(self):
-        from reportforge.core.render.datasource.db_source_introspection import build_mssql_url
-        url = build_mssql_url("myhost", 1433, "SBO_DEMO", "sa", "pass123")
-        self.assertTrue(url.startswith("mssql+pyodbc://"), url)
-        self.assertIn("@myhost:1433/SBO_DEMO", url)
+    def test_structured_spec_has_required_keys(self):
+        spec = {"type": "mssql", "host": "myhost", "port": 1433,
+                "database": "SBO_DEMO", "username": "sa", "password": "pass123"}
+        for key in ("host", "port", "database", "username", "password"):
+            self.assertIn(key, spec)
 
-    def test_password_url_encoded(self):
-        from reportforge.core.render.datasource.db_source_introspection import build_mssql_url
-        url = build_mssql_url("host", 1433, "DB", "user", "p@ss!w0rd")
-        self.assertNotIn("p@ss!w0rd", url, "Raw password must not appear — should be URL-encoded")
-        self.assertIn("p%40ss%21w0rd", url)
+    def test_no_pyodbc_import_in_pymssql_module(self):
+        import inspect
+        import reportforge.core.render.datasource.db_source_pymssql as mod
+        source = inspect.getsource(mod)
+        self.assertNotIn("pyodbc", source, "pyodbc must not appear in db_source_pymssql")
 
-    def test_driver_in_url(self):
-        from reportforge.core.render.datasource.db_source_introspection import build_mssql_url
-        url = build_mssql_url("host", 1433, "DB", "user", "pass", "ODBC Driver 17 for SQL Server")
-        self.assertIn("driver=", url)
+    def test_no_mssql_pyodbc_url_in_pymssql_module(self):
+        import inspect
+        import reportforge.core.render.datasource.db_source_pymssql as mod
+        source = inspect.getsource(mod)
+        self.assertNotIn("mssql+pyodbc", source)
 
-    def test_custom_port(self):
-        from reportforge.core.render.datasource.db_source_introspection import build_mssql_url
-        url = build_mssql_url("host", 1435, "DB", "user", "pass")
-        self.assertIn(":1435/", url)
+    def test_pymssql_ping_returns_bool_on_mock(self):
+        from reportforge.core.render.datasource.db_source_pymssql import ping
+        spec = {"host": "h", "port": 1433, "database": "DB", "username": "u", "password": "p"}
+        conn_mock = MagicMock()
+        conn_mock.cursor.return_value = MagicMock()
+        with patch("reportforge.core.render.datasource.db_source_pymssql.pymssql") as mock_mssql:
+            mock_mssql.connect.return_value = conn_mock
+            result = ping(spec)
+        self.assertIsInstance(result, bool)
+
+    def test_pymssql_ping_false_on_connection_error(self):
+        from reportforge.core.render.datasource.db_source_pymssql import ping
+        spec = {"host": "h", "port": 1433, "database": "DB", "username": "u", "password": "p"}
+        with patch("reportforge.core.render.datasource.db_source_pymssql.pymssql") as mock_mssql:
+            mock_mssql.connect.side_effect = Exception("Connection refused")
+            result = ping(spec)
+        self.assertFalse(result)
 
 
 # ── §3 — ping_structured() ────────────────────────────────────────────────────
@@ -211,7 +225,7 @@ class TestStdlibDsConnect(unittest.TestCase):
         json_sent = []
         with patch("reportforge_server_datasources._json", side_effect=lambda h, d: json_sent.append(d)):
             with patch("reportforge_server_datasources._error"):
-                with patch("reportforge.core.render.datasource.db_source_introspection.ping", return_value=False):
+                with patch("reportforge.core.render.datasource.db_source_pymssql.ping", return_value=False):
                     _post_ds_connect(handler, "test_alias",
                                      {"host": "srv", "port": 1433, "database": "SBO",
                                       "username": "sa", "password": "pw"})
@@ -228,7 +242,7 @@ class TestStdlibDsConnect(unittest.TestCase):
         json_sent = []
         with patch("reportforge_server_datasources._json", side_effect=lambda h, d: json_sent.append(d)):
             with patch("reportforge_server_datasources._error"):
-                with patch("reportforge.core.render.datasource.db_source_introspection.ping", return_value=False):
+                with patch("reportforge.core.render.datasource.db_source_pymssql.ping", return_value=False):
                     _post_ds_connect(handler, "alias2",
                                      {"host": "h", "database": "D", "username": "u", "password": "p"})
         self.assertNotIn("url", json_sent[0], "URL must not be returned in connect response")
@@ -315,10 +329,13 @@ class TestSecurityInvariants(unittest.TestCase):
         from reportforge.core.render.datasource import db_source_registry as reg
         reg._REGISTRY.clear()
 
-    def test_build_mssql_url_encodes_special_chars_in_password(self):
-        from reportforge.core.render.datasource.db_source_introspection import build_mssql_url
-        url = build_mssql_url("h", 1433, "DB", "u", "p@ss:w0rd/x")
-        self.assertNotIn("p@ss:w0rd/x", url, "Special chars in password must be percent-encoded")
+    def test_no_pyodbc_in_production_datasource_code(self):
+        import inspect
+        import reportforge.core.render.datasource.db_source_introspection as mod_intr
+        import reportforge.core.render.datasource.db_source_pymssql as mod_pymssql
+        for mod in (mod_intr, mod_pymssql):
+            src = inspect.getsource(mod)
+            self.assertNotIn("pyodbc", src, f"pyodbc found in {mod.__name__}")
 
     def test_connect_response_does_not_contain_password(self):
         from reportforge_server_datasources import _post_ds_connect
@@ -326,7 +343,7 @@ class TestSecurityInvariants(unittest.TestCase):
         json_sent = []
         with patch("reportforge_server_datasources._json", side_effect=lambda h, d: json_sent.append(d)):
             with patch("reportforge_server_datasources._error"):
-                with patch("reportforge.core.render.datasource.db_source_introspection.ping", return_value=False):
+                with patch("reportforge.core.render.datasource.db_source_pymssql.ping", return_value=False):
                     _post_ds_connect(handler, "alias",
                                      {"host": "h", "database": "D", "username": "u",
                                       "password": "secret_pw_never_exposed"})
@@ -334,14 +351,17 @@ class TestSecurityInvariants(unittest.TestCase):
         self.assertNotIn("secret_pw_never_exposed", response_str)
 
     def test_safe_list_strips_credentials_after_connect(self):
-        from reportforge.core.render.datasource.db_source_introspection import build_mssql_url
-        from reportforge.core.render.datasource.db_source_registry import register, list_registered_safe
-        url = build_mssql_url("myhost", 1433, "MyDB", "sa", "ultra_secret")
-        register("test_ds", {"type": "db", "url": url})
-        safe = list_registered_safe()
-        safe_str = json.dumps(safe)
-        self.assertNotIn("ultra_secret", safe_str)
-        self.assertNotIn("mssql+pyodbc://", safe_str)
+        from reportforge.core.render.datasource.db_source_registry import register, list_registered_safe, unregister
+        spec = {"type": "mssql", "host": "myhost", "port": 1433,
+                "database": "MyDB", "username": "sa", "password": "ultra_secret"}
+        register("test_ds", spec)
+        try:
+            safe = list_registered_safe()
+            safe_str = json.dumps(safe)
+            self.assertNotIn("ultra_secret", safe_str)
+            self.assertNotIn("mssql+pyodbc://", safe_str)
+        finally:
+            unregister("test_ds")
 
 
 if __name__ == "__main__":

@@ -27,12 +27,11 @@ def _post_ds_test(handler, body: dict):
     database = body.get("database", "")
     username = body.get("username", "")
     password = body.get("password", "")
-    driver = body.get("driver", "ODBC Driver 17 for SQL Server")
     if not all([host, database, username, password]):
         _error(handler, 400, "host, database, username, password are required")
         return
     from reportforge.core.render.datasource.db_source_introspection import ping_structured
-    result = ping_structured(host, port, database, username, password, driver)
+    result = ping_structured(host, port, database, username, password)
     _json(handler, result)
 
 
@@ -42,19 +41,18 @@ def _post_ds_connect(handler, alias: str, body: dict):
     database = body.get("database", "")
     username = body.get("username", "")
     password = body.get("password", "")
-    driver = body.get("driver", "ODBC Driver 17 for SQL Server")
     if not alias:
         _error(handler, 400, "alias is required")
         return
     if not all([host, database, username, password]):
         _error(handler, 400, "host, database, username, password are required")
         return
-    from reportforge.core.render.datasource.db_source_introspection import build_mssql_url, ping
+    from reportforge.core.render.datasource.db_source_pymssql import ping as pymssql_ping
     from reportforge.core.render.datasource.db_source_registry import register
-    url = build_mssql_url(host, port, database, username, password, driver)
-    spec = {"type": "db", "url": url, "query": "", "params": {}, "ttl": 300}
+    spec = {"type": "mssql", "host": host, "port": port,
+            "database": database, "username": username, "password": password}
     register(alias, spec)
-    reachable = ping(url)
+    reachable = pymssql_ping(spec)
     _json(handler, {"alias": alias, "registered": True, "reachable": reachable})
 
 
