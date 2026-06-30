@@ -17,8 +17,24 @@
     });
 
     canvasScroll.addEventListener('contextmenu', (e) => {
-      if (DS.previewMode) return;
       e.preventDefault();
+      if (DS.previewMode) {
+        const pvEl = e.target.closest?.('.pv-el[data-origin-id]');
+        if (pvEl) {
+          const id = pvEl.dataset.originId;
+          if (!SelectionState.isSelected(id)) {
+            SelectionState.selectOnly(id);
+            SelectionEngine.renderHandles();
+          }
+          ContextMenuEngine.show(e.clientX, e.clientY, 'element');
+        } else {
+          SelectionEngine.clearSelection();
+          ContextMenuEngine.show(e.clientX, e.clientY, 'canvas');
+        }
+        return;
+      }
+      // Design mode: .cr-element contextmenu is handled by attachElementEvents (stopPropagation)
+      // so this branch is only reached for canvas-background right-clicks.
       if (!e.target.closest('.cr-element')) {
         SelectionEngine.clearSelection();
         ContextMenuEngine.show(e.clientX, e.clientY, 'canvas');
