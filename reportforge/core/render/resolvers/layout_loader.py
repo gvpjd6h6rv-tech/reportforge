@@ -144,6 +144,8 @@ class Element:
         self.content   = raw.get("content","")
         self.fieldPath = raw.get("fieldPath","")
         self.fieldFmt  = raw.get("fieldFmt")
+        # Format Editor — Crystal Reports-style per-element format config
+        self.format    = raw.get("format") or {}
         # Advanced
         self.canGrow   = bool(raw.get("canGrow",False))
         self.canShrink = bool(raw.get("canShrink",False))

@@ -53,9 +53,47 @@ def render_element(engine, el, res, agg=None, ctx=None) -> str:
     return ""
 
 
+def _format_number_config(raw_value: object, cfg: dict) -> str:
+    """Apply element.format.number config to a raw value. Returns formatted string."""
+    if raw_value is None or raw_value == "":
+        return ""
+    try:
+        n = float(str(raw_value).replace(",", "").strip())
+    except (ValueError, TypeError):
+        return str(raw_value)
+    # Zero blank
+    zero_cfg = cfg.get("zero") or {}
+    if n == 0 and zero_cfg.get("blankIfZero"):
+        return ""
+    decimals = max(0, min(6, int(cfg.get("decimals", 2))))
+    # thousands: explicit wins; parentheses mode implies thousands
+    neg_mode = (cfg.get("negative") or {}).get("mode", "minus")
+    explicit_th = cfg.get("thousands")
+    thousands = explicit_th if explicit_th is not None else (neg_mode == "parentheses")
+    is_neg = n < 0
+    abs_n = abs(n)
+    if thousands:
+        formatted = f"{abs_n:,.{decimals}f}"
+    else:
+        formatted = f"{abs_n:.{decimals}f}"
+    # Currency symbol
+    cur_cfg = cfg.get("currency") or {}
+    if cur_cfg.get("enabled"):
+        sym = str(cur_cfg.get("symbol") or "$")
+        formatted = sym + " " + formatted
+    # Negative sign
+    if is_neg:
+        if neg_mode == "parentheses":
+            formatted = "(" + formatted + ")"
+        else:
+            formatted = "-" + formatted
+    return formatted
+
+
 def element_value(engine, el, res, agg, ctx=None) -> str:
     ctx = ctx or {}
     p = el.fieldPath
+    fmt_num = (getattr(el, "format", None) or {}).get("number")
     if p:
         sp_key = p.strip()
         if sp_key in _SPECIAL:
@@ -64,7 +102,12 @@ def element_value(engine, el, res, agg, ctx=None) -> str:
         if is_expr:
             gitems = getattr(agg, "_items", None) if agg is not engine._agg else None
             value = engine._ev.eval_expr(p, res, group_items=gitems)
+            if fmt_num is not None:
+                return _format_number_config(value, fmt_num)
             return _format_value(engine, value, el.fieldFmt)
+        if fmt_num is not None:
+            raw = res.get(p, "")
+            return _format_number_config(raw, fmt_num)
         return res.get_formatted(p, el.fieldFmt)
     content = getattr(el, "content", None)
     if content is not None and content != "":
@@ -238,13 +281,30 @@ def _div(engine, el, value) -> str:
     return f'<div class="cr-el{cls}" style="{style}"><span class="cr-el-inner">{value}</span></div>'
 
 
+def _borders_css(cfg: dict) -> str:
+    """Convert format.borders config to per-side CSS border properties."""
+    style = cfg.get("style", "solid")
+    color = cfg.get("color", "#000000")
+    width = int(cfg.get("width", 1))
+    parts = []
+    for side, prop in [("top", "border-top"), ("right", "border-right"),
+                       ("bottom", "border-bottom"), ("left", "border-left")]:
+        if cfg.get(side):
+            parts.append(f"{prop}:{width}px {style} {color};")
+    return "".join(parts)
+
+
 def _sty(engine, el, h, av="center") -> str:
     bg = el.bgColor if el.bgColor not in ("transparent", "") else "transparent"
-    brd = (
-        f"border:{el.borderWidth}px {el.borderStyle} {el.borderColor};"
-        if el.borderWidth > 0 and el.borderColor not in ("transparent", "")
-        else ""
-    )
+    fmt_borders = (getattr(el, "format", None) or {}).get("borders")
+    if fmt_borders:
+        brd = _borders_css(fmt_borders)
+    else:
+        brd = (
+            f"border:{el.borderWidth}px {el.borderStyle} {el.borderColor};"
+            if el.borderWidth > 0 and el.borderColor not in ("transparent", "")
+            else ""
+        )
     return (
         f"position:absolute;left:{el.x}px;top:{el.y}px;width:{el.w}px;height:{h}px;"
         f"font-family:{el.fontFamily},Arial,sans-serif;font-size:{el.fontSize}pt;"

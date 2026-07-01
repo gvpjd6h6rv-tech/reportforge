@@ -43,7 +43,16 @@
   }
 
   function _setBorder(div, el) {
-    div.style.border = el.borderWidth > 0 ? `${el.borderWidth}px ${el.borderStyle} ${el.borderColor}` : '';
+    const fb = el.format && el.format.borders;
+    if (fb) {
+      const { inlineStyles } = BorderMapper.mapBorders(fb);
+      div.style.border = '';
+      Object.keys(inlineStyles).forEach(function(prop) {
+        div.style[prop] = inlineStyles[prop];
+      });
+    } else {
+      div.style.border = el.borderWidth > 0 ? `${el.borderWidth}px ${el.borderStyle} ${el.borderColor}` : '';
+    }
   }
 
   function _fieldLabel(el) {

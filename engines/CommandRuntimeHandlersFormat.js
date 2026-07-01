@@ -5,8 +5,9 @@
 
   function runFormatField() {
     if (!DS.selection.size) return;
-    PropertiesEngine.render();
-    PropertiesEngine.focusSection('format');
+    const el = DS.getSelectedElements()[0];
+    if (!el) return;
+    FormatEditorEngine.open(el);
   }
 
   function runOpenProperties() {

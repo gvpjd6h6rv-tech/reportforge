@@ -5,7 +5,7 @@
     show(x, y, context = 'canvas') {
       const menu = document.getElementById('ctx-menu');
       const items = context === 'element' ? [
-        { label: 'Formatear campo...', action: 'format-field', icon: '⚙' },
+        { label: 'Dar formato al campo...', action: 'format-field', icon: '⚙' },
         { label: 'Propiedades...', action: 'open-properties', icon: '📋' },
         { sep: true },
         { label: 'Cortar', action: 'cut', short: 'Ctrl+X', icon: '✂' },

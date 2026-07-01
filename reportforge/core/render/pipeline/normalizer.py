@@ -115,7 +115,10 @@ def _norm_el(raw):
         "zIndex":           int(_p(raw,"zIndex","z","layer") or 0),
         "content":          content if content is not None else "",
         "fieldPath":        str(_p(raw,"fieldPath","field","dataField","source","path") or ""),
-        "fieldFmt":         _p(raw,"fieldFmt","format","fmt","formatString"),
+        # "format" alias is kept only when it is a string (legacy naming).
+        # A dict value means element.format (Crystal-Reports format config) — handled below.
+        "fieldFmt":         _p(raw,"fieldFmt","fmt","formatString") or (raw.get("format") if isinstance(raw.get("format"), str) else None),
+        "format":           raw.get("format") if isinstance(raw.get("format"), dict) else None,
         "canGrow":          bool(_p(raw,"canGrow","grow","autoHeight")),
         "canShrink":        bool(_p(raw,"canShrink","shrink")),
         "wordWrap":         bool(_p(raw,"wordWrap","wrap","wrapText")),
