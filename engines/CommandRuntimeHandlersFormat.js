@@ -31,13 +31,22 @@
     runColorPicker('color-picker-font', sel.length ? sel[0].color : '#000000', 'color', '--swatch-font');
   }
 
+  function applyTextAlign(v)  { FormatEngine.applyFormat('align',  v); }
+  function applyTextValign(v) { FormatEngine.applyFormat('valign', v); }
+
   function handleFormatCommands(action) {
     return dispatchActionMap(action, {
-      'format-field':    runFormatField,
-      'open-properties': runOpenProperties,
-      'color-font':      runColorFont,
-      'color-bg':        () => runColorPicker('color-picker-bg', '#ffffff', 'bgColor', '--swatch-bg'),
-      'color-border':    () => runColorPicker('color-picker-border', '#000000', 'borderColor', '--swatch-border'),
+      'format-field':        runFormatField,
+      'open-properties':     runOpenProperties,
+      'color-font':          runColorFont,
+      'color-bg':            () => runColorPicker('color-picker-bg', '#ffffff', 'bgColor', '--swatch-bg'),
+      'color-border':        () => runColorPicker('color-picker-border', '#000000', 'borderColor', '--swatch-border'),
+      'text-align-left':     () => applyTextAlign('left'),
+      'text-align-center':   () => applyTextAlign('center'),
+      'text-align-right':    () => applyTextAlign('right'),
+      'text-valign-top':     () => applyTextValign('top'),
+      'text-valign-middle':  () => applyTextValign('middle'),
+      'text-valign-bottom':  () => applyTextValign('bottom'),
     });
   }
 

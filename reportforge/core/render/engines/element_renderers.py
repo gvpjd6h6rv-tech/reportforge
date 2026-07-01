@@ -272,12 +272,23 @@ def _cond(engine, el, res):
     return el
 
 
+def _valign_css(valign: object) -> str:
+    """Map el.valign string to CSS align-items value. Pure function, no side effects."""
+    return {"top": "flex-start", "middle": "center", "bottom": "flex-end"}.get(
+        str(valign).lower() if valign else "", "center"
+    )
+
+
 def _div(engine, el, value) -> str:
     wrap = getattr(el, "wordWrap", False) or getattr(el, "canGrow", False)
     height = _calc_h(engine, el, value) if getattr(el, "canGrow", False) else el.h
-    align = "flex-start" if wrap else "center"
+    el_type = getattr(el, "type", "")
+    if el_type in ("field", "text"):
+        av = _valign_css(getattr(el, "valign", None) or None)
+    else:
+        av = "flex-start" if wrap else "center"
     cls = " wrap" if wrap else " nowrap"
-    style = _sty(engine, el, height, align)
+    style = _sty(engine, el, height, av)
     return f'<div class="cr-el{cls}" style="{style}"><span class="cr-el-inner">{value}</span></div>'
 
 

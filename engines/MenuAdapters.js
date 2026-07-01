@@ -18,17 +18,23 @@
         { label: 'Traer al frente', action: 'bring-front', icon: '🔼' },
         { label: 'Enviar al fondo', action: 'send-back', icon: '🔽' },
         { sep: true },
-        { label: 'Alinear izquierda',  action: 'align-lefts' },
-        { label: 'Centrar horizontal', action: 'align-centers' },
-        { label: 'Alinear derecha',    action: 'align-rights' },
-        { sep: true },
-        { label: 'Alinear arriba',     action: 'align-tops' },
-        { label: 'Centrar vertical',   action: 'align-middles' },
-        { label: 'Alinear abajo',      action: 'align-bottoms' },
+        { label: 'Alinear elemento izquierda',  action: 'align-lefts' },
+        { label: 'Centrar elemento horizontal', action: 'align-centers' },
+        { label: 'Alinear elemento derecha',    action: 'align-rights' },
+        { label: 'Alinear elemento arriba',     action: 'align-tops' },
+        { label: 'Centrar elemento vertical',   action: 'align-middles' },
+        { label: 'Alinear elemento abajo',      action: 'align-bottoms' },
         { sep: true },
         { label: 'Mismo ancho',        action: 'same-width',  disabled: needsMulti, title: 'Requiere 2 o más elementos seleccionados' },
         { label: 'Misma altura',       action: 'same-height', disabled: needsMulti, title: 'Requiere 2 o más elementos seleccionados' },
         { label: 'Mismo tamaño',       action: 'same-size',   disabled: needsMulti, title: 'Requiere 2 o más elementos seleccionados' },
+        { sep: true },
+        { label: 'Texto izquierda',         action: 'text-align-left' },
+        { label: 'Texto centro horizontal', action: 'text-align-center' },
+        { label: 'Texto derecha',           action: 'text-align-right' },
+        { label: 'Texto arriba',            action: 'text-valign-top' },
+        { label: 'Texto centro vertical',   action: 'text-valign-middle' },
+        { label: 'Texto abajo',             action: 'text-valign-bottom' },
       ] : [
         { label: 'Insertar > Texto', action: 'insert-text' },
         { label: 'Insertar > Campo', action: 'insert-field' },
@@ -56,7 +62,7 @@
         }
         menu.appendChild(entry);
       });
-      const pw = 170;
+      const pw = 210;
       const ph = items.reduce((s, i) => s + (i.sep ? 5 : 22), 0) + 4;
       menu.style.left = `${Math.min(x, window.innerWidth - pw - 4)}px`;
       menu.style.top = `${Math.max(0, Math.min(y, window.innerHeight - ph - 4))}px`;

@@ -110,10 +110,13 @@ const PropertiesEngine = {
       });
     });
 
+    const divTextSec=document.createElement('div');divTextSec.className='prop-section';divTextSec.textContent='Texto';
+    form.appendChild(divTextSec);
+
     const alignRow=document.createElement('div');alignRow.className='prop-row';
-    alignRow.innerHTML=`<span class="prop-label">Alinear:</span>
+    alignRow.innerHTML=`<span class="prop-label">H:</span>
       <div style="display:flex;gap:2px">
-        ${['left','center','right'].map(a=>`<button class="tb-icon${el.align===a?' active':''}" style="width:18px;height:16px;font-size:10px" data-prop-align="${a}">${a==='left'?'⬱':a==='center'?'≡':'⬰'}</button>`).join('')}
+        ${['left','center','right'].map(a=>`<button class="tb-icon${el.align===a?' active':''}" style="width:18px;height:16px;font-size:10px" data-prop-align="${a}" title="${a==='left'?'Texto izquierda':a==='center'?'Texto centro':'Texto derecha'}">${a==='left'?'⬱':a==='center'?'≡':'⬰'}</button>`).join('')}
       </div>`;
     form.appendChild(alignRow);
     form.querySelectorAll('[data-prop-align]').forEach(btn=>{
@@ -125,7 +128,22 @@ const PropertiesEngine = {
       });
     });
 
-    const divAlignSec=document.createElement('div');divAlignSec.className='prop-section';divAlignSec.textContent='Alineación';
+    const valignRow=document.createElement('div');valignRow.className='prop-row';
+    valignRow.innerHTML=`<span class="prop-label">V:</span>
+      <div style="display:flex;gap:2px">
+        ${['top','middle','bottom'].map(v=>`<button class="tb-icon${(el.valign||'middle')===v?' active':''}" style="width:18px;height:16px;font-size:10px" data-prop-valign="${v}" title="${v==='top'?'Texto arriba':v==='middle'?'Texto centro vertical':'Texto abajo'}">${v==='top'?'⬆':v==='middle'?'⬕':'⬇'}</button>`).join('')}
+      </div>`;
+    form.appendChild(valignRow);
+    form.querySelectorAll('[data-prop-valign]').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const v=btn.dataset.propValign;
+        sel.forEach(s=>{s.valign=v;_canonicalCanvasWriter().updateElement(s.id);});
+        form.querySelectorAll('[data-prop-valign]').forEach(b=>b.classList.toggle('active',b.dataset.propValign===v));
+        DS.saveHistory();
+      });
+    });
+
+    const divAlignSec=document.createElement('div');divAlignSec.className='prop-section';divAlignSec.textContent='Elemento';
     form.appendChild(divAlignSec);
     const _mkPB=(act,tt,ico)=>{const b=document.createElement('button');b.className='tb-icon';b.style.cssText='width:18px;height:16px;font-size:10px';b.title=tt;b.textContent=ico;if(sel.length<2){b.disabled=true;b.style.opacity='0.35';}else b.addEventListener('click',()=>handleAction(act));return b;};
     const alignHRow=document.createElement('div');alignHRow.className='prop-row';

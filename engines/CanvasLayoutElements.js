@@ -31,6 +31,9 @@
     div.style.fontStyle = el.italic ? 'italic' : 'normal';
     div.style.textDecoration = el.underline ? 'underline' : 'none';
     div.style.textAlign = el.align || 'left';
+    if (el.type === 'field' || el.type === 'text') {
+      div.style.alignItems = global.TextAlignmentMapper.valignToFlex(el.valign);
+    }
     // Only set an inline z-index for an EXPLICIT document order — an
     // inline `z-index:0` fallback otherwise permanently wins over
     // `.cr-element.selected`'s stylesheet z-index, burying a

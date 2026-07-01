@@ -13,9 +13,9 @@ const FormatEngine = {
     document.getElementById('btn-bold').classList.toggle('active',el.bold);
     document.getElementById('btn-italic').classList.toggle('active',el.italic);
     document.getElementById('btn-underline').classList.toggle('active',el.underline);
-    document.getElementById('btn-al').classList.toggle('active',el.align==='left');
-    document.getElementById('btn-ac').classList.toggle('active',el.align==='center');
-    document.getElementById('btn-ar').classList.toggle('active',el.align==='right');
+    document.getElementById('btn-al')?.classList.toggle('active',el.align==='left');
+    document.getElementById('btn-ac')?.classList.toggle('active',el.align==='center');
+    document.getElementById('btn-ar')?.classList.toggle('active',el.align==='right');
     document.documentElement.style.setProperty('--swatch-font', el.color);
     const fn=document.getElementById('tb-font-name');
     const fsz=document.getElementById('tb-font-size');

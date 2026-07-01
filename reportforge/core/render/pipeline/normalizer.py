@@ -105,6 +105,7 @@ def _norm_el(raw):
         "italic":           bool(_p(raw,"italic","fontItalic")),
         "underline":        bool(_p(raw,"underline","fontUnderline")),
         "align":            {"center":"center","right":"right","justify":"justify"}.get(str(_p(raw,"align","textAlign","halign") or "").lower(),"left"),
+        "valign":           {"top":"top","middle":"middle","center":"middle","bottom":"bottom"}.get(str(_p(raw,"valign","textVAlign","verticalAlign","vAlign") or "").lower()) or None,
         "color":            _p(raw,"color","textColor","foreColor") or "#000000",
         "bgColor":          _p(raw,"bgColor","backgroundColor") or "transparent",
         "borderColor":      _p(raw,"borderColor","border_color") or "transparent",

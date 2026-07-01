@@ -129,6 +129,7 @@ class Element:
         self.italic    = bool(raw.get("italic",False))
         self.underline = bool(raw.get("underline",False))
         self.align     = raw.get("align","left")
+        self.valign    = raw.get("valign") or None
         self.color     = raw.get("color","#000000")
         self.bgColor   = raw.get("bgColor","transparent")
         self.borderColor= raw.get("borderColor","transparent")

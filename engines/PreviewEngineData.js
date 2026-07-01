@@ -2,6 +2,8 @@
 
 (function initPreviewEngineData(global) {
   const C = global.PreviewEngineContracts;
+  const _valignToFlex = (global.TextAlignmentMapper && global.TextAlignmentMapper.valignToFlex) ||
+    function(v) { return { top: 'flex-start', middle: 'center', bottom: 'flex-end' }[v] || 'center'; };
 
   function _marginMm(side) {
     try {
@@ -74,6 +76,8 @@
     const r = { left: el.x, top: el.y, width: el.w, height: el.h };
     const fs = el.fontSize * 96 / 72;
     const interaction = _hitLayerInteractionStyle(el);
+    const _hasTextContent = el.type === 'field' || el.type === 'text';
+    const alignItems = _hasTextContent ? _valignToFlex(el.valign) : 'center';
     const st = [
       `position:absolute`, `left:${r.left}px`, `top:${r.top}px`,
       `width:${r.width}px`, `height:${r.height}px`,
@@ -84,7 +88,7 @@
       `font-style:${el.italic ? 'italic' : 'normal'}`,
       `text-decoration:${el.underline ? 'underline' : 'none'}`,
       `text-align:${el.align}`, `color:${el.color}`,
-      `overflow:hidden`, `display:flex`, `align-items:center`, `line-height:1`,
+      `overflow:hidden`, `display:flex`, `align-items:${alignItems}`, `line-height:1`,
     ].join(';');
 
     if (el.type === 'line') {
@@ -116,6 +120,8 @@
     const ri = rowIndex !== null ? ` data-row-index="${rowIndex}"` : '';
     const r = { left: el.x, top: el.y, width: el.w, height: el.h };
     const fs = el.fontSize * 96 / 72;
+    const _hasText2 = el.type === 'field' || el.type === 'text';
+    const alignItems2 = _hasText2 ? _valignToFlex(el.valign) : 'center';
     const st = [
       `position:absolute`, `left:${r.left}px`, `top:${r.top}px`,
       `width:${r.width}px`, `height:${r.height}px`,
@@ -124,7 +130,7 @@
       `font-style:${el.italic ? 'italic' : 'normal'}`,
       `text-decoration:${el.underline ? 'underline' : 'none'}`,
       `text-align:${el.align}`, `color:${el.color}`,
-      `overflow:hidden`, `display:flex`, `align-items:center`, `line-height:1`,
+      `overflow:hidden`, `display:flex`, `align-items:${alignItems2}`, `line-height:1`,
     ].join(';');
     const corners = '<span class="el-corner tl"></span><span class="el-corner tr"></span><span class="el-corner bl"></span><span class="el-corner br"></span>';
     return `<div class="pv-el cr-element" data-id="${el.id}" data-origin-id="${el.id}" data-type="${el.type}"${ri} style="${st}">${corners}${value}</div>`;

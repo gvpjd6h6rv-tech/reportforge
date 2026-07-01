@@ -97,16 +97,19 @@
 <div class="dropdown" id="dd-formato">
   <div class="dd-item" data-action="format-field">⚙ <span>Formatear campo...</span><span class="dd-shortcut">Alt+Enter</span></div>
   <div class="dd-sep"></div>
-  <div class="dd-item" data-format="align-left">⬱ <span>Alinear a la izquierda</span></div>
-  <div class="dd-item" data-format="align-center">≡ <span>Centrar</span></div>
-  <div class="dd-item" data-format="align-right">⬰ <span>Alinear a la derecha</span></div>
+  <div class="dd-item" data-format="align-left">⬱ <span>Texto izquierda</span></div>
+  <div class="dd-item" data-format="align-center">≡ <span>Texto centro horizontal</span></div>
+  <div class="dd-item" data-format="align-right">⬰ <span>Texto derecha</span></div>
+  <div class="dd-item" data-action="text-valign-top">⬆ <span>Texto arriba</span></div>
+  <div class="dd-item" data-action="text-valign-middle">⬕ <span>Texto centro vertical</span></div>
+  <div class="dd-item" data-action="text-valign-bottom">⬇ <span>Texto abajo</span></div>
   <div class="dd-sep"></div>
-  <div class="dd-item" data-action="align-lefts">◧ <span>Alinear bordes izquierdos</span></div>
-  <div class="dd-item" data-action="align-centers">◈ <span>Centrar horizontal</span></div>
-  <div class="dd-item" data-action="align-rights">◨ <span>Alinear bordes derechos</span></div>
-  <div class="dd-item" data-action="align-tops">⬆ <span>Alinear bordes superiores</span></div>
-  <div class="dd-item" data-action="align-middles">⬕ <span>Alinear centros verticales</span></div>
-  <div class="dd-item" data-action="align-bottoms">⬇ <span>Alinear bordes inferiores</span></div>
+  <div class="dd-item" data-action="align-lefts">◧ <span>Alinear elemento izquierda</span></div>
+  <div class="dd-item" data-action="align-centers">◈ <span>Centrar elemento horizontal</span></div>
+  <div class="dd-item" data-action="align-rights">◨ <span>Alinear elemento derecha</span></div>
+  <div class="dd-item" data-action="align-tops">⬆ <span>Alinear elemento arriba</span></div>
+  <div class="dd-item" data-action="align-middles">⬕ <span>Centrar elemento vertical</span></div>
+  <div class="dd-item" data-action="align-bottoms">⬇ <span>Alinear elemento abajo</span></div>
   <div class="dd-sep"></div>
   <div class="dd-item" data-action="same-width">↔ <span>Mismo ancho</span></div>
   <div class="dd-item" data-action="same-height">↕ <span>Misma altura</span></div>
@@ -129,6 +132,16 @@
   <div class="dd-item" data-action="same-width">↔ <span>Mismo ancho</span></div>
   <div class="dd-item" data-action="same-height">↕ <span>Misma altura</span></div>
   <div class="dd-item" data-action="same-size">⛶ <span>Mismo tamaño</span></div>
+</div>
+<div class="dropdown" id="dd-tdd-texto-h">
+  <div class="dd-item" data-action="text-align-left">⬱ <span>Texto izquierda</span></div>
+  <div class="dd-item" data-action="text-align-center">≡ <span>Texto centro horizontal</span></div>
+  <div class="dd-item" data-action="text-align-right">⬰ <span>Texto derecha</span></div>
+</div>
+<div class="dropdown" id="dd-tdd-texto-v">
+  <div class="dd-item" data-action="text-valign-top">⬆ <span>Texto arriba</span></div>
+  <div class="dd-item" data-action="text-valign-middle">⬕ <span>Texto centro vertical</span></div>
+  <div class="dd-item" data-action="text-valign-bottom">⬇ <span>Texto abajo</span></div>
 </div>
 
 <!-- ── Toolbars ── -->
@@ -197,9 +210,8 @@
     <button class="tb-icon" title="Cursiva (Ctrl+I)" data-format="italic" id="btn-italic" class="tb-icon tb-icon--italic">I</button>
     <button class="tb-icon" title="Subrayado (Ctrl+U)" data-format="underline" id="btn-underline" class="tb-icon tb-icon--underline">U</button>
     <div class="tb-sep"></div>
-    <button class="tb-icon" title="Alinear izquierda" data-format="align-left" id="btn-al">⬱</button>
-    <button class="tb-icon" title="Centrar" data-format="align-center" id="btn-ac">≡</button>
-    <button class="tb-icon" title="Alinear derecha" data-format="align-right" id="btn-ar">⬰</button>
+    <button class="tb-icon tb-dd-btn" id="tdd-btn-texto-h" data-dd="texto-h" title="Alineación horizontal de texto">H ▾</button>
+    <button class="tb-icon tb-dd-btn" id="tdd-btn-texto-v" data-dd="texto-v" title="Alineación vertical de texto">V ▾</button>
     <div class="tb-sep"></div>
     <!-- Color buttons -->
     <button class="tb-icon" title="Color de fuente" data-action="color-font">
@@ -215,7 +227,7 @@
     <!-- Alignment tools (multi-select) — dropdown buttons -->
     <button class="tb-icon tb-dd-btn" id="tdd-btn-alinear" data-dd="alinear" title="Alineación de elementos">Alinear ▾</button>
     <div class="tb-sep"></div>
-    <button class="tb-icon tb-dd-btn" id="tdd-btn-tamano" data-dd="tamano" title="Igualar tamaño">Tamaño ▾</button>
+    <button class="tb-icon tb-dd-btn" id="tdd-btn-tamano" data-dd="tamano" title="Igualar tamaño de elementos">Tamaño ▾</button>
     <div class="tb-sep"></div>
     <button class="tb-icon" title="Traer al frente" data-action="bring-front">🔼</button>
     <button class="tb-icon" title="Enviar al fondo" data-action="send-back">🔽</button>
@@ -440,6 +452,7 @@
 <script src="/engines/FontStack.js"></script>
 <script src="/engines/CanvasLayoutContracts.js"></script>
 <script src="/engines/CanvasLayoutSize.js"></script>
+<script src="/engines/TextAlignmentMapper.js"></script>
 <script src="/engines/CanvasLayoutElements.js"></script>
 <script src="/engines/PreviewEngineContracts.js"></script>
 <script src="/engines/PreviewPaginationEngine.js"></script>
@@ -562,7 +575,7 @@
         }
       });
     });
-    ['alinear', 'tamano'].forEach(function (name) {
+    ['alinear', 'tamano', 'texto-h', 'texto-v'].forEach(function (name) {
       var panel = document.getElementById('dd-tdd-' + name);
       var btn   = document.getElementById('tdd-btn-' + name);
       if (panel && btn) {
