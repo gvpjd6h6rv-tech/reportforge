@@ -219,6 +219,20 @@
     margin-block: 3px;
     font-weight: bold;
   }
+  /* Section targeted by "Formatear campo..." / "Propiedades..." — gives those
+     context-menu actions a visible effect even when the form fits without
+     scrolling. Cleared on next render() (innerHTML reset) or focusSection(). */
+  .prop-section.props-section-focus {
+    color: #1A4A80;
+    background: #FFF4C2;
+    outline: 1px solid #2A5EA0;
+    border-radius: 2px;
+    animation: rf-props-section-focus 0.9s ease-out;
+  }
+  @keyframes rf-props-section-focus {
+    0% { background: #FFE066; }
+    100% { background: #FFF4C2; }
+  }
   .prop-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin-block-end: 3px; }
   .prop-row-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; margin-block-end: 3px; }
   .prop-color-row {

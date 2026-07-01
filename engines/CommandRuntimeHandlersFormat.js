@@ -6,19 +6,13 @@
   function runFormatField() {
     if (!DS.selection.size) return;
     PropertiesEngine.render();
-    const panelRight = document.getElementById('panel-right');
-    if (panelRight) panelRight.scrollTop = 9999;
-    const propsBody = document.getElementById('props-body');
-    if (propsBody) propsBody.scrollTop = 9999;
+    PropertiesEngine.focusSection('format');
   }
 
   function runOpenProperties() {
     if (!DS.selection.size) return;
     PropertiesEngine.render();
-    const panelRight = document.getElementById('panel-right');
-    if (panelRight) panelRight.scrollTop = 9999;
-    const propsBody = document.getElementById('props-body');
-    if (propsBody) propsBody.scrollTop = 0;
+    PropertiesEngine.focusSection('general');
   }
 
   function runColorPicker(id, value, format, swatchVar) {

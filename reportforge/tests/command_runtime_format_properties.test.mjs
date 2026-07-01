@@ -5,10 +5,10 @@
  * Tests for format-field and open-properties actions in CommandRuntimeHandlersFormat.js,
  * and MenuAdapters.js action string verification.
  *
- * §1  format-field with selection → render + props-body to 9999 (format section at bottom)
- * §2  open-properties with selection → render + props-body to 0 (properties section at top)
- * §3  format-field without selection → no-op (no render, no scroll)
- * §4  open-properties without selection → no-op (no render, no scroll)
+ * §1  format-field with selection → render + focusSection('format')
+ * §2  open-properties with selection → render + focusSection('general')
+ * §3  format-field without selection → no-op (no render, no focus)
+ * §4  open-properties without selection → no-op (no render, no focus)
  * §5  format-field in preview mode → same behavior as design mode
  * §6  open-properties in preview mode → same behavior as design mode
  * §7  format-field with field element → no crash
@@ -23,7 +23,7 @@
  * §16 unknown action → not handled by format handler (returns false)
  * §17 MenuAdapters: "Dar formato al campo..." uses action format-field
  * §18 MenuAdapters: "Propiedades..." uses action open-properties
- * §19 Regression: format-field and open-properties have distinct scroll behavior
+ * §19 Regression: format-field and open-properties focus distinct sections
  * §20 Regression: align-lefts NOT handled by format handler (different dispatch family)
  * §21 Regression: color-font IS handled by format handler (handled but no render call)
  * §22 Regression: same-size NOT handled by format handler (selection dispatch family)
@@ -55,6 +55,7 @@ function makeEl(overrides = {}) {
 
 function load({ elements = [makeEl()], previewMode = false, selectionSize = null } = {}) {
   const renderCalls      = [];
+  const focusCalls       = [];
   const applyFormatCalls = [];
   const panelRight       = { scrollTop: 0 };
   const propsBody        = { scrollTop: 0 };
@@ -78,6 +79,7 @@ function load({ elements = [makeEl()], previewMode = false, selectionSize = null
     },
     PropertiesEngine: {
       render(...args) { renderCalls.push(args); },
+      focusSection(which) { focusCalls.push(which); },
     },
     FormatEngine: {
       applyFormat(...args) { applyFormatCalls.push(args); },
@@ -103,61 +105,55 @@ function load({ elements = [makeEl()], previewMode = false, selectionSize = null
 
   const { handleFormatCommands } = ctx.CommandRuntimeHandlersFormat;
 
-  return { dispatch: handleFormatCommands, renderCalls, applyFormatCalls, panelRight, propsBody };
+  return { dispatch: handleFormatCommands, renderCalls, focusCalls, applyFormatCalls, panelRight, propsBody };
 }
 
 // §1
-test('§1  format-field with selection: renders PropertiesEngine, scrolls panel-right=9999, props-body=9999', () => {
-  const { dispatch, renderCalls, panelRight, propsBody } = load();
+test('§1  format-field with selection: renders PropertiesEngine + focusSection("format")', () => {
+  const { dispatch, renderCalls, focusCalls } = load();
   dispatch('format-field');
   assert.equal(renderCalls.length, 1);
-  assert.equal(panelRight.scrollTop, 9999);
-  assert.equal(propsBody.scrollTop, 9999);
+  assert.deepEqual(focusCalls, ['format']);
 });
 
 // §2
-test('§2  open-properties with selection: renders PropertiesEngine, scrolls panel-right=9999, props-body=0', () => {
-  const { dispatch, renderCalls, panelRight, propsBody } = load();
+test('§2  open-properties with selection: renders PropertiesEngine + focusSection("general")', () => {
+  const { dispatch, renderCalls, focusCalls } = load();
   dispatch('open-properties');
   assert.equal(renderCalls.length, 1);
-  assert.equal(panelRight.scrollTop, 9999);
-  assert.equal(propsBody.scrollTop, 0);
+  assert.deepEqual(focusCalls, ['general']);
 });
 
 // §3
-test('§3  format-field without selection: no-op — no render, no scroll', () => {
-  const { dispatch, renderCalls, panelRight, propsBody } = load({ elements: [], selectionSize: 0 });
+test('§3  format-field without selection: no-op — no render, no focus', () => {
+  const { dispatch, renderCalls, focusCalls } = load({ elements: [], selectionSize: 0 });
   dispatch('format-field');
   assert.equal(renderCalls.length, 0);
-  assert.equal(panelRight.scrollTop, 0);
-  assert.equal(propsBody.scrollTop, 0);
+  assert.equal(focusCalls.length, 0);
 });
 
 // §4
-test('§4  open-properties without selection: no-op — no render, no scroll', () => {
-  const { dispatch, renderCalls, panelRight, propsBody } = load({ elements: [], selectionSize: 0 });
+test('§4  open-properties without selection: no-op — no render, no focus', () => {
+  const { dispatch, renderCalls, focusCalls } = load({ elements: [], selectionSize: 0 });
   dispatch('open-properties');
   assert.equal(renderCalls.length, 0);
-  assert.equal(panelRight.scrollTop, 0);
-  assert.equal(propsBody.scrollTop, 0);
+  assert.equal(focusCalls.length, 0);
 });
 
 // §5
-test('§5  format-field in preview mode: renders same as design mode', () => {
-  const { dispatch, renderCalls, panelRight, propsBody } = load({ previewMode: true });
+test('§5  format-field in preview mode: renders + focuses format same as design mode', () => {
+  const { dispatch, renderCalls, focusCalls } = load({ previewMode: true });
   dispatch('format-field');
   assert.equal(renderCalls.length, 1);
-  assert.equal(panelRight.scrollTop, 9999);
-  assert.equal(propsBody.scrollTop, 9999);
+  assert.deepEqual(focusCalls, ['format']);
 });
 
 // §6
-test('§6  open-properties in preview mode: renders same as design mode', () => {
-  const { dispatch, renderCalls, panelRight, propsBody } = load({ previewMode: true });
+test('§6  open-properties in preview mode: renders + focuses general same as design mode', () => {
+  const { dispatch, renderCalls, focusCalls } = load({ previewMode: true });
   dispatch('open-properties');
   assert.equal(renderCalls.length, 1);
-  assert.equal(panelRight.scrollTop, 9999);
-  assert.equal(propsBody.scrollTop, 0);
+  assert.deepEqual(focusCalls, ['general']);
 });
 
 // §7
@@ -253,16 +249,16 @@ test('§18 MenuAdapters: "Propiedades..." item uses action open-properties', () 
 });
 
 // §19
-test('§19 Regression: format-field and open-properties produce distinct scroll behavior', () => {
+test('§19 Regression: format-field and open-properties focus distinct sections', () => {
   const ff = load();
   ff.dispatch('format-field');
 
   const op = load();
   op.dispatch('open-properties');
 
-  assert.equal(ff.propsBody.scrollTop, 9999, 'format-field scrolls props-body to 9999');
-  assert.equal(op.propsBody.scrollTop, 0,    'open-properties resets props-body to 0');
-  assert.notEqual(ff.propsBody.scrollTop, op.propsBody.scrollTop);
+  assert.deepEqual(ff.focusCalls, ['format'],  'format-field focuses the format section');
+  assert.deepEqual(op.focusCalls, ['general'], 'open-properties focuses the general section');
+  assert.notDeepEqual(ff.focusCalls, op.focusCalls);
 });
 
 // §20

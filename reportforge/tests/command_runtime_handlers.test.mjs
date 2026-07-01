@@ -28,6 +28,7 @@ function loadHandlers(options = {}) {
     selection: [],
     command: [],
     format: [],
+    focus: [],
     insert: [],
     layout: [],
     dialog: [],
@@ -174,6 +175,7 @@ function loadHandlers(options = {}) {
     },
     PropertiesEngine: {
       render: makeSpy(calls, 'format'),
+      focusSection: makeSpy(calls, 'focus'),
     },
     FormatEngine: {
       applyFormat: makeSpy(calls, 'format'),
@@ -350,8 +352,8 @@ test('CommandRuntimeHandlers.handleAction dispatches each family and preserves s
   assert.equal(calls.command.length >= 1, true);
   assert.deepEqual(calls.format[0], []);   // format-field → PropertiesEngine.render()
   assert.deepEqual(calls.format[1], []);   // open-properties → PropertiesEngine.render()
-  assert.equal(panelRight.scrollTop, 9999);
-  assert.equal(propsBody.scrollTop, 0);    // open-properties called last → scrolled to top
+  assert.deepEqual(calls.focus[0], ['format']);    // format-field → focusSection('format')
+  assert.deepEqual(calls.focus[1], ['general']);   // open-properties → focusSection('general')
   assert.equal(fontPicker.value, '#445566');
   assert.equal(bgPicker.value, '#ffffff');
   assert.equal(borderPicker.value, '#000000');

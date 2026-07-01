@@ -48,7 +48,7 @@ const PropertiesEngine = {
       }
     }
 
-    const div1=document.createElement('div');div1.className='prop-section';div1.textContent='Posición y tamaño';
+    const div1=document.createElement('div');div1.className='prop-section';div1.id='props-general-anchor';div1.textContent='Posición y tamaño';
     form.appendChild(div1);
 
     const pos=document.createElement('div');
@@ -74,7 +74,7 @@ const PropertiesEngine = {
       DS.sections.map(s=>s.label));
     form.appendChild(secRow);
 
-    const div2=document.createElement('div');div2.className='prop-section';div2.textContent='Fuente';
+    const div2=document.createElement('div');div2.className='prop-section';div2.id='props-format-anchor';div2.textContent='Fuente';
     form.appendChild(div2);
 
     const fontRow=document.createElement('div');fontRow.className='prop-row';
@@ -214,6 +214,28 @@ const PropertiesEngine = {
     return d;
   },
   _esc(s){return String(s).replace(/"/g,'&quot;').replace(/</g,'&lt;');},
+
+  // Reveal + focus a logical section of the (already rendered) props form.
+  // which='format'  → Fuente / Colores section, focuses the font-family control.
+  // which='general' → Posición y tamaño section, focuses the X control.
+  // Produces a *visible* change independent of scroll overflow: un-collapses the
+  // panel, highlights the target section, and moves real keyboard focus into it.
+  // Returns the focused control id (or null if nothing to focus, e.g. no selection).
+  focusSection(which){
+    const panel=document.getElementById('properties-panel');
+    if(panel) panel.classList.remove('collapsed');
+    const form=document.getElementById('props-form');
+    if(!form || form.classList.contains('hidden')) return null;
+    const isFormat = which==='format';
+    form.querySelectorAll('.prop-section.props-section-focus')
+      .forEach(s=>s.classList.remove('props-section-focus'));
+    const anchor=document.getElementById(isFormat?'props-format-anchor':'props-general-anchor');
+    if(anchor) anchor.classList.add('props-section-focus');
+    const ctl=document.getElementById(isFormat?'prop-font-family':'prop-x');
+    if(ctl && typeof ctl.focus==='function'){ ctl.focus(); return ctl.id; }
+    if(anchor && typeof anchor.scrollIntoView==='function') anchor.scrollIntoView({block:'nearest'});
+    return anchor?anchor.id:null;
+  },
 
   updatePositionFields(el){
     ['x','y','w','h'].forEach(k=>{
