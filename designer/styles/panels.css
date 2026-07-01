@@ -177,9 +177,10 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    cursor: pointer;
+    cursor: ns-resize;
     flex-shrink: 0;
     transition: background var(--rf-transition);
+    user-select: none;
   }
   #props-body {
     overflow-y: auto;
@@ -188,6 +189,17 @@
     max-block-size: 260px;
     min-block-size: 100px;
   }
+  /* When JS sets an explicit panel height, body fills the remaining space */
+  #properties-panel.sized {
+    flex-shrink: 0;
+  }
+  #properties-panel.sized #props-body {
+    max-block-size: none;
+    min-block-size: 0;
+    flex: 1 1 0;
+  }
+  /* During active drag */
+  body.rf-resizing { user-select: none; -webkit-user-select: none; cursor: ns-resize !important; }
   .prop-row {
     display: flex;
     align-items: center;

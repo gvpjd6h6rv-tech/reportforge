@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('props-title')?.addEventListener('click', () => {
     document.getElementById('properties-panel').classList.toggle('collapsed');
   });
+  if (typeof PanelResizeEngine !== 'undefined') PanelResizeEngine.init();
   console.log('[ReportForge] Diseñador iniciado — ' + DS.elements.length + ' elementos, ' + DS.sections.length + ' secciones');
 });
 
