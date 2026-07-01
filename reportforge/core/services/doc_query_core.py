@@ -77,7 +77,7 @@ def fetch_document(
             http_status=500,
         ) from exc
 
-    validation = validate_dataset_shape(dataset)
+    validation = validate_dataset_shape(dataset, doc_type=doc_type)
     if not validation["schemaOk"]:
         raise DocumentQueryError(
             code="SCHEMA_MISMATCH",

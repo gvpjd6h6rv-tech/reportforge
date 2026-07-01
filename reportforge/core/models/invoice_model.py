@@ -6,6 +6,7 @@ from reportforge.core.render.datasource.db_source_errors import DbConnectionErro
 from reportforge.core.render.datasource.db_source_registry import get_registered
 from reportforge.core.models.invoice_queries import (
     fetch_company_info,
+    fetch_guia_referencias,
     fetch_invoice_header,
     fetch_invoice_lines,
 )
@@ -74,11 +75,22 @@ def _build_numero_documento(header: dict) -> str:
     return sec or str(header.get("doc_num") or "")
 
 
-def build_invoice_model(doc_entry: int, datasource_alias: str | None = None) -> dict:
+_FORMA_PAGO_DESC = {
+    "01": "SIN UTILIZACIÓN DEL SISTEMA FINANCIERO",
+    "15": "COMPENSACIÓN DE DEUDAS", "16": "TARJETA DE DÉBITO",
+    "17": "DINERO ELECTRÓNICO",      "18": "TARJETA PREPAGO",
+    "19": "TARJETA DE CRÉDITO",      "20": "OTROS CON SISTEMA FINANCIERO",
+    "21": "ENDOSO DE TÍTULOS",
+}
+
+
+def build_invoice_model(doc_num: int, datasource_alias: str | None = None) -> dict:
     spec = _resolve_db_spec(datasource_alias)
-    header = fetch_invoice_header(spec, doc_entry)
+    header = fetch_invoice_header(spec, doc_num)
+    doc_entry = int(header["doc_entry"])
     lines = fetch_invoice_lines(spec, doc_entry)
     company = fetch_company_info(spec)
+    guia_ref = fetch_guia_referencias(spec, doc_entry)
 
     iva = float(header.get("iva") or 0)
     total = float(header.get("total") or 0)
@@ -88,6 +100,7 @@ def build_invoice_model(doc_entry: int, datasource_alias: str | None = None) -> 
 
     items = [
         {
+            "numero": int(line.get("numero") or 0),
             "codigo": str(line.get("codigo") or ""),
             "descripcion": str(line.get("descripcion") or ""),
             "cantidad": float(line.get("cantidad") or 0),
@@ -95,15 +108,33 @@ def build_invoice_model(doc_entry: int, datasource_alias: str | None = None) -> 
             "descuento": float(line.get("descuento") or 0),
             "desc_lineal": float(line.get("desc_lineal") or 0),
             "subtotal": float(line.get("subtotal") or 0),
+            "precio_total": float(line.get("subtotal") or 0),
             "ice_porcentaje": float(line.get("ice_porcentaje") or 0),
             "ice_valor": float(line.get("ice_valor") or 0),
+            "referencia": str(line.get("referencia") or "") or None,
         }
         for line in lines
     ]
 
+    forma_pago_fe = str(header.get("forma_pago_fe") or "01")
+    forma_pago_desc = _FORMA_PAGO_DESC.get(forma_pago_fe, forma_pago_fe)
+    plazo_val = str(header.get("plazo") or "") or None
+    email_val = str(company.get("email") or "")
+    tipo_emision_val = str(header.get("tipo_emision") or "")
+    folio_num = header.get("folio_num")
+    nota_num_val = str(int(folio_num)) if folio_num not in (None, 0, "") else str(header.get("doc_num") or "")
+    raw_time = header.get("doc_time")
+    hora_emision = ""
+    if raw_time is not None:
+        try:
+            t = int(raw_time)
+            hora_emision = f"{t // 100:02d}:{t % 100:02d}"
+        except (ValueError, TypeError):
+            pass
+
     return {
         "meta": {
-            "doc_entry": int(header["doc_entry"]),
+            "doc_entry": doc_entry,
             "doc_num": int(header["doc_num"]),
             "obj_type": str(header.get("obj_type") or "13"),
             "currency": str(header.get("currency") or "USD"),
@@ -115,23 +146,28 @@ def build_invoice_model(doc_entry: int, datasource_alias: str | None = None) -> 
             "direccion_matriz": str(company.get("direccion_matriz") or ""),
             "pais": str(company.get("pais") or ""),
             "telefono": str(company.get("telefono") or ""),
-            "email": str(company.get("email") or ""),
+            "email": email_val,
+            "correo": email_val,
             "direccion_sucursal": None,
             "obligado_contabilidad": "SI",
             "agente_retencion": "NO",
         },
         "cliente": {
             "razon_social": str(header.get("cliente_nombre") or ""),
+            "nombre": str(header.get("cliente_nombre") or ""),
             "identificacion": str(header.get("cliente_ruc") or ""),
             "tipo_identificacion": str(header.get("cliente_tipo_id") or ""),
             "direccion": header.get("cliente_direccion"),
             "email": header.get("cliente_email"),
+            "telefono": str(header.get("cliente_telefono") or "") or None,
+            "telefono2": str(header.get("cliente_telefono2") or "") or None,
         },
         "fiscal": {
             "ambiente_raw": str(header.get("ambiente") or ""),
             "ambiente": _AMBIENTE_MAP.get(str(header.get("ambiente") or ""), str(header.get("ambiente") or "")),
             "tipo_comprobante": str(header.get("tipo_comprobante") or ""),
-            "tipo_emision": str(header.get("tipo_emision") or ""),
+            "tipo_emision": tipo_emision_val,
+            "emision": tipo_emision_val,
             "estado_fe": str(header.get("estado_fe") or "") or None,
             "codigo_error": str(header.get("codigo_error") or "") or None,
             "descripcion_error": str(header.get("descripcion_error") or "") or None,
@@ -143,16 +179,45 @@ def build_invoice_model(doc_entry: int, datasource_alias: str | None = None) -> 
             "clave_acceso": str(header.get("clave_acceso") or ""),
         },
         "pago": {
-            "forma_pago_fe": str(header.get("forma_pago_fe") or "01"),
-            "plazo": str(header.get("plazo") or "") or None,
+            "forma_pago_fe": forma_pago_fe,
+            "plazo": plazo_val,
             "total": total,
         },
+        "forma_pago": {
+            "descripcion": forma_pago_desc,
+            "valor": total,
+            "plazo": plazo_val,
+            "tiempo": None,
+        },
+        "fecha": {
+            "emision": str(header.get("doc_date") or ""),
+        },
+        "hora": {
+            "emision": hora_emision or None,
+        },
+        "guia": {
+            "remision": guia_ref,
+        },
+        "observaciones": str(header.get("comments") or "") or None,
+        "nota_numero": nota_num_val,
+        "subtotal": sub_sin_imp,
+        "descuento": 0.0,
+        "valor_total": total,
         "items": items,
         "totales": {
             "subtotal_12": sub_12,
+            "subtotal_15": sub_12,
             "subtotal_0": sub_0,
+            "subtotal_iva_0": sub_0,
             "subtotal_sin_impuestos": sub_sin_imp,
+            "subtotal_no_objeto_iva": 0.0,
+            "subtotal_exento_iva": 0.0,
+            "descuento_total": 0.0,
+            "valor_ice": 0.0,
             "iva_12": iva,
+            "iva_15": iva,
+            "propina": 0.0,
             "importe_total": total,
+            "valor_total": total,
         },
     }

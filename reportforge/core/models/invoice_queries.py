@@ -21,10 +21,15 @@ SELECT
     T1.LicTradNum                      AS cliente_ruc,
     T1.E_Mail                          AS cliente_email,
     T1.Address                         AS cliente_direccion,
+    ISNULL(T1.Phone1, '')              AS cliente_telefono,
+    ISNULL(T1.Phone2, '')              AS cliente_telefono2,
     ISNULL(T1.U_TIPO_ID, '')           AS cliente_tipo_id,
     ISNULL(T1.U_Exx_Plazo, '')         AS plazo,
+    CONVERT(VARCHAR(10), T0.DocDate, 23) AS doc_date,
+    T0.DocTime                         AS doc_time,
     T0.DocTotal                        AS total,
     T0.VatSum                          AS iva,
+    ISNULL(T0.Comments, '')            AS comments,
     T0.U_EXX_FE_TIPAMB                 AS ambiente,
     T0.U_EXX_FE_TIPCOM                 AS tipo_comprobante,
     T0.U_EXX_FE_TIPEMI                 AS tipo_emision,
@@ -45,11 +50,12 @@ FROM OINV T0
 INNER JOIN OCRD T1 ON T0.CardCode = T1.CardCode
 LEFT JOIN [@EXX_FPAGO_VENT_DET] FP
        ON FP.Code = T0.U_EXX_FPAGO_VENTAS AND FP.LineId = 1
-WHERE T0.DocEntry = :doc_entry
+WHERE T0.DocNum = :doc_num
 """
 
 _LINES_SQL = """
 SELECT
+    LineNum                                   AS numero,
     ItemCode                                  AS codigo,
     Dscription                                AS descripcion,
     Quantity                                  AS cantidad,
@@ -59,10 +65,30 @@ SELECT
     LineTotal                                 AS subtotal,
     TaxCode                                   AS tax_code,
     ISNULL(U_EXX_FE_PorICEVta, 0)            AS ice_porcentaje,
-    ISNULL(U_EXX_FE_ValICEVta, 0)            AS ice_valor
+    ISNULL(U_EXX_FE_ValICEVta, 0)            AS ice_valor,
+    CAST(Text AS NVARCHAR(4000))              AS referencia
 FROM INV1
 WHERE DocEntry = :doc_entry
 ORDER BY LineNum
+"""
+
+# Guías vinculadas a la factura: busca ODLNs cuyas líneas (DLN1) tengan BaseType=13
+# y BaseEntry = OINV.DocEntry. Toma la clave de autorización de la guía en orden de
+# prioridad: U_EXX_FE_ClaAcc → U_NUM_AUTOR. Si hay varias guías distintas, las une
+# con ", " en el orden de DocEntry ascendente.
+_GUIA_REF_SQL = """
+SELECT DISTINCT
+    T0.DocEntry AS odln_entry,
+    COALESCE(
+        NULLIF(ISNULL(T0.U_EXX_FE_ClaAcc, ''), ''),
+        NULLIF(ISNULL(T0.U_NUM_AUTOR, ''), ''),
+        ''
+    ) AS guia_clave
+FROM ODLN T0
+INNER JOIN DLN1 T1 ON T1.DocEntry = T0.DocEntry
+WHERE T1.BaseType = 13
+  AND T1.BaseEntry = :doc_entry
+ORDER BY T0.DocEntry ASC
 """
 
 _COMPANY_SQL = """
@@ -78,13 +104,13 @@ FROM OADM
 """
 
 
-def fetch_invoice_header(spec: dict, doc_entry: int) -> dict:
+def fetch_invoice_header(spec: dict, doc_num: int) -> dict:
     try:
-        rows = pymssql_query(spec, _HEADER_SQL, {"doc_entry": doc_entry})
+        rows = pymssql_query(spec, _HEADER_SQL, {"doc_num": doc_num})
     except Exception as exc:
         _reclassify(exc)
     if not rows:
-        raise DbDocNotFoundError(f"OINV DocEntry={doc_entry} no encontrado.")
+        raise DbDocNotFoundError(f"OINV DocNum={doc_num} no encontrado.")
     return rows[0]
 
 
@@ -93,6 +119,17 @@ def fetch_invoice_lines(spec: dict, doc_entry: int) -> list[dict]:
         return pymssql_query(spec, _LINES_SQL, {"doc_entry": doc_entry})
     except Exception as exc:
         _reclassify(exc)
+
+
+def fetch_guia_referencias(spec: dict, doc_entry: int) -> str | None:
+    """Return comma-separated guia authorization keys for ODLNs linked to this OINV DocEntry.
+    Returns None if no linked guia exists or if UDF columns are missing."""
+    try:
+        rows = pymssql_query(spec, _GUIA_REF_SQL, {"doc_entry": doc_entry})
+    except Exception:
+        return None
+    keys = [str(r["guia_clave"]) for r in (rows or []) if r.get("guia_clave")]
+    return ", ".join(keys) if keys else None
 
 
 def fetch_company_info(spec: dict) -> dict:

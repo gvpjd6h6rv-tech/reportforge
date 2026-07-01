@@ -224,6 +224,14 @@ _ALIAS_PREFIXES = (
     "totales",
     "fecha",
     "guia",
+    "destinatario",
+    "traslado",
+    "origen",
+    "destino",
+    "meta",
+    "pago",
+    "hora",
+    "nota",
 )
 _MISSING = object()
 
