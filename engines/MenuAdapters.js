@@ -4,6 +4,8 @@
   const ContextMenuEngine = {
     show(x, y, context = 'canvas') {
       const menu = document.getElementById('ctx-menu');
+      const selCount = (typeof DS !== 'undefined' && DS.selection) ? DS.selection.size : 0;
+      const needsMulti = selCount < 2;
       const items = context === 'element' ? [
         { label: 'Dar formato al campo...', action: 'format-field', icon: '⚙' },
         { label: 'Propiedades...', action: 'open-properties', icon: '📋' },
@@ -24,9 +26,9 @@
         { label: 'Centrar vertical',   action: 'align-middles' },
         { label: 'Alinear abajo',      action: 'align-bottoms' },
         { sep: true },
-        { label: 'Mismo ancho',        action: 'same-width' },
-        { label: 'Misma altura',       action: 'same-height' },
-        { label: 'Mismo tamaño',       action: 'same-size' },
+        { label: 'Mismo ancho',        action: 'same-width',  disabled: needsMulti, title: 'Requiere 2 o más elementos seleccionados' },
+        { label: 'Misma altura',       action: 'same-height', disabled: needsMulti, title: 'Requiere 2 o más elementos seleccionados' },
+        { label: 'Mismo tamaño',       action: 'same-size',   disabled: needsMulti, title: 'Requiere 2 o más elementos seleccionados' },
       ] : [
         { label: 'Insertar > Texto', action: 'insert-text' },
         { label: 'Insertar > Campo', action: 'insert-field' },
@@ -46,9 +48,12 @@
           return;
         }
         const entry = document.createElement('div');
-        entry.className = 'ctx-item';
+        entry.className = 'ctx-item' + (item.disabled ? ' disabled' : '');
+        if (item.title) entry.title = item.title;
         entry.innerHTML = `<span class="ctx-icon">${item.icon || ''}</span><span>${item.label}</span>${item.short ? `<span class="ctx-shortcut">${item.short}</span>` : ''}`;
-        entry.addEventListener('click', () => { this.hide(); handleAction(item.action); });
+        if (!item.disabled) {
+          entry.addEventListener('click', () => { this.hide(); handleAction(item.action); });
+        }
         menu.appendChild(entry);
       });
       const pw = 170;
