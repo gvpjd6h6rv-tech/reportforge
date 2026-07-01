@@ -8,6 +8,8 @@
     min-inline-size: 170px;
     display: none;
     padding-block: 2px;
+    max-block-size: calc(100vh - 8px);
+    overflow-y: auto;
   }
   #ctx-menu.visible { display: block; }
   .ctx-item {

@@ -101,15 +101,34 @@
   <div class="dd-item" data-format="align-center">≡ <span>Centrar</span></div>
   <div class="dd-item" data-format="align-right">⬰ <span>Alinear a la derecha</span></div>
   <div class="dd-sep"></div>
+  <div class="dd-item" data-action="align-lefts">◧ <span>Alinear bordes izquierdos</span></div>
+  <div class="dd-item" data-action="align-centers">◈ <span>Centrar horizontal</span></div>
+  <div class="dd-item" data-action="align-rights">◨ <span>Alinear bordes derechos</span></div>
   <div class="dd-item" data-action="align-tops">⬆ <span>Alinear bordes superiores</span></div>
   <div class="dd-item" data-action="align-middles">⬕ <span>Alinear centros verticales</span></div>
   <div class="dd-item" data-action="align-bottoms">⬇ <span>Alinear bordes inferiores</span></div>
   <div class="dd-sep"></div>
   <div class="dd-item" data-action="same-width">↔ <span>Mismo ancho</span></div>
   <div class="dd-item" data-action="same-height">↕ <span>Misma altura</span></div>
+  <div class="dd-item" data-action="same-size">⛶ <span>Mismo tamaño</span></div>
   <div class="dd-sep"></div>
   <div class="dd-item" data-action="bring-front">🔼 <span>Traer al frente</span></div>
   <div class="dd-item" data-action="send-back">🔽 <span>Enviar al fondo</span></div>
+</div>
+<!-- Toolbar sub-menus (opened by .tb-dd-btn toggle script below) -->
+<div class="dropdown" id="dd-tdd-alinear">
+  <div class="dd-item" data-action="align-lefts">◧ <span>Alinear izquierda</span></div>
+  <div class="dd-item" data-action="align-centers">◈ <span>Centrar horizontal</span></div>
+  <div class="dd-item" data-action="align-rights">◨ <span>Alinear derecha</span></div>
+  <div class="dd-sep"></div>
+  <div class="dd-item" data-action="align-tops">⬆ <span>Alinear arriba</span></div>
+  <div class="dd-item" data-action="align-middles">⬕ <span>Centrar vertical</span></div>
+  <div class="dd-item" data-action="align-bottoms">⬇ <span>Alinear abajo</span></div>
+</div>
+<div class="dropdown" id="dd-tdd-tamano">
+  <div class="dd-item" data-action="same-width">↔ <span>Mismo ancho</span></div>
+  <div class="dd-item" data-action="same-height">↕ <span>Misma altura</span></div>
+  <div class="dd-item" data-action="same-size">⛶ <span>Mismo tamaño</span></div>
 </div>
 
 <!-- ── Toolbars ── -->
@@ -193,20 +212,10 @@
       ▭<div class="color-swatch color-swatch--transparent" id="swatch-border"></div>
     </button>
     <div class="tb-sep"></div>
-    <!-- Alignment tools (multi-select) — RF-CR-PARITY: each used to be two
-         stacked unicode glyphs (e.g. "⬜◧") that overlap/render as visual
-         noise instead of a clear icon, obscuring what each button does
-         (confirmed live, classic skin). Single glyph per button instead. -->
-    <button class="tb-icon" title="Alinear bordes izquierdos" data-action="align-lefts">◧</button>
-    <button class="tb-icon" title="Centrar horizontal" data-action="align-centers">◈</button>
-    <button class="tb-icon" title="Alinear bordes derechos" data-action="align-rights">◨</button>
-    <button class="tb-icon" title="Alinear bordes superiores" data-action="align-tops">⬆</button>
-    <button class="tb-icon" title="Centrar vertical" data-action="align-middles">⬕</button>
-    <button class="tb-icon" title="Alinear bordes inferiores" data-action="align-bottoms">⬇</button>
+    <!-- Alignment tools (multi-select) — dropdown buttons -->
+    <button class="tb-icon tb-dd-btn" id="tdd-btn-alinear" data-dd="alinear" title="Alineación de elementos">Alinear ▾</button>
     <div class="tb-sep"></div>
-    <button class="tb-icon" title="Mismo ancho" data-action="same-width">↔</button>
-    <button class="tb-icon" title="Misma altura" data-action="same-height">↕</button>
-    <button class="tb-icon" title="Mismo tamaño" data-action="same-size">⛶</button>
+    <button class="tb-icon tb-dd-btn" id="tdd-btn-tamano" data-dd="tamano" title="Igualar tamaño">Tamaño ▾</button>
     <div class="tb-sep"></div>
     <button class="tb-icon" title="Traer al frente" data-action="bring-front">🔼</button>
     <button class="tb-icon" title="Enviar al fondo" data-action="send-back">🔽</button>
@@ -520,5 +529,43 @@
 <script src="/engines/EngineCoreRouting.js"></script>
 <script src="/engines/EngineCore.js"></script>
 <script src="/engines/DeferredBootstrap.js"></script>
+<script>
+/* Toolbar dropdown toggle for "Alinear ▾" / "Tamaño ▾" in #tb2.
+   Panels (#dd-tdd-*) use .dropdown so MenuEngine.closeAll() covers them.
+   MutationObserver keeps .active in sync when panels close externally. */
+(function () {
+  function init() {
+    document.querySelectorAll('.tb-dd-btn[data-dd]').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var panel = document.getElementById('dd-tdd-' + btn.dataset.dd);
+        if (!panel) return;
+        var opening = !panel.classList.contains('visible');
+        document.querySelectorAll('.dropdown').forEach(function (d) { d.classList.remove('visible'); });
+        document.querySelectorAll('.tb-dd-btn').forEach(function (b) { b.classList.remove('active'); });
+        if (typeof MenuEngine !== 'undefined') MenuEngine._open = null;
+        if (opening) {
+          var r = btn.getBoundingClientRect();
+          panel.style.left = r.left + 'px';
+          panel.style.top = r.bottom + 'px';
+          panel.classList.add('visible');
+          btn.classList.add('active');
+        }
+      });
+    });
+    ['alinear', 'tamano'].forEach(function (name) {
+      var panel = document.getElementById('dd-tdd-' + name);
+      var btn   = document.getElementById('tdd-btn-' + name);
+      if (panel && btn) {
+        new MutationObserver(function () {
+          btn.classList.toggle('active', panel.classList.contains('visible'));
+        }).observe(panel, { attributes: true, attributeFilter: ['class'] });
+      }
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
 
 <!-- ══ ReportForge v19.6 — Full Engine Implementations ════════════════ -->

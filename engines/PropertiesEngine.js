@@ -125,6 +125,31 @@ const PropertiesEngine = {
       });
     });
 
+    const divAlignSec=document.createElement('div');divAlignSec.className='prop-section';divAlignSec.textContent='Alineación';
+    form.appendChild(divAlignSec);
+    const _mkPB=(act,tt,ico)=>{const b=document.createElement('button');b.className='tb-icon';b.style.cssText='width:18px;height:16px;font-size:10px';b.title=tt;b.textContent=ico;if(sel.length<2){b.disabled=true;b.style.opacity='0.35';}else b.addEventListener('click',()=>handleAction(act));return b;};
+    const alignHRow=document.createElement('div');alignHRow.className='prop-row';
+    const alignHBtns=document.createElement('div');alignHBtns.style.cssText='display:flex;gap:2px';
+    alignHBtns.appendChild(_mkPB('align-lefts','Alinear bordes izquierdos','◧'));
+    alignHBtns.appendChild(_mkPB('align-centers','Centrar horizontal','◈'));
+    alignHBtns.appendChild(_mkPB('align-rights','Alinear bordes derechos','◨'));
+    const alignHLbl=document.createElement('span');alignHLbl.className='prop-label';alignHLbl.textContent='H:';
+    alignHRow.appendChild(alignHLbl);alignHRow.appendChild(alignHBtns);form.appendChild(alignHRow);
+    const alignVRow=document.createElement('div');alignVRow.className='prop-row';
+    const alignVBtns=document.createElement('div');alignVBtns.style.cssText='display:flex;gap:2px';
+    alignVBtns.appendChild(_mkPB('align-tops','Alinear bordes superiores','⬆'));
+    alignVBtns.appendChild(_mkPB('align-middles','Centrar vertical','⬕'));
+    alignVBtns.appendChild(_mkPB('align-bottoms','Alinear bordes inferiores','⬇'));
+    const alignVLbl=document.createElement('span');alignVLbl.className='prop-label';alignVLbl.textContent='V:';
+    alignVRow.appendChild(alignVLbl);alignVRow.appendChild(alignVBtns);form.appendChild(alignVRow);
+    const alignSzRow=document.createElement('div');alignSzRow.className='prop-row';
+    const alignSzBtns=document.createElement('div');alignSzBtns.style.cssText='display:flex;gap:2px';
+    alignSzBtns.appendChild(_mkPB('same-width','Mismo ancho','↔'));
+    alignSzBtns.appendChild(_mkPB('same-height','Misma altura','↕'));
+    alignSzBtns.appendChild(_mkPB('same-size','Mismo tamaño','⛶'));
+    const alignSzLbl=document.createElement('span');alignSzLbl.className='prop-label';alignSzLbl.textContent='Tamaño:';
+    alignSzRow.appendChild(alignSzLbl);alignSzRow.appendChild(alignSzBtns);form.appendChild(alignSzRow);
+
     const div3=document.createElement('div');div3.className='prop-section';div3.textContent='Colores y bordes';
     form.appendChild(div3);
 

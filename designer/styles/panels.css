@@ -23,6 +23,7 @@
     flex-direction: column;
     overflow: hidden;
     flex-shrink: 0;
+    padding-block-end: 40px; /* #zoom-widget is fixed bottom:28px, overlaps ~34px of panel — buffer zone */
   }
 
   /* Container query: narrow left panel */

@@ -141,6 +141,8 @@
     min-inline-size: 160px;
     display: none;
     padding-block: 2px;
+    max-block-size: calc(100vh - 8px);
+    overflow-y: auto;
   }
   .dropdown.visible { display: block; }
   .dd-item {
@@ -181,6 +183,16 @@
     background: var(--rf-border-mid);
     margin-inline: 3px;
     flex-shrink: 0;
+  }
+  /* Toolbar dropdown trigger buttons — wider to fit "Alinear ▾" / "Tamaño ▾".
+     .tb-icon.tb-dd-btn beats .tb-icon alone so inline-size:auto wins. */
+  .tb-icon.tb-dd-btn {
+    inline-size: auto;
+    padding-inline: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0;
+    white-space: nowrap;
   }
   .tb-icon {
     inline-size: 22px;

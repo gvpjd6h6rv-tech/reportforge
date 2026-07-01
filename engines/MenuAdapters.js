@@ -52,9 +52,9 @@
         menu.appendChild(entry);
       });
       const pw = 170;
-      const ph = items.length * 22;
+      const ph = items.reduce((s, i) => s + (i.sep ? 5 : 22), 0) + 4;
       menu.style.left = `${Math.min(x, window.innerWidth - pw - 4)}px`;
-      menu.style.top = `${Math.min(y, window.innerHeight - ph - 4)}px`;
+      menu.style.top = `${Math.max(0, Math.min(y, window.innerHeight - ph - 4))}px`;
       menu.classList.add('visible');
     },
     hide() {
