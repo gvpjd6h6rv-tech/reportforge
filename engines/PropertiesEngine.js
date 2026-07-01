@@ -190,25 +190,28 @@ const PropertiesEngine = {
     });
 
     document.getElementById('pc-font')?.addEventListener('click',()=>{
-      const cp=document.getElementById('color-picker-font');cp.value=el.color;
-      cp.click();cp.oninput=ev=>{sel.forEach(s=>{s.color=ev.target.value;_canonicalCanvasWriter().updateElement(s.id);});
-        (function(){const el=document.getElementById('pc-font');if(el)el.dataset.color=ev.target.value;})();
-        document.documentElement.style.setProperty('--swatch-font', ev.target.value);
-        DS.saveHistory();};
+      ColorPickerAdapter.open(el.color||'#000000',(hex)=>{
+        sel.forEach(s=>{s.color=hex;_canonicalCanvasWriter().updateElement(s.id);});
+        document.documentElement.style.setProperty('--swatch-font',hex);
+        const sw=document.getElementById('pc-font');if(sw)sw.style.background=hex;
+        DS.saveHistory();PropertiesEngine.render();
+      },{allowTransparent:false});
     });
     document.getElementById('pc-bg')?.addEventListener('click',()=>{
-      const cp=document.getElementById('color-picker-bg');cp.value=el.bgColor==='transparent'?'#ffffff':el.bgColor;
-      cp.click();cp.oninput=ev=>{sel.forEach(s=>{s.bgColor=ev.target.value;_canonicalCanvasWriter().updateElement(s.id);});
-        document.getElementById('pc-bg').style.background=ev.target.value;
-        document.documentElement.style.setProperty('--swatch-bg', ev.target.value);
-        DS.saveHistory();};
+      ColorPickerAdapter.open(el.bgColor||'#ffffff',(hex)=>{
+        sel.forEach(s=>{s.bgColor=hex;_canonicalCanvasWriter().updateElement(s.id);});
+        document.documentElement.style.setProperty('--swatch-bg',hex==='transparent'?'transparent':hex);
+        const sw=document.getElementById('pc-bg');if(sw){sw.style.background=hex==='transparent'?'#fff':hex;sw.style.borderStyle=hex==='transparent'?'dashed':'solid';}
+        DS.saveHistory();PropertiesEngine.render();
+      },{allowTransparent:true});
     });
     document.getElementById('pc-border')?.addEventListener('click',()=>{
-      const cp=document.getElementById('color-picker-border');cp.value=el.borderColor==='transparent'?'#000000':el.borderColor;
-      cp.click();cp.oninput=ev=>{sel.forEach(s=>{s.borderColor=ev.target.value;_canonicalCanvasWriter().updateElement(s.id);});
-        document.getElementById('pc-border').style.background=ev.target.value;
-        document.documentElement.style.setProperty('--swatch-border', ev.target.value);
-        DS.saveHistory();};
+      ColorPickerAdapter.open(el.borderColor||'#000000',(hex)=>{
+        sel.forEach(s=>{s.borderColor=hex;_canonicalCanvasWriter().updateElement(s.id);});
+        document.documentElement.style.setProperty('--swatch-border',hex==='transparent'?'transparent':hex);
+        const sw=document.getElementById('pc-border');if(sw){sw.style.background=hex==='transparent'?'#fff':hex;sw.style.borderStyle=hex==='transparent'?'dashed':'solid';}
+        DS.saveHistory();PropertiesEngine.render();
+      },{allowTransparent:true});
     });
   },
 

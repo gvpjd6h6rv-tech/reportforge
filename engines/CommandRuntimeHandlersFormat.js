@@ -16,19 +16,17 @@
     PropertiesEngine.focusSection('general');
   }
 
-  function runColorPicker(id, value, format, swatchVar) {
-    const cp = document.getElementById(id);
-    cp.value = value;
-    cp.click();
-    cp.oninput = (e) => {
-      FormatEngine.applyFormat(format, e.target.value);
-      document.documentElement.style.setProperty(swatchVar, e.target.value);
-    };
+  function runColorPicker(currentHex, format, swatchVar, allowTransparent) {
+    global.ColorPickerAdapter.open(currentHex, (hex) => {
+      FormatEngine.applyFormat(format, hex);
+      document.documentElement.style.setProperty(swatchVar, hex === 'transparent' ? 'transparent' : hex);
+    }, { allowTransparent: !!allowTransparent });
   }
 
   function runColorFont() {
     const sel = DS.getSelectedElements();
-    runColorPicker('color-picker-font', sel.length ? sel[0].color : '#000000', 'color', '--swatch-font');
+    const hex = sel.length && sel[0].color ? sel[0].color : '#000000';
+    runColorPicker(hex, 'color', '--swatch-font', false);
   }
 
   function applyTextAlign(v)  { FormatEngine.applyFormat('align',  v); }
@@ -39,8 +37,8 @@
       'format-field':        runFormatField,
       'open-properties':     runOpenProperties,
       'color-font':          runColorFont,
-      'color-bg':            () => runColorPicker('color-picker-bg', '#ffffff', 'bgColor', '--swatch-bg'),
-      'color-border':        () => runColorPicker('color-picker-border', '#000000', 'borderColor', '--swatch-border'),
+      'color-bg':            () => { const sel=DS.getSelectedElements(); runColorPicker(sel.length?sel[0].bgColor||'#ffffff':'#ffffff','bgColor','--swatch-bg',true); },
+      'color-border':        () => { const sel=DS.getSelectedElements(); runColorPicker(sel.length?sel[0].borderColor||'#000000':'#000000','borderColor','--swatch-border',true); },
       'text-align-left':     () => applyTextAlign('left'),
       'text-align-center':   () => applyTextAlign('center'),
       'text-align-right':    () => applyTextAlign('right'),
