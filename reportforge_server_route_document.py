@@ -55,7 +55,14 @@ def _get_document(handler, doc_type: str, doc_number: str) -> None:
 
     try:
         from reportforge.core.services.doc_query_core import DocumentQueryError, fetch_document
+        from reportforge.core.services.field_tree_builder import (
+            build_dataset_paths,
+            build_field_tree,
+        )
         result = fetch_document(doc_type, doc_num_int, datasource_alias=datasource, timeout=timeout)
+        ds = result.get("dataset", {})
+        result["fieldTree"] = build_field_tree(ds)
+        result["datasetPaths"] = build_dataset_paths(ds)
         _respond_json(handler, 200, result)
     except DocumentQueryError as exc:
         _respond_json(handler, exc.http_status, _envelope_error(exc.code, exc.message, exc.details))

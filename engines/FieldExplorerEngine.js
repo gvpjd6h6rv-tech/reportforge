@@ -11,7 +11,8 @@ const FieldExplorerEngine = {
   render(){
     const tree=document.getElementById('field-tree');
     tree.innerHTML='';
-    Object.entries(FIELD_TREE).forEach(([key,node])=>{
+    const source = this._activeTree || FIELD_TREE;
+    Object.entries(source).forEach(([key,node])=>{
       tree.appendChild(this._buildNode(key,node,0));
     });
   },

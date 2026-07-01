@@ -57,12 +57,19 @@ def register_document_routes(app) -> None:
                 DocumentQueryError,
                 fetch_document,
             )
+            from reportforge.core.services.field_tree_builder import (
+                build_dataset_paths,
+                build_field_tree,
+            )
             result = fetch_document(
                 doc_type,
                 doc_num_int,
                 datasource_alias=datasource,
                 timeout=timeout_clamped,
             )
+            ds = result.get("dataset", {})
+            result["fieldTree"] = build_field_tree(ds)
+            result["datasetPaths"] = build_dataset_paths(ds)
             return JSONResponse(status_code=200, content=result)
         except DocumentQueryError as exc:
             return JSONResponse(

@@ -110,6 +110,45 @@
     const DS = global.DS;
     if (DS) {
       DS._sampleData = body.dataset;
+
+      // SSOT: real field tree from server replaces hardcoded FIELD_TREE for database category.
+      // Merge so special/formula/group categories from window.FIELD_TREE are preserved.
+      if (body.fieldTree) {
+        DS.fieldTree = Object.assign(
+          {},
+          (typeof FIELD_TREE !== 'undefined' ? FIELD_TREE : {}),
+          body.fieldTree,
+        );
+      } else {
+        DS.fieldTree = null;
+      }
+
+      DS.datasetPaths = body.datasetPaths || [];
+
+      // Layout-dependent cross-check (computed client-side from current elements)
+      const elements = DS.elements || [];
+      DS.layoutFieldPaths = elements
+        .filter(function(e){ return e.type === 'field' && e.fieldPath; })
+        .map(function(e){ return e.fieldPath; });
+      DS.missingLayoutPaths = DS.layoutFieldPaths
+        .filter(function(p){ return !DS.datasetPaths.includes(p); });
+      DS.unusedDatasetPaths = DS.datasetPaths
+        .filter(function(p){ return !DS.layoutFieldPaths.includes(p); });
+
+      // Push real tree to FieldExplorer
+      if (DS.fieldTree && typeof FieldExplorerEngine !== 'undefined') {
+        FieldExplorerEngine._activeTree = DS.fieldTree;
+        FieldExplorerEngine.render();
+      }
+
+      // Diagnostic warning (never breaks Preview)
+      if (DS.missingLayoutPaths && DS.missingLayoutPaths.length > 0) {
+        console.warn(
+          'RF DATA CONTRACT WARNING\nmissingLayoutPaths:\n' +
+          DS.missingLayoutPaths.map(function(p){ return '- ' + p; }).join('\n')
+        );
+      }
+
       if (DS.previewMode) {
         const renderer = global.PreviewEngineRenderer;
         if (renderer && typeof renderer.refresh === 'function') {
