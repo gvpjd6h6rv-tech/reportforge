@@ -16,6 +16,30 @@ const EngineCoreRoutingPointerHelpers = (() => {
     // an opacity:0 hit-layer), fixed to use the same resolver too.
     let _hoverNode = null;
 
+    // RF-INTERACTION-AUDIT-1 (BUG NEW 5): at high zoom the synthetic
+    // scrollbar (position:fixed, z-index:150 — see SyntheticScrollbarEngine
+    // .js / canvas.css) can visually sit directly over the document. A
+    // pointer there is genuinely NOT on interactive report content, but
+    // HitTestResolver's elementsFromPoint-based candidate search has no
+    // concept of "topmost opaque UI chrome" — it only filters by CSS
+    // selector, so it happily returns a .cr-element/.pv-el hidden underneath
+    // the scrollbar. Proven live: hover/selection changed while the pointer
+    // sat on the scrollbar thumb at 200%/400% zoom (never at 100%, where the
+    // document doesn't reach the scrollbar). This guard runs BEFORE any
+    // HitTestResolver call or selection/insert dispatch, so chrome pixels
+    // are excluded up front instead of trying to teach the resolver about
+    // UI chrome it has no business knowing about.
+    function isPointerOnDesignerChrome(event) {
+      const target = event && event.target;
+      return !!(target && typeof target.closest === 'function' &&
+        target.closest('.rf-scrollbar-track, .rf-scrollbar-thumb'));
+    }
+
+    function _clearHover() {
+      if (_hoverNode) _hoverNode.classList.remove('rf-hit-hover');
+      _hoverNode = null;
+    }
+
     function normalizePointerEvent(e, phase) {
       const ws = typeof document !== 'undefined' ? document.getElementById('workspace') : null;
       const rect = ws ? ws.getBoundingClientRect() : null;
@@ -201,7 +225,7 @@ const EngineCoreRoutingPointerHelpers = (() => {
       if (selection && selection._drag) return; // no flicker mid drag/resize/insert/rubber
       const node = HitTestResolver.resolve(event.clientX, event.clientY, { selector: '.cr-element', idAttr: 'id' });
       if (node === _hoverNode) return;
-      if (_hoverNode) _hoverNode.classList.remove('rf-hit-hover');
+      _clearHover();
       _hoverNode = node;
       if (_hoverNode) _hoverNode.classList.add('rf-hit-hover');
     }
@@ -256,6 +280,26 @@ const EngineCoreRoutingPointerHelpers = (() => {
       const selection = interactionEngine();
       const sectionResize = getEngine('SectionResizeEngine');
       const insert = getEngine('InsertEngine');
+
+      // BUG NEW 5 guard: must run before HitTestResolver.resolve, before
+      // elementNode/pvElNode resolution, before InsertEngine, before
+      // SelectionEngine.startRubberBand / selection. A drag legitimately
+      // started on real canvas content (selection._drag / sectionResize
+      // ._drag already active) must keep tracking smoothly even if the
+      // pointer transiently crosses the scrollbar strip — only a NEW
+      // interaction is refused here; nothing already in progress is cut off.
+      if (isPointerOnDesignerChrome(event)) {
+        const dragAlreadyActive = !!(selection && selection._drag) || !!(sectionResize && sectionResize._drag);
+        if (phase === 'move') {
+          if (!dragAlreadyActive) { _clearHover(); return event; }
+        } else if (phase === 'down') {
+          return event;
+        }
+        // 'up'/'cancel' phases always fall through to routeUp below so any
+        // drag that DID start legitimately on canvas can still terminate
+        // cleanly, even if it ends with the pointer over the scrollbar.
+      }
+
       const closest = selector => (
         event.target &&
         typeof event.target.closest === 'function' &&

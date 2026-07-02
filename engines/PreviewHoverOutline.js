@@ -58,6 +58,22 @@ const PreviewHoverOutline = (() => {
     if (id && _isSelected(id)) clear();
   }
 
+  // RF-INTERACTION-AUDIT-1 (BUG NEW 5): this module listens to native
+  // mouseover/mouseout directly (not routed through EngineCoreRouting*),
+  // and re-resolves purely from event.clientX/clientY -- so it never
+  // noticed when the native mouseover target was the synthetic scrollbar
+  // (SyntheticScrollbarEngine.js, position:fixed z-index:150) sitting on
+  // top of the document at high zoom, and still lit up the .pv-el
+  // underneath it. Proven live: orange hover box appeared over a real
+  // report field while event.target was .rf-scrollbar-thumb--h. Must be
+  // checked first, before any HitTestResolver call, same principle as the
+  // isPointerOnDesignerChrome guard in EngineCoreRoutingPointerHelpers.js.
+  function _isOnScrollbarChrome(event) {
+    const target = event && event.target;
+    return !!(target && typeof target.closest === 'function' &&
+      target.closest('.rf-scrollbar-track, .rf-scrollbar-thumb'));
+  }
+
   // RF-INTERACTION-AUDIT-1 (BUG NEW 4): event.target.closest() trusted the
   // browser's native topmost element, same tie-break bug as click routing —
   // a transparent frame rect drawn over inner fields native-hover-highlighted
@@ -66,6 +82,7 @@ const PreviewHoverOutline = (() => {
   // event's actual client coordinates instead of trusting event.target.
   function _onOver(event) {
     if (typeof DS === 'undefined' || !DS.previewMode) return;
+    if (_isOnScrollbarChrome(event)) { clear(); return; }
     if (typeof HitTestResolver === 'undefined') return;
     const node = HitTestResolver.resolve(event.clientX, event.clientY, { selector: '.preview-hit-layer .pv-el', idAttr: 'originId' });
     if (!node) return;
@@ -75,6 +92,7 @@ const PreviewHoverOutline = (() => {
 
   function _onOut(event) {
     if (!hoverEl) return;
+    if (_isOnScrollbarChrome(event)) { clear(); return; }
     if (typeof HitTestResolver === 'undefined') return;
     // Re-resolve at the current point instead of comparing the leaving
     // native target — if the resolver still agrees hoverEl is the winner

@@ -16,6 +16,7 @@ window.SyntheticScrollbarEngine = (() => {
   const MIN_THUMB = 24;
   let _ws = null, _trackV = null, _thumbV = null, _trackH = null, _thumbH = null;
   let _drag = null; // { axis, startClientPos, startScroll, trackLen, thumbLen, range }
+  let _prevScrollBehavior = null; // RF-INTERACTION-AUDIT-1 (BUG NEW 6): saved inline value, restored when the drag ends
 
   function _buildBar(axis) {
     const track = document.createElement('div');
@@ -93,8 +94,24 @@ window.SyntheticScrollbarEngine = (() => {
       e.stopPropagation();
       _beginDrag(axis, axis === 'v' ? e.clientY : e.clientX, thumbEl, trackEl);
       thumbEl.classList.add('rf-scrollbar-thumb--active');
+      // RF-INTERACTION-AUDIT-1 (BUG NEW 6): #workspace carries CSS
+      // scroll-behavior:smooth (canvas.css) for unrelated cases (keyboard
+      // nav, track-click paging). During a THUMB drag, _onPointerMove below
+      // assigns a new absolute scrollTop/scrollLeft on every pointermove
+      // tick; with scroll-behavior:smooth each assignment is treated as an
+      // animated scroll-to request, so the readable scroll position lags far
+      // behind the value just assigned, chasing an ever-moving target
+      // instead of jumping instantly. Proven live: assigned scrollTop=452 vs
+      // a synchronous readback of 19 on the very same tick. Disabling smooth
+      // scrolling only for the lifetime of this drag makes each write apply
+      // instantly, matching a native scrollbar; the formula itself is
+      // unchanged and was already verified correct.
+      _prevScrollBehavior = _ws.style.scrollBehavior;
+      _ws.style.scrollBehavior = 'auto';
       window.addEventListener('pointermove', _onPointerMove);
       window.addEventListener('pointerup', _onPointerUp, { once: true });
+      window.addEventListener('pointercancel', _onPointerUp, { once: true });
+      window.addEventListener('blur', _onPointerUp, { once: true });
     };
   }
 
@@ -114,7 +131,13 @@ window.SyntheticScrollbarEngine = (() => {
       thumbEl.classList.remove('rf-scrollbar-thumb--active');
     }
     _drag = null;
+    if (_prevScrollBehavior !== null) {
+      _ws.style.scrollBehavior = _prevScrollBehavior;
+      _prevScrollBehavior = null;
+    }
     window.removeEventListener('pointermove', _onPointerMove);
+    window.removeEventListener('pointercancel', _onPointerUp);
+    window.removeEventListener('blur', _onPointerUp);
   }
 
   // Click on the track itself (not the thumb) — page-scroll toward the click, like a native scrollbar.
