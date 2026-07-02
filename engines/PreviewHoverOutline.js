@@ -58,9 +58,16 @@ const PreviewHoverOutline = (() => {
     if (id && _isSelected(id)) clear();
   }
 
+  // RF-INTERACTION-AUDIT-1 (BUG NEW 4): event.target.closest() trusted the
+  // browser's native topmost element, same tie-break bug as click routing —
+  // a transparent frame rect drawn over inner fields native-hover-highlighted
+  // itself instead of the field underneath. HitTestResolver (same one click
+  // routing uses in EngineCoreRoutingPointerHelpers.js) re-resolves from the
+  // event's actual client coordinates instead of trusting event.target.
   function _onOver(event) {
     if (typeof DS === 'undefined' || !DS.previewMode) return;
-    const node = event.target.closest?.('.preview-hit-layer .pv-el');
+    if (typeof HitTestResolver === 'undefined') return;
+    const node = HitTestResolver.resolve(event.clientX, event.clientY, { selector: '.preview-hit-layer .pv-el', idAttr: 'originId' });
     if (!node) return;
     if (node === hoverEl) return;
     _show(node);
@@ -68,8 +75,13 @@ const PreviewHoverOutline = (() => {
 
   function _onOut(event) {
     if (!hoverEl) return;
-    const node = event.target.closest?.('.preview-hit-layer .pv-el');
-    if (node === hoverEl && (!event.relatedTarget || !node.contains(event.relatedTarget))) clear();
+    if (typeof HitTestResolver === 'undefined') return;
+    // Re-resolve at the current point instead of comparing the leaving
+    // native target — if the resolver still agrees hoverEl is the winner
+    // here (e.g. this mouseout only bubbled from one of hoverEl's own child
+    // spans), keep the highlight; only clear once hoverEl is no longer it.
+    const node = HitTestResolver.resolve(event.clientX, event.clientY, { selector: '.preview-hit-layer .pv-el', idAttr: 'originId' });
+    if (node !== hoverEl) clear();
   }
 
   function init() {

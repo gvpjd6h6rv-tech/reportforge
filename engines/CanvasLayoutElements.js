@@ -108,28 +108,58 @@
     return Number.isFinite(el.lineWidth) ? el.lineWidth : 1;
   }
 
-  function _buildLine(div, el) {
-    div.style.background = 'transparent';
-    div.style.border = 'none';
-    div.style.overflow = 'visible';
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.style.cssText = 'position:absolute;overflow:visible;pointer-events:none';
-    svg.setAttribute('width', Math.max(el.w, 1));
-    svg.setAttribute('height', Math.max(el.h, 1));
-    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  // RF-INTERACTION-AUDIT-1 (BUG NEW 2): shared by _buildLine (creation) and
+  // _updateLineGeometry (resize) so the SVG's own width/height + the <line>'s
+  // x1/y1/x2/y2/mid can never drift apart between the two call sites — same
+  // pattern already used for _lineStrokeColor/_lineStrokeWidth above.
+  function _lineGeometry(el) {
     // Missing lineDir used to always default horizontal (matching element_renderers.py fix).
     const isVertical = el.lineDir === 'v' || (!el.lineDir && el.h > el.w);
     // Clamping mid to >=1 pushed a 1px-thin line's true center (0.5) to
     // the SVG's far edge, splitting the stroke into a ~50% gray sliver
     // 1px outside its own box. No floor needed; svg is overflow:visible.
     const mid = (isVertical ? el.w : el.h) / 2;
-    if (isVertical) { line.setAttribute('x1', mid); line.setAttribute('y1', 0); line.setAttribute('x2', mid); line.setAttribute('y2', el.h); }
-    else { line.setAttribute('x1', 0); line.setAttribute('y1', mid); line.setAttribute('x2', el.w); line.setAttribute('y2', mid); }
+    const svgW = Math.max(el.w, 1);
+    const svgH = Math.max(el.h, 1);
+    return isVertical
+      ? { isVertical, svgW, svgH, x1: mid, y1: 0, x2: mid, y2: el.h }
+      : { isVertical, svgW, svgH, x1: 0, y1: mid, x2: el.w, y2: mid };
+  }
+
+  function _buildLine(div, el) {
+    div.style.background = 'transparent';
+    div.style.border = 'none';
+    div.style.overflow = 'visible';
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.style.cssText = 'position:absolute;overflow:visible;pointer-events:none';
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    const g = _lineGeometry(el);
+    svg.setAttribute('width', g.svgW);
+    svg.setAttribute('height', g.svgH);
+    line.setAttribute('x1', g.x1); line.setAttribute('y1', g.y1);
+    line.setAttribute('x2', g.x2); line.setAttribute('y2', g.y2);
     line.setAttribute('stroke', _lineStrokeColor(el));
     line.setAttribute('stroke-width', _lineStrokeWidth(el));
     svg.appendChild(line);
     div.appendChild(svg);
     _appendContentSpan(div);
+  }
+
+  // BUG NEW 2: updateElementPosition() (below) resizes the container div but
+  // never touched the SVG's own width/height attributes or the <line>'s
+  // x1/y1/x2/y2 — those were baked in once at _buildLine() and never
+  // revisited, so an existing line's visual length/orientation stayed frozen
+  // at its creation-time size through any resize drag. Mirrors _lineGeometry
+  // (creation) onto the already-mounted SVG node.
+  function _updateLineGeometry(div, el) {
+    const svg = div.querySelector('svg');
+    const line = div.querySelector('svg line');
+    if (!svg || !line) return;
+    const g = _lineGeometry(el);
+    svg.setAttribute('width', g.svgW);
+    svg.setAttribute('height', g.svgH);
+    line.setAttribute('x1', g.x1); line.setAttribute('y1', g.y1);
+    line.setAttribute('x2', g.x2); line.setAttribute('y2', g.y2);
   }
 
   // RF-COLORS-BORDERS-AUDIT-1: updateElement() (below) calls _updateVisualStyle
@@ -298,6 +328,7 @@
     div.style.top = _px(el.y);
     div.style.width = _px(el.w);
     div.style.height = _px(el.h);
+    if (el.type === 'line') _updateLineGeometry(div, el);
   }
 
   global.CanvasLayoutElements = { buildElementDiv, renderElement, renderAll, updateElement, updateElementPosition };

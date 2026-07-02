@@ -8,14 +8,19 @@
   }
   /* CR-HOVER-OUTLINE-PARITY-1: CR shows a thin orange hairline box around
      whatever element the mouse is hovering, in both Design and Preview —
-     no text, no tooltip. Single owner for both modes via the shared
-     .cr-element class (.pv-el also carries it, see components.css).
-     `outline` (not `border`) so it adds zero layout box (no shift to
-     siblings/box-sizing). `:not(.selected)` makes the active selection's
-     blue box win outright — SelectionOverlay.js:_syncSelectionDomClasses()
-     keeps `.selected` in sync on every renderHandles() call, in both
-     Design's own .cr-element nodes and Preview's hit-layer .pv-el nodes. */
-  .cr-element:hover:not(.selected) {
+     no text, no tooltip. `outline` (not `border`) so it adds zero layout box
+     (no shift to siblings/box-sizing). `:not(.selected)` makes the active
+     selection's blue box win outright.
+     RF-INTERACTION-AUDIT-1 (BUG NEW 4): was native `:hover` — the browser's
+     own topmost-element hit-test, which a same-z, later-in-DOM transparent
+     frame rect wins over a smaller field it encloses (see HitTestResolver.js
+     for the full root cause). `.rf-hit-hover` is instead toggled by
+     EngineCoreRoutingPointerHelpers.js's updateHoverHighlight(), which runs
+     the SAME resolver click routing uses, so hover and click can never pick
+     two different elements. (Preview's own .pv-el sits in an opacity:0
+     hit-layer, so this rule has no visual effect there either way — Preview
+     keeps its dedicated PreviewHoverOutline.js overlay box.) */
+  .cr-element.rf-hit-hover:not(.selected) {
     outline: 1px solid #F08000;
     outline-offset: 0;
   }
@@ -203,6 +208,19 @@
   .sel-handle::before,
   .sel-handle::after {
     display: none;
+  }
+  /* RF-INTERACTION-AUDIT-1 (BUG NEW 1): .sel-handle is an invisible hit-zone
+     by design for box types — their visible L-corner ticks come from
+     .sel-box's own pseudo-elements below, which a selected line no longer
+     renders (no rectangular box, per CR parity). Without its own marker a
+     selected line would show literally nothing. A small solid square at
+     each endpoint is the lightest CR-accurate indication for a 1-D element. */
+  .sel-handle.sel-handle-line {
+    width: 6px;
+    height: 6px;
+    background: var(--cr-sel-bdr, #0066CC);
+    border: 1px solid #fff;
+    border-radius: 1px;
   }
   .sel-handle[data-pos="nw"],
   .sel-handle[data-pos="se"] { cursor: nwse-resize; }

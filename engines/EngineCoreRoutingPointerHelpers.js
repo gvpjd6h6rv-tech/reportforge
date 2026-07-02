@@ -9,6 +9,12 @@ const EngineCoreRoutingPointerHelpers = (() => {
     const cloneSerializable = typeof deps.cloneSerializable === 'function'
       ? deps.cloneSerializable
       : (value) => JSON.parse(JSON.stringify(value));
+    // RF-INTERACTION-AUDIT-1 (BUG NEW 4): Design-mode hover highlight, kept
+    // in the same closure/module as click routing so both share the exact
+    // same HitTestResolver call — Preview's equivalent lives in
+    // PreviewHoverOutline.js (separate visible overlay, since .pv-el sits in
+    // an opacity:0 hit-layer), fixed to use the same resolver too.
+    let _hoverNode = null;
 
     function normalizePointerEvent(e, phase) {
       const ws = typeof document !== 'undefined' ? document.getElementById('workspace') : null;
@@ -189,7 +195,19 @@ const EngineCoreRoutingPointerHelpers = (() => {
       }
     }
 
+    function updateHoverHighlight(event, selection) {
+      if (typeof HitTestResolver === 'undefined' || typeof document === 'undefined') return;
+      if (typeof DS !== 'undefined' && DS.previewMode) return; // Preview: PreviewHoverOutline.js owns this
+      if (selection && selection._drag) return; // no flicker mid drag/resize/insert/rubber
+      const node = HitTestResolver.resolve(event.clientX, event.clientY, { selector: '.cr-element', idAttr: 'id' });
+      if (node === _hoverNode) return;
+      if (_hoverNode) _hoverNode.classList.remove('rf-hit-hover');
+      _hoverNode = node;
+      if (_hoverNode) _hoverNode.classList.add('rf-hit-hover');
+    }
+
     function routeMove(event, selection, sectionResize) {
+      updateHoverHighlight(event, selection);
       if (sectionResize && sectionResize._drag && typeof sectionResize.onMouseMove === 'function') {
         sectionResize.onMouseMove(event);
       } else if (selection && typeof selection.onMouseMove === 'function') {
@@ -243,8 +261,20 @@ const EngineCoreRoutingPointerHelpers = (() => {
         typeof event.target.closest === 'function' &&
         event.target.closest(selector)
       );
-      const elementNode = closest('.cr-element');
-      const pvElNode = closest('.pv-el');
+      // BUG NEW 4: closest('.cr-element'|'.pv-el') trusted the browser's
+      // native topmost element at the point, which a same-z-index, later-
+      // in-DOM decorative frame (e.g. a transparent rect wrapping fields)
+      // wins by pure DOM-order tie-break — regardless of a smaller, more
+      // specific element sitting right under the same pixel. HitTestResolver
+      // collects every candidate and picks the right one; falls back to the
+      // original closest() if the resolver script hasn't loaded for some
+      // reason (defensive, should not happen in the shipped app).
+      const elementNode = (typeof HitTestResolver !== 'undefined')
+        ? HitTestResolver.resolve(event.clientX, event.clientY, { selector: '.cr-element', idAttr: 'id' })
+        : closest('.cr-element');
+      const pvElNode = (typeof HitTestResolver !== 'undefined')
+        ? HitTestResolver.resolve(event.clientX, event.clientY, { selector: '.pv-el', idAttr: 'originId' })
+        : closest('.pv-el');
       const selBoxNode = closest('.sel-box');
       const handleNode = closest('.sel-handle');
       const sectionHandleNode = closest('.section-resize-handle');

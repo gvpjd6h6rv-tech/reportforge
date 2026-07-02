@@ -26,21 +26,44 @@ const SelectionOverlayRender = (() => {
     box.style.pointerEvents = 'none';
     box.style.zIndex = '40';
   }
+  // RF-INTERACTION-AUDIT-1 (BUG NEW 1): Crystal Reports never shows a
+  // rectangular bounding box or 8 box-corner handles around a selected
+  // line — only the two endpoints are meaningful for a 1-D element. RF drew
+  // the exact same .sel-box + 8-handle chrome for every type, line included.
+  // SelectionGeometry.selectionHandles() stays generic/pure on purpose (it's
+  // reused by every type) — the line-specific narrowing lives here, at the
+  // one call site that knows the element's type.
+  function _isLine(el) { return el.type === 'line'; }
+  function _lineEndpointPositions(el) {
+    const isVertical = el.lineDir === 'v' || (!el.lineDir && el.h > el.w);
+    return isVertical ? ['n', 's'] : ['w', 'e'];
+  }
+
   function renderSingleSelection(engine, layer, id, showGuides) {
     const el = S.getElementById(id); if (!el) return;
     C.assertLayoutContract(el, 'SelectionEngine.renderHandles.layout');
     const rect = selectionRect(el, layer);
     C.assertRectShape(rect, 'SelectionEngine.renderHandles.rect');
     C.assertZoomContract('SelectionEngine.renderHandles.zoom');
-    const positions = G.selectionHandles(rect);
-    const selBox = document.createElement('div');
-    selBox.className = 'sel-box';
-    _styleSelectionBox(selBox, rect);
-    layer.appendChild(selBox);
+    const isLine = _isLine(el);
+    const positions = G.selectionHandles(rect).filter(
+      (p) => !isLine || _lineEndpointPositions(el).includes(p.pos)
+    );
+    if (!isLine) {
+      const selBox = document.createElement('div');
+      selBox.className = 'sel-box';
+      _styleSelectionBox(selBox, rect);
+      layer.appendChild(selBox);
+    }
     if (showGuides) _preview().renderSelectionGuides(layer, [rect]);
     positions.forEach(({ pos, cx, cy }) => {
       const h = document.createElement('div');
-      h.className = 'sel-handle';
+      // .sel-handle itself is an invisible 14x14 hit-zone by design — normal
+      // types get their visible L-corner ticks from .sel-box's own CSS
+      // (elements-selection.css ~line 295), which lines no longer render.
+      // sel-handle-line gives a line's endpoint handles their own small
+      // visible marker so a selected line isn't left with zero indication.
+      h.className = isLine ? 'sel-handle sel-handle-line' : 'sel-handle';
       h.dataset.pos = pos;
       h.style.left = cx + 'px';
       h.style.top = cy + 'px';

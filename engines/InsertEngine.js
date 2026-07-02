@@ -7,6 +7,21 @@ const _TOOL_CLASSES = [
   'tool-line','tool-line-v','tool-box','tool-barcode','tool-section',
 ];
 
+// RF-INTERACTION-AUDIT-1 (BUG NEW 3): single source for "no explicit size
+// given" fallback dimensions, shared by insertAtDefaultPosition() (explicit
+// default-position insert) and onMouseUp()'s click-without-drag case for
+// line/line-v — a "minimal visible line" means the same thing everywhere,
+// not two different magic sizes depending on which code path created it.
+const _DEFAULT_W = {text:200,field:200,line:200,'line-v':2,box:200,barcode:200};
+const _DEFAULT_H = {text:16, field:16, line:2,  'line-v':60,box:40, barcode:60};
+// Below this drag distance (model units) on the dominant axis, treat the
+// gesture as a click, not a drag.
+const _LINE_CLICK_THRESHOLD = 3;
+// Fixed thickness for a line's non-dominant axis, both while drawing (ghost)
+// and on the final element — a horizontal line stays 2px tall no matter how
+// much vertical wobble the drag had, and vice versa.
+const _LINE_THIN_AXIS = 2;
+
 const InsertEngine = {
   _startPos:null,
 
@@ -36,9 +51,7 @@ const InsertEngine = {
   },
 
   insertAtDefaultPosition(tool){
-    const W={text:200,field:200,line:200,'line-v':2,box:200,barcode:200};
-    const H={text:16, field:16, line:2,  'line-v':60,box:40, barcode:60};
-    const w=W[tool]||120, h=H[tool]||20;
+    const w=_DEFAULT_W[tool]||120, h=_DEFAULT_H[tool]||20;
     const relY=DS.snap(4);
     const needed=DS.snap(relY+h+4);   // minimum section height to keep element in bounds
 
@@ -109,9 +122,23 @@ const InsertEngine = {
 
   onMouseMove(pos){
     const d=SelectionEngine._drag;if(!d||d.type!=='insert')return;
-    const x=Math.min(d.startX,pos.x),y=Math.min(d.startY,pos.y);
-    const w=Math.abs(pos.x-d.startX)||4,h=Math.abs(pos.y-d.startY)||4;
-    this._showGhost(x,y,w,h);
+    const tool=DS.tool;
+    // BUG NEW 3: the ghost tracked the drag's full bounding box for every
+    // tool, including line/line-v — a diagonal-ish drag drew a fat dashed
+    // rectangle instead of a thin line preview. Pin the non-dominant axis to
+    // the same fixed thickness the final element will use, anchored at the
+    // mousedown point on that axis (matches onMouseUp's anchor below).
+    if(tool==='line'){
+      const w=Math.abs(pos.x-d.startX)||4;
+      this._showGhost(Math.min(d.startX,pos.x), d.startY, w, _LINE_THIN_AXIS);
+    } else if(tool==='line-v'){
+      const h=Math.abs(pos.y-d.startY)||4;
+      this._showGhost(d.startX, Math.min(d.startY,pos.y), _LINE_THIN_AXIS, h);
+    } else {
+      const x=Math.min(d.startX,pos.x),y=Math.min(d.startY,pos.y);
+      const w=Math.abs(pos.x-d.startX)||4,h=Math.abs(pos.y-d.startY)||4;
+      this._showGhost(x,y,w,h);
+    }
   },
 
   onMouseUp(e){
@@ -154,8 +181,23 @@ const InsertEngine = {
     const tool=DS.tool;
     if(tool==='text') newEl=mkEl('text',secId,x,relY,w,h,{content:'Texto',bgColor:'transparent',borderColor:'transparent'});
     else if(tool==='field') newEl=mkEl('field',secId,x,relY,w,h,{fieldPath:'',content:'Seleccione campo'});
-    else if(tool==='line') newEl=mkEl('line',secId,x,relY,w,Math.max(h,2),{borderColor:'#000',lineWidth:1});
-    else if(tool==='line-v') newEl=mkEl('line',secId,x,relY,2,Math.max(h,20),{borderColor:'#000',lineWidth:1,lineDir:'v'});
+    else if(tool==='line' || tool==='line-v'){
+      // BUG NEW 3: was using the same generic drag-bounding-box sizing as
+      // text/field/box (w/h above), so a plain click fell into the generic
+      // 20x12 box floor, and any vertical wobble during a "horizontal" drag
+      // leaked straight into the line's height. A line only has one
+      // meaningful axis — the other stays pinned to _LINE_THIN_AXIS — and a
+      // drag distance under the click threshold uses the same documented
+      // default insertAtDefaultPosition() would (never a 20x12 box).
+      const isV=tool==='line-v';
+      const dragDX=Math.abs(pos.x-d.startX), dragDY=Math.abs(pos.y-d.startY);
+      const dominant=isV?dragDY:dragDX;
+      let lineW,lineH;
+      if(dominant<_LINE_CLICK_THRESHOLD){ lineW=_DEFAULT_W[tool]; lineH=_DEFAULT_H[tool]; }
+      else if(isV){ lineW=_LINE_THIN_AXIS; lineH=DS.snap(Math.max(dragDY,_LINE_THIN_AXIS)); }
+      else { lineW=DS.snap(Math.max(dragDX,_LINE_THIN_AXIS)); lineH=_LINE_THIN_AXIS; }
+      newEl=mkEl('line',secId,x,relY,lineW,lineH,{borderColor:'#000',lineWidth:1,lineDir:isV?'v':'h'});
+    }
     else if(tool==='box')     newEl=mkEl('rect',secId,x,relY,w,h,{bgColor:'transparent',borderColor:'#000',borderWidth:1});
     else if(tool==='barcode') newEl=mkEl('barcode',secId,x,relY,Math.max(w,120),Math.max(h,40),{barcodeType:'code128',showText:true});
     if(!newEl)return;
