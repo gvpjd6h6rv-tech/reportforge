@@ -30,6 +30,8 @@
   let _statusEl = null;
   let _dsSelEl  = null;
 
+  const _LAST_DATASOURCE_KEY = 'rf.dlm.lastDatasource';
+
   // ── DOM helpers ───────────────────────────────────────────────────────────
 
   function _el(tag, props) {
@@ -133,7 +135,7 @@
       style: 'flex:1;border:1px inset #808080;background:white;padding:1px 4px;font-family:inherit;font-size:11px;',
     });
     inpNum.setAttribute('inputmode', 'numeric');
-    inpNum.setAttribute('placeholder', 'DocEntry (ej: 12345)');
+    inpNum.setAttribute('placeholder', 'DocNum (ej: 12345)');
     rowNum.appendChild(lblNum);
     rowNum.appendChild(inpNum);
 
@@ -155,7 +157,7 @@
     /* Status row */
     const statusEl = _el('div', {
       id:    'dlm-status',
-      style: 'min-height:16px;font-size:10px;color:#CC0000;word-break:break-word;',
+      style: 'min-height:16px;font-size:10px;color:#CC0000;word-break:break-word;user-select:text;-webkit-user-select:text;cursor:text;',
     });
     statusEl.setAttribute('data-status-type', 'idle');
     body.appendChild(statusEl);
@@ -203,7 +205,8 @@
   // ── Datasource loader (non-critical: fails silently) ─────────────────────
 
   async function _fetchDatasources(selEl) {
-    if (!selEl || typeof global.fetch !== 'function') return;
+    if (!selEl) return;
+    if (typeof global.fetch !== 'function') { _restoreLastDatasource(selEl); return; }
     try {
       const res = await global.fetch('/datasources');
       const items = await res.json();
@@ -213,6 +216,22 @@
         });
       }
     } catch (_) { /* non-critical — default stays selected */ }
+    _restoreLastDatasource(selEl);
+  }
+
+  // ── Last-used connection (localStorage, non-critical: fails silently) ────
+
+  function _restoreLastDatasource(selEl) {
+    if (!selEl) return;
+    let last;
+    try { last = global.localStorage && global.localStorage.getItem(_LAST_DATASOURCE_KEY); } catch (_) { last = null; }
+    if (!last) return;
+    const hasOption = Array.prototype.some.call(selEl.options, o => o.value === last);
+    if (hasOption) selEl.value = last;
+  }
+
+  function _rememberDatasource(value) {
+    try { global.localStorage && global.localStorage.setItem(_LAST_DATASOURCE_KEY, value); } catch (_) { /* ignore */ }
   }
 
   // ── Status renderer ───────────────────────────────────────────────────────
@@ -264,6 +283,7 @@
     }
 
     const dsAlias = (_modal && _modal.querySelector('#dlm-datasource'))?.value || 'default';
+    _rememberDatasource(dsAlias);
     const result = await provider.load(type, num, { datasource: dsAlias });
 
     if (result.ok) {
@@ -290,6 +310,15 @@
     if (closeBtn)  closeBtn.addEventListener('click',  close);
     if (cancelBtn) cancelBtn.addEventListener('click', close);
     if (loadBtn)   loadBtn.addEventListener('click',   _handleLoad);
+
+    // Enter anywhere in the dialog (except on a button, which already
+    // handles its own Enter/click) triggers the same action as "Cargar".
+    _modal.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      if (e.target && e.target.tagName === 'BUTTON') return;
+      e.preventDefault();
+      _handleLoad();
+    });
 
     if (numInput && typeof numInput.focus === 'function') numInput.focus();
 
