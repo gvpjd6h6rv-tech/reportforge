@@ -112,7 +112,10 @@ def _norm_el(raw):
         "borderWidth":      int(_p(raw,"borderWidth","borderSize") or 0),
         "borderStyle":      _p(raw,"borderStyle","border_style") or "solid",
         "lineDir":          "v" if (_line_dir_raw in ("v","vertical","vert") or (not _line_dir_raw and _default_dir == "v")) else "h",
-        "lineWidth":        int(_p(raw,"lineWidth","strokeWidth") or 1),
+        # `or 1` treated an explicit 0 (hide the line, Gate 1) the same as
+        # "field absent" — Python's `or` short-circuits on any falsy value,
+        # not just None/missing. _p() already returns None when truly absent.
+        "lineWidth":        int(_lw) if (_lw := _p(raw,"lineWidth","strokeWidth")) is not None else 1,
         "zIndex":           int(_p(raw,"zIndex","z","layer") or 0),
         "content":          content if content is not None else "",
         "fieldPath":        str(_p(raw,"fieldPath","field","dataField","source","path") or ""),

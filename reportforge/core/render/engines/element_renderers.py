@@ -127,7 +127,10 @@ def render_text(engine, el, res, agg) -> str:
 
 def render_line(el) -> str:
     color = el.borderColor if el.borderColor not in ("transparent", "") else "#000"
-    lw = max(1, el.lineWidth)
+    # max(1, ...) clamped an explicit lineWidth=0 (Gate 1: 0 must hide the
+    # line) back up to 1 — 0 is a valid, renderable width (a 0px CSS border
+    # paints nothing), it just isn't a *minimum*.
+    lw = max(0, el.lineWidth)
     # PARITY-AUDIT-1: was an SVG <line> with overflow:visible. Proven live
     # (geometry diff=0.0 vs expected pos; elementFromPoint + full-tree rect
     # scan found no element over the visible-stroke pixels): under the
@@ -152,11 +155,20 @@ def render_line(el) -> str:
 
 def render_rect(el) -> str:
     bg = el.bgColor if el.bgColor != "transparent" else "transparent"
-    brd = (
-        f"border:{el.borderWidth}px {el.borderStyle} {el.borderColor};"
-        if el.borderWidth > 0 and el.borderColor not in ("transparent", "")
-        else ""
-    )
+    # format.borders (Format Editor) takes precedence over the flat
+    # borderWidth/borderColor/borderStyle when present, matching both
+    # _sty() below (field/text) and CanvasLayoutElements.js's _setBorder() —
+    # render_rect used to be the one place that always ignored format.borders,
+    # so a rect with it set rendered completely differently in Design vs here.
+    fmt_borders = (getattr(el, "format", None) or {}).get("borders")
+    if fmt_borders:
+        brd = _borders_css(fmt_borders)
+    else:
+        brd = (
+            f"border:{el.borderWidth}px {el.borderStyle} {el.borderColor};"
+            if el.borderWidth > 0 and el.borderColor not in ("transparent", "")
+            else ""
+        )
     return (
         f'<div style="position:absolute;left:{el.x}px;top:{el.y}px;width:{el.w}px;height:{el.h}px;'
         f'background:{bg};{brd}z-index:{el.zIndex}"></div>'

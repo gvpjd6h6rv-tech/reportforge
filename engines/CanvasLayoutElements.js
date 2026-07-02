@@ -96,6 +96,18 @@
     _appendContentSpan(div, el.content || 'Texto').contentEditable = 'false';
   }
 
+  // Shared by _buildLine (initial render) and _updateLineStroke (property
+  // edits) so the transparent->black fallback and the 0-is-a-real-value fix
+  // can't drift apart between creation and update.
+  function _lineStrokeColor(el) {
+    return el.borderColor === 'transparent' ? '#000' : (el.borderColor || '#000');
+  }
+  function _lineStrokeWidth(el) {
+    // el.lineWidth || 1 treated an explicit 0 (hide the line) the same as
+    // "unset", same footgun as Python's `or 1` — 0 is a valid width.
+    return Number.isFinite(el.lineWidth) ? el.lineWidth : 1;
+  }
+
   function _buildLine(div, el) {
     div.style.background = 'transparent';
     div.style.border = 'none';
@@ -105,7 +117,6 @@
     svg.setAttribute('width', Math.max(el.w, 1));
     svg.setAttribute('height', Math.max(el.h, 1));
     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    const lc = el.borderColor === 'transparent' ? '#000' : (el.borderColor || '#000');
     // Missing lineDir used to always default horizontal (matching element_renderers.py fix).
     const isVertical = el.lineDir === 'v' || (!el.lineDir && el.h > el.w);
     // Clamping mid to >=1 pushed a 1px-thin line's true center (0.5) to
@@ -114,11 +125,26 @@
     const mid = (isVertical ? el.w : el.h) / 2;
     if (isVertical) { line.setAttribute('x1', mid); line.setAttribute('y1', 0); line.setAttribute('x2', mid); line.setAttribute('y2', el.h); }
     else { line.setAttribute('x1', 0); line.setAttribute('y1', mid); line.setAttribute('x2', el.w); line.setAttribute('y2', mid); }
-    line.setAttribute('stroke', lc);
-    line.setAttribute('stroke-width', el.lineWidth || 1);
+    line.setAttribute('stroke', _lineStrokeColor(el));
+    line.setAttribute('stroke-width', _lineStrokeWidth(el));
     svg.appendChild(line);
     div.appendChild(svg);
     _appendContentSpan(div);
+  }
+
+  // RF-COLORS-BORDERS-AUDIT-1: updateElement() (below) calls _updateVisualStyle
+  // for every element type uniformly, but a line's visible stroke lives on the
+  // SVG <line> child's stroke/stroke-width attributes, not on div.style.border
+  // — _setBorder() writing div.style.border was a complete no-op for a line
+  // (border:none is set once in _buildLine and never visually used). Any
+  // property edit (color or width) on an existing line therefore never
+  // reached the screen until a full renderAll(). This is the fix: mirror
+  // _buildLine's stroke assignment onto the already-mounted SVG node.
+  function _updateLineStroke(div, el) {
+    const line = div.querySelector('svg line');
+    if (!line) return;
+    line.setAttribute('stroke', _lineStrokeColor(el));
+    line.setAttribute('stroke-width', _lineStrokeWidth(el));
   }
 
   function _buildRect(div, el) {
@@ -191,10 +217,19 @@
 
   function _updateVisualStyle(div, el) {
     div.style.color = el.color || '#000';
+    // RF-COLORS-BORDERS-AUDIT-1: the field/text placeholder-tint fallback for
+    // bgColor:'transparent' is a Design-only affordance so an empty text/field
+    // box stays visible on the canvas — it does not apply to rect (or any
+    // other type), which must stay genuinely transparent like _buildRect()
+    // already renders it at creation. Applying it unconditionally here meant
+    // any property edit on an existing transparent rect silently painted over
+    // its transparency the moment updateElement() ran.
+    const usesPlaceholderBg = el.type === 'field' || el.type === 'text';
     div.style.background = el.bgColor === 'transparent'
-      ? (el.type === 'field' ? 'var(--cr-field-bg)' : 'var(--cr-text-bg)')
+      ? (usesPlaceholderBg ? (el.type === 'field' ? 'var(--cr-field-bg)' : 'var(--cr-text-bg)') : 'transparent')
       : (el.bgColor || 'transparent');
-    _setBorder(div, el);
+    if (el.type === 'line') _updateLineStroke(div, el);
+    else _setBorder(div, el);
   }
 
   function buildElementDiv(el) {

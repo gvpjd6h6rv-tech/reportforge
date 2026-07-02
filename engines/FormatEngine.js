@@ -17,6 +17,12 @@ const FormatEngine = {
     document.getElementById('btn-ac')?.classList.toggle('active',el.align==='center');
     document.getElementById('btn-ar')?.classList.toggle('active',el.align==='right');
     document.documentElement.style.setProperty('--swatch-font', el.color);
+    // BUG J: --swatch-bg/--swatch-border were only ever written by the
+    // toolbar's own color-bg/color-border pick handlers, never on selection
+    // change — so they kept showing whatever was last toolbar-picked instead
+    // of the newly-selected element's actual bgColor/borderColor.
+    document.documentElement.style.setProperty('--swatch-bg', el.bgColor==='transparent'?'transparent':el.bgColor);
+    document.documentElement.style.setProperty('--swatch-border', el.borderColor==='transparent'?'transparent':el.borderColor);
     const fn=document.getElementById('tb-font-name');
     const fsz=document.getElementById('tb-font-size');
     if(fn) for(let o of fn.options)if(o.text===el.fontFamily){o.selected=true;break;}

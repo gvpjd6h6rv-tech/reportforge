@@ -181,13 +181,31 @@ const PropertiesEngine = {
       <div class="prop-color-swatch" id="pc-border" style="background:${el.borderColor==='transparent'?'#fff':el.borderColor};${el.borderColor==='transparent'?'border-style:dashed':''}" title="Color de borde"></div>`;
     form.appendChild(colorRow);
 
+    // Contract: line thickness lives in lineWidth, not borderWidth (matches
+    // CanvasLayoutElements._buildLine / PreviewEngineData / element_renderers.py
+    // render_line, all of which read el.lineWidth for a line's stroke). Every
+    // other type keeps using borderWidth. Writing borderWidth for a line left
+    // "Borde px" editing a property nothing ever rendered from.
+    const bwKey = el.type==='line' ? 'lineWidth' : 'borderWidth';
     const bwRow=document.createElement('div');bwRow.className='prop-row';
     bwRow.innerHTML=`<span class="prop-label">Borde px:</span>
-      <input class="prop-num" id="prop-border-w" type="number" value="${el.borderWidth}" min="0" max="10" style="width:40px">`;
+      <input class="prop-num" id="prop-border-w" type="number" value="${el[bwKey]}" min="0" max="10" style="width:40px">`;
     form.appendChild(bwRow);
     document.getElementById('prop-border-w')?.addEventListener('change',e=>{
-      sel.forEach(s=>{s.borderWidth=parseInt(e.target.value)||0;_canonicalCanvasWriter().updateElement(s.id);});DS.saveHistory();
+      sel.forEach(s=>{const k=s.type==='line'?'lineWidth':'borderWidth';s[k]=parseInt(e.target.value)||0;_canonicalCanvasWriter().updateElement(s.id);});DS.saveHistory();
     });
+
+    // BUG D: element.format.borders (set by the Format Editor's "Bordes" tab
+    // the moment any single side is checked) silently overrides borderWidth/
+    // borderColor for rect/field/text (CanvasLayoutElements._setBorder gives it
+    // precedence). Rather than an editable-but-lying "Borde px", say so.
+    const hasFormatBorders = !!(el.format && el.format.borders &&
+      ['top','right','bottom','left'].some(s=>el.format.borders[s]));
+    if(hasFormatBorders){
+      const warnRow=document.createElement('div');warnRow.className='prop-row';
+      warnRow.innerHTML=`<span style="font-size:9px;color:#a05a00;flex:1">⚠ Bordes controlados por Editor de Formato — "Borde px" no tiene efecto visual mientras estén activos.</span>`;
+      form.appendChild(warnRow);
+    }
 
     document.getElementById('pc-font')?.addEventListener('click',()=>{
       ColorPickerAdapter.open(el.color||'#000000',(hex)=>{
