@@ -10,7 +10,7 @@ from .element_embed_renderers import render_chart as _render_chart_el
 from .element_embed_renderers import render_subreport_el as _render_subreport_el
 from .element_embed_renderers import render_table_el as _render_table_el
 from .crosstab_renderer import _render_crosstab
-from .element_renderers_assets import _isrc, _barcode_font_source
+from .element_renderers_assets import _isrc, _barcode_font_source, _image_src_candidates
 
 
 def render_element(engine, el, res, agg=None, ctx=None) -> str:
