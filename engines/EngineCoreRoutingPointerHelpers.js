@@ -164,13 +164,23 @@ const EngineCoreRoutingPointerHelpers = (() => {
 
     function routeDown(event, ctx) {
       const { closest, elementNode, handleNode, pvElNode, selBoxNode,
-        selection, interactionEngineName } = ctx;
+        selection, insert, interactionEngineName } = ctx;
       tracePointerDown(event, elementNode, handleNode, interactionEngineName);
       dismissMenus(closest);
       if (event.button !== 0) return;
       if (DS.previewMode) {
         if (pvElNode || selBoxNode || handleNode) {
           routePreviewPointerDown(event, selection, pvElNode, selBoxNode, handleNode, interactionEngineName);
+          return;
+        }
+        // RF-PREVIEW-INSERT-CLICK-POSITION-1: click landed on empty Preview
+        // canvas (no existing element/handle under the pointer). If an insert
+        // tool is armed, route it to InsertEngine exactly like Design's
+        // dispatchDesignDown does for its own empty-canvas case, instead of
+        // silently dropping the click.
+        if (insert && DS.tool !== 'pointer' && typeof insert.onCanvasMouseDown === 'function') {
+          traceElement('EngineCore', 'dispatch-preview-canvas-down', { engine: 'InsertEngine' });
+          insert.onCanvasMouseDown(event);
         }
         return;
       }

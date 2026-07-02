@@ -11,14 +11,9 @@ const InsertEngine = {
   _startPos:null,
 
   setTool(tool){
-    if(tool !== 'pointer' && DS.previewMode && typeof PreviewEngineMode !== 'undefined'){
-      // insert-section uses its own route (CommandRuntimeSections) — keep legacy exit-to-design
-      if(tool === 'section'){ PreviewEngineMode.hide(); return; }
-      // CR PARITY (RF-CR-PARITY-PREVIEW-INSERT-STAY-IN-PREVIEW): stay in Preview.
-      // insertAtDefaultPosition() calls DS.saveHistory(), whose CommandRuntimeInit patch
-      // auto-refreshes #preview-content while DS.previewMode stays true. Chain proven by
-      // tools/diagnostics/rf-preview-insert/rf_preview_insert_stay_experiment.mjs (gate a–h).
-      this.insertAtDefaultPosition(tool);
+    // insert-section uses its own route (CommandRuntimeSections) — keep legacy exit-to-design
+    if(tool === 'section' && DS.previewMode && typeof PreviewEngineMode !== 'undefined'){
+      PreviewEngineMode.hide();
       return;
     }
     DS.setTool(tool, 'InsertEngine.setTool');
@@ -28,6 +23,16 @@ const InsertEngine = {
     cs.classList.remove(..._TOOL_CLASSES);
     if(tool !== 'pointer') cs.classList.add(`tool-${tool}`);
     if(tool==='pointer') SelectionEngine._drag=null;
+    // RF-PREVIEW-INSERT-CLICK-POSITION-1: arm the tool and wait for the user's
+    // click/drag on the Preview canvas — do NOT insert immediately. onCanvasMouseDown/
+    // onMouseMove/onMouseUp below resolve the real click position (via getCanvasPos()/
+    // RF.Geometry.clientToModel, preview-aware) and create the element there, exactly
+    // like Design. insertAtDefaultPosition() is kept only for explicit default-position
+    // callers, never auto-invoked from tool selection anymore.
+    if(tool !== 'pointer' && DS.previewMode){
+      const sb=document.getElementById('sb-msg');
+      if(sb) sb.textContent='Haga clic o arrastre en el documento para insertar';
+    }
   },
 
   insertAtDefaultPosition(tool){
@@ -91,16 +96,14 @@ const InsertEngine = {
   },
 
   onCanvasMouseDown(e){
-    if(DS.previewMode)return;
+    if(DS.previewMode && DS.tool==='pointer')return; // rubber-band selection stays Design-only
     if(DS.tool==='pointer'){
       SelectionEngine.clearSelection();
       SelectionEngine.startRubberBand(e);
     } else {
       const pos=getCanvasPos(e);
       SelectionEngine._drag={type:'insert',startX:pos.x,startY:pos.y,curX:pos.x,curY:pos.y};
-      const ghost=document.getElementById('insert-ghost');
-      ghost.style.display='block';ghost.style.left=pos.x+'px';ghost.style.top=pos.y+'px';
-      ghost.style.width='4px';ghost.style.height='4px';
+      this._showGhost(pos.x,pos.y,4,4);
     }
   },
 
@@ -108,30 +111,45 @@ const InsertEngine = {
     const d=SelectionEngine._drag;if(!d||d.type!=='insert')return;
     const x=Math.min(d.startX,pos.x),y=Math.min(d.startY,pos.y);
     const w=Math.abs(pos.x-d.startX)||4,h=Math.abs(pos.y-d.startY)||4;
-    const ghost=document.getElementById('insert-ghost');
-    ghost.style.left=x+'px';ghost.style.top=y+'px';
-    ghost.style.width=w+'px';ghost.style.height=h+'px';
+    this._showGhost(x,y,w,h);
   },
 
   onMouseUp(e){
     const d=SelectionEngine._drag;if(!d||d.type!=='insert')return;
     if(e && e.phase === 'cancel'){
-      const ghost=document.getElementById('insert-ghost');
-      ghost.style.display='none';
+      this._hideGhost();
       SelectionEngine._drag=null;
       return;
     }
-    const ghost=document.getElementById('insert-ghost');
-    ghost.style.display='none';
+    this._hideGhost();
     const pos=getCanvasPos(e);
     let x=DS.snap(Math.min(d.startX,pos.x));
     let y=DS.snap(Math.min(d.startY,pos.y));
     let w=DS.snap(Math.max(Math.abs(pos.x-d.startX),20));
     let h=DS.snap(Math.max(Math.abs(pos.y-d.startY),12));
-    const target=DS.getSectionAtY(y+h/2);
-    if(!target)return;
-    const secId=target.section.id;
-    const relY=DS.snap(Math.max(0,y-DS.getSectionTop(secId)));
+    let secId, relY;
+    if(DS.previewMode && typeof PreviewInsertPositionResolver !== 'undefined'){
+      // DS.getSectionAtY() is the flat Design-declaration-order model — it
+      // diverges from the rendered Preview layout (repeating rows, rf/pf
+      // print order). Resolve against the actual rendered DOM instead.
+      const hit=PreviewInsertPositionResolver.resolve(e.clientX,e.clientY);
+      if(!hit){
+        const sb=document.getElementById('sb-msg');
+        if(sb) sb.textContent='No hay sección destino';
+        return;
+      }
+      secId=hit.sectionId;
+      relY=DS.snap(Math.max(0,hit.relY));
+    } else {
+      const target=DS.getSectionAtY(y+h/2);
+      if(!target){
+        const sb=document.getElementById('sb-msg');
+        if(sb) sb.textContent='No hay sección destino';
+        return;
+      }
+      secId=target.section.id;
+      relY=DS.snap(Math.max(0,y-DS.getSectionTop(secId)));
+    }
     let newEl;
     const tool=DS.tool;
     if(tool==='text') newEl=mkEl('text',secId,x,relY,w,h,{content:'Texto',bgColor:'transparent',borderColor:'transparent'});
@@ -148,13 +166,66 @@ const InsertEngine = {
     PropertiesEngine.render();FormatEngine.updateToolbar();
     DS.saveHistory();
     this.setTool('pointer');
-    if(tool==='text'){
+    if(tool==='text' && !DS.previewMode){
+      // In Preview the design node is display:none; inline edit uses preview double-click parity.
       const div=document.querySelector(`.cr-element[data-id="${newEl.id}"]`);
       if(div) setTimeout(()=>SelectionEngine.startTextEdit(div,newEl),50);
     }
     if(tool==='field'){
       document.getElementById('sb-msg').textContent='Arrastre un campo desde el Explorador para asignarlo';
     }
+  },
+
+  // RF-PREVIEW-INSERT-CLICK-POSITION-1: insert-ghost lives inside #canvas-layer,
+  // which is positioned/scaled for the Design surface. In Preview the visible
+  // document is #preview-content .preview-render-layer, geometry-synced to
+  // .preview-hit-layer via a copyable transform (same technique already used
+  // by SelectionOverlayPreview for the selection box and hover outline) — so
+  // the ghost needs its own layer there instead of the Design #insert-ghost node.
+  _ensurePreviewGhostLayer(){
+    const content=document.querySelector('#preview-content');
+    const hitLayer=document.querySelector('#preview-content .preview-hit-layer');
+    if(!content||!hitLayer)return null;
+    let layer=content.querySelector(':scope > .preview-insert-ghost-layer');
+    if(!layer){
+      layer=document.createElement('div');
+      layer.className='preview-insert-ghost-layer';
+      layer.style.position='absolute';
+      layer.style.left='0px';layer.style.top='0px';
+      layer.style.overflow='visible';
+      layer.style.pointerEvents='none';
+      layer.style.zIndex='9999';
+      const ghost=document.createElement('div');
+      ghost.className='preview-insert-ghost';
+      ghost.style.position='absolute';
+      ghost.style.border='1px dashed #0060C0';
+      ghost.style.background='rgba(0,96,192,.1)';
+      ghost.style.pointerEvents='none';
+      ghost.style.display='none';
+      layer.appendChild(ghost);
+      content.appendChild(layer);
+    }
+    layer.style.height=hitLayer.style.height||'100%';
+    layer.style.transform=hitLayer.style.transform||'none';
+    layer.style.transformOrigin=hitLayer.style.transformOrigin||'top left';
+    return layer.firstChild;
+  },
+
+  _ghostEl(){
+    return DS.previewMode ? this._ensurePreviewGhostLayer() : document.getElementById('insert-ghost');
+  },
+
+  _showGhost(x,y,w,h){
+    const ghost=this._ghostEl();
+    if(!ghost)return;
+    ghost.style.display='block';
+    ghost.style.left=x+'px';ghost.style.top=y+'px';
+    ghost.style.width=w+'px';ghost.style.height=h+'px';
+  },
+
+  _hideGhost(){
+    const ghost=this._ghostEl();
+    if(ghost) ghost.style.display='none';
   },
 };
 

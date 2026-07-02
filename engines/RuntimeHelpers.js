@@ -104,6 +104,16 @@ const RuntimeHelpers = (() => {
   }
 
   function getCanvasPos(e){
+    // RF-PREVIEW-INSERT-CLICK-POSITION-1: routed pointer events precompute
+    // .model via RF.Geometry.viewToModel (canvas-layer/Design-space rect),
+    // regardless of DS.previewMode — see EngineCoreRoutingPointerHelpers
+    // .normalizePointerEvent. That's wrong for absolute placement in Preview,
+    // where the visible/hittable surface is #preview-content .preview-hit-layer,
+    // not #canvas-layer. Always recompute fresh via the preview-aware mapper
+    // in Preview instead of trusting the stale e.model.
+    if(typeof DS !== 'undefined' && DS.previewMode){
+      return RF.Geometry.clientToModel(e.clientX, e.clientY);
+    }
     if(e && e.model && typeof e.model.x === 'number' && typeof e.model.y === 'number'){
       return { x: e.model.x, y: e.model.y };
     }
