@@ -173,7 +173,12 @@ await page.locator('#tool-box').click();
 await page.waitForTimeout(150);
 const before8 = await page.evaluate(() => DS.elements.length);
 const ws = await page.evaluate(() => { const r = document.getElementById('workspace').getBoundingClientRect(); return { left: r.left, bottom: r.bottom }; });
-await page.mouse.click(ws.left + 50, ws.bottom - 5);
+// RF-INTERACTION-AUDIT-1 (BUG NEW 5): bottom-5 lands inside the synthetic
+// horizontal scrollbar's 17px strip (SyntheticScrollbarEngine.THICKNESS),
+// which is now correctly excluded from canvas routing as UI chrome -- use
+// bottom-30 instead, still gray area outside any section but clear of the
+// scrollbar, to keep testing this gate's actual intent unchanged.
+await page.mouse.click(ws.left + 50, ws.bottom - 30);
 await page.waitForTimeout(300);
 check('no element created when clicking outside valid section', await page.evaluate(() => DS.elements.length) === before8, `${before8} -> ${await page.evaluate(() => DS.elements.length)}`);
 const sbMsg = await page.evaluate(() => document.getElementById('sb-msg')?.textContent || '');
