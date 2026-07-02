@@ -327,20 +327,27 @@
 
     // Hue bar (vertical rainbow) — bar on LEFT 20px, left-pointing arrow on RIGHT 12px
     const hueBarWrap = _el('div', 'position:relative;width:32px;height:200px;flex-shrink:0');
+    // The gradient's color-stop list is itself a single CSS value split across
+    // lines for readability — those fragments concatenate with NO separator
+    // ('' ), while the three top-level declarations (position/border/background)
+    // are joined with ';', same convention as _hueCursor below.
+    const hueGradient = 'background:linear-gradient(to bottom,'
+      + 'hsl(0,100%,50%),hsl(30,100%,50%),hsl(60,100%,50%),hsl(90,100%,50%),'
+      + 'hsl(120,100%,50%),hsl(150,100%,50%),hsl(180,100%,50%),hsl(210,100%,50%),'
+      + 'hsl(240,100%,50%),hsl(270,100%,50%),hsl(300,100%,50%),hsl(330,100%,50%),'
+      + 'hsl(360,100%,50%))';
     _hueBar = _el('div', [
       'position:absolute;left:0;right:12px;top:0;bottom:0;cursor:ns-resize',
       'border:1px solid #888;border-radius:2px;box-sizing:border-box',
-      'background:linear-gradient(to bottom,',
-      'hsl(0,100%,50%),hsl(30,100%,50%),hsl(60,100%,50%),hsl(90,100%,50%),',
-      'hsl(120,100%,50%),hsl(150,100%,50%),hsl(180,100%,50%),hsl(210,100%,50%),',
-      'hsl(240,100%,50%),hsl(270,100%,50%),hsl(300,100%,50%),hsl(330,100%,50%),',
-      'hsl(360,100%,50%))',
-    ].join(''));
+      hueGradient,
+    ].join(';'));
     _hueBar.id = 'rf-cp-hue-bar';
-    // Left-pointing triangle (◀): tip at x=20 (bar's right edge), base at x=32 (wrapper edge)
+    // Left-pointing triangle (◀): tip pinned to the color-area's right edge (6px flex gap
+    // + 20px bar width = 26px), so the arrowhead sits flush against the panel like in
+    // Crystal Reports, instead of floating at the wrapper's own right edge.
     // pointer-events enabled so the user can drag the arrow directly
     _hueCursor = _el('div', [
-      'position:absolute;right:0',
+      'position:absolute;right:26px',
       'width:0;height:0',
       'border-top:7px solid transparent',
       'border-bottom:7px solid transparent',
