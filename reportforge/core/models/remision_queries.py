@@ -156,9 +156,14 @@ FROM [@EXX_TRANSPORTISTA]
 WHERE Code = :code
 """
 
+# RF-EMPRESA-RAZON-SOCIAL-VS-COMERCIAL-1: same fix as
+# invoice_queries.py::_COMPANY_SQL — OADM.AliasName holds the SRI-registered
+# fiscal razón social for this installation, OADM.CompnyName holds the
+# trade/commercial name. See that file's comment for the confirming evidence.
 _COMPANY_SQL = """
 SELECT
-    CompnyName  AS razon_social,
+    AliasName   AS razon_social,
+    CompnyName  AS nombre_comercial,
     TaxIdNum    AS ruc,
     CompnyAddr  AS direccion_matriz,
     Phone1      AS telefono,

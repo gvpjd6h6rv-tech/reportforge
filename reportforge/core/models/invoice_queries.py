@@ -91,10 +91,16 @@ WHERE T1.BaseType = 13
 ORDER BY T0.DocEntry ASC
 """
 
+# RF-EMPRESA-RAZON-SOCIAL-VS-COMERCIAL-1: confirmed against the live OADM row
+# for this installation — OADM.AliasName holds the SRI-registered fiscal
+# razón social ("CAROLINA JULIA CHANG AJOY CHONG"), OADM.CompnyName holds the
+# trade/commercial name ("SUPER MOTOS Y BICICLETAS"). Mapping CompnyName into
+# razon_social (the original query) put the trade name into the layout's
+# fiscal-legal-name slot.
 _COMPANY_SQL = """
 SELECT
-    CompnyName AS razon_social,
-    AliasName  AS nombre_comercial,
+    AliasName  AS razon_social,
+    CompnyName AS nombre_comercial,
     TaxIdNum   AS ruc,
     CompnyAddr AS direccion_matriz,
     Country    AS pais,

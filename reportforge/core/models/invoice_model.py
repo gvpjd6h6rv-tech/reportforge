@@ -140,8 +140,15 @@ def build_invoice_model(doc_num: int, datasource_alias: str | None = None) -> di
             "currency": str(header.get("currency") or "USD"),
         },
         "empresa": {
+            # RF-EMPRESA-RAZON-SOCIAL-VS-COMERCIAL-1: fetch_company_info's
+            # razon_social/nombre_comercial now come from OADM.AliasName /
+            # OADM.CompnyName respectively (swapped from the original query —
+            # see _COMPANY_SQL's comment in invoice_queries.py). No fallback
+            # from razon_social to nombre_comercial here: if the fiscal name
+            # is genuinely blank, leaving it blank is correct — falling back
+            # to the trade name would reintroduce the same collision.
             "razon_social": str(company.get("razon_social") or ""),
-            "nombre_comercial": str(company.get("nombre_comercial") or company.get("razon_social") or ""),
+            "nombre_comercial": str(company.get("nombre_comercial") or ""),
             "ruc": str(company.get("ruc") or ""),
             "direccion_matriz": str(company.get("direccion_matriz") or ""),
             "pais": str(company.get("pais") or ""),
