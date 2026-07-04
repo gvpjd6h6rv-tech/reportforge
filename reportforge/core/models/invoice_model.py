@@ -96,9 +96,6 @@ def build_invoice_model(doc_num: int, datasource_alias: str | None = None) -> di
 
     iva = float(header.get("iva") or 0)
     total = float(header.get("total") or 0)
-    sub_sin_imp = round(total - iva, 2)
-    sub_12 = sub_sin_imp if iva > 0 else 0.0
-    sub_0 = 0.0 if iva > 0 else sub_sin_imp
 
     items = [
         {
@@ -130,6 +127,19 @@ def build_invoice_model(doc_num: int, datasource_alias: str | None = None) -> di
         }
         for line in lines
     ]
+
+    # RF-SUBTOTAL-SIN-IMPUESTOS-1: subtotal_sin_impuestos/subtotal_iva_0 must
+    # sum the REAL per-line NET totals (INV1.LineTotal, now correctly sourced
+    # — see RF-NET-GROSS-PRICE-SOURCE-1), matching SAP's own
+    # build_invoice_items_and_totals (subtotal_15/subtotal_iva_0 accumulated
+    # per-line by tax rate). The previous `total - iva` (OINV.DocTotal minus
+    # OINV.VatSum) silently assumed no document-level discount separates the
+    # line subtotal from the final total — wrong for FV_002 "no declarable"
+    # documents, where DocTotal is ALREADY net of a real discount (confirmed:
+    # DocEntry 55142 has line subtotal 112.00, DocTotal 106.41, discount 5.59).
+    sub_12 = round(sum(it["subtotal"] for it in items if it["vat_prcnt"] > 0), 2)
+    sub_0 = round(sum(it["subtotal"] for it in items if not it["vat_prcnt"] > 0), 2)
+    sub_sin_imp = round(sub_12 + sub_0, 2)
 
     # RF-FORMA-PAGO-FE-FABRICATED-DEFAULT-1: invoice_queries.py's own
     # _HEADER_SQL already resolves this via the real

@@ -230,6 +230,34 @@ class TestValidInvoiceReturnsDataset(unittest.TestCase):
         self.assertEqual(result["pago"]["forma_pago_fe"], "01")
         self.assertAlmostEqual(result["pago"]["total"], 112.00)
 
+    def test_subtotal_sin_impuestos_uses_real_line_subtotals_not_doc_total(self):
+        # RF-SUBTOTAL-SIN-IMPUESTOS-1: real case (DocEntry 55142, FV_002 "no
+        # declarable") — the line's real net subtotal is 112.00, but
+        # OINV.DocTotal is ALREADY net of a document-level discount (106.41 =
+        # 112.00 - 5.59). The old `total - iva` formula silently returned
+        # 106.41 (total=106.41, iva=0), discarding the discount and reporting
+        # a subtotal that doesn't match the sum of the real line totals. This
+        # must be 112.00 — the actual sum of INV1.LineTotal — not 106.41.
+        from reportforge.core.models.invoice_model import build_invoice_model
+
+        header = {**_HEADER_ROW, "total": 106.41, "iva": 0.0}
+        line = {
+            **_LINE_ROW,
+            "precio_unitario": 112.00,
+            "subtotal": 112.00,
+            "precio_unitario_con_iva": 112.00,
+            "precio_total_con_iva": 112.00,
+            "vat_prcnt": 0.0,
+        }
+        mock_sa = MagicMock(side_effect=[[header], [line], [_COMPANY_ROW]])
+        with _patch_registered(), patch(_SA_QUERY_TARGET, mock_sa):
+            result = build_invoice_model(1001)
+        tot = result["totales"]
+        self.assertAlmostEqual(tot["subtotal_sin_impuestos"], 112.00)
+        self.assertNotAlmostEqual(tot["subtotal_sin_impuestos"], 106.41)
+        self.assertAlmostEqual(tot["subtotal_0"], 112.00)
+        self.assertAlmostEqual(tot["subtotal_12"], 0.0)
+
 
 class TestFormaPagoNoFabricatedDefault(unittest.TestCase):
     """RF-FORMA-PAGO-FE-FABRICATED-DEFAULT-1: a document with no real
