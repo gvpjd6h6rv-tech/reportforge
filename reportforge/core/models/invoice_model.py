@@ -79,7 +79,11 @@ _FORMA_PAGO_DESC = {
     "01": "SIN UTILIZACIÓN DEL SISTEMA FINANCIERO",
     "15": "COMPENSACIÓN DE DEUDAS", "16": "TARJETA DE DÉBITO",
     "17": "DINERO ELECTRÓNICO",      "18": "TARJETA PREPAGO",
-    "19": "TARJETA DE CRÉDITO",      "20": "OTROS CON SISTEMA FINANCIERO",
+    # Corrected against the official SRI formaPago catalog PDF: "20" is
+    # "OTROS CON UTILIZACIÓN DEL SISTEMA FINANCIERO", not "OTROS CON
+    # SISTEMA FINANCIERO" -- same owner (this catalog), same commit as the
+    # forma_pago_fe default fix below, not a separate scope.
+    "19": "TARJETA DE CRÉDITO",      "20": "OTROS CON UTILIZACIÓN DEL SISTEMA FINANCIERO",
     "21": "ENDOSO DE TÍTULOS",
 }
 
@@ -116,8 +120,18 @@ def build_invoice_model(doc_num: int, datasource_alias: str | None = None) -> di
         for line in lines
     ]
 
-    forma_pago_fe = str(header.get("forma_pago_fe") or "01")
-    forma_pago_desc = _FORMA_PAGO_DESC.get(forma_pago_fe, forma_pago_fe)
+    # RF-FORMA-PAGO-FE-FABRICATED-DEFAULT-1: invoice_queries.py's own
+    # _HEADER_SQL already resolves this via the real
+    # FP.Code = OINV.U_EXX_FPAGO_VENTAS AND FP.LineId = 1 join, wrapped in
+    # ISNULL(..., '') -- a document with no real payment-method row
+    # genuinely comes back as ''. The previous `or "01"` here discarded that
+    # honest absence and fabricated a real SRI code ("01" = SIN UTILIZACIÓN
+    # DEL SISTEMA FINANCIERO) no source data ever provided (confirmed live:
+    # DocEntry 55142 has no @EXX_FPAGO_VENT_DET row at all). No default: a
+    # genuine absence stays "", matching SAP's own equivalent fix
+    # (sap_b1_linux services/invoice_forma_pago_supplement.py).
+    forma_pago_fe = str(header.get("forma_pago_fe") or "").strip()
+    forma_pago_desc = _FORMA_PAGO_DESC.get(forma_pago_fe, forma_pago_fe) if forma_pago_fe else ""
     plazo_val = str(header.get("plazo") or "") or None
     email_val = str(company.get("email") or "")
     tipo_emision_val = str(header.get("tipo_emision") or "")

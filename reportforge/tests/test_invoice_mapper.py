@@ -228,6 +228,37 @@ class TestValidInvoiceReturnsDataset(unittest.TestCase):
         self.assertAlmostEqual(result["pago"]["total"], 112.00)
 
 
+class TestFormaPagoNoFabricatedDefault(unittest.TestCase):
+    """RF-FORMA-PAGO-FE-FABRICATED-DEFAULT-1: a document with no real
+    @EXX_FPAGO_VENT_DET row must stay genuinely empty, never default to SRI
+    code "01" -- matching SAP's own equivalent fix
+    (sap_b1_linux services/invoice_forma_pago_supplement.py)."""
+
+    def _call_with(self, forma_pago_fe):
+        from reportforge.core.models.invoice_model import build_invoice_model
+        header = deepcopy(_HEADER_ROW)
+        header["forma_pago_fe"] = forma_pago_fe
+        with _patch_registered(), _patch_sa(header=header):
+            return build_invoice_model(1001)
+
+    def test_none_source_yields_empty_descripcion(self):
+        result = self._call_with(None)
+        self.assertEqual(result["pago"]["forma_pago_fe"], "")
+        self.assertEqual(result["forma_pago"]["descripcion"], "")
+
+    def test_empty_string_source_yields_empty_descripcion(self):
+        result = self._call_with("")
+        self.assertEqual(result["forma_pago"]["descripcion"], "")
+
+    def test_real_01_source_yields_real_description(self):
+        result = self._call_with("01")
+        self.assertEqual(result["forma_pago"]["descripcion"], "SIN UTILIZACIÓN DEL SISTEMA FINANCIERO")
+
+    def test_catalog_code_20_matches_official_sri_text(self):
+        result = self._call_with("20")
+        self.assertEqual(result["forma_pago"]["descripcion"], "OTROS CON UTILIZACIÓN DEL SISTEMA FINANCIERO")
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # §2 — DOC_NOT_FOUND cuando OINV devuelve 0 filas
 # ─────────────────────────────────────────────────────────────────────────────
