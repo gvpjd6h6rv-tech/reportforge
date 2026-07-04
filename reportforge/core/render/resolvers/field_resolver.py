@@ -203,6 +203,14 @@ def format_value(value: Any, fmt: Optional[str]) -> str:
                 "19": "TARJETA DE CRÉDITO",      "20": "OTROS CON SISTEMA FINANCIERO",
                 "21": "ENDOSO DE TÍTULOS",
             }.get(str(value), str(value))
+        if fmt == "ambiente":
+            # RF-AMBIENTE-RAW-CODE-1 (canonical) keeps the raw SRI code
+            # ("1"/"2") in the payload; this formatter is the ONLY place the
+            # human label belongs (display-only, see #8.2).
+            return {"1": "PRUEBAS", "2": "PRODUCCIÓN"}.get(str(value), str(value))
+        if fmt == "tipo_emision":
+            # Same rationale as "ambiente" — canonical stays raw-code.
+            return {"1": "NORMAL"}.get(str(value), str(value))
     except (ValueError, TypeError, AttributeError):
         if _logger is not None:
             _logger.record_mismatch(

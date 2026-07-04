@@ -240,7 +240,7 @@ def _default_invoice_raw():
             _el("rh-rect","rect","s-rh",530,4,220,96, bgColor="transparent",borderColor="#C0511A",borderWidth=2),
             _el("rh-title","text","s-rh",535,8,210,16, content="FACTURA",fontSize=12,bold=True,align="center",color="#C0511A",zIndex=1),
             _el("rh-docnum","field","s-rh",535,28,210,14,fieldPath="fiscal.numero_documento",fontSize=10,bold=True,align="center",zIndex=1),
-            _el("rh-amb","field","s-rh",535,45,210,11, fieldPath="fiscal.ambiente",fontSize=8,align="center",color="#856404",zIndex=1),
+            _el("rh-amb","field","s-rh",535,45,210,11, fieldPath="fiscal.ambiente",fieldFmt="ambiente",fontSize=8,align="center",color="#856404",zIndex=1),
             _el("rh-date","field","s-rh",535,60,210,11, fieldPath="fiscal.fecha_autorizacion",fieldFmt="datetime",fontSize=7,align="center",zIndex=1),
             _el("rh-clave","field","s-rh",535,74,210,10, fieldPath="fiscal.clave_acceso",fieldFmt="clave_acceso",fontSize=6,align="center",color="#444",fontFamily="Courier New",zIndex=1),
             _el("ph-01","text","s-ph",4,4,60,12,    content="Cliente:",bold=True),

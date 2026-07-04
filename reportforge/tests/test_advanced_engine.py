@@ -277,6 +277,22 @@ class TestFieldFormatter(unittest.TestCase):
         self.assertEqual(_format_value(True, "bool_si_no"), "SI")
         self.assertEqual(_format_value(False, "bool_si_no"), "NO")
 
+    def test_ambiente_raw_code_to_label(self):
+        # #8.2: display-only mapping — the canonical payload keeps the raw
+        # SRI code ("1"/"2"); this formatter is the ONLY place it becomes a
+        # human label, and only at render time.
+        self.assertEqual(_format_value("1", "ambiente"), "PRUEBAS")
+        self.assertEqual(_format_value("2", "ambiente"), "PRODUCCIÓN")
+
+    def test_ambiente_unknown_passes_through(self):
+        self.assertEqual(_format_value("9", "ambiente"), "9")
+
+    def test_tipo_emision_raw_code_to_label(self):
+        self.assertEqual(_format_value("1", "tipo_emision"), "NORMAL")
+
+    def test_tipo_emision_unknown_passes_through(self):
+        self.assertEqual(_format_value("9", "tipo_emision"), "9")
+
     def test_unknown_fmt(self):
         self.assertEqual(_format_value("abc", "unknown_fmt"), "abc")
 
@@ -313,6 +329,13 @@ class TestFieldResolver(unittest.TestCase):
 
     def test_get_formatted(self):
         self.assertEqual(self.ri.get_formatted("item.unit_price", "currency"), "999.99")
+
+    def test_get_formatted_ambiente_empty_stays_empty_no_crash(self):
+        # #8.2: empty fiscal.ambiente (genuine absence, RF-NO-FABRICATED-
+        # FIELDS-1 style) must render as "", never crash and never fabricate
+        # a label for data that isn't there.
+        r = FieldResolver({"fiscal": {"ambiente": ""}})
+        self.assertEqual(r.get_formatted("fiscal.ambiente", "ambiente"), "")
 
     def test_strip_braces(self):
         self.assertEqual(self.r.get("{client.name}"), "ACME Corp")

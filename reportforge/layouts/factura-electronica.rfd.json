@@ -36,11 +36,11 @@
       "content": "fiscal.numero_documento" },
 
     { "id": "rh-amb", "type": "field", "x": 520, "y": 25, "w": 200, "h": 12,
-      "fieldPath": "fiscal.ambiente", "fontSize": 8, "align": "center",
+      "fieldPath": "fiscal.ambiente", "fieldFmt": "ambiente", "fontSize": 8, "align": "center",
       "content": "fiscal.ambiente" },
 
     { "id": "rh-emi", "type": "field", "x": 520, "y": 38, "w": 200, "h": 12,
-      "fieldPath": "fiscal.tipo_emision", "fontSize": 8, "align": "center",
+      "fieldPath": "fiscal.tipo_emision", "fieldFmt": "tipo_emision", "fontSize": 8, "align": "center",
       "content": "fiscal.tipo_emision" },
 
     { "id": "rh-auth","type": "field", "x": 390, "y": 60, "w": 330, "h": 10,
