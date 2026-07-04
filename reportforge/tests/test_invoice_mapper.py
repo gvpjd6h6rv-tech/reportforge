@@ -299,7 +299,11 @@ class TestDocNotFound(unittest.TestCase):
 
 class TestPreparedParams(unittest.TestCase):
 
-    def test_header_query_passes_doc_entry_as_param(self):
+    def test_header_query_passes_doc_num_as_param(self):
+        """fetch_invoice_header looks OINV up BY DocNum (_HEADER_SQL: WHERE
+        T0.DocNum = :doc_num) -- the header query never receives a
+        doc_entry, since doc_entry is only KNOWN after the header row comes
+        back (see test_lines_query_passes_resolved_doc_entry_as_param)."""
         from reportforge.core.models.invoice_model import build_invoice_model
 
         mock_sa = MagicMock(side_effect=[[_HEADER_ROW], [_LINE_ROW], [_COMPANY_ROW]])
@@ -309,8 +313,8 @@ class TestPreparedParams(unittest.TestCase):
         header_call = mock_sa.call_args_list[0]
         _spec, _query, params = header_call[0]
         self.assertIsInstance(params, dict)
-        self.assertIn("doc_entry", params)
-        self.assertEqual(params["doc_entry"], 1001)
+        self.assertIn("doc_num", params)
+        self.assertEqual(params["doc_num"], 1001)
 
     def test_doc_entry_not_concatenated_into_sql(self):
         from reportforge.core.models.invoice_model import build_invoice_model
@@ -323,7 +327,13 @@ class TestPreparedParams(unittest.TestCase):
             _spec, query, _params = c[0]
             self.assertNotIn("1001", query, "doc_entry must not be concatenated into SQL")
 
-    def test_lines_query_passes_doc_entry_as_param(self):
+    def test_lines_query_passes_resolved_doc_entry_as_param(self):
+        """fetch_invoice_lines looks INV1 up BY DocEntry -- but the ONLY
+        source of doc_entry is the header row's own "doc_entry" field
+        (build_invoice_model: doc_entry = int(header["doc_entry"])), never
+        the caller's doc_num input. _HEADER_ROW carries doc_entry=1001
+        regardless of which doc_num the header query was called with, so
+        the lines query must receive 1001, not 42."""
         from reportforge.core.models.invoice_model import build_invoice_model
 
         mock_sa = MagicMock(side_effect=[[_HEADER_ROW], [_LINE_ROW], [_COMPANY_ROW]])
@@ -332,7 +342,7 @@ class TestPreparedParams(unittest.TestCase):
 
         lines_call = mock_sa.call_args_list[1]
         _spec, _query, params = lines_call[0]
-        self.assertEqual(params["doc_entry"], 42)
+        self.assertEqual(params["doc_entry"], _HEADER_ROW["doc_entry"])
 
 
 # ─────────────────────────────────────────────────────────────────────────────
