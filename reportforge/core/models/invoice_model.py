@@ -165,13 +165,29 @@ def build_invoice_model(doc_num: int, datasource_alias: str | None = None) -> di
             "nombre_comercial": str(company.get("nombre_comercial") or ""),
             "ruc": str(company.get("ruc") or ""),
             "direccion_matriz": str(company.get("direccion_matriz") or ""),
+            # RF-EMPRESA-DIRECCION-SUCURSAL-1: mirrors SAP's own canonical
+            # empresa shape, which only has ONE address field ("direccion")
+            # shared by matriz/sucursal via factura_normalizer's fallback
+            # chain (there's no separate branch-address source on either
+            # side) — without this alias, RF's sucursal field fell back to
+            # nothing (empresa.get("direccion") not existing here) while
+            # SAP's fell back to its own single address, a spurious
+            # cross-source divergence for a field neither side actually
+            # tracks separately.
+            "direccion": str(company.get("direccion_matriz") or ""),
             "pais": str(company.get("pais") or ""),
             "telefono": str(company.get("telefono") or ""),
             "email": email_val,
             "correo": email_val,
             "direccion_sucursal": None,
-            "obligado_contabilidad": "SI",
-            "agente_retencion": "NO",
+            # RF-NO-FABRICATED-FIELDS-1: no OADM/OINV column backs either
+            # concept in this schema (verified: 0 matches for %RET%/%CONTAB%/
+            # %AGENTE% across both tables) — SAP's own model has no source
+            # for these either (they're simply absent from its empresa dict).
+            # Hardcoding "SI"/"NO" fabricated data neither side can verify;
+            # leaving both blank matches SAP's genuine absence instead.
+            "obligado_contabilidad": "",
+            "agente_retencion": "",
         },
         "cliente": {
             "razon_social": str(header.get("cliente_nombre") or ""),

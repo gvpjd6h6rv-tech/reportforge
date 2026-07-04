@@ -142,8 +142,15 @@ class TestValidInvoiceReturnsDataset(unittest.TestCase):
         self.assertEqual(emp["nombre_comercial"], "DEMO COMERCIAL")
         self.assertEqual(emp["ruc"], "0991111111001")
         self.assertIn("direccion_matriz", emp)
-        self.assertEqual(emp["obligado_contabilidad"], "SI")
-        self.assertEqual(emp["agente_retencion"], "NO")
+
+    def test_empresa_has_no_fabricated_retencion_contabilidad_fields(self):
+        # RF-NO-FABRICATED-FIELDS-1: no OADM/OINV column backs either concept
+        # in this schema, and SAP's own model has no source for them either —
+        # both must stay blank rather than carry invented "SI"/"NO" values.
+        result = self._call()
+        emp = result["empresa"]
+        self.assertEqual(emp["obligado_contabilidad"], "")
+        self.assertEqual(emp["agente_retencion"], "")
 
     def test_cliente_fields(self):
         result = self._call()

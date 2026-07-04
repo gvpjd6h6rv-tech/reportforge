@@ -407,7 +407,11 @@ def fetch_remision_model_data(spec: dict, doc_num: int) -> dict:
             "telefono": str(company.get("telefono") or ""),
             "email": str(company.get("email") or ""),
             "correo": str(company.get("email") or ""),
-            "obligado_contabilidad": "SI",
+            # RF-NO-FABRICATED-FIELDS-1: no OADM/OINV column backs this
+            # concept (verified: 0 matches for %CONTAB%/%AGENTE%/%RET% across
+            # both tables) and SAP's own model has no source for it either —
+            # left blank to match SAP's genuine absence, not fabricated.
+            "obligado_contabilidad": "",
         },
         "destinatario": guia["destinatario"],
         "fiscal": {
