@@ -164,7 +164,7 @@ class TestValidInvoiceReturnsDataset(unittest.TestCase):
         fis = result["fiscal"]
         self.assertEqual(fis["numero_documento"], "001-001-000000042")
         self.assertEqual(fis["ambiente_raw"], "2")
-        self.assertEqual(fis["ambiente"], "Producción")
+        self.assertEqual(fis["ambiente"], "2")
         self.assertEqual(fis["tipo_emision"], "1")
         self.assertIn("clave_acceso", fis)
 
@@ -188,28 +188,21 @@ class TestValidInvoiceReturnsDataset(unittest.TestCase):
             result = build_invoice_model(1001)
         self.assertEqual(result["fiscal"]["numero_documento"], "002-101-000021660")
 
-    def test_fiscal_ambiente_mapping(self):
+    def test_fiscal_ambiente_is_the_raw_source_code_not_a_mapped_label(self):
+        # RF-AMBIENTE-RAW-CODE-1: aligned to SAP's own representation — SAP's
+        # universal_invoice_builder.py passes U_FE_AMBIENTE's raw code
+        # straight through with no text mapping, so RF must match (no
+        # "Pruebas"/"Producción" translation layer in the canonical payload).
         from reportforge.core.models.invoice_model import build_invoice_model
 
-        for raw, label in [("1", "Pruebas"), ("2", "Producción")]:
+        for raw in ("1", "2", "9"):
             header = {**_HEADER_ROW, "ambiente": raw}
             mock_sa = MagicMock(side_effect=[[header], [_LINE_ROW], [_COMPANY_ROW]])
             with _patch_registered(), patch(_SA_QUERY_TARGET, mock_sa):
                 result = build_invoice_model(1001)
             fis = result["fiscal"]
             self.assertEqual(fis["ambiente_raw"], raw)
-            self.assertEqual(fis["ambiente"], label)
-
-    def test_fiscal_ambiente_unknown_value_passes_through(self):
-        from reportforge.core.models.invoice_model import build_invoice_model
-
-        header = {**_HEADER_ROW, "ambiente": "9"}
-        mock_sa = MagicMock(side_effect=[[header], [_LINE_ROW], [_COMPANY_ROW]])
-        with _patch_registered(), patch(_SA_QUERY_TARGET, mock_sa):
-            result = build_invoice_model(1001)
-        fis = result["fiscal"]
-        self.assertEqual(fis["ambiente_raw"], "9")
-        self.assertEqual(fis["ambiente"], "9")
+            self.assertEqual(fis["ambiente"], raw)
 
     def test_items_list(self):
         result = self._call()

@@ -331,9 +331,6 @@ def fetch_remision_fve2(spec, oinv_head):
     }
 
 
-_AMBIENTE_MAP = {"1": "Pruebas", "2": "Producción"}
-
-
 def _get_oinv_head(spec: dict, doc_num: int) -> dict:
     """Query OINV header with dynamic UDF column detection."""
     try:
@@ -415,8 +412,10 @@ def fetch_remision_model_data(spec: dict, doc_num: int) -> dict:
         },
         "destinatario": guia["destinatario"],
         "fiscal": {
+            # RF-AMBIENTE-RAW-CODE-1: aligned to SAP's raw-code passthrough —
+            # see the equivalent comment in invoice_model.py.
             "ambiente_raw": ambiente_raw,
-            "ambiente": _AMBIENTE_MAP.get(ambiente_raw, ambiente_raw),
+            "ambiente": ambiente_raw,
             "tipo_emision": tipo_emision,
             "emision": tipo_emision,
             "numero_documento": guia["numero_documento"],

@@ -13,8 +13,6 @@ from reportforge.core.models.invoice_queries import (
 
 _DB_ALIAS = os.environ.get("SAP_B1_DATASOURCE", "sap_b1")
 
-_AMBIENTE_MAP = {"1": "Pruebas", "2": "Producción"}
-
 
 def _url_to_spec(url: str) -> dict:
     """Parse a mssql+pyodbc://user:pass@host:port/db URL into a pymssql spec dict."""
@@ -200,8 +198,15 @@ def build_invoice_model(doc_num: int, datasource_alias: str | None = None) -> di
             "telefono2": str(header.get("cliente_telefono2") or "") or None,
         },
         "fiscal": {
+            # RF-AMBIENTE-RAW-CODE-1: aligned to SAP's own representation —
+            # SAP's universal_invoice_builder.py passes U_FE_AMBIENTE's raw
+            # code ("1"/"2") straight through with no text mapping, so RF
+            # mapping it to "Pruebas"/"Producción" was an interpretation SAP
+            # doesn't apply, causing a cross-source divergence for the same
+            # field. Both now expose the raw source code; any human-readable
+            # label is a presentation-layer concern, not a payload concern.
             "ambiente_raw": str(header.get("ambiente") or ""),
-            "ambiente": _AMBIENTE_MAP.get(str(header.get("ambiente") or ""), str(header.get("ambiente") or "")),
+            "ambiente": str(header.get("ambiente") or ""),
             "tipo_comprobante": str(header.get("tipo_comprobante") or ""),
             "tipo_emision": tipo_emision_val,
             "emision": tipo_emision_val,
