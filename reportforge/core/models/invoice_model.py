@@ -156,8 +156,15 @@ def build_invoice_model(doc_num: int, datasource_alias: str | None = None) -> di
     plazo_val = str(header.get("plazo") or "") or None
     email_val = str(company.get("email") or "")
     tipo_emision_val = str(header.get("tipo_emision") or "")
-    folio_num = header.get("folio_num")
-    nota_num_val = str(int(folio_num)) if folio_num not in (None, 0, "") else str(header.get("doc_num") or "")
+    # RF-META-INVOICE-NUMBER-FORMAT-1: SAP's own canonical payload treats
+    # meta_invoice_number as IDENTICAL to fiscal_numero_documento (confirmed
+    # live via the SAP↔RF parity gate: both sides carry the same
+    # "est-pto-seq(9)" value, e.g. "002-101-000021206" for docnum 2021215
+    # and "000009501" for docnum 1007542) — RF's own numero_documento is
+    # already built correctly by _build_numero_documento(); the previous
+    # nota_num_val here used the raw, unformatted folio_num/doc_num instead,
+    # producing "21206"/"9501" and diverging from SAP for no real reason.
+    numero_documento_val = _build_numero_documento(header)
     raw_time = header.get("doc_time")
     hora_emision = ""
     if raw_time is not None:
@@ -238,7 +245,7 @@ def build_invoice_model(doc_num: int, datasource_alias: str | None = None) -> di
             "descripcion_error": str(header.get("descripcion_error") or "") or None,
             "pdf_generado": str(header.get("pdf_generado") or "") or None,
             "mail_enviado": str(header.get("mail_enviado") or "") or None,
-            "numero_documento": _build_numero_documento(header),
+            "numero_documento": numero_documento_val,
             "numero_autorizacion": str(header.get("numero_autorizacion") or ""),
             "fecha_autorizacion": str(header.get("fecha_autorizacion") or ""),
             "clave_acceso": str(header.get("clave_acceso") or ""),
@@ -264,7 +271,7 @@ def build_invoice_model(doc_num: int, datasource_alias: str | None = None) -> di
             "remision": guia_ref,
         },
         "observaciones": str(header.get("comments") or "") or None,
-        "nota_numero": nota_num_val,
+        "nota_numero": numero_documento_val,
         "subtotal": sub_sin_imp,
         "descuento": 0.0,
         "valor_total": total,

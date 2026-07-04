@@ -191,6 +191,51 @@ class TestValidInvoiceReturnsDataset(unittest.TestCase):
             result = build_invoice_model(1001)
         self.assertEqual(result["fiscal"]["numero_documento"], "002-101-000021660")
 
+    def test_nota_numero_matches_sap_est_pto_seq_format_fve1(self):
+        # RF-META-INVOICE-NUMBER-FORMAT-1: real evidence from the SAP<->RF
+        # parity gate (docnum 2021215, FVE_001 declarable-externa) — SAP's
+        # own meta_invoice_number equals its fiscal_numero_documento
+        # ("002-101-000021206"), never the bare folio. nota_numero (which
+        # feeds meta_invoice_number via adapt_rf_invoice_model) must match.
+        from reportforge.core.models.invoice_model import build_invoice_model
+
+        header = {**_HEADER_ROW, "correlativo": 21206, "folio_num": 21206,
+                  "ser_est": "002", "ser_pe": "101"}
+        mock_sa = MagicMock(side_effect=[[header], [_LINE_ROW], [_COMPANY_ROW]])
+        with _patch_registered(), patch(_SA_QUERY_TARGET, mock_sa):
+            result = build_invoice_model(1001)
+        self.assertEqual(result["nota_numero"], "002-101-000021206")
+        self.assertEqual(result["nota_numero"], result["fiscal"]["numero_documento"])
+
+    def test_nota_numero_matches_sap_padded_seq_format_fv2(self):
+        # Real evidence: docnum 1007542, FV_002 "interna" -- no ser_est/
+        # ser_pe on this series, SAP's meta_invoice_number is just the
+        # zero-padded 9-digit sequential ("000009501"), not the bare "9501"
+        # RF used to emit.
+        from reportforge.core.models.invoice_model import build_invoice_model
+
+        header = {**_HEADER_ROW, "correlativo": None, "folio_num": 9501,
+                  "ser_est": "", "ser_pe": ""}
+        mock_sa = MagicMock(side_effect=[[header], [_LINE_ROW], [_COMPANY_ROW]])
+        with _patch_registered(), patch(_SA_QUERY_TARGET, mock_sa):
+            result = build_invoice_model(1001)
+        self.assertEqual(result["nota_numero"], "000009501")
+        self.assertEqual(result["nota_numero"], result["fiscal"]["numero_documento"])
+
+    def test_nota_numero_does_not_fabricate_establecimiento_when_missing(self):
+        # Missing ser_est/ser_pe must NOT produce a fabricated "000-000-..."
+        # prefix -- falls back to the bare zero-padded sequential, matching
+        # _build_numero_documento's own documented, evidence-based fallback.
+        from reportforge.core.models.invoice_model import build_invoice_model
+
+        header = {**_HEADER_ROW, "correlativo": 21206, "folio_num": 21206,
+                  "ser_est": "", "ser_pe": ""}
+        mock_sa = MagicMock(side_effect=[[header], [_LINE_ROW], [_COMPANY_ROW]])
+        with _patch_registered(), patch(_SA_QUERY_TARGET, mock_sa):
+            result = build_invoice_model(1001)
+        self.assertEqual(result["nota_numero"], "000021206")
+        self.assertNotIn("000-000", result["nota_numero"])
+
     def test_fiscal_ambiente_is_the_raw_source_code_not_a_mapped_label(self):
         # RF-AMBIENTE-RAW-CODE-1: aligned to SAP's own representation — SAP's
         # universal_invoice_builder.py passes U_FE_AMBIENTE's raw code
