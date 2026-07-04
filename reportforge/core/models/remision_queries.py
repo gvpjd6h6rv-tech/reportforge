@@ -93,7 +93,8 @@ SELECT
     ISNULL(T0.U_FEC_FIN_TRAS, '')       AS fecha_fin,
     ISNULL(T0.U_MOT_TRASLADO, '')       AS motivo,
     ISNULL(T0.U_TRANSPORTE, '')         AS transporte_code,
-    ISNULL(T0.U_TRANSPORTISTA, '')      AS transportista_code
+    ISNULL(T0.U_TRANSPORTISTA, '')      AS transportista_code,
+    ISNULL(T0.U_EXX_FE_FECAUT, '')      AS fecha_autorizacion_raw
 FROM ODLN T0
 WHERE T0.DocEntry = :odln_entry
 """
@@ -259,6 +260,7 @@ def fetch_remision_fve1(spec, oinv_head):
         "punto_llegada": punto_llegada,
         "fecha_inicio": str(odln.get("fecha_inicio") or ""),
         "fecha_fin": str(odln.get("fecha_fin") or ""),
+        "fecha_autorizacion": str(odln.get("fecha_autorizacion_raw") or ""),
         "motivo": str(odln.get("motivo") or ""),
         "placa": placa,
         "transportista_nombre": transp_nombre,
