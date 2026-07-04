@@ -60,7 +60,10 @@ _LINE_ROW = {
     "descuento": 0.0,
     "desc_lineal": 0.0,
     "subtotal": 100.00,
+    "precio_unitario_con_iva": 56.00,
+    "precio_total_con_iva": 112.00,
     "tax_code": "IVA12",
+    "vat_prcnt": 12.0,
     "ice_porcentaje": 0.0,
     "ice_valor": 0.0,
 }

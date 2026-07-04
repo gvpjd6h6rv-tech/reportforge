@@ -53,6 +53,15 @@ LEFT JOIN [@EXX_FPAGO_VENT_DET] FP
 WHERE T0.DocNum = :doc_num
 """
 
+# RF-NET-GROSS-PRICE-SOURCE-1: Price/LineTotal ARE the real NET (pre-VAT)
+# values and PriceAfVAT/GTotal are the real GROSS values — confirmed against
+# a live SSMS query on a 15%-IVA document (docnum 2021215/DocEntry 55271,
+# item BCAUC.04: Price=0.434783, PriceAfVAT=0.500000 — genuinely different).
+# An earlier check on an all-IVA-exempt document (docnum 1007542, VatPrcnt=0)
+# showed Price≈PriceAfVAT and was wrongly read as "Price IS the gross value"
+# — for a 0%-tax line NET and GROSS are numerically identical, so that
+# document could never have distinguished the two. Both NET and GROSS are
+# real source columns; neither needs to be derived by formula.
 _LINES_SQL = """
 SELECT
     LineNum                                   AS numero,
@@ -63,7 +72,11 @@ SELECT
     DiscPrcnt                                 AS descuento,
     ISNULL(U_DescLineal, 0)                   AS desc_lineal,
     LineTotal                                 AS subtotal,
+    PriceAfVAT                                AS precio_unitario_con_iva,
+    GTotal                                     AS precio_total_con_iva,
     TaxCode                                   AS tax_code,
+    VatPrcnt                                   AS vat_prcnt,
+    VatSum                                     AS vat_sum,
     ISNULL(U_EXX_FE_PorICEVta, 0)            AS ice_porcentaje,
     ISNULL(U_EXX_FE_ValICEVta, 0)            AS ice_valor,
     CAST(Text AS NVARCHAR(4000))              AS referencia

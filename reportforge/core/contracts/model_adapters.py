@@ -20,15 +20,20 @@ Both raw shapes are read-only inputs here; this module returns a NEW dict
 tree and never mutates its argument.
 
 Documented, evidence-based gaps (left as None/empty rather than invented):
-  * RF's own invoice_model has no separate NET (pre-VAT) unit price — its
-    single ``precio_unitario`` field IS the PriceAfVAT/gross value (confirmed:
-    it renders as "2.6000" against a GROSS-priced layout). There is no source
-    for the FV1 NET price/subtotal when the RF path is used, so
-    ``precio_unitario``/``subtotal`` (NET) are left ``None`` for that path.
   * SAP's raw guide_block (``model["guia_remision"]``) has no source field for
     ``traslado.ruta`` or ``guia_remision.fiscal.fecha_autorizacion`` distinct
     from the invoice's own fiscal envelope — left as documented gaps / reused
     from the shared invoice fiscal block, never fabricated.
+
+Corrected finding (RF-NET-GROSS-PRICE-SOURCE-1): an earlier revision of this
+module treated RF's raw ``precio_unitario`` as the GROSS/PriceAfVAT value and
+left NET as an unfillable gap. That was based on testing against a single,
+all-IVA-exempt document (VatPrcnt=0), where NET and GROSS are numerically
+identical — no test could have told them apart on that document. A live SSMS
+query against a 15%-IVA document (INV1: Price=0.434783, PriceAfVAT=0.500000)
+confirmed Price/LineTotal ARE genuinely NET and PriceAfVAT/GTotal ARE
+genuinely GROSS. RF's raw model (invoice_queries.py::_LINES_SQL) now selects
+both pairs directly from INV1 — no formula-derived pricing anywhere.
 """
 from __future__ import annotations
 
@@ -141,14 +146,20 @@ def _adapt_rf_items(raw_items: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "descripcion": it.get("descripcion"),
                 "cantidad": it.get("cantidad"),
                 "descuento": it.get("descuento"),
-                # RF's own "precio_unitario"/"subtotal" ARE the gross
-                # (PriceAfVAT) values — there is no separate NET source on
-                # this path, so the NET keys stay None (documented gap; see
-                # module docstring) rather than being fabricated.
-                "precio_unitario": None,
-                "subtotal": None,
-                "precio_unitario_con_iva": it.get("precio_unitario"),
-                "precio_total_con_iva": it.get("precio_total", it.get("subtotal")),
+                # RF-NET-GROSS-PRICE-SOURCE-1: RF's raw precio_unitario/subtotal
+                # ARE the real NET (pre-VAT) values (INV1.Price/LineTotal) and
+                # precio_unitario_con_iva/precio_total_con_iva ARE the real
+                # GROSS values (INV1.PriceAfVAT/GTotal) — both confirmed via a
+                # live SSMS query against a 15%-IVA document. An earlier
+                # revision of this adapter treated precio_unitario as gross
+                # and left NET as None; that was wrong, verified only against
+                # an all-IVA-exempt document where NET and GROSS are
+                # numerically identical (0% tax), so the mislabeling was
+                # invisible on that one document.
+                "precio_unitario": it.get("precio_unitario"),
+                "subtotal": it.get("subtotal"),
+                "precio_unitario_con_iva": it.get("precio_unitario_con_iva"),
+                "precio_total_con_iva": it.get("precio_total_con_iva"),
             }
         )
     return items

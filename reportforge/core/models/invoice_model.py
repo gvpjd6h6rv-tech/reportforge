@@ -106,11 +106,24 @@ def build_invoice_model(doc_num: int, datasource_alias: str | None = None) -> di
             "codigo": str(line.get("codigo") or ""),
             "descripcion": str(line.get("descripcion") or ""),
             "cantidad": float(line.get("cantidad") or 0),
-            "precio_unitario": float(line.get("precio_unitario") or 0),
+            # NET (pre-VAT) — INV1.Price / INV1.LineTotal, confirmed against
+            # a live SSMS query as the real NET source (see
+            # invoice_queries.py::_LINES_SQL's RF-NET-GROSS-PRICE-SOURCE-1 note).
+            # Rounded to 2 decimals to match SAP's own universal money
+            # rounding (services/invoice_builder_coercions.py::coerce_float
+            # always formats as "%.2f") — INV1.Price's raw SQL precision
+            # (e.g. 2.600001) is a source-level artifact, not a real cents
+            # value, and diverged from SAP's rounded display otherwise.
+            "precio_unitario": round(float(line.get("precio_unitario") or 0), 2),
             "descuento": float(line.get("descuento") or 0),
             "desc_lineal": float(line.get("desc_lineal") or 0),
-            "subtotal": float(line.get("subtotal") or 0),
-            "precio_total": float(line.get("subtotal") or 0),
+            "subtotal": round(float(line.get("subtotal") or 0), 2),
+            "precio_total": round(float(line.get("subtotal") or 0), 2),
+            # GROSS / PriceAfVAT — INV1.PriceAfVAT / INV1.GTotal, the real
+            # tax-inclusive counterparts (same note, same rounding).
+            "precio_unitario_con_iva": round(float(line.get("precio_unitario_con_iva") or 0), 2),
+            "precio_total_con_iva": round(float(line.get("precio_total_con_iva") or 0), 2),
+            "vat_prcnt": float(line.get("vat_prcnt") or 0),
             "ice_porcentaje": float(line.get("ice_porcentaje") or 0),
             "ice_valor": float(line.get("ice_valor") or 0),
             "referencia": str(line.get("referencia") or "") or None,

@@ -85,8 +85,14 @@ def _raw_rf_model() -> dict:
         "descuento": 0.0,
         "valor_total": 106.41,
         "items": [
+            # RF-NET-GROSS-PRICE-SOURCE-1: NET != GROSS (a real 15%-IVA pair,
+            # matching _raw_sap_model()'s SAME item/document so the
+            # cross-source comparison test below stays meaningful) — an
+            # all-0%-tax fixture can never catch a NET/GROSS mapping
+            # regression since NET and GROSS would be numerically identical.
             {"numero": 1, "codigo": "BINFL.09", "descripcion": "INFLADOR", "cantidad": 10.0,
-             "precio_unitario": 2.60, "descuento": 0.0, "subtotal": 26.00, "precio_total": 26.00,
+             "precio_unitario": 2.26, "descuento": 0.0, "subtotal": 22.60, "precio_total": 22.60,
+             "precio_unitario_con_iva": 2.60, "precio_total_con_iva": 26.00, "vat_prcnt": 15.0,
              "referencia": None},
         ],
         "totales": {
@@ -175,13 +181,19 @@ class TestRfAdapterMetaReshape(unittest.TestCase):
         self.assertEqual(out["meta"]["doc_date"], "2026-04-24")
 
 
-class TestRfAdapterItemsGrossOnly(unittest.TestCase):
-    def test_gross_price_mapped_net_left_as_documented_gap(self):
+class TestRfAdapterItemsNetAndGrossBothReal(unittest.TestCase):
+    """RF-NET-GROSS-PRICE-SOURCE-1: both NET and GROSS come from real INV1
+    columns (Price/LineTotal vs PriceAfVAT/GTotal) — neither is a formula
+    derivation, neither is left as a documented gap."""
+
+    def test_net_and_gross_prices_are_both_real_and_distinct(self):
         out = adapt_rf_invoice_model(_raw_rf_model())
         item = out["items"][0]
+        self.assertEqual(item["precio_unitario"], 2.26)
+        self.assertEqual(item["subtotal"], 22.60)
         self.assertEqual(item["precio_unitario_con_iva"], 2.60)
-        self.assertIsNone(item["precio_unitario"])
-        self.assertIsNone(item["subtotal"])
+        self.assertEqual(item["precio_total_con_iva"], 26.00)
+        self.assertNotEqual(item["precio_unitario"], item["precio_unitario_con_iva"])
 
 
 def _raw_rf_remision_model() -> dict:
@@ -272,6 +284,13 @@ class TestAdaptersFeedNormalizersFullCoverage(unittest.TestCase):
         self.assertEqual(
             sap_payload["items"][0]["precio_unitario_con_iva"],
             rf_payload["items"][0]["precio_unitario_con_iva"],
+        )
+        # RF-NET-GROSS-PRICE-SOURCE-1: NET must ALSO agree now — both sources
+        # read a real NET column (SAP's DocumentLines[].UnitPrice / RF's
+        # INV1.Price), neither is a formula derivation or a documented gap.
+        self.assertEqual(
+            sap_payload["items"][0]["precio_unitario"],
+            rf_payload["items"][0]["precio_unitario"],
         )
 
 
