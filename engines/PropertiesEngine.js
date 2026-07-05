@@ -261,13 +261,20 @@ const PropertiesEngine = {
     setTimeout(()=>{
       document.getElementById(id)?.addEventListener('change',e=>{
         DS.getSelectedElements().forEach(el=>{
-          el[key]=e.target.value;
           if(key==='sectionId'){
             const sec=DS.getSection(e.target.value);if(!sec)return;
+            // RF-SECTION-MOVE-INK-1: route through the canonical state
+            // mutation path (DS.updateElementLayout) instead of mutating
+            // el.sectionId directly -- it clamps x/y into the target
+            // section's own bounds so the moved field never lands outside
+            // its new section's paintable area (see DocumentActions.js and
+            // DocumentActionsLayoutClamp.js for the clamp + full writeup).
+            DS.updateElementLayout(el.id, { sectionId: e.target.value }, 'PropertiesEngine.selectSection');
             const oldDiv=document.querySelector(`.cr-element[data-id="${el.id}"]`);
             if(oldDiv)oldDiv.remove();
             _canonicalCanvasWriter().renderElement(el);
           } else {
+            el[key]=e.target.value;
             _canonicalCanvasWriter().updateElement(el.id);
           }
           SelectionEngine.renderHandles();

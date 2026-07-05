@@ -109,9 +109,15 @@ const FieldExplorerEngine = {
       const target=DS.getSectionAtY(y);
       if(!target)return;
       const secId=target.section.id;
-      const relY=DS.snap(Math.max(0,y-DS.getSectionTop(secId)));
+      // RF-SECTION-MOVE-INK-1 (drop sibling): clamp relY into the target
+      // section's own [0, height - h] band -- a drop low in a short section
+      // otherwise places the 14px field past the section box, invisible
+      // because .cr-section's `contain: layout paint` clips it (same causal
+      // class as the dropdown-move bug; forensic scan #10.7R).
+      const H=14, secH=Number(target.section.height)||0;
+      const relY=DS.snap(Math.max(0,Math.min(y-DS.getSectionTop(secId),Math.max(0,secH-H))));
       const fmtDef=field.vtype==='currency'?'currency':field.vtype==='date'?'date':null;
-      const el=mkEl('field',secId,x,relY,150,14,{
+      const el=mkEl('field',secId,x,relY,150,H,{
         fieldPath:field.path,fieldFmt:fmtDef,content:field.path,fontSize:8,
       });
       DS.setElements([...DS.elements, el], 'FieldExplorerEngine.drop');_canonicalCanvasWriter().renderElement(el);

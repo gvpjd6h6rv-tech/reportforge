@@ -13,6 +13,19 @@ const DAS = (() => {
   return null;
 })();
 
+const DALC = (() => {
+  if (typeof DocumentActionsLayoutClamp !== 'undefined') {
+    return DocumentActionsLayoutClamp;
+  }
+  if (typeof globalThis !== 'undefined' && globalThis.DocumentActionsLayoutClamp) {
+    return globalThis.DocumentActionsLayoutClamp;
+  }
+  if (typeof require === 'function') {
+    return require('./DocumentActionsLayoutClamp.js');
+  }
+  return null;
+})();
+
 const DocumentActions = (() => {
   function createDocumentActions(state, selectors, invariants, history, getApi) {
     if (!DAS || typeof DAS.createSelectionActions !== 'function') {
@@ -74,8 +87,18 @@ const DocumentActions = (() => {
           return null;
         }
         const before = { id: element.id, sectionId: element.sectionId, x: element.x, y: element.y, w: element.w, h: element.h };
+
+        // RF-SECTION-MOVE-INK-1: clamp x/y into the target section's own
+        // bounds on a sectionId change -- see DocumentActionsLayoutClamp.js
+        // for the full incident writeup. Single source of truth: this is
+        // the canonical state-mutation path both the Properties-panel
+        // dropdown AND any programmatic caller funnel through.
+        const finalPatch = DALC && DALC.clampSectionMovePatch
+          ? DALC.clampSectionMovePatch(element, patch, selectors)
+          : patch;
+
         for (const key of ['sectionId', 'x', 'y', 'w', 'h']) {
-          if (Object.prototype.hasOwnProperty.call(patch, key)) { element[key] = patch[key]; _record(`element.${key}`, { v: element[key], id }, source); }
+          if (Object.prototype.hasOwnProperty.call(finalPatch, key)) { element[key] = finalPatch[key]; _record(`element.${key}`, { v: element[key], id }, source); }
         }
         _audit('updateElementLayout', { field: 'elements', elementId: id, source, before, after: { id: element.id, sectionId: element.sectionId, x: element.x, y: element.y, w: element.w, h: element.h }, patch: _clone(patch), result: 'ok' });
         return element;
