@@ -737,6 +737,112 @@ class TestPaginationEngine(unittest.TestCase):
             self.assertIn(f"X{i:03}", html)
 
 
+class TestReportFooterPaginationReservation(unittest.TestCase):
+    """RF-PAGINATION-RF-HEIGHT-1 regression + metamorphic coverage.
+
+    minimal_layout_raw() defaults: rh=60, ph=40, det=16/row, pf=30, rf=40,
+    pageHeight=1123 (A4 default), margins default to 15mm top/bottom
+    (int(15*3.7795)=56px each). usable = 1123-56-56-40-30 = 941.
+    avail(page1, rh reserved) = 941-60 = 881.
+
+    N=55 detail rows -> 55*16=880 <= 881 (all 55 fit alone, main loop never
+    breaks), but 880+rf_h(40)=920 > 881 -- the exact boundary condition the
+    bug missed: items alone fit "page 1", but items+rf together do not.
+    """
+
+    def _layout(self, rf_height=40, n_rf_elements=1, no_rf_section=False, margin_top=None, margin_bottom=None):
+        raw = minimal_layout_raw()
+        if margin_top is not None or margin_bottom is not None:
+            raw["margins"] = {
+                "top": margin_top if margin_top is not None else 15,
+                "bottom": margin_bottom if margin_bottom is not None else 15,
+                "left": 20, "right": 20,
+            }
+        if no_rf_section:
+            raw["sections"] = [s for s in raw["sections"] if s["stype"] != "rf"]
+            raw["elements"] = [e for e in raw["elements"] if e["sectionId"] != "s-rf"]
+        else:
+            for s in raw["sections"]:
+                if s["stype"] == "rf":
+                    s["height"] = rf_height
+        return raw
+
+    def _data(self, n_items: int) -> dict:
+        return {**DATA, "items": [
+            {"code": f"X{i:03}", "name": f"Product {i}", "category": "Cat",
+             "qty": 1, "unit_price": 10.0, "discount": 0.0, "total": 10.0, "stock": 5}
+            for i in range(n_items)
+        ]}
+
+    def _render(self, n_items, **layout_kwargs):
+        return AdvancedHtmlEngine(self._layout(**layout_kwargs), self._data(n_items)).render()
+
+    # ── Happy path ──────────────────────────────────────────────────
+    def test_items_and_rf_both_fit_stays_one_page(self):
+        html = self._render(50)  # 50*16=800; 800+40=840 <= 881
+        self.assertEqual(html.count('class="rpt-page"'), 1)
+        self.assertEqual(html.count('data-stype="rf"'), 1)
+
+    # ── Negative path: THE bug's exact boundary ──────────────────────
+    def test_items_fit_alone_but_not_with_rf_forces_extra_page(self):
+        html = self._render(55)  # 55*16=880 fits alone; +40 rf = 920 > 881
+        pages = html.count('class="rpt-page"')
+        self.assertEqual(pages, 2, f"expected 2 logical pages, got {pages}")
+        self.assertEqual(html.count('data-stype="rf"'), 1, "rf must not duplicate")
+        last_page_html = html.split('class="rpt-page"')[-1]
+        self.assertIn('data-stype="rf"', last_page_html)
+        self.assertEqual(html.count('data-stype="pf"'), pages, "pf must still repeat every page")
+        self.assertEqual(html.count('data-stype="rh"'), 1, "rh must still appear only on page 1")
+        for i in range(55):
+            self.assertIn(f"X{i:03}", html, "no item may be dropped by the extra trailing page")
+
+    def test_extra_trailing_page_has_no_duplicate_detail_rows(self):
+        html = self._render(55)
+        self.assertEqual(html.count('data-stype="det"'), 55)
+
+    # ── No rf section at all (rf_h == 0): pagination unaffected ──────
+    # normalize_layout coerces a declared height of 0 to max(10,20)=20
+    # (pipeline/normalizer.py, falsy-zero-as-missing quirk), so the true
+    # rf_h==0 case can only be exercised by omitting the rf section entirely.
+    def test_no_rf_section_unaffected(self):
+        html = self._render(55, no_rf_section=True)
+        self.assertEqual(html.count('class="rpt-page"'), 1)
+        self.assertEqual(html.count('data-stype="rf"'), 0)
+
+    # ── Metamorphic M2-M3: rf height growth is monotonic in page count ──
+    # N=54 items = 864px, avail(page1) = 881px. rf inputs 1/15/40 normalize
+    # (max(10,...) floor) to 10/15/40: 874/879 fit (1 page), 904 overflows.
+    def test_m2_m3_rf_height_growth_is_monotonic(self):
+        small = self._render(54, rf_height=1).count('class="rpt-page"')
+        mid = self._render(54, rf_height=15).count('class="rpt-page"')
+        grown = self._render(54, rf_height=40).count('class="rpt-page"')
+        self.assertEqual(small, 1)
+        self.assertEqual(mid, 1)
+        self.assertEqual(grown, 2)
+        self.assertGreaterEqual(mid, small)
+        self.assertGreaterEqual(grown, mid)
+
+    def test_m4_removing_a_detail_row_never_increases_pages(self):
+        before = self._render(55).count('class="rpt-page"')
+        after = self._render(54).count('class="rpt-page"')
+        self.assertLessEqual(after, before)
+
+    def test_m5_adding_a_detail_row_never_decreases_pages(self):
+        before = self._render(55).count('class="rpt-page"')
+        after = self._render(56).count('class="rpt-page"')
+        self.assertGreaterEqual(after, before)
+
+    def test_m6_increasing_margins_never_decreases_pages(self):
+        before = self._render(55, margin_top=15, margin_bottom=15).count('class="rpt-page"')
+        after = self._render(55, margin_top=25, margin_bottom=25).count('class="rpt-page"')
+        self.assertGreaterEqual(after, before)
+
+    def test_m7_decreasing_margins_never_increases_pages(self):
+        before = self._render(55, margin_top=15, margin_bottom=15).count('class="rpt-page"')
+        after = self._render(55, margin_top=5, margin_bottom=5).count('class="rpt-page"')
+        self.assertLessEqual(after, before)
+
+
 # ═════════════════════════════════════════════════════════════════
 class TestCanGrowWordWrap(unittest.TestCase):
 

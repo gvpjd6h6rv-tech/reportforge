@@ -150,6 +150,7 @@ class AdvancedHtmlEngine:
         ph_h = sum(s.height for s in self._secs("ph"))
         pf_h = sum(s.height for s in self._secs("pf"))
         rh_h = sum(s.height for s in self._secs("rh"))
+        rf_h = sum(s.height for s in self._secs("rf"))
         usable = self._page_h - self._mtop - self._mbot - ph_h - pf_h
         body = self._body_rows()
         pages: list[list] = []
@@ -167,6 +168,21 @@ class AdvancedHtmlEngine:
             cur.append(row)
             cy += row_h
         pages.append(cur)
+
+        # RF-PAGINATION-RF-HEIGHT-1: _page() appends rf in full to whichever
+        # page is last=True, but this loop never reserved rf_h -- silently
+        # under-counting total_pages vs. WeasyPrint's real physical overflow
+        # (confirmed live, guia_remision_fv2.json docnum 1007547: 1 logical
+        # .rpt-page in /designer-preview vs 2 physical pages in /render).
+        # Reserve rf_h like rh_h above; push a trailing page if it doesn't
+        # fit. NOTE: this is a SERVER-side module -- the running
+        # reportforge_server.py must be RESTARTED to load this change.
+        if rf_h > 0:
+            avail_last = usable - (rh_h if len(pages) == 1 else 0)
+            last_cy = sum(row["h"] for row in pages[-1])
+            if last_cy + rf_h > avail_last:
+                pages.append([])
+
         total_pages = len(pages)
         return "\n".join(self._page(rows, i == 0, i == len(pages) - 1, i + 1, total_pages) for i, rows in enumerate(pages))
 
