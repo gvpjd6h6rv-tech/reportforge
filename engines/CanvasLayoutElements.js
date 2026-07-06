@@ -310,6 +310,15 @@
     const el = typeof DS !== 'undefined' ? DS.getElementById(id) : null;
     if (!el) return;
     C.assertLayoutContract(el, 'CanvasLayoutEngine.updateElement');
+    // RF-SECTION-MOVE-INK-1 (Policy A): if the owning section changed, rebuild
+    // the node in the correct band instead of restyling the stale one -- keeps
+    // DOM parent == el.sectionId so box and ink stay together in one band.
+    const _psec = div.closest('.cr-section');
+    if (_psec && _psec.dataset.sectionId !== el.sectionId) {
+      div.remove();
+      renderElement(el);
+      return;
+    }
     _applyBaseStyle(div, el);
     _updateVisualStyle(div, el);
     _updateContent(div, el);
@@ -324,6 +333,15 @@
     if (!el) return;
     C.assertLayoutContract(el, 'CanvasLayoutEngine.updateElementPosition');
     C.assertZoomContract('CanvasLayoutEngine.updateElementPosition');
+    // RF-SECTION-MOVE-INK-1 (Policy A): re-parent into the new band if the
+    // owning section changed (e.g. a cross-section drag settling on mouseup),
+    // so ink and box end up together in the destination section.
+    const _psec2 = div.closest('.cr-section');
+    if (_psec2 && _psec2.dataset.sectionId !== el.sectionId) {
+      div.remove();
+      renderElement(el);
+      return;
+    }
     div.style.left = _px(el.x);
     div.style.top = _px(el.y);
     div.style.width = _px(el.w);

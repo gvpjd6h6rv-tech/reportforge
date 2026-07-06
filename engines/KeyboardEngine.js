@@ -214,10 +214,27 @@ const KeyboardEngine = (() => {
     sel.forEach(id => {
       const el = DS.getElementById(id);
       if (!el) return;
-      if (typeof ElementLayoutEngine !== 'undefined') {
+      const _oldSec = el.sectionId;
+      // RF-SECTION-MOVE-INK-1 / Policy A: route through the central enforcer
+      // so a nudge that crosses a band re-owns sectionId + clamps (never
+      // straddles), instead of writing el.y directly.
+      if (typeof DS.updateElementLayout === 'function') {
+        DS.updateElementLayout(el.id, { x: el.x + dx, y: el.y + dy }, 'KeyboardEngine.nudge');
+        const w = (typeof _canonicalCanvasWriter === 'function') ? _canonicalCanvasWriter() : null;
+        if (w && w.updateElement) w.updateElement(el.id);
+        else if (w && w.updateElementPosition) w.updateElementPosition(el.id);
+      } else if (typeof ElementLayoutEngine !== 'undefined') {
         ElementLayoutEngine.moveElement(el, dx, dy);
       } else {
         el.x += dx; el.y += dy;
+      }
+      // RF-SECTION-MOVE-INK-1 (preview): a nudge that crosses to a new band
+      // needs the server-rendered preview re-rendered so the visible text
+      // follows the box into the new section (same reason as the drag path).
+      if (DS.previewMode && el.sectionId !== _oldSec) {
+        const _pvW = (typeof PreviewEngineRenderer !== 'undefined' && PreviewEngineRenderer.refresh) ? PreviewEngineRenderer
+          : (typeof PreviewEngineV19 !== 'undefined' && PreviewEngineV19.refresh) ? PreviewEngineV19 : null;
+        if (_pvW) _pvW.refresh();
       }
       _syncPreviewForNudge(el);
     });

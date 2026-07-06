@@ -18,31 +18,90 @@
 // mutation path both the Properties-panel dropdown and any programmatic
 // caller funnel through) so every sectionId change gets the same clamp.
 const DocumentActionsLayoutClamp = (() => {
-  function clampSectionMovePatch(element, patch, selectors) {
+  // RF-SECTION-MOVE-INK-1 / CONTRACT: an element must NEVER straddle two
+  // section bands. Enforce the invariant on EVERY layout mutation (not only
+  // on a sectionId change) against the RESOLVED owning section
+  // (patch.sectionId if the move reassigns it, else element.sectionId):
+  //     0 <= y <= section.height - h
+  //     0 <= x <= pageWidth  - w
+  // Policy B (hard-clamp / no-cross): a mouse drag or keyboard nudge stops at
+  // the owning section's boundary instead of half-crossing; to change section
+  // the user uses the "Sección:" dropdown (which sets patch.sectionId, and is
+  // then clamped into the new band by the same rule here). Idempotent: an
+  // already in-bounds element is unchanged.
+  // POLICY A (dynamic re-ownership): when a move takes the element into a
+  // different band, sectionId FOLLOWS the band where the element visually
+  // lands (resolved by its vertical CENTER), y is recomputed relative to the
+  // new band, and clamped so it never straddles. Uses the DS globals for the
+  // absolute section geometry (getSectionTop / sections).
+  function _sectionsList(selectors) {
+    if (typeof DS !== 'undefined' && Array.isArray(DS.sections)) return DS.sections;
+    if (selectors && Array.isArray(selectors.sections)) return selectors.sections;
+    return null;
+  }
+  function _sectionTop(id, selectors) {
+    if (typeof DS !== 'undefined' && typeof DS.getSectionTop === 'function') return DS.getSectionTop(id);
+    const list = _sectionsList(selectors) || [];
+    let t = 0; for (const s of list) { if (s.id === id) return t; t += Number(s.height) || 0; }
+    return 0;
+  }
+  function _getSection(id, selectors) {
+    if (selectors && selectors.getSection) return selectors.getSection(id);
+    const list = _sectionsList(selectors) || [];
+    return list.find((s) => s.id === id) || null;
+  }
+
+  function normalizeElementLayout(element, patch, selectors) {
     const finalPatch = { ...patch };
-    if (!Object.prototype.hasOwnProperty.call(patch, 'sectionId') || patch.sectionId === element.sectionId) {
-      return finalPatch;
-    }
-    const targetSection = selectors.getSection ? selectors.getSection(patch.sectionId) : null;
-    if (!targetSection) return finalPatch;
+    const explicitSection = Object.prototype.hasOwnProperty.call(patch, 'sectionId');
+    const startId = explicitSection ? patch.sectionId : element.sectionId;
 
     const w = Object.prototype.hasOwnProperty.call(patch, 'w') ? patch.w : element.w;
     const h = Object.prototype.hasOwnProperty.call(patch, 'h') ? patch.h : element.h;
     const curX = Object.prototype.hasOwnProperty.call(patch, 'x') ? patch.x : element.x;
     const curY = Object.prototype.hasOwnProperty.call(patch, 'y') ? patch.y : element.y;
 
-    const maxY = Math.max(0, (Number(targetSection.height) || 0) - h);
-    finalPatch.y = Math.max(0, Math.min(curY, maxY));
+    let ownerId = startId;
+    let relY = curY;
+    const list = _sectionsList(selectors);
+
+    // Re-own by OVERFLOW/CARRY when the move is positional (y changed) and the
+    // dropdown didn't set an explicit target. A pure center rule deadlocks:
+    // the anti-straddle clamp caps y at band.height-h, so the center stops
+    // h/2 short of the boundary and can never cross. Instead, when the
+    // candidate y overflows the band, carry the surplus into the adjacent
+    // band and clamp there -- crosses cleanly, never straddles, works up and
+    // down, for both mouse drag and keyboard nudge.
+    if (!explicitSection && list && Object.prototype.hasOwnProperty.call(patch, 'y')) {
+      let idx = list.findIndex((s) => s.id === startId);
+      if (idx >= 0) {
+        if (relY < 0) {
+          while (relY < 0 && idx > 0) { idx -= 1; relY += Number(list[idx].height) || 0; }
+        } else {
+          while (relY > (Number(list[idx].height) || 0) - h && idx < list.length - 1) {
+            relY -= Number(list[idx].height) || 0; idx += 1;
+          }
+        }
+        ownerId = list[idx].id;
+      }
+    }
+
+    const ownerSec = _getSection(ownerId, selectors);
+    if (!ownerSec) return finalPatch;
+    if (ownerId !== element.sectionId) finalPatch.sectionId = ownerId;
+
+    const maxY = Math.max(0, (Number(ownerSec.height) || 0) - h);
+    finalPatch.y = Math.max(0, Math.min(relY, maxY));
 
     const pageW = typeof CFG !== 'undefined' && Number.isFinite(CFG.PAGE_W) ? CFG.PAGE_W : null;
-    if (pageW !== null) {
-      const maxX = Math.max(0, pageW - w);
-      finalPatch.x = Math.max(0, Math.min(curX, maxX));
-    }
+    if (pageW !== null) finalPatch.x = Math.max(0, Math.min(curX, Math.max(0, pageW - w)));
     return finalPatch;
   }
 
-  return { clampSectionMovePatch };
+  // Back-compat alias (previous name); same enforcer.
+  const clampSectionMovePatch = normalizeElementLayout;
+
+  return { normalizeElementLayout, clampSectionMovePatch };
 })();
 
 if (typeof module !== 'undefined') {
