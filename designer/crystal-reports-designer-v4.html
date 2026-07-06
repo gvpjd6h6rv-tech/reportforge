@@ -19,6 +19,7 @@
     <div id="ui-mode-stack">
       <div id="ui-mode-btn" title="Cambiar interfaz (Classic/Modern)">◧ Classic</div>
       <button id="rf-runtime-fingerprint" title="#10.7T runtime identity (temporary diagnostic)" style="background:#8e44ad;color:#fff;border:0;border-radius:6px;padding:4px 8px;font:bold 9px/1.2 sans-serif;cursor:pointer;margin-right:6px;align-self:center">RUNTIME<br>FINGERPRINT</button>
+      <button id="rf-margins-btn" title="Página / Márgenes (mm) — actualiza preview y PDF" style="background:#2c7;color:#fff;border:0;border-radius:6px;padding:4px 8px;font:bold 9px/1.2 sans-serif;cursor:pointer;margin-right:6px;align-self:center">MÁR-<br>GENES</button>
       <button class="rf-test-orb" id="rf-test-quick" title="Run quick validation">RUN<br>SMOKE</button>
       <button class="rf-test-orb" id="rf-test-full" title="Run full certification">RUN<br>FULL<br>CERTIFICATION</button>
       <div id="rf-debug-indicator" aria-live="polite">
@@ -489,6 +490,7 @@
 <script src="/engines/FormatEngine.js"></script>
 <script src="/engines/FieldExplorerDropCoords.js"></script>
 <script src="/engines/FieldExplorerEngine.js"></script>
+<script src="/engines/PageMarginsEngine.js"></script>
 <script src="/engines/SectionEngine.js"></script>
 <script src="/engines/SectionResizeEngine.js"></script>
 <script src="/engines/PreviewInsertPositionResolver.js"></script>
