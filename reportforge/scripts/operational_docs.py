@@ -138,6 +138,12 @@ def build_guia_remision_a4_data(model: dict[str, Any]) -> dict[str, Any]:
                 "descripcion": str(item.get("descripcion") or item.get("ItemDescription") or item.get("ItemName") or "").strip(),
                 "cantidad": item.get("cantidad") if item.get("cantidad") is not None else item.get("Quantity"),
                 "unidad_medida": str(item.get("unidad_medida") or item.get("u_medida") or item.get("Unit") or "").strip(),
+                # RF-GUIA-ITEM-REF-1: pass the canonical item.referencia through
+                # to the guide render data (was dropped here; guia_normalizer
+                # already maps it). Same fallback as the normalizer
+                # (codigo_adicional). Empty/null -> "" (renders empty, no break);
+                # never invented.
+                "referencia": str(item.get("referencia") or item.get("codigo_adicional") or "").strip(),
             }
         )
 
