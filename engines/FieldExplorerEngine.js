@@ -104,18 +104,38 @@ const FieldExplorerEngine = {
       e.preventDefault();
       const ind=document.getElementById('field-drop-indicator');ind.style.display='none';
       const field=this._dragField;
-      const pos=getCanvasPos(e);
-      const x=DS.snap(pos.x),y=DS.snap(pos.y);
-      const target=DS.getSectionAtY(y);
-      if(!target)return;
-      const secId=target.section.id;
-      // RF-SECTION-MOVE-INK-1 (drop sibling): clamp relY into the target
-      // section's own [0, height - h] band -- a drop low in a short section
-      // otherwise places the 14px field past the section box, invisible
-      // because .cr-section's `contain: layout paint` clips it (same causal
-      // class as the dropdown-move bug; forensic scan #10.7R).
-      const H=14, secH=Number(target.section.height)||0;
-      const relY=DS.snap(Math.max(0,Math.min(y-DS.getSectionTop(secId),Math.max(0,secH-H))));
+      const H=14;
+      let secId,x,relY;
+      if(DS.previewMode){
+        // RF-PREVIEW-DROP-1: Preview paginates/insets/scales the sections, so
+        // the design-model Y (getSectionAtY) only ever matched the top ~2
+        // bands. Resolve the target from the DOM the user actually points at:
+        // the topmost [data-section-id] under the cursor (the pv-section hit
+        // layer carries all 5). Coordinates come from that node's on-screen
+        // rect via the model/rect ratio -> invariant to zoom and scroll.
+        const hit=document.elementFromPoint(e.clientX,e.clientY);
+        const secEl=hit&&hit.closest?hit.closest('[data-section-id]'):null;
+        if(!secEl)return;
+        secId=secEl.dataset.sectionId;
+        const sec=(DS.sections||[]).find(s=>s.id===secId);
+        if(!sec)return;
+        const pageW=(typeof CFG!=='undefined'&&Number.isFinite(CFG.PAGE_W))?CFG.PAGE_W:(secEl.getBoundingClientRect().width||0);
+        const c=FieldExplorerDropCoords.relFromRect(secEl.getBoundingClientRect(),e.clientX,e.clientY,Number(sec.height)||0,pageW,H);
+        x=DS.snap(c.x);relY=DS.snap(c.relY);
+      }else{
+        const pos=getCanvasPos(e);
+        x=DS.snap(pos.x);const y=DS.snap(pos.y);
+        const target=DS.getSectionAtY(y);
+        if(!target)return;
+        secId=target.section.id;
+        // RF-SECTION-MOVE-INK-1 (drop sibling): clamp relY into the target
+        // section's own [0, height - h] band -- a drop low in a short section
+        // otherwise places the 14px field past the section box, invisible
+        // because .cr-section's `contain: layout paint` clips it (same causal
+        // class as the dropdown-move bug; forensic scan #10.7R).
+        const secH=Number(target.section.height)||0;
+        relY=DS.snap(Math.max(0,Math.min(y-DS.getSectionTop(secId),Math.max(0,secH-H))));
+      }
       const fmtDef=field.vtype==='currency'?'currency':field.vtype==='date'?'date':null;
       const el=mkEl('field',secId,x,relY,150,H,{
         fieldPath:field.path,fieldFmt:fmtDef,content:field.path,fontSize:8,
