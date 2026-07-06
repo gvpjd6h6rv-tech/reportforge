@@ -205,7 +205,14 @@ def render_barcode(engine, el, res) -> str:
     if el.fieldPath:
         value = str(res.get(el.fieldPath, "") or "")
     if not value:
-        value = getattr(el, "content", "") or "RF-BARCODE"
+        value = str(getattr(el, "content", "") or "")
+    if not value:
+        # RF-BARCODE-EMPTY-1: a data-bound barcode whose fieldPath is
+        # empty/null/missing (and with no explicit content) must NOT fall back
+        # to the internal "RF-BARCODE" placeholder -- that leaked a fake code
+        # into real fiscal documents (e.g. an empty Clave de Acceso). Render an
+        # empty (invisible) box that preserves the layout slot instead.
+        return f'<div class="cr-barcode cr-barcode-empty" style="{style}"></div>'
     bc_type = (getattr(el, "barcodeType", None) or "code128").lower()
     show_text = getattr(el, "showText", True)
     font_family = getattr(el, "barcodeFontFamily", "") or ""
