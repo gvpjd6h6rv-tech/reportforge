@@ -75,15 +75,33 @@ class AdvancedHtmlEngine:
         margins = self._layout.margin_mm
         page_width = self._layout.page_width
         dbg = ".cr-section,.cr-detail-row{outline:1px dashed rgba(255,0,0,.15)}" if self._debug else ""
-        # RF-PREVIEW-A4-PAGES-1: in on-screen preview, render each .rpt-page as
-        # a distinct A4 SHEET (full page height + gap + shadow + white bg)
-        # instead of a continuous strip -- parity with the exported PDF's
-        # separate pages.
-        page_shadow = (
-            f".rpt-page{{box-shadow:0 2px 8px rgba(0,0,0,.25);margin:14px auto;"
-            f"min-height:{self._page_h}px;background:#fff}}"
-            if getattr(self, "_preview", False) else ""
-        )
+        # RF-PREVIEW-A4-PAGES-1 / RF-PREVIEW-MARGINS-1: in on-screen preview,
+        # render each page as a distinct A4 SHEET (gap + shadow + white bg) AND
+        # show the layout margins as an inset -- parity with the exported PDF,
+        # which gets its margins from the @page rule (ignored on screen).
+        # The margins are the OUTER wrapper's padding (.rpt-sheet), NOT padding
+        # on .rpt-page: elements are positioned relative to their .cr-section
+        # inside .rpt-page, so putting padding there would shift them and break
+        # coordinates. The wrapper insets the whole page uniformly, and the JS
+        # preview hit-layer aligns to .rpt-page dynamically, so it stays glued.
+        if getattr(self, "_preview", False):
+            _MM = 3.7795
+            l_px = round(margins["left"] * _MM)
+            r_px = round(margins["right"] * _MM)
+            t_px = round(margins["top"] * _MM)
+            b_px = round(margins["bottom"] * _MM)
+            sheet_w = page_width + l_px + r_px
+            sheet_h = self._page_h + t_px + b_px
+            page_shadow = (
+                f".rpt-sheet{{box-sizing:border-box;background:#fff;"
+                f"box-shadow:0 2px 8px rgba(0,0,0,.25);margin:14px auto;"
+                f"width:{sheet_w}px;min-height:{sheet_h}px;"
+                f"padding:{margins['top']}mm {margins['right']}mm "
+                f"{margins['bottom']}mm {margins['left']}mm}}"
+                f".rpt-page{{min-height:{self._page_h}px;background:transparent}}"
+            )
+        else:
+            page_shadow = ""
         font_css = self._barcode_font_css()
         page_rule = "" if getattr(self, "_preview", False) else (
             f"@page{{size: {self._norm.get('pageSize','A4')} {self._norm.get('orientation','portrait')};"
@@ -307,7 +325,12 @@ class AdvancedHtmlEngine:
             "print_date": self._print_date,
             "print_time": self._print_time,
         }
-        parts = [f'<div class="rpt-page" style="width:{page_width}px">']
+        # RF-PREVIEW-MARGINS-1: wrap the page in a .rpt-sheet only for on-screen
+        # preview so the sheet can carry the margin inset (see _css); PDF keeps
+        # the bare .rpt-page and gets margins from @page.
+        sheet_open = '<div class="rpt-sheet">' if getattr(self, "_preview", False) else ''
+        sheet_close = '</div>' if getattr(self, "_preview", False) else ''
+        parts = [f'{sheet_open}<div class="rpt-page" style="width:{page_width}px">']
         if first:
             for s in self._secs("rh"):
                 parts.append(self._static(s, ctx))
@@ -320,7 +343,7 @@ class AdvancedHtmlEngine:
                 parts.append(self._static(s, ctx))
         for s in self._secs("pf"):
             parts.append(self._static(s, ctx))
-        parts.append("</div>")
+        parts.append("</div>" + sheet_close)
         return "\n".join(parts)
 
     def _row(self, row, ctx=None) -> str:
