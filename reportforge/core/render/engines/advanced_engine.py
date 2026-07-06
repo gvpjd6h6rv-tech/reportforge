@@ -75,7 +75,15 @@ class AdvancedHtmlEngine:
         margins = self._layout.margin_mm
         page_width = self._layout.page_width
         dbg = ".cr-section,.cr-detail-row{outline:1px dashed rgba(255,0,0,.15)}" if self._debug else ""
-        page_shadow = ".rpt-page{box-shadow:0 2px 8px rgba(0,0,0,.15);margin:10px auto;}" if getattr(self, "_preview", False) else ""
+        # RF-PREVIEW-A4-PAGES-1: in on-screen preview, render each .rpt-page as
+        # a distinct A4 SHEET (full page height + gap + shadow + white bg)
+        # instead of a continuous strip -- parity with the exported PDF's
+        # separate pages.
+        page_shadow = (
+            f".rpt-page{{box-shadow:0 2px 8px rgba(0,0,0,.25);margin:14px auto;"
+            f"min-height:{self._page_h}px;background:#fff}}"
+            if getattr(self, "_preview", False) else ""
+        )
         font_css = self._barcode_font_css()
         page_rule = "" if getattr(self, "_preview", False) else (
             f"@page{{size: {self._norm.get('pageSize','A4')} {self._norm.get('orientation','portrait')};"

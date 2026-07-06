@@ -15,7 +15,7 @@ def _post_preview(handler, body: dict):
     data = body.get("data") or _DEMO_DATA
     try:
         logger.info("preview layout=%s", layout.get("name") if isinstance(layout, dict) else "unknown")
-        _html(handler, AdvancedHtmlEngine(layout, data).render())
+        _html(handler, AdvancedHtmlEngine(layout, data).render_preview())
     except Exception as exc:
         logger.warning("preview failed: %s", exc)
         _error(handler, 422, str(exc))

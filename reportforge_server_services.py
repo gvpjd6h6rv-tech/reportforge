@@ -32,6 +32,9 @@ def handle_get(handler):
         return _get_tests_stream(handler, (qs.get("kind") or ["quick"])[0])
     if path == "/health":
         return _get_health(handler)
+    if path == "/runtime-fingerprint":
+        from reportforge_server_route_fingerprint import _get_fingerprint
+        return _get_fingerprint(handler)
     if path.startswith("/preview-barcode"):
         return _get_barcode(handler)
     if path == "/datasources":
