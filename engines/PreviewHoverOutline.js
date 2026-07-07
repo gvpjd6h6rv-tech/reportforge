@@ -29,15 +29,24 @@ const PreviewHoverOutline = (() => {
     const id = node?.dataset?.id || node?.dataset?.originId;
     if (!id || _isSelected(id)) { clear(); return; }
     const layer = SelectionOverlayPreview.ensurePreviewHoverLayer();
-    const rect = layer && SelectionOverlayPreview.domRectRelativeToLayer(node, layer);
-    if (!layer || !rect) return;
+    if (!layer) return;
+    // RF-PREVIEW-BBOX-INK-1: hug the render-layer ink (same source selection
+    // uses via getPreviewVisualBBox); fall back to the hovered node's own rect.
+    const el = (typeof DS !== 'undefined' && DS.getElementById) ? DS.getElementById(id) : null;
+    const rect = (el && SelectionOverlayPreview.getPreviewVisualBBox
+      ? SelectionOverlayPreview.getPreviewVisualBBox(el, layer) : null)
+      || SelectionOverlayPreview.domRectRelativeToLayer(node, layer);
+    if (!rect) return;
     if (!box) {
       box = document.createElement('div');
       box.className = 'preview-hover-box';
       box.style.position = 'absolute';
       box.style.boxSizing = 'border-box';
-      box.style.outline = '1px solid #F08000';
-      box.style.outlineOffset = '0px';
+      // RF-PREVIEW-BBOX-HUG-1: same outer-edge outline formula as selection.
+      const _os = PreviewOverlayStyle.overlayBoxStyle(true, '#F08000');
+      box.style.border = _os.border;
+      box.style.outline = _os.outline;
+      box.style.outlineOffset = _os.outlineOffset;
       box.style.pointerEvents = 'none';
       layer.appendChild(box);
     }

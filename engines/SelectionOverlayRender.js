@@ -21,7 +21,12 @@ const SelectionOverlayRender = (() => {
     box.style.width = rect.width + 'px';
     box.style.height = rect.height + 'px';
     box.style.boxSizing = 'border-box';
-    box.style.border = '1px solid var(--cr-sel-bdr, #0066CC)';
+    // RF-PREVIEW-BBOX-HUG-1: preview hugs the outer edge with outline (same as
+    // the hover outline); design keeps its border unchanged.
+    const _os = PreviewOverlayStyle.overlayBoxStyle(!!(typeof DS !== 'undefined' && DS.previewMode), 'var(--cr-sel-bdr, #0066CC)');
+    box.style.border = _os.border;
+    box.style.outline = _os.outline;
+    box.style.outlineOffset = _os.outlineOffset;
     box.style.background = 'transparent';
     box.style.pointerEvents = 'none';
     box.style.zIndex = '40';
@@ -43,6 +48,11 @@ const SelectionOverlayRender = (() => {
     const el = S.getElementById(id); if (!el) return;
     C.assertLayoutContract(el, 'SelectionEngine.renderHandles.layout');
     const rect = selectionRect(el, layer);
+    // RF-PREVIEW-SELECTION-RECT-1: in Preview a missing paginated node yields
+    // null -> skip drawing (no stale/displaced box) instead of asserting/
+    // drawing raw coords. Design's rect is never null, so this never triggers
+    // in Design.
+    if (!rect) return;
     C.assertRectShape(rect, 'SelectionEngine.renderHandles.rect');
     C.assertZoomContract('SelectionEngine.renderHandles.zoom');
     const isLine = _isLine(el);
