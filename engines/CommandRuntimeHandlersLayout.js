@@ -19,6 +19,7 @@
       'set-margin-right': () => setStatus('Margen derecho: use Configurar página'),
       'set-margin-top': () => runMarginChange('Margen superior (px):', () => DS.pageMarginTop, (value, source) => DS.setPageMarginTop(value, source), 'CommandRuntimeHandlers.setMarginTop'),
       'set-margin-bottom': () => setStatus('Margen inferior: use Configurar página'),
+      'page-margins': () => { global.PageMarginsEngine && global.PageMarginsEngine.openEditor(); },
       'insert-section': () => CommandEngine.insertSection && CommandEngine.insertSection(),
       'delete-section': () => CommandEngine.deleteSection && CommandEngine.deleteSection(),
       'move-section-up': () => CommandEngine.moveSectionUp && CommandEngine.moveSectionUp(),

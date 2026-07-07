@@ -86,16 +86,9 @@
     if (b) b.remove();
   }
 
+  // Opened from the menu: Formato -> "Márgenes de página..."
+  // (data-action="page-margins" -> CommandRuntimeHandlersLayout -> openEditor).
   global.PageMarginsEngine = { get, set, setAll, openEditor, closeEditor, SIDES, DEFAULTS };
-
-  function _wire() {
-    const btn = document.getElementById('rf-margins-btn');
-    if (btn && !btn._wired) { btn._wired = true; btn.addEventListener('click', () => openEditor(btn)); }
-  }
-  if (typeof document !== 'undefined') {
-    if (document.readyState !== 'loading') _wire();
-    else document.addEventListener('DOMContentLoaded', _wire);
-  }
 })(typeof window !== 'undefined' ? window : globalThis);
 
 if (typeof module !== 'undefined') {
