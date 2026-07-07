@@ -1,414 +1,369 @@
 <!DOCTYPE html>
-<html lang="es" dir="ltr">
+<html lang="es">
 <head>
 <meta charset="UTF-8">
-  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" href="/favicon.ico">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="ReportForge Enterprise – Crystal Reports Designer">
 <title>SAP Crystal Reports for SAP Business One</title>
 <link rel="stylesheet" href="/designer/styles/index.css">
 </head>
 <body>
 <div id="app" data-ui="classic" data-dom-owner="designer-shell">
-
-<!-- ── Title bar ── -->
-<div id="titlebar">
-  <div id="titlebar-icon">◈</div>
-  <div id="titlebar-text">SAP Crystal Reports for SAP Business One - [Factura Electrónica 002-101-000020482]</div>
-  <div id="titlebar-controls">
-    <div id="ui-mode-stack">
-      <div id="ui-mode-btn" title="Cambiar interfaz (Classic/Modern)">◧ Classic</div>
-      <button id="rf-runtime-fingerprint" title="#10.7T runtime identity (temporary diagnostic)" style="background:#8e44ad;color:#fff;border:0;border-radius:6px;padding:4px 8px;font:bold 9px/1.2 sans-serif;cursor:pointer;margin-right:6px;align-self:center">RUNTIME<br>FINGERPRINT</button>
-      <button class="rf-test-orb" id="rf-test-quick" title="Run quick validation">RUN<br>SMOKE</button>
-      <button class="rf-test-orb" id="rf-test-full" title="Run full certification">RUN<br>FULL<br>CERTIFICATION</button>
-      <div id="rf-debug-indicator" aria-live="polite">
-        <span id="rf-debug-indicator-led"></span>
-        <span>debug on</span>
-      </div>
-    </div>
-    <div class="tb-btn">─</div>
-    <div class="tb-btn">□</div>
-    <div class="tb-btn close">✕</div>
-  </div>
+<div id=titlebar>
+<div id=titlebar-icon>◈</div>
+<div id=titlebar-text>SAP Crystal Reports for SAP Business One - [Factura Electrónica 002-101-000020482]</div>
+<div id=titlebar-controls>
+<div id=ui-mode-stack>
+<div id=ui-mode-btn title="Cambiar interfaz (Classic/Modern)">◧ Classic</div>
+<button id=rf-runtime-fingerprint class="rf-runtime-fingerprint-btn" title="#10.7T runtime identity (temporary diagnostic)">RUNTIME<br>FINGERPRINT</button>
+<button class="rf-test-orb" id=rf-test-quick title="Run quick validation">RUN<br>SMOKE</button>
+<button class="rf-test-orb" id=rf-test-full title="Run full certification">RUN<br>FULL<br>CERTIFICATION</button>
+<div id=rf-debug-indicator aria-live="polite">
+<span id=rf-debug-indicator-led></span>
+<span>debug on</span>
 </div>
-
-<!-- ── Menu bar ── -->
+</div>
+<div class="tb-btn">─</div>
+<div class="tb-btn">□</div>
+<div class="tb-btn close">✕</div>
+</div>
+</div>
 <div id="menubar" role="menubar">
-  <div class="menu-item" data-menu="archivo"><span data-u>A</span>rchivo</div>
-  <div class="menu-item" data-menu="edicion"><span data-u>E</span>dición</div>
-  <div class="menu-item" data-menu="vista"><span data-u>V</span>ista</div>
-  <div class="menu-item" data-menu="insertar"><span data-u>I</span>nsertar</div>
-  <div class="menu-item" data-menu="formato"><span data-u>F</span>ormato</div>
-  <div class="menu-item" data-menu="informe"><span data-u>I</span>nforme</div>
-  <div class="menu-item" data-menu="ventana">Ve<span data-u>n</span>tana</div>
-  <div class="menu-item" data-menu="ayuda">Ay<span data-u>u</span>da</div>
+<div class="menu-item" data-menu=archivo><span data-u>A</span>rchivo</div>
+<div class="menu-item" data-menu=edicion><span data-u>E</span>dición</div>
+<div class="menu-item" data-menu=vista><span data-u>V</span>ista</div>
+<div class="menu-item" data-menu=insertar><span data-u>I</span>nsertar</div>
+<div class="menu-item" data-menu=formato><span data-u>F</span>ormato</div>
+<div class="menu-item" data-menu=informe><span data-u>I</span>nforme</div>
+<div class="menu-item" data-menu=ventana>Ve<span data-u>n</span>tana</div>
+<div class="menu-item" data-menu=ayuda>Ay<span data-u>u</span>da</div>
 </div>
-
-<!-- Dropdown menus (hidden by default) -->
-<div class="dropdown" id="dd-archivo">
-  <div class="dd-item" data-action="new">📄 <span>Nuevo</span><span class="dd-shortcut">Ctrl+N</span></div>
-  <div class="dd-item" data-action="open">📂 <span>Abrir...</span><span class="dd-shortcut">Ctrl+O</span></div>
-  <div class="dd-item" data-action="save">💾 <span>Guardar</span><span class="dd-shortcut">Ctrl+S</span></div>
-  <div class="dd-item" data-action="save-as">💾 <span>Guardar como...</span></div>
-  <div class="dd-sep"></div>
-  <div class="dd-item" data-action="load-document">📥 <span>Cargar documento SAP...</span></div>
-  <div class="dd-item" data-action="sql-conn">Conexión SQL…</div>
-  <div class="dd-sep"></div>
-  <div class="dd-item" data-action="export-pdf">📤 <span>Exportar a PDF...</span></div>
-  <div class="dd-item" data-action="export-json">📤 <span>Exportar diseño (.rfd.json)</span></div>
-  <div class="dd-sep"></div>
-  <div class="dd-item" data-action="print">🖨 <span>Imprimir...</span><span class="dd-shortcut">Ctrl+P</span></div>
-  <div class="dd-sep"></div>
-  <div class="dd-item" data-action="quit">🚪 <span>Salir</span><span class="dd-shortcut">Alt+F4</span></div>
+<div class="dropdown" id=dd-archivo>
+<div class="dd-item" data-action="new">📄 <span>Nuevo</span><span class="dd-shortcut">Ctrl+N</span></div>
+<div class="dd-item" data-action="open">📂 <span>Abrir...</span><span class="dd-shortcut">Ctrl+O</span></div>
+<div class="dd-item" data-action="save">💾 <span>Guardar</span><span class="dd-shortcut">Ctrl+S</span></div>
+<div class="dd-item" data-action="save-as">💾 <span>Guardar como...</span></div>
+<div class="dd-sep"></div>
+<div class="dd-item" data-action="load-document">📥 <span>Cargar documento SAP...</span></div>
+<div class="dd-item" data-action="sql-conn">Conexión SQL…</div>
+<div class="dd-sep"></div>
+<div class="dd-item" data-action="export-pdf">📤 <span>Exportar a PDF...</span></div>
+<div class="dd-item" data-action="export-json">📤 <span>Exportar diseño (.rfd.json)</span></div>
+<div class="dd-sep"></div>
+<div class="dd-item" data-action="print">🖨 <span>Imprimir...</span><span class="dd-shortcut">Ctrl+P</span></div>
+<div class="dd-sep"></div>
+<div class="dd-item" data-action="quit">🚪 <span>Salir</span><span class="dd-shortcut">Alt+F4</span></div>
 </div>
-<div class="dropdown" id="dd-edicion">
-  <div class="dd-item" data-action="undo">↩ <span>Deshacer</span><span class="dd-shortcut">Ctrl+Z</span></div>
-  <div class="dd-item" data-action="redo">↪ <span>Rehacer</span><span class="dd-shortcut">Ctrl+Y</span></div>
-  <div class="dd-sep"></div>
-  <div class="dd-item" data-action="cut">✂ <span>Cortar</span><span class="dd-shortcut">Ctrl+X</span></div>
-  <div class="dd-item" data-action="copy">📋 <span>Copiar</span><span class="dd-shortcut">Ctrl+C</span></div>
-  <div class="dd-item" data-action="paste">📌 <span>Pegar</span><span class="dd-shortcut">Ctrl+V</span></div>
-  <div class="dd-item" data-action="delete">🗑 <span>Eliminar</span><span class="dd-shortcut">Del</span></div>
-  <div class="dd-sep"></div>
-  <div class="dd-item" data-action="select-all">☑ <span>Seleccionar todo</span><span class="dd-shortcut">Ctrl+A</span></div>
+<div class="dropdown" id=dd-edicion>
+<div class="dd-item" data-action="undo">↩ <span>Deshacer</span><span class="dd-shortcut">Ctrl+Z</span></div>
+<div class="dd-item" data-action="redo">↪ <span>Rehacer</span><span class="dd-shortcut">Ctrl+Y</span></div>
+<div class="dd-sep"></div>
+<div class="dd-item" data-action="cut">✂ <span>Cortar</span><span class="dd-shortcut">Ctrl+X</span></div>
+<div class="dd-item" data-action="copy">📋 <span>Copiar</span><span class="dd-shortcut">Ctrl+C</span></div>
+<div class="dd-item" data-action="paste">📌 <span>Pegar</span><span class="dd-shortcut">Ctrl+V</span></div>
+<div class="dd-item" data-action="delete">🗑 <span>Eliminar</span><span class="dd-shortcut">Del</span></div>
+<div class="dd-sep"></div>
+<div class="dd-item" data-action="select-all">☑ <span>Seleccionar todo</span><span class="dd-shortcut">Ctrl+A</span></div>
 </div>
-<div class="dropdown" id="dd-vista">
-  <div class="dd-item" data-action="toggle-grid">⊞ <span id="mi-grid">Mostrar cuadrícula</span><span class="dd-shortcut">Ctrl+G</span></div>
-  <div class="dd-item" data-action="toggle-snap">🧲 <span id="mi-snap">Ajustar a cuadrícula ✓</span></div>
-  <div class="dd-item" data-action="toggle-rulers">📏 <span>Mostrar reglas ✓</span></div>
-  <div class="dd-sep"></div>
-  <div class="dd-item" data-action="zoom-in">🔍 <span>Acercar</span><span class="dd-shortcut">+</span></div>
-  <div class="dd-item" data-action="zoom-out">🔎 <span>Alejar</span><span class="dd-shortcut">-</span></div>
-  <div class="dd-item" data-action="zoom-100">1:1 <span>100%</span><span class="dd-shortcut">Ctrl+1</span></div>
-  <div class="dd-sep"></div>
-  <div class="dd-item" data-action="preview">👁 <span>Preview</span><span class="dd-shortcut">F5</span></div>
+<div class="dropdown" id=dd-vista>
+<div class="dd-item" data-action="toggle-grid">⊞ <span id=mi-grid>Mostrar cuadrícula</span><span class="dd-shortcut">Ctrl+G</span></div>
+<div class="dd-item" data-action="toggle-snap">🧲 <span id=mi-snap>Ajustar a cuadrícula ✓</span></div>
+<div class="dd-item" data-action="toggle-rulers">📏 <span>Mostrar reglas ✓</span></div>
+<div class="dd-sep"></div>
+<div class="dd-item" data-action="zoom-in">🔍 <span>Acercar</span><span class="dd-shortcut">+</span></div>
+<div class="dd-item" data-action="zoom-out">🔎 <span>Alejar</span><span class="dd-shortcut">-</span></div>
+<div class="dd-item" data-action="zoom-100">1:1 <span>100%</span><span class="dd-shortcut">Ctrl+1</span></div>
+<div class="dd-sep"></div>
+<div class="dd-item" data-action="preview">👁 <span>Preview</span><span class="dd-shortcut">F5</span></div>
 </div>
-<div class="dropdown" id="dd-insertar">
-  <div class="dd-item" data-action="insert-text">T <span>Objeto de texto</span></div>
-  <div class="dd-item" data-action="insert-field">⬚ <span>Campo de base de datos...</span></div>
-  <div class="dd-sep"></div>
-  <div class="dd-item" data-action="insert-line">─ <span>Línea</span></div>
-  <div class="dd-item" data-action="insert-line-v">│ <span>Línea vertical</span></div>
-  <div class="dd-item" data-action="insert-box">▭ <span>Rectángulo</span></div>
-  <div class="dd-sep"></div>
-  <div class="dd-item" data-action="insert-barcode">▌▌ <span>Código de barras</span></div>
-  <div class="dd-sep"></div>
-  <div class="dd-item" data-action="insert-section">+ <span>Sección...</span></div>
+<div class="dropdown" id=dd-insertar>
+<div class="dd-item" data-action="insert-text">T <span>Objeto de texto</span></div>
+<div class="dd-item" data-action="insert-field">⬚ <span>Campo de base de datos...</span></div>
+<div class="dd-sep"></div>
+<div class="dd-item" data-action="insert-line">─ <span>Línea</span></div>
+<div class="dd-item" data-action="insert-line-v">│ <span>Línea vertical</span></div>
+<div class="dd-item" data-action="insert-box">▭ <span>Rectángulo</span></div>
+<div class="dd-sep"></div>
+<div class="dd-item" data-action="insert-barcode">▌▌ <span>Código de barras</span></div>
+<div class="dd-sep"></div>
+<div class="dd-item" data-action="insert-section">+ <span>Sección...</span></div>
 </div>
-<div class="dropdown" id="dd-formato">
-  <div class="dd-item" data-action="format-field">⚙ <span>Formatear campo...</span><span class="dd-shortcut">Alt+Enter</span></div>
-  <div class="dd-item" data-action="page-margins">📐 <span>Márgenes de página...</span></div>
-  <div class="dd-sep"></div>
-  <div class="dd-item" data-format="align-left">⬱ <span>Texto izquierda</span></div>
-  <div class="dd-item" data-format="align-center">≡ <span>Texto centro horizontal</span></div>
-  <div class="dd-item" data-format="align-right">⬰ <span>Texto derecha</span></div>
-  <div class="dd-item" data-action="text-valign-top">⬆ <span>Texto arriba</span></div>
-  <div class="dd-item" data-action="text-valign-middle">⬕ <span>Texto centro vertical</span></div>
-  <div class="dd-item" data-action="text-valign-bottom">⬇ <span>Texto abajo</span></div>
-  <div class="dd-sep"></div>
-  <div class="dd-item" data-action="align-lefts">◧ <span>Alinear elemento izquierda</span></div>
-  <div class="dd-item" data-action="align-centers">◈ <span>Centrar elemento horizontal</span></div>
-  <div class="dd-item" data-action="align-rights">◨ <span>Alinear elemento derecha</span></div>
-  <div class="dd-item" data-action="align-tops">⬆ <span>Alinear elemento arriba</span></div>
-  <div class="dd-item" data-action="align-middles">⬕ <span>Centrar elemento vertical</span></div>
-  <div class="dd-item" data-action="align-bottoms">⬇ <span>Alinear elemento abajo</span></div>
-  <div class="dd-sep"></div>
-  <div class="dd-item" data-action="same-width">↔ <span>Mismo ancho</span></div>
-  <div class="dd-item" data-action="same-height">↕ <span>Misma altura</span></div>
-  <div class="dd-item" data-action="same-size">⛶ <span>Mismo tamaño</span></div>
-  <div class="dd-sep"></div>
-  <div class="dd-item" data-action="bring-front">🔼 <span>Traer al frente</span></div>
-  <div class="dd-item" data-action="send-back">🔽 <span>Enviar al fondo</span></div>
+<div class="dropdown" id=dd-formato>
+<div class="dd-item" data-action="format-field">⚙ <span>Formatear campo...</span><span class="dd-shortcut">Alt+Enter</span></div>
+<div class="dd-item" data-action="page-margins">📐 <span>Márgenes de página...</span></div>
+<div class="dd-sep"></div>
+<div class="dd-item" data-format=align-left>⬱ <span>Texto izquierda</span></div>
+<div class="dd-item" data-format=align-center>≡ <span>Texto centro horizontal</span></div>
+<div class="dd-item" data-format=align-right>⬰ <span>Texto derecha</span></div>
+<div class="dd-item" data-action="text-valign-top">⬆ <span>Texto arriba</span></div>
+<div class="dd-item" data-action="text-valign-middle">⬕ <span>Texto centro vertical</span></div>
+<div class="dd-item" data-action="text-valign-bottom">⬇ <span>Texto abajo</span></div>
+<div class="dd-sep"></div>
+<div class="dd-item" data-action="align-lefts">◧ <span>Alinear elemento izquierda</span></div>
+<div class="dd-item" data-action="align-centers">◈ <span>Centrar elemento horizontal</span></div>
+<div class="dd-item" data-action="align-rights">◨ <span>Alinear elemento derecha</span></div>
+<div class="dd-item" data-action="align-tops">⬆ <span>Alinear elemento arriba</span></div>
+<div class="dd-item" data-action="align-middles">⬕ <span>Centrar elemento vertical</span></div>
+<div class="dd-item" data-action="align-bottoms">⬇ <span>Alinear elemento abajo</span></div>
+<div class="dd-sep"></div>
+<div class="dd-item" data-action="same-width">↔ <span>Mismo ancho</span></div>
+<div class="dd-item" data-action="same-height">↕ <span>Misma altura</span></div>
+<div class="dd-item" data-action="same-size">⛶ <span>Mismo tamaño</span></div>
+<div class="dd-sep"></div>
+<div class="dd-item" data-action="bring-front">🔼 <span>Traer al frente</span></div>
+<div class="dd-item" data-action="send-back">🔽 <span>Enviar al fondo</span></div>
 </div>
-<!-- Toolbar sub-menus (opened by .tb-dd-btn toggle script below) -->
-<div class="dropdown" id="dd-tdd-alinear">
-  <div class="dd-item" data-action="align-lefts">◧ <span>Alinear izquierda</span></div>
-  <div class="dd-item" data-action="align-centers">◈ <span>Centrar horizontal</span></div>
-  <div class="dd-item" data-action="align-rights">◨ <span>Alinear derecha</span></div>
-  <div class="dd-sep"></div>
-  <div class="dd-item" data-action="align-tops">⬆ <span>Alinear arriba</span></div>
-  <div class="dd-item" data-action="align-middles">⬕ <span>Centrar vertical</span></div>
-  <div class="dd-item" data-action="align-bottoms">⬇ <span>Alinear abajo</span></div>
+<div class="dropdown" id=dd-tdd-alinear>
+<div class="dd-item" data-action="align-lefts">◧ <span>Alinear izquierda</span></div>
+<div class="dd-item" data-action="align-centers">◈ <span>Centrar horizontal</span></div>
+<div class="dd-item" data-action="align-rights">◨ <span>Alinear derecha</span></div>
+<div class="dd-sep"></div>
+<div class="dd-item" data-action="align-tops">⬆ <span>Alinear arriba</span></div>
+<div class="dd-item" data-action="align-middles">⬕ <span>Centrar vertical</span></div>
+<div class="dd-item" data-action="align-bottoms">⬇ <span>Alinear abajo</span></div>
 </div>
-<div class="dropdown" id="dd-tdd-tamano">
-  <div class="dd-item" data-action="same-width">↔ <span>Mismo ancho</span></div>
-  <div class="dd-item" data-action="same-height">↕ <span>Misma altura</span></div>
-  <div class="dd-item" data-action="same-size">⛶ <span>Mismo tamaño</span></div>
+<div class="dropdown" id=dd-tdd-tamano>
+<div class="dd-item" data-action="same-width">↔ <span>Mismo ancho</span></div>
+<div class="dd-item" data-action="same-height">↕ <span>Misma altura</span></div>
+<div class="dd-item" data-action="same-size">⛶ <span>Mismo tamaño</span></div>
 </div>
-<div class="dropdown" id="dd-tdd-texto-h">
-  <div class="dd-item" data-action="text-align-left">⬱ <span>Texto izquierda</span></div>
-  <div class="dd-item" data-action="text-align-center">≡ <span>Texto centro horizontal</span></div>
-  <div class="dd-item" data-action="text-align-right">⬰ <span>Texto derecha</span></div>
+<div class="dropdown" id=dd-tdd-texto-h>
+<div class="dd-item" data-action="text-align-left">⬱ <span>Texto izquierda</span></div>
+<div class="dd-item" data-action="text-align-center">≡ <span>Texto centro horizontal</span></div>
+<div class="dd-item" data-action="text-align-right">⬰ <span>Texto derecha</span></div>
 </div>
-<div class="dropdown" id="dd-tdd-texto-v">
-  <div class="dd-item" data-action="text-valign-top">⬆ <span>Texto arriba</span></div>
-  <div class="dd-item" data-action="text-valign-middle">⬕ <span>Texto centro vertical</span></div>
-  <div class="dd-item" data-action="text-valign-bottom">⬇ <span>Texto abajo</span></div>
+<div class="dropdown" id=dd-tdd-texto-v>
+<div class="dd-item" data-action="text-valign-top">⬆ <span>Texto arriba</span></div>
+<div class="dd-item" data-action="text-valign-middle">⬕ <span>Texto centro vertical</span></div>
+<div class="dd-item" data-action="text-valign-bottom">⬇ <span>Texto abajo</span></div>
 </div>
-
-<!-- ── Toolbars ── -->
-<div id="toolbars">
-  <!-- Toolbar 1: File + Edit -->
-  <div class="toolbar" id="tb1" role="toolbar" aria-label="Herramientas principales">
-    <button class="tb-icon" title="Nuevo (Ctrl+N)" data-action="new">📄</button>
-    <button class="tb-icon" title="Abrir (Ctrl+O)" data-action="open">📂</button>
-    <button class="tb-icon" title="Guardar (Ctrl+S)" data-action="save">💾</button>
-    <div class="tb-sep"></div>
-    <button class="tb-icon" title="Deshacer (Ctrl+Z)" data-action="undo" id="btn-undo">↩</button>
-    <button class="tb-icon" title="Rehacer (Ctrl+Y)" data-action="redo" id="btn-redo">↪</button>
-    <div class="tb-sep"></div>
-    <button class="tb-icon" title="Cortar (Ctrl+X)" data-action="cut">✂</button>
-    <button class="tb-icon" title="Copiar (Ctrl+C)" data-action="copy">📋</button>
-    <button class="tb-icon" title="Pegar (Ctrl+V)" data-action="paste">📌</button>
-    <div class="tb-sep"></div>
-    <button class="tb-icon" title="Cargar documento SAP (F6)" data-action="load-document">📥</button>
-    <div class="tb-sep"></div>
-    <button class="tb-icon" title="Preview (F5)" data-action="preview">👁</button>
-    <button class="tb-icon" title="Exportar PDF" data-action="export-pdf">📤</button>
-    <div class="tb-sep"></div>
-    <button class="tb-icon" title="Actualizar datos (F9)" data-action="refresh">🔄</button>
-    <div class="tb-sep"></div>
-    <!-- Zoom -->
-    <button class="tb-icon" title="Alejar" data-action="zoom-out">🔎</button>
-    <select class="tb-select tb-select--zoom" id="tb-zoom">
-      <option>25%</option><option>50%</option><option>75%</option>
-      <option selected>100%</option><option>125%</option>
-      <option>150%</option><option>200%</option><option>400%</option>
-    </select>
-    <button class="tb-icon" title="Acercar" data-action="zoom-in">🔍</button>
-    <div class="tb-sep"></div>
-    <!-- Navigation -->
-    <button class="tb-icon" title="Primera página" data-action="page-first">⏮</button>
-    <button class="tb-icon" title="Página anterior" data-action="page-prev">◀</button>
-    <span class="tb-label">Página <input id="tb-page" type="text" value="1" class="tb-num-input"> de <span id="tb-pages">1</span></span>
-    <button class="tb-icon" title="Página siguiente" data-action="page-next">▶</button>
-    <button class="tb-icon" title="Última página" data-action="page-last">⏭</button>
-  </div>
-
-  <!-- Toolbar 2: Insert tools + Format -->
-  <div class="toolbar" id="tb2" role="toolbar" aria-label="Formato">
-    <!-- Tool selection -->
-    <button class="tb-icon active" title="Puntero (Esc)" data-tool="pointer" id="tool-pointer">🖱</button>
-    <button class="tb-icon" title="Insertar texto (T)" data-tool="text" id="tool-text">T</button>
-    <button class="tb-icon" title="Insertar campo (F)" data-tool="field" id="tool-field" class="tb-num-label">⬚</button>
-    <button class="tb-icon" title="Insertar línea (L)" data-tool="line" id="tool-line">─</button>
-    <button class="tb-icon" title="Insertar línea vertical" data-tool="line-v" id="tool-line-v">│</button>
-    <button class="tb-icon" title="Insertar rectángulo (B)" data-tool="box" id="tool-box">▭</button>
-    <button class="tb-icon" title="Insertar código de barras" data-tool="barcode" id="tool-barcode">▌▌</button>
-    <div class="tb-sep"></div>
-    <!-- Font -->
-    <select class="tb-select" id="tb-font-name" title="Fuente" aria-label="Fuente">
-      <option>Arial</option><option>Tahoma</option><option selected>Arial</option>
-      <option>Courier New</option><option>Times New Roman</option>
-      <option>Calibri</option><option>Verdana</option>
-    </select>
-    <select class="tb-select tb-select--size" id="tb-font-size" title="Tamaño">
-      <option>6</option><option>7</option><option selected>8</option>
-      <option>9</option><option>10</option><option>11</option><option>12</option>
-      <option>14</option><option>16</option><option>18</option><option>20</option>
-    </select>
-    <div class="tb-sep"></div>
-    <button class="tb-icon" title="Negrita (Ctrl+B)" data-format="bold" id="btn-bold" class="tb-icon tb-icon--bold">B</button>
-    <button class="tb-icon" title="Cursiva (Ctrl+I)" data-format="italic" id="btn-italic" class="tb-icon tb-icon--italic">I</button>
-    <button class="tb-icon" title="Subrayado (Ctrl+U)" data-format="underline" id="btn-underline" class="tb-icon tb-icon--underline">U</button>
-    <div class="tb-sep"></div>
-    <button class="tb-icon tb-dd-btn" id="tdd-btn-texto-h" data-dd="texto-h" title="Alineación horizontal de texto">H ▾</button>
-    <button class="tb-icon tb-dd-btn" id="tdd-btn-texto-v" data-dd="texto-v" title="Alineación vertical de texto">V ▾</button>
-    <div class="tb-sep"></div>
-    <!-- Color buttons -->
-    <button class="tb-icon" title="Color de fuente" data-action="color-font">
-      A<div class="color-swatch" id="swatch-font" data-color="#000"></div>
-    </button>
-    <button class="tb-icon" title="Color de fondo" data-action="color-bg">
-      🎨<div class="color-swatch color-swatch--transparent" id="swatch-bg"></div>
-    </button>
-    <button class="tb-icon" title="Color de borde" data-action="color-border">
-      ▭<div class="color-swatch color-swatch--transparent" id="swatch-border"></div>
-    </button>
-    <div class="tb-sep"></div>
-    <!-- Alignment tools (multi-select) — dropdown buttons -->
-    <button class="tb-icon tb-dd-btn" id="tdd-btn-alinear" data-dd="alinear" title="Alineación de elementos">Alinear ▾</button>
-    <div class="tb-sep"></div>
-    <button class="tb-icon tb-dd-btn" id="tdd-btn-tamano" data-dd="tamano" title="Igualar tamaño de elementos">Tamaño ▾</button>
-    <div class="tb-sep"></div>
-    <button class="tb-icon" title="Traer al frente" data-action="bring-front">🔼</button>
-    <button class="tb-icon" title="Enviar al fondo" data-action="send-back">🔽</button>
-    <div class="tb-sep"></div>
-    <!-- Grid toggle -->
-    <button class="tb-icon active" title="Mostrar cuadrícula (Ctrl+G)" data-action="toggle-grid" id="btn-grid">⊞</button>
-    <button class="tb-icon active" title="Ajustar a cuadrícula" data-action="toggle-snap" id="btn-snap">🧲</button>
-  </div>
+<div id=toolbars>
+<div class="toolbar" id=tb1 role="toolbar" aria-label="Herramientas principales">
+<button class="tb-icon" title="Nuevo (Ctrl+N)" data-action="new">📄</button>
+<button class="tb-icon" title="Abrir (Ctrl+O)" data-action="open">📂</button>
+<button class="tb-icon" title="Guardar (Ctrl+S)" data-action="save">💾</button>
+<div class="tb-sep"></div>
+<button class="tb-icon" title="Deshacer (Ctrl+Z)" data-action="undo" id=btn-undo>↩</button>
+<button class="tb-icon" title="Rehacer (Ctrl+Y)" data-action="redo" id=btn-redo>↪</button>
+<div class="tb-sep"></div>
+<button class="tb-icon" title="Cortar (Ctrl+X)" data-action="cut">✂</button>
+<button class="tb-icon" title="Copiar (Ctrl+C)" data-action="copy">📋</button>
+<button class="tb-icon" title="Pegar (Ctrl+V)" data-action="paste">📌</button>
+<div class="tb-sep"></div>
+<button class="tb-icon" title="Cargar documento SAP (F6)" data-action="load-document">📥</button>
+<div class="tb-sep"></div>
+<button class="tb-icon" title="Preview (F5)" data-action="preview">👁</button>
+<button class="tb-icon" title="Exportar PDF" data-action="export-pdf">📤</button>
+<div class="tb-sep"></div>
+<button class="tb-icon" title="Actualizar datos (F9)" data-action="refresh">🔄</button>
+<div class="tb-sep"></div>
+<button class="tb-icon" title=Alejar data-action="zoom-out">🔎</button>
+<select class="tb-select tb-select--zoom" id=tb-zoom>
+<option>25%</option><option>50%</option><option>75%</option>
+<option selected>100%</option><option>125%</option>
+<option>150%</option><option>200%</option><option>400%</option>
+</select>
+<button class="tb-icon" title=Acercar data-action="zoom-in">🔍</button>
+<div class="tb-sep"></div>
+<button class="tb-icon" title="Primera página" data-action="page-first">⏮</button>
+<button class="tb-icon" title="Página anterior" data-action="page-prev">◀</button>
+<span class="tb-label">Página <input id=tb-page type=text value=1 class="tb-num-input"> de <span id=tb-pages>1</span></span>
+<button class="tb-icon" title="Página siguiente" data-action="page-next">▶</button>
+<button class="tb-icon" title="Última página" data-action="page-last">⏭</button>
 </div>
-
-<!-- ── Tabs ── -->
+<div class="toolbar" id=tb2 role="toolbar" aria-label="Formato">
+<button class="tb-icon active" title="Puntero (Esc)" data-tool=pointer id=tool-pointer>🖱</button>
+<button class="tb-icon" title="Insertar texto (T)" data-tool=text id=tool-text>T</button>
+<button class="tb-icon" title="Insertar campo (F)" data-tool=field id=tool-field>⬚</button>
+<button class="tb-icon" title="Insertar línea (L)" data-tool=line id=tool-line>─</button>
+<button class="tb-icon" title="Insertar línea vertical" data-tool="line-v" id=tool-line-v>│</button>
+<button class="tb-icon" title="Insertar rectángulo (B)" data-tool=box id=tool-box>▭</button>
+<button class="tb-icon" title="Insertar código de barras" data-tool="barcode" id=tool-barcode>▌▌</button>
+<div class="tb-sep"></div>
+<select class="tb-select" id=tb-font-name title=Fuente aria-label="Fuente">
+<option>Arial</option><option>Tahoma</option><option selected>Arial</option>
+<option>Courier New</option><option>Times New Roman</option>
+<option>Calibri</option><option>Verdana</option>
+</select>
+<select class="tb-select tb-select--size" id=tb-font-size title="Tamaño">
+<option>6</option><option>7</option><option selected>8</option>
+<option>9</option><option>10</option><option>11</option><option>12</option>
+<option>14</option><option>16</option><option>18</option><option>20</option>
+</select>
+<div class="tb-sep"></div>
+<button class="tb-icon" title="Negrita (Ctrl+B)" data-format=bold id=btn-bold>B</button>
+<button class="tb-icon" title="Cursiva (Ctrl+I)" data-format=italic id=btn-italic>I</button>
+<button class="tb-icon" title="Subrayado (Ctrl+U)" data-format=underline id=btn-underline>U</button>
+<div class="tb-sep"></div>
+<button class="tb-icon tb-dd-btn" id=tdd-btn-texto-h data-dd=texto-h title="Alineación horizontal de texto">H ▾</button>
+<button class="tb-icon tb-dd-btn" id=tdd-btn-texto-v data-dd=texto-v title="Alineación vertical de texto">V ▾</button>
+<div class="tb-sep"></div>
+<button class="tb-icon" title="Color de fuente" data-action="color-font">
+A<div class="color-swatch" id=swatch-font data-color="#000"></div>
+</button>
+<button class="tb-icon" title="Color de fondo" data-action="color-bg">
+🎨<div class="color-swatch color-swatch--transparent" id=swatch-bg></div>
+</button>
+<button class="tb-icon" title="Color de borde" data-action="color-border">
+▭<div class="color-swatch color-swatch--transparent" id=swatch-border></div>
+</button>
+<div class="tb-sep"></div>
+<button class="tb-icon tb-dd-btn" id=tdd-btn-alinear data-dd=alinear title="Alineación de elementos">Alinear ▾</button>
+<div class="tb-sep"></div>
+<button class="tb-icon tb-dd-btn" id=tdd-btn-tamano data-dd=tamano title="Igualar tamaño de elementos">Tamaño ▾</button>
+<div class="tb-sep"></div>
+<button class="tb-icon" title="Traer al frente" data-action="bring-front">🔼</button>
+<button class="tb-icon" title="Enviar al fondo" data-action="send-back">🔽</button>
+<div class="tb-sep"></div>
+<button class="tb-icon active" title="Mostrar cuadrícula (Ctrl+G)" data-action="toggle-grid" id=btn-grid>⊞</button>
+<button class="tb-icon active" title="Ajustar a cuadrícula" data-action="toggle-snap" id=btn-snap>🧲</button>
+</div>
+</div>
 <div id="tabs-row">
-  <div class="file-tab">Página de inicio</div>
-  <div class="sub-tabs">
-    <div class="sub-tab active" data-view="design" id="tab-design">Diseño</div>
-    <div class="sub-tab" data-view="preview" id="tab-preview">Preview</div>
-  </div>
+<div class="file-tab">Página de inicio</div>
+<div class="sub-tabs">
+<div class="sub-tab active" data-view="design" id="tab-design">Diseño</div>
+<div class="sub-tab" data-view="preview" id="tab-preview">Preview</div>
 </div>
-
-<!-- ── Doc type selector bar ── -->
+</div>
 <div id="doc-type-bar">
-  <span class="doc-type-label">Tipo de documento:</span>
-  <button class="doc-type-btn active" data-doctype="factura" class="doc-type-btn doc-type--factura active"><span class="doc-type-dot"></span>Factura</button>
-  <button class="doc-type-btn"        data-doctype="remision" class="doc-type-btn doc-type--remision"><span class="doc-type-dot"></span>Guía de Remisión</button>
-  <button class="doc-type-btn"        data-doctype="nota_credito" class="doc-type-btn doc-type--nota-credito"><span class="doc-type-dot"></span>Nota de Crédito</button>
-  <button class="doc-type-btn"        data-doctype="retencion" class="doc-type-btn doc-type--retencion"><span class="doc-type-dot"></span>Retención</button>
-  <button class="doc-type-btn"        data-doctype="liquidacion" class="doc-type-btn doc-type--liquidacion"><span class="doc-type-dot"></span>Liquidación de Compras</button>
+<span class="doc-type-label">Tipo de documento:</span>
+<button class="doc-type-btn active" data-doctype=factura><span class="doc-type-dot"></span>Factura</button>
+<button class="doc-type-btn" data-doctype=remision><span class="doc-type-dot"></span>Guía de Remisión</button>
+<button class="doc-type-btn" data-doctype=nota_credito><span class="doc-type-dot"></span>Nota de Crédito</button>
+<button class="doc-type-btn" data-doctype=retencion><span class="doc-type-dot"></span>Retención</button>
+<button class="doc-type-btn" data-doctype=liquidacion><span class="doc-type-dot"></span>Liquidación de Compras</button>
 </div>
-<!-- ── Main area ── -->
 <div id="main-area" data-dom-owner="designer-layout">
-
-  <!-- Left panel -->
-  <div id="panel-left" data-dom-owner="designer-left-panel">
-    <div class="panel-title">
-      Parámetros
-      <div class="panel-btn-group">
-        <div class="panel-mini-btn" title="Nuevo parámetro">+</div>
-        <div class="panel-mini-btn" title="Editar">✎</div>
-        <div class="panel-mini-btn" title="Eliminar">×</div>
-        <div class="panel-mini-btn" title="Actualizar">↻</div>
-      </div>
-    </div>
-    <div id="params-list" class="params-list-wrap">
-      <div class="panel-section-item">▷ EI</div>
-      <div class="panel-section-item">▷ EP</div>
-    </div>
-    <div class="panel-section-h">Secciones del reporte</div>
-    <div class="panel-section-list" id="sections-list"></div>
-    <div class="panel-tabs">
-      <div class="panel-tab active" id="ptab-groups">Grupos</div>
-      <div class="panel-tab" id="ptab-params">Parámetros</div>
-      <div class="panel-tab" id="ptab-find">Buscar</div>
-    </div>
-  </div>
-
-  <!-- Center canvas -->
-  <div id="canvas-area" data-dom-owner="designer-canvas-area">
-    <div id="ruler-h-row">
-      <div id="ruler-corner"></div>
-      <div id="ruler-h-canvas">
-        <canvas id="ruler-h-inner"></canvas>
-      </div>
-    </div>
-    <div id="canvas-row" data-qa="section-gutter">
-      <div id="ruler-v">
-        <canvas id="ruler-v-inner" width="24"></canvas>
-      </div>
-      <div id="workspace" class="workspace" data-dom-owner="designer-workspace">
-        <div id="viewport">
-          <div id="canvas-layer">
-            <div id="grid-overlay"></div>
-            <div class="elements-layer" aria-hidden="true"></div>
-            <div id="sections-layer" class="sections-layer"></div>
-            <div id="guides-layer" class="guides-layer"></div>
-            <div id="selection-layer" class="selection-layer"></div>
-            <div id="handles-layer"  class="handles-layer"></div>
-            <div id="labels-layer"   class="labels-layer"></div>
-            <div id="rubber-band"></div>
-            <div id="insert-ghost"></div>
-            <div id="field-drop-indicator"></div>
-            <!-- preview-layer: inside canvas-layer for CSS renderMode targeting -->
-            <div id="preview-layer">
-              <div id="preview-content"></div>
-            </div>
-          </div><!-- /canvas-layer -->
-        </div><!-- /viewport -->
-        <!-- guide-overlay: workspace-space, never scaled by viewport zoom -->
-        <div id="guide-layer"></div>
-        <div id="snap-layer"   ></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Right panel -->
-  <div id="panel-right" data-dom-owner="designer-right-panel">
-    <div id="field-explorer">
-      <div class="panel-title">
-        Explorador de campos
-        <div class="panel-btn-group">
-          <div class="panel-mini-btn" title="Actualizar">↻</div>
-          <div class="panel-mini-btn" title="Nuevo">+</div>
-          <div class="panel-mini-btn" title="Editar">✎</div>
-          <div class="panel-mini-btn" title="Eliminar">×</div>
-          <div class="panel-mini-btn" title="Subir">▲</div>
-          <div class="panel-mini-btn" title="Bajar">▼</div>
-        </div>
-      </div>
-      <div id="field-tree"></div>
-    </div>
-    <div id="properties-panel">
-      <div id="props-title">▼ Propiedades del elemento</div>
-      <div id="props-body">
-        <div id="props-empty">Seleccione un elemento para ver sus propiedades</div>
-        <div id="props-form" class="hidden"></div>
-      </div>
-    </div>
-  </div>
-
+<div id="panel-left" data-dom-owner="designer-left-panel">
+<div class="panel-title">
+Parámetros
+<div class="panel-btn-group">
+<div class="panel-mini-btn" title="Nuevo parámetro">+</div>
+<div class="panel-mini-btn" title=Editar>✎</div>
+<div class="panel-mini-btn" title=Eliminar>×</div>
+<div class="panel-mini-btn" title=Actualizar>↻</div>
+</div>
+</div>
+<div id=params-list class="params-list-wrap">
+<div class="panel-section-item">▷ EI</div>
+<div class="panel-section-item">▷ EP</div>
+</div>
+<div class="panel-section-h">Secciones del reporte</div>
+<div class="panel-section-list" id="sections-list"></div>
+<div class="panel-tabs">
+<div class="panel-tab active" id=ptab-groups>Grupos</div>
+<div class="panel-tab" id=ptab-params>Parámetros</div>
+<div class="panel-tab" id=ptab-find>Buscar</div>
+</div>
+</div>
+<div id="canvas-area" data-dom-owner="designer-canvas-area">
+<div id="ruler-h-row">
+<div id=ruler-corner></div>
+<div id=ruler-h-canvas>
+<canvas id=ruler-h-inner></canvas>
+</div>
+</div>
+<div id=canvas-row data-qa="section-gutter">
+<div id=ruler-v>
+<canvas id=ruler-v-inner width="24"></canvas>
+</div>
+<div id="workspace" class="workspace" data-dom-owner="designer-workspace">
+<div id="viewport">
+<div id="canvas-layer">
+<div id=grid-overlay></div>
+<div class="elements-layer" aria-hidden="true"></div>
+<div id="sections-layer" class="sections-layer"></div>
+<div id="guides-layer" class="guides-layer"></div>
+<div id="selection-layer" class="selection-layer"></div>
+<div id="handles-layer" class="handles-layer"></div>
+<div id="labels-layer" class="labels-layer"></div>
+<div id="rubber-band"></div>
+<div id="insert-ghost"></div>
+<div id="field-drop-indicator"></div>
+<div id="preview-layer">
+<div id="preview-content"></div>
+</div>
+</div></div><div id="guide-layer"></div>
+<div id=snap-layer></div>
+</div>
+</div>
+</div>
+<div id="panel-right" data-dom-owner="designer-right-panel">
+<div id="field-explorer">
+<div class="panel-title">
+Explorador de campos
+<div class="panel-btn-group">
+<div class="panel-mini-btn" title=Actualizar>↻</div>
+<div class="panel-mini-btn" title=Nuevo>+</div>
+<div class="panel-mini-btn" title=Editar>✎</div>
+<div class="panel-mini-btn" title=Eliminar>×</div>
+<div class="panel-mini-btn" title=Subir>▲</div>
+<div class="panel-mini-btn" title=Bajar>▼</div>
+</div>
+</div>
+<div id="field-tree"></div>
+</div>
+<div id="properties-panel">
+<div id=props-title>▼ Propiedades del elemento</div>
+<div id="props-body">
+<div id=props-empty>Seleccione un elemento para ver sus propiedades</div>
+<div id=props-form class="hidden"></div>
+</div>
+</div>
+</div>
 </div><!-- /main-area -->
-
-<!-- ── Status bar ── -->
 <div id="statusbar" role="status" aria-live="polite">
-  <div class="sb-cell grow" id="sb-msg">Para obtener Ayuda, presione F1</div>
-  <div class="sb-cell" id="sb-pos">X: 0   Y: 0</div>
-  <div class="sb-cell u-hidden" id="sb-size">W: 0   H: 0</div>
-  <div class="sb-cell" id="sb-records">Registros: 9</div>
-  <div class="sb-cell" id="sb-zoom">100%</div>
-  <div class="sb-cell">ES</div>
-  <div class="sb-cell" id="sb-time"></div>
+<div class="sb-cell grow" id="sb-msg">Para obtener Ayuda, presione F1</div>
+<div class="sb-cell" id=sb-pos>X: 0 Y: 0</div>
+<div class="sb-cell u-hidden" id=sb-size>W: 0 H: 0</div>
+<div class="sb-cell" id=sb-records>Registros: 9</div>
+<div class="sb-cell" id=sb-zoom>100%</div>
+<div class="sb-cell">ES</div>
+<div class="sb-cell" id=sb-time></div>
 </div>
-
-</div><!-- /app -->
-<div id="zoom-widget"><span class="zw-mode" id="zw-mode">DISEÑO</span><span class="zw-sep"></span><button class="zw-btn" id="zw-out" title="Alejar (Ctrl+-)">−</button><input type="range" id="zw-slider" min="25" max="400" step="25" value="100"><span class="zw-pct" id="zw-pct" title="Click: 100%">100%</span><button class="zw-btn" id="zw-in" title="Acercar (Ctrl++)">+</button></div>
-<div id="rf-build-debug" aria-live="polite" data-collapsed="true">
-  <div class="rf-debug-panel__head" id="rf-build-debug-head">
-    <span>Build info</span>
-    <button type="button" id="rf-build-debug-collapse" title="Restaurar">+</button>
-  </div>
-  <div class="rf-debug-panel__body">
-    <div class="rf-build-debug__row">
-      <span class="rf-build-debug__label">BUILD</span>
-      <span class="rf-build-debug__value" id="rf-build-commit">commit</span>
-      <span class="rf-build-debug__value" id="rf-build-asset">asset</span>
-      <span class="rf-build-debug__value" id="rf-build-htmlts">html ts</span>
-    </div>
-    <div class="rf-build-debug__row">
-      <span class="rf-build-debug__label">JS</span>
-      <span class="rf-build-debug__value" id="rf-build-js">/engines/ZoomEngine.js</span>
-      <span class="rf-build-debug__value" id="rf-build-jsts">js ts</span>
-      <span class="rf-build-debug__value" id="rf-build-cache">cache</span>
-    </div>
-  </div>
+</div><div id=zoom-widget><span class="zw-mode" id=zw-mode>DISEÑO</span><span class="zw-sep"></span><button class="zw-btn" id=zw-out title="Alejar (Ctrl+-)">−</button><input type=range id=zw-slider min=25 max=400 step=25 value=100><span class="zw-pct" id=zw-pct title="Click: 100%">100%</span><button class="zw-btn" id=zw-in title="Acercar (Ctrl++)">+</button></div>
+<div id=rf-build-debug aria-live="polite" data-collapsed="true">
+<div class="rf-debug-panel__head" id=rf-build-debug-head>
+<span>Build info</span>
+<button type=button id=rf-build-debug-collapse title=Restaurar>+</button>
 </div>
-<div id="rf-zoom-live-debug" aria-live="polite" data-collapsed="true">
-  <div class="rf-debug-panel__head" id="rf-zoom-live-debug-head">
-    <span>Zoom debug</span>
-    <button type="button" id="rf-zoom-live-debug-collapse" title="Restaurar">+</button>
-  </div>
-  <div class="rf-debug-panel__body">
-    <div class="rf-zoom-live-debug__row"><span class="rf-zoom-live-debug__label">ZOOM</span><span class="rf-zoom-live-debug__value" id="rf-zd-zoom">0</span></div>
-    <div class="rf-zoom-live-debug__row"><span class="rf-zoom-live-debug__label">SLIDER</span><span class="rf-zoom-live-debug__value" id="rf-zd-slider">0</span></div>
-    <div class="rf-zoom-live-debug__row"><span class="rf-zoom-live-debug__label">PCT</span><span class="rf-zoom-live-debug__value" id="rf-zd-pct">0%</span></div>
-    <div class="rf-zoom-live-debug__row"><span class="rf-zoom-live-debug__label">TB</span><span class="rf-zoom-live-debug__value" id="rf-zd-tb">0%</span></div>
-    <div class="rf-zoom-live-debug__row"><span class="rf-zoom-live-debug__label">EVENT</span><span class="rf-zoom-live-debug__value" id="rf-zd-event">init</span></div>
-    <div class="rf-zoom-live-debug__row"><span class="rf-zoom-live-debug__label">FN</span><span class="rf-zoom-live-debug__value" id="rf-zd-fn">boot</span></div>
-  </div>
+<div class="rf-debug-panel__body">
+<div class="rf-build-debug__row">
+<span class="rf-build-debug__label">BUILD</span>
+<span class="rf-build-debug__value" id=rf-build-commit>commit</span>
+<span class="rf-build-debug__value" id=rf-build-asset>asset</span>
+<span class="rf-build-debug__value" id=rf-build-htmlts>html ts</span>
 </div>
-
-
-<!-- Helper overlays -->
-<div id="field-drag-ghost"></div>
+<div class="rf-build-debug__row">
+<span class="rf-build-debug__label">JS</span>
+<span class="rf-build-debug__value" id=rf-build-js>/engines/ZoomEngine.js</span>
+<span class="rf-build-debug__value" id=rf-build-jsts>js ts</span>
+<span class="rf-build-debug__value" id=rf-build-cache>cache</span>
+</div>
+</div>
+</div>
+<div id=rf-zoom-live-debug aria-live="polite" data-collapsed="true">
+<div class="rf-debug-panel__head" id=rf-zoom-live-debug-head>
+<span>Zoom debug</span>
+<button type=button id=rf-zoom-live-debug-collapse title=Restaurar>+</button>
+</div>
+<div class="rf-debug-panel__body">
+<div class="rf-zoom-live-debug__row"><span class="rf-zoom-live-debug__label">ZOOM</span><span class="rf-zoom-live-debug__value" id=rf-zd-zoom>0</span></div>
+<div class="rf-zoom-live-debug__row"><span class="rf-zoom-live-debug__label">SLIDER</span><span class="rf-zoom-live-debug__value" id=rf-zd-slider>0</span></div>
+<div class="rf-zoom-live-debug__row"><span class="rf-zoom-live-debug__label">PCT</span><span class="rf-zoom-live-debug__value" id=rf-zd-pct>0%</span></div>
+<div class="rf-zoom-live-debug__row"><span class="rf-zoom-live-debug__label">TB</span><span class="rf-zoom-live-debug__value" id=rf-zd-tb>0%</span></div>
+<div class="rf-zoom-live-debug__row"><span class="rf-zoom-live-debug__label">EVENT</span><span class="rf-zoom-live-debug__value" id=rf-zd-event>init</span></div>
+<div class="rf-zoom-live-debug__row"><span class="rf-zoom-live-debug__label">FN</span><span class="rf-zoom-live-debug__value" id=rf-zd-fn>boot</span></div>
+</div>
+</div>
+<div id=field-drag-ghost></div>
 <div id="ctx-menu"></div>
-<div id="selection-info"></div>
-<div class="section-resize-badge" id="resize-badge"></div>
-
-<!-- Hidden color pickers -->
-<input type="color" id="color-picker-font"   class="color-picker-hidden">
-<input type="color" id="color-picker-bg"     class="color-picker-hidden">
-<input type="color" id="color-picker-border" class="color-picker-hidden">
+<div id=selection-info></div>
+<div class="section-resize-badge" id=resize-badge></div>
+<input type=color id=color-picker-font class="color-picker-hidden">
+<input type=color id=color-picker-bg class="color-picker-hidden">
+<input type=color id=color-picker-border class="color-picker-hidden">
 <script src="/engines/FormulaEngine.js"></script>
 <script src="/engines/FormulaEditorDialog.js"></script>
 <script src="/engines/DesignerUI.js"></script>
@@ -441,8 +396,6 @@
 <script src="/engines/CanvasGeometry.js"></script>
 <script src="/engines/HitTestGeometry.js"></script>
 <script src="/engines/HitTestResolver.js"></script>
-
-<!-- ══ ReportForge v19 Engine Modules ══════════════════════════════ -->
 <script src="/engines/WorkspaceScrollEngine.js"></script>
 <script src="/engines/SyntheticScrollbarEngine.js"></script>
 <script src="/engines/GridEngine.js"></script>
@@ -457,11 +410,13 @@
 <script src="/engines/CanvasLayoutContracts.js"></script>
 <script src="/engines/CanvasLayoutSize.js"></script>
 <script src="/engines/TextAlignmentMapper.js"></script>
+<script src="/engines/CanvasLayoutElementContent.js"></script>
 <script src="/engines/CanvasLayoutElements.js"></script>
 <script src="/engines/PreviewEngineContracts.js"></script>
 <script src="/engines/PreviewPaginationEngine.js"></script>
 <script src="/engines/PreviewEngineData.js"></script>
 <script src="/engines/PreviewEngineMode.js"></script>
+<script src="/engines/PreviewEngineRendererMetrics.js"></script>
 <script src="/engines/PreviewEngineRendererLayout.js"></script>
 <script src="/engines/PreviewEngineRenderer.js"></script>
 <script src="/engines/CommandRuntimeShared.js"></script>
@@ -469,6 +424,7 @@
 <script src="/engines/CommandRuntimeView.js"></script>
 <script src="/engines/CommandRuntimeSections.js"></script>
 <script src="/engines/DocumentTabManager.js"></script>
+<script src="/engines/CommandRuntimeFileApply.js"></script>
 <script src="/engines/CommandRuntimeFile.js"></script>
 <script src="/engines/CommandRuntimeFileIO.js"></script>
 <script src="/engines/CommandRuntimeDocType.js"></script>
@@ -500,12 +456,10 @@
 <script src="/engines/DocumentDataProvider.js"></script>
 <script src="/engines/DocumentLoadModal.js"></script>
 <script src="/engines/SQLModal.js"></script>
-<!-- ══ Color modules — load before CommandRuntimeHandlersFormat uses ColorPickerAdapter -->
 <script src="/engines/format/ColorConverter.js"></script>
 <script src="/engines/format/ColorPaletteMap.js"></script>
 <script src="/engines/format/CustomColorStore.js"></script>
 <script src="/engines/format/ColorPickerAdapter.js"></script>
-<!-- ══ Format Editor — load order: data → pure → sub-modal → tabs → orchestrator -->
 <script src="/engines/format/NumberFormatPresetMap.js"></script>
 <script src="/engines/format/NumberFormatter.js"></script>
 <script src="/engines/format/BorderMapper.js"></script>
@@ -516,8 +470,6 @@
 <script src="/engines/RuntimeBootstrap.js"></script>
 <script src="/designer/TestOutputSanitizer.js"></script>
 <script src="/designer/TestRunnerUI.js"></script>
-
-<!-- ══ ReportForge v19 Phase 2 — Interaction & System Engines ════════ -->
 <script src="/engines/RenderScheduler.js"></script>
 <script src="/engines/ZoomEngine.js"></script>
 <script src="/engines/HitTestEngine.js"></script>
@@ -529,7 +481,9 @@
 <script src="/engines/SelectionState.js"></script>
 <script src="/engines/SelectionHitTest.js"></script>
 <script src="/engines/SelectionGeometry.js"></script>
+<script src="/engines/SelectionOverlayPreviewLayers.js"></script>
 <script src="/engines/SelectionOverlayPreview.js"></script>
+<script src="/engines/SelectionOverlayRenderHelpers.js"></script>
 <script src="/engines/SelectionOverlayRender.js"></script>
 <script src="/engines/SelectionOverlay.js"></script>
 <script src="/engines/SelectionDragPreviewSync.js"></script>
@@ -540,8 +494,6 @@
 <script src="/engines/AlignmentGuides.js"></script>
 <script src="/engines/SelectionEnginePreviewBridge.js"></script>
 <script src="/engines/SelectionEngine.js"></script>
-
-<!-- ══ ReportForge v19 Phase 3 — Core Layout, System & Precision Engines ═══ -->
 <script src="/engines/CanvasLayoutEngine.js"></script>
 <script src="/engines/SectionLayoutEngine.js"></script>
 <script src="/engines/ElementLayoutEngine.js"></script>
@@ -566,43 +518,4 @@
 <script src="/engines/DeferredBootstrap.js"></script>
 <script src="/engines/RuntimeFingerprintPanel.js"></script>
 <script src="/engines/DiagnosticsGestureLoader.js"></script>
-<script>
-/* Toolbar dropdown toggle for "Alinear ▾" / "Tamaño ▾" in #tb2.
-   Panels (#dd-tdd-*) use .dropdown so MenuEngine.closeAll() covers them.
-   MutationObserver keeps .active in sync when panels close externally. */
-(function () {
-  function init() {
-    document.querySelectorAll('.tb-dd-btn[data-dd]').forEach(function (btn) {
-      btn.addEventListener('click', function (e) {
-        e.stopPropagation();
-        var panel = document.getElementById('dd-tdd-' + btn.dataset.dd);
-        if (!panel) return;
-        var opening = !panel.classList.contains('visible');
-        document.querySelectorAll('.dropdown').forEach(function (d) { d.classList.remove('visible'); });
-        document.querySelectorAll('.tb-dd-btn').forEach(function (b) { b.classList.remove('active'); });
-        if (typeof MenuEngine !== 'undefined') MenuEngine._open = null;
-        if (opening) {
-          var r = btn.getBoundingClientRect();
-          panel.style.left = r.left + 'px';
-          panel.style.top = r.bottom + 'px';
-          panel.classList.add('visible');
-          btn.classList.add('active');
-        }
-      });
-    });
-    ['alinear', 'tamano', 'texto-h', 'texto-v'].forEach(function (name) {
-      var panel = document.getElementById('dd-tdd-' + name);
-      var btn   = document.getElementById('tdd-btn-' + name);
-      if (panel && btn) {
-        new MutationObserver(function () {
-          btn.classList.toggle('active', panel.classList.contains('visible'));
-        }).observe(panel, { attributes: true, attributeFilter: ['class'] });
-      }
-    });
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-  else init();
-})();
-</script>
-
-<!-- ══ ReportForge v19.6 — Full Engine Implementations ════════════════ -->
+<script src="/engines/ToolbarDropdown.js"></script>

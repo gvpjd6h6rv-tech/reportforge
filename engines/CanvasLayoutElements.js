@@ -45,23 +45,11 @@
     }
   }
 
-  function _setBorder(div, el) {
-    const fb = el.format && el.format.borders;
-    if (fb) {
-      const { inlineStyles } = BorderMapper.mapBorders(fb);
-      div.style.border = '';
-      Object.keys(inlineStyles).forEach(function(prop) {
-        div.style[prop] = inlineStyles[prop];
-      });
-    } else {
-      div.style.border = el.borderWidth > 0 ? `${el.borderWidth}px ${el.borderStyle} ${el.borderColor}` : '';
-    }
-  }
-
-  function _fieldLabel(el) {
-    if (el.content && el.content !== el.fieldPath) return el.content;
-    return el.fieldPath ? `{${el.fieldPath}}` : '';
-  }
+  // Non-line per-element-type builders/updaters (field/text/rect/image/
+  // barcode) live in CanvasLayoutElementContent.js — extracted to stay under
+  // this file's governance line-count threshold. Line rendering stays here:
+  // this file's governance baseline pins exactly one cssText assignment.
+  const EC = global.CanvasLayoutElementContent;
 
   function _appendContentSpan(div, text = '') {
     const span = document.createElement('span');
@@ -69,31 +57,6 @@
     span.textContent = text;
     div.appendChild(span);
     return span;
-  }
-
-  function _appendCorners(div) {
-    ['tl', 'tr', 'bl', 'br'].forEach((pos) => {
-      const m = document.createElement('span');
-      m.className = 'el-corner ' + pos;
-      div.appendChild(m);
-    });
-  }
-
-  function _buildField(div, el) {
-    div.style.color = el.color;
-    div.style.background = el.bgColor === 'transparent' ? 'var(--cr-field-bg)' : el.bgColor;
-    _setBorder(div, el);
-    const icon = document.createElement('span');
-    icon.className = 'el-field-icon'; icon.textContent = '⬚';
-    div.appendChild(icon);
-    _appendContentSpan(div, _fieldLabel(el));
-  }
-
-  function _buildText(div, el) {
-    div.style.color = el.color;
-    div.style.background = el.bgColor === 'transparent' ? 'var(--cr-text-bg)' : el.bgColor;
-    _setBorder(div, el);
-    _appendContentSpan(div, el.content || 'Texto').contentEditable = 'false';
   }
 
   // Shared by _buildLine (initial render) and _updateLineStroke (property
@@ -165,7 +128,7 @@
   // RF-COLORS-BORDERS-AUDIT-1: updateElement() (below) calls _updateVisualStyle
   // for every element type uniformly, but a line's visible stroke lives on the
   // SVG <line> child's stroke/stroke-width attributes, not on div.style.border
-  // — _setBorder() writing div.style.border was a complete no-op for a line
+  // — setBorder() writing div.style.border was a complete no-op for a line
   // (border:none is set once in _buildLine and never visually used). Any
   // property edit (color or width) on an existing line therefore never
   // reached the screen until a full renderAll(). This is the fix: mirror
@@ -177,72 +140,13 @@
     line.setAttribute('stroke-width', _lineStrokeWidth(el));
   }
 
-  function _buildRect(div, el) {
-    div.style.background = el.bgColor === 'transparent' ? 'transparent' : el.bgColor;
-    div.style.overflow = 'visible';
-    _setBorder(div, el);
-    _appendContentSpan(div);
-  }
-
-  function _buildImage(div, el) {
-    const src = el.src || el.imageSrc || '';
-    if (!src) {
-      div.style.background = '#F9F9F9';
-      div.style.border = '1px dashed #999';
-      _appendContentSpan(div, '⬚ imagen');
-      return;
-    }
-    div.style.background = 'transparent';
-    div.style.border = 'none';
-    const img = document.createElement('img');
-    img.className = 'el-content'; img.alt = el.content || '';
-    img.src = src;
-    img.style.display = 'block';
-    img.style.width = '100%';
-    img.style.height = '100%';
-    img.style.objectFit = el.srcFit || el.imageFit || 'contain';
-    img.style.pointerEvents = 'none';
-    div.appendChild(img);
-  }
-
-  function _barcodeLabel(el) { return el.fieldPath ? `{${el.fieldPath}}` : 'BARCODE'; }
-  function _barcodeSrc(el) { return `/preview-barcode?value=${encodeURIComponent(_barcodeLabel(el))}&barcodeType=${encodeURIComponent(el.barcodeType||'code128')}&width=${el.w||200}&height=${el.h||60}&showText=${el.showText!==false}`; }
-  function _buildBarcode(div, el) {
-    const img = document.createElement('img');
-    img.className = 'el-content';
-    img.style.display = 'block'; img.style.width = '100%'; img.style.height = '100%'; img.style.pointerEvents = 'none';
-    img.title = _barcodeLabel(el);
-    img.src = _barcodeSrc(el);
-    div.appendChild(img);
-  }
-
   function _buildElementContent(div, el) {
-    if (el.type === 'field') return _buildField(div, el);
-    if (el.type === 'text') return _buildText(div, el);
+    if (el.type === 'field') return EC.buildField(div, el);
+    if (el.type === 'text') return EC.buildText(div, el);
     if (el.type === 'line') return _buildLine(div, el);
-    if (el.type === 'rect') return _buildRect(div, el);
-    if (el.type === 'image') return _buildImage(div, el);
-    if (el.type === 'barcode') return _buildBarcode(div, el);
-  }
-
-  function _updateContent(div, el) {
-    const span = div.querySelector('.el-content');
-    if (!span) return;
-    if (el.type === 'field') span.textContent = _fieldLabel(el);
-    else if (el.type === 'text') span.textContent = el.content || '';
-    else if (el.type === 'image') _updateImageContent(div, el, span);
-    else if (el.type === 'barcode') { const img = div.querySelector('img.el-content'); if (img) { img.src = _barcodeSrc(el); img.title = _barcodeLabel(el); } }
-  }
-
-  function _updateImageContent(div, el, span) {
-    const img = div.querySelector('img.el-content');
-    if (!img) {
-      span.textContent = '⬚ imagen';
-      return;
-    }
-    img.src = el.src || el.imageSrc || '';
-    img.alt = el.content || '';
-    img.style.objectFit = el.srcFit || el.imageFit || 'contain';
+    if (el.type === 'rect') return EC.buildRect(div, el);
+    if (el.type === 'image') return EC.buildImage(div, el);
+    if (el.type === 'barcode') return EC.buildBarcode(div, el);
   }
 
   function _updateVisualStyle(div, el) {
@@ -259,7 +163,7 @@
       ? (usesPlaceholderBg ? (el.type === 'field' ? 'var(--cr-field-bg)' : 'var(--cr-text-bg)') : 'transparent')
       : (el.bgColor || 'transparent');
     if (el.type === 'line') _updateLineStroke(div, el);
-    else _setBorder(div, el);
+    else EC.setBorder(div, el);
   }
 
   function buildElementDiv(el) {
@@ -271,7 +175,7 @@
     div.dataset.type = el.type;
 
     _applyBaseStyle(div, el);
-    _appendCorners(div);
+    EC.appendCorners(div);
     _buildElementContent(div, el);
 
     const SE = (typeof EngineRegistry !== 'undefined' && EngineRegistry.get('SelectionEngine'))
@@ -321,7 +225,7 @@
     }
     _applyBaseStyle(div, el);
     _updateVisualStyle(div, el);
-    _updateContent(div, el);
+    EC.updateContent(div, el);
     if (typeof DS !== 'undefined')
       div.classList.toggle('selected', (C.assertSelectionState('CanvasLayoutEngine.updateElement.selection'), DS.selection.has(id)));
   }

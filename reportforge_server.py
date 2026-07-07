@@ -13,7 +13,8 @@ from pathlib import Path
 _HERE = Path(__file__).parent
 sys.path.insert(0, str(_HERE))
 
-from reportforge_server_services import handle_delete, handle_get, handle_options, handle_post
+from reportforge_server_services import handle_get, handle_options, handle_post
+from reportforge_server_services import handle_delete
 
 
 class RFHandler(BaseHTTPRequestHandler):

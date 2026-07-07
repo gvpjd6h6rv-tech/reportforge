@@ -163,9 +163,11 @@ function makeRuntime() {
   context.window.window = context.window;
   context.window.document = document;
 
+  const applySource = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeFileApply.js'), 'utf8');
   const source = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeFile.js'), 'utf8');
   const ioSource = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeFileIO.js'), 'utf8');
   vm.createContext(context);
+  vm.runInContext(applySource, context, { filename: 'engines/CommandRuntimeFileApply.js' });
   vm.runInContext(source, context, { filename: 'engines/CommandRuntimeFile.js' });
   vm.runInContext(ioSource, context, { filename: 'engines/CommandRuntimeFileIO.js' });
 

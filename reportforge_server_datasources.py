@@ -4,11 +4,9 @@ from reportforge.core.render.datasource.db_source import DbSource, query_registe
 
 from reportforge_server_http_utils import _error, _json
 
-
 def _get_ds_list(handler):
     from reportforge.core.render.datasource.db_source_registry import list_registered_safe
     _json(handler, list_registered_safe())
-
 
 def _post_register_ds(handler, body: dict):
     alias = body.get("alias", "")
@@ -19,7 +17,6 @@ def _post_register_ds(handler, body: dict):
     ds_register(alias, spec)
     reachable = DbSource.ping(spec.get("url", "")) if spec.get("url") else None
     _json(handler, {"alias": alias, "status": "registered", "reachable": reachable})
-
 
 def _post_ds_test(handler, body: dict):
     host = body.get("host", "")
@@ -33,7 +30,6 @@ def _post_ds_test(handler, body: dict):
     from reportforge.core.render.datasource.db_source_introspection import ping_structured
     result = ping_structured(host, port, database, username, password)
     _json(handler, result)
-
 
 def _post_ds_connect(handler, alias: str, body: dict):
     host = body.get("host", "")
@@ -61,7 +57,6 @@ def _post_ds_connect(handler, alias: str, body: dict):
     reachable = pymssql_ping(spec)
     _json(handler, {"alias": alias, "registered": True, "reachable": reachable})
 
-
 def _delete_ds(handler, alias: str):
     from reportforge.core.render.datasource.db_source_registry import unregister
     ok = unregister(alias)
@@ -74,7 +69,6 @@ def _delete_ds(handler, alias: str):
     except Exception:
         pass
     _json(handler, {"deleted": alias})
-
 
 def _post_ds_query(handler, alias: str, body: dict):
     try:
