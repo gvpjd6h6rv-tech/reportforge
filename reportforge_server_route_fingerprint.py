@@ -22,7 +22,18 @@ _JS_OF_INTEREST = [
     "DocumentActionsLayoutClamp.js",
     "CanvasLayoutElements.js",
     "FieldExplorerEngine.js",
+    # #10.15 preview overlay/selection owners — permanent, so /runtime-fingerprint
+    # can verify the correct (cache-free) JS is served for the hover/selection
+    # bbox fix. NOT the bbox-ink diagnostic: that is a tools/ opt-in, reported
+    # separately (below) only when enabled, never a dependency here.
+    "SelectionOverlayPreview.js",
+    "SelectionOverlayRender.js",
+    "PreviewHoverOutline.js",
+    "PreviewOverlayStyle.js",
 ]
+
+# opt-in diagnostics reported only when present in engines/ (see enabled_diagnostics)
+_DIAGNOSTIC_JS = ["RfBboxInkDiagnostic.js"]
 
 _FIX_MARKERS = {
     "advanced_engine.py": "RF-PAGINATION-RF-HEIGHT-1",
@@ -30,6 +41,10 @@ _FIX_MARKERS = {
     "PropertiesEngine.js": "RF-SECTION-MOVE-INK-1",
     "DocumentActionsLayoutClamp.js": "clampSectionMovePatch",
     "FieldExplorerEngine.js": "RF-SECTION-MOVE-INK-1",
+    "SelectionOverlayPreview.js": "RF-PREVIEW-BBOX-INK-1",
+    "SelectionOverlayRender.js": "RF-PREVIEW-SELECTION-RECT-1",
+    "PreviewHoverOutline.js": "RF-PREVIEW-BBOX-INK-1",
+    "PreviewOverlayStyle.js": "RF-PREVIEW-BBOX-HUG-1",
 }
 
 
@@ -98,5 +113,12 @@ def _get_fingerprint(handler):
         "advanced_engine": ae_block,
         "served_html": _finfo(served_html),
         "served_js": {name: _finfo(_HERE / "engines" / name) for name in _JS_OF_INTEREST},
+        # opt-in diagnostics: reported only when copied into engines/ (enabled via
+        # tools/diagnostics/*/enable.sh). Soft — the fingerprint never depends on them.
+        "enabled_diagnostics": {
+            name: _finfo(_HERE / "engines" / name)
+            for name in _DIAGNOSTIC_JS
+            if (_HERE / "engines" / name).exists()
+        },
         "root": str(_HERE),
     })
