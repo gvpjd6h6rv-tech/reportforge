@@ -159,16 +159,21 @@ test('SelectionOverlay renders selection guides as zoom-stable hairlines aligned
   assert.equal(horizontal.length, 2);
   assert.equal(vertical.length, 2);
 
+  // el-1 is { x:68, y:128, w:160, h:12 } -> outer edges: top=128, bottom=140
+  // (128+12), left=68, right=228 (68+160). All four guides anchor to this
+  // SAME outer/visual edge convention — bottom/right must NOT subtract a
+  // border-width inset (that was the bug: it landed them 1 unit inside the
+  // box instead of exactly on its visible line).
   assert.deepEqual(
     horizontal.map((node) => node.style.top),
-    [`${128 - GUIDE_HIT_PAD}px`, `${139 - GUIDE_HIT_PAD}px`],
-    'top/bottom guide hit-boxes must straddle the sel-box border starts'
+    [`${128 - GUIDE_HIT_PAD}px`, `${140 - GUIDE_HIT_PAD}px`],
+    'top/bottom guide hit-boxes must straddle the sel-box OUTER edge, no inset'
   );
 
   assert.deepEqual(
     vertical.map((node) => node.style.left),
-    [`${68 - GUIDE_HIT_PAD}px`, `${227 - GUIDE_HIT_PAD}px`],
-    'left/right guide hit-boxes must straddle the sel-box border starts'
+    [`${68 - GUIDE_HIT_PAD}px`, `${228 - GUIDE_HIT_PAD}px`],
+    'left/right guide hit-boxes must straddle the sel-box OUTER edge, no inset'
   );
 
   for (const node of horizontal) {

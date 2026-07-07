@@ -99,14 +99,20 @@ const SelectionOverlayPreviewLayers = (() => {
     layer.appendChild(guide);
   }
 
+  // All four guides anchor to the rect's own OUTER/visual edge — the same
+  // convention on all sides. bottom/right used to subtract a leftover
+  // `borderWidth` (1px) inset from an older flat-border implementation,
+  // landing them one device px INSIDE the box instead of exactly on its
+  // visible line, while top/left (which never had that subtraction) landed
+  // correctly. Removed: rect.top+rect.height and rect.left+rect.width are
+  // themselves already the box's bottom/right edge, nothing to subtract.
   function renderSelectionGuides(layer, rects) {
-    const borderWidth = 1;
     rects.forEach(rect => {
       if (!rect) return;
       appendSelectionGuide(layer, rect, 'h', rect.top);
-      appendSelectionGuide(layer, rect, 'h', rect.top + rect.height - borderWidth);
+      appendSelectionGuide(layer, rect, 'h', rect.top + rect.height);
       appendSelectionGuide(layer, rect, 'v', rect.left);
-      appendSelectionGuide(layer, rect, 'v', rect.left + rect.width - borderWidth);
+      appendSelectionGuide(layer, rect, 'v', rect.left + rect.width);
     });
   }
 
