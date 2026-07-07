@@ -23,6 +23,8 @@ const PreviewHoverOutline = (() => {
     if (box) box.remove();
     box = null;
     hoverEl = null;
+    const layer = typeof document !== 'undefined' ? document.querySelector('#preview-content .preview-hover-layer') : null;
+    if (layer) globalThis.PreviewOverlayStyle.clearHairlineFrame(layer, 'hover');
   }
 
   function _show(node) {
@@ -42,11 +44,9 @@ const PreviewHoverOutline = (() => {
       box.className = 'preview-hover-box';
       box.style.position = 'absolute';
       box.style.boxSizing = 'border-box';
-      // RF-PREVIEW-BBOX-HUG-1: same outer-edge outline formula as selection.
-      const _os = PreviewOverlayStyle.overlayBoxStyle(true, '#F08000');
-      box.style.border = _os.border;
-      box.style.outline = _os.outline;
-      box.style.outlineOffset = _os.outlineOffset;
+      box.style.border = 'none';
+      box.style.outline = 'none';
+      box.style.background = 'transparent';
       box.style.pointerEvents = 'none';
       layer.appendChild(box);
     }
@@ -54,6 +54,21 @@ const PreviewHoverOutline = (() => {
     box.style.top = `${rect.top}px`;
     box.style.width = `${rect.width}px`;
     box.style.height = `${rect.height}px`;
+    // RF-PREVIEW-BBOX-HUG-1: same outer-edge frame as selection — 4
+    // independent divs appended directly to `layer` at rect's real
+    // coordinates (never nested/percentage-relative to `box`), so all four
+    // sides (and the corner where they meet) render regardless of `box`'s
+    // own box model. `box` itself stays an invisible position/rect marker
+    // (kept for any code/tests that query `.preview-hover-box`'s rect).
+    // RF-PREVIEW-THIN-OVERLAY-1: outline-width (and even a div's own height/
+    // width) floors to a whole device pixel pre-transform in Chromium
+    // (proven via raw pixel raster — see tools/diagnostics/rf-bbox-ink/
+    // rf_thickness_raster_probe.mjs); only a background-gradient sized via
+    // background-size survives with true sub-pixel anti-aliasing. Recomputed
+    // on every show (not just at box creation) so the stroke width never
+    // goes stale if zoom changes while the box is still mounted from a
+    // previous hover.
+    globalThis.PreviewOverlayStyle.paintHairlineFrame(layer, rect, '#F08000', SelectionOverlayPreview.selectionOverlayZoom(), 'hover');
     hoverEl = node;
   }
 

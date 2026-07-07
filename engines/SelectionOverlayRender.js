@@ -32,7 +32,7 @@ const SelectionOverlayRender = (() => {
     if (!isLine) {
       const selBox = document.createElement('div');
       selBox.className = 'sel-box';
-      H.styleSelectionBox(selBox, rect);
+      H.styleSelectionBox(selBox, rect, layer);
       layer.appendChild(selBox);
     }
     if (showGuides) _preview().renderSelectionGuides(layer, [rect]);

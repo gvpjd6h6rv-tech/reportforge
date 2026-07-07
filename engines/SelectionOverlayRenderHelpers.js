@@ -17,7 +17,7 @@ const SelectionOverlayRenderHelpers = (() => {
     return DS.previewMode ? _preview().previewRect(el, layer)
       : { left: el.x, top: SelectionState.getSectionTop(el.sectionId) + el.y, width: el.w, height: el.h };
   }
-  function styleSelectionBox(box, rect) {
+  function styleSelectionBox(box, rect, layer) {
     box.style.setProperty('--sel-x', rect.left + 'px');
     box.style.setProperty('--sel-y', rect.top + 'px');
     box.style.setProperty('--sel-w', rect.width + 'px');
@@ -28,13 +28,33 @@ const SelectionOverlayRenderHelpers = (() => {
     box.style.width = rect.width + 'px';
     box.style.height = rect.height + 'px';
     box.style.boxSizing = 'border-box';
-    // RF-PREVIEW-BBOX-HUG-1: preview hugs the outer edge with outline (same as
-    // the hover outline); design keeps its border unchanged.
-    const _os = PreviewOverlayStyle.overlayBoxStyle(!!(typeof DS !== 'undefined' && DS.previewMode), 'var(--cr-sel-bdr, #0066CC)');
-    box.style.border = _os.border;
-    box.style.outline = _os.outline;
-    box.style.outlineOffset = _os.outlineOffset;
     box.style.background = 'transparent';
+    // RF-PREVIEW-BBOX-HUG-1: preview hugs the SAME outer edge as the hover
+    // box; design keeps its plain border unchanged.
+    // RF-PREVIEW-THIN-OVERLAY-1: outline-width (and even a div's own height/
+    // width, even 4 child divs nested in `box`) floors to a whole device
+    // pixel pre-transform in Chromium (proven via raw pixel raster — see
+    // tools/diagnostics/rf-bbox-ink/rf_thickness_raster_probe.mjs). Only a
+    // background-gradient sized via background-size survives with true
+    // sub-pixel anti-aliasing, so preview draws its frame as 4 INDEPENDENT
+    // divs appended directly to `layer` at rect's real coordinates (never
+    // nested/percentage-relative to `box`) via
+    // PreviewOverlayStyle.paintHairlineFrame — `box` itself stays an
+    // invisible position/rect marker. Only the frame's stroke width is
+    // zoom-compensated — rect (hence the #10.15 renderInkRect hug) is never
+    // touched here.
+    const _previewMode = !!(typeof DS !== 'undefined' && DS.previewMode);
+    if (_previewMode) {
+      box.style.border = 'none';
+      box.style.outline = 'none';
+      globalThis.PreviewOverlayStyle.paintHairlineFrame(layer, rect, 'var(--cr-sel-bdr, #0066CC)', _preview().selectionOverlayZoom(), 'sel');
+    } else {
+      const _os = globalThis.PreviewOverlayStyle.designBoxStyle('var(--cr-sel-bdr, #0066CC)');
+      box.style.border = _os.border;
+      box.style.outline = _os.outline;
+      box.style.outlineOffset = _os.outlineOffset;
+      if (layer) globalThis.PreviewOverlayStyle.clearHairlineFrame(layer, 'sel');
+    }
     box.style.pointerEvents = 'none';
     box.style.zIndex = '40';
   }
@@ -63,10 +83,23 @@ const SelectionOverlayRenderHelpers = (() => {
     // CR-PARITY-1: guides only during an active move/resize gesture — see
     // SelectionOverlay._shouldShowGuides, the single owner of this decision.
     if (showGuides) _preview().renderSelectionGuides(layer, viewRects);
-    viewRects.forEach((rect) => {
+    // RF-PREVIEW-THIN-OVERLAY-1: same hairline-frame mechanism as the single-
+    // selection box — 4 independent divs per item appended directly to
+    // `layer` at that item's real rect coordinates (never nested/percentage-
+    // relative to `item`), keyed per-item so multiple selected items never
+    // collide. `item` itself stays an invisible position/rect marker.
+    const previewMode = !!(typeof DS !== 'undefined' && DS.previewMode);
+    const zoom = previewMode ? _preview().selectionOverlayZoom() : 1;
+    viewRects.forEach((rect, idx) => {
       const item = document.createElement('div');
       item.className = 'sel-box-multi-item';
-      Object.assign(item.style, { position: 'absolute', left: (rect.left - bounds.left) + 'px', top: (rect.top - bounds.top) + 'px', width: rect.width + 'px', height: rect.height + 'px', boxSizing: 'border-box', border: '1px solid #000', background: 'transparent', pointerEvents: 'none' });
+      Object.assign(item.style, { position: 'absolute', left: (rect.left - bounds.left) + 'px', top: (rect.top - bounds.top) + 'px', width: rect.width + 'px', height: rect.height + 'px', boxSizing: 'border-box', background: 'transparent', pointerEvents: 'none' });
+      if (previewMode) {
+        item.style.border = 'none';
+        globalThis.PreviewOverlayStyle.paintHairlineFrame(layer, rect, '#000', zoom, `multi-${idx}`);
+      } else {
+        item.style.border = '1px solid #000';
+      }
       outline.appendChild(item);
     });
   }

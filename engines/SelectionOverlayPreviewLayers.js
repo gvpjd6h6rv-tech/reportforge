@@ -53,30 +53,48 @@ const SelectionOverlayPreviewLayers = (() => {
   function ensurePreviewSelectionLayer() { return _ensurePreviewOverlayLayer('preview-selection-layer', 'selectionLayer', '9999'); }
   function ensurePreviewHoverLayer() { return _ensurePreviewOverlayLayer('preview-hover-layer', 'hoverLayer', '9998'); }
 
+  // RF-PREVIEW-THIN-OVERLAY-1: same hairline formula as the selection/hover
+  // box frame — see PreviewOverlayStyle.thinStrokeWidth. One shared visual
+  // weight for every preview overlay stroke, never duplicated.
   function selectionGuideThickness() {
     const zoom = globalThis.SelectionOverlayPreview.selectionOverlayZoom();
-    return Math.max(0.25, 1 / zoom);
+    return globalThis.PreviewOverlayStyle.thinStrokeWidth(zoom);
   }
+
+  // Proven via raw pixel raster (tools/diagnostics/rf-bbox-ink/
+  // rf_thickness_raster_probe.mjs) that a div's OWN height/width floors to a
+  // whole device pixel pre-transform in Chromium — a "0.25px"-tall guide
+  // still painted a flat 1px at zoom=1 and 4px at zoom=4, same floor as
+  // outline-width. Only a background-gradient sized via background-size
+  // survives the transform with true sub-pixel anti-aliasing. So the guide
+  // element itself is a small (2*GUIDE_HIT_PAD) hit-box straddling the
+  // target edge, and the actual visible line is a gradient centered inside
+  // it — the edge position (guide.dataset.edge) is unchanged, only the
+  // element's own top/left/height/width now describe the padded hit-box,
+  // not the hairline itself.
+  const GUIDE_HIT_PAD = 3;
 
   function appendSelectionGuide(layer, rect, axis, edge) {
     const guide = document.createElement('div');
     const thickness = selectionGuideThickness();
+    const color = 'rgba(255, 32, 32, 0.9)';
     guide.className = `selection-guide selection-guide-${axis}`;
     guide.dataset.edge = edge;
     guide.style.position = 'absolute';
     guide.style.pointerEvents = 'none';
     guide.style.zIndex = '27';
-    guide.style.background = 'rgba(255, 32, 32, 0.9)';
     if (axis === 'h') {
       guide.style.left = '0px';
       guide.style.width = '100%';
-      guide.style.top = `${edge}px`;
-      guide.style.height = `${thickness}px`;
+      guide.style.top = `${edge - GUIDE_HIT_PAD}px`;
+      guide.style.height = `${GUIDE_HIT_PAD * 2}px`;
+      guide.style.background = `linear-gradient(${color},${color}) center / 100% ${thickness}px no-repeat`;
     } else {
       guide.style.top = '0px';
       guide.style.height = '100%';
-      guide.style.left = `${edge}px`;
-      guide.style.width = `${thickness}px`;
+      guide.style.left = `${edge - GUIDE_HIT_PAD}px`;
+      guide.style.width = `${GUIDE_HIT_PAD * 2}px`;
+      guide.style.background = `linear-gradient(${color},${color}) center / ${thickness}px 100% no-repeat`;
     }
     layer.appendChild(guide);
   }

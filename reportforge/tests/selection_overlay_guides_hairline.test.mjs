@@ -32,6 +32,11 @@ function makeNode(tag = 'div') {
       this.children = this.children.filter((item) => item !== child);
       this.firstChild = this.children[0] || null;
     },
+    querySelector(sel) {
+      const cls = sel.replace('.', '');
+      return this.children.find((c) => String(c.className).split(' ').includes(cls)) || null;
+    },
+    remove() {},
   };
   return node;
 }
@@ -50,7 +55,6 @@ function loadSelectionOverlayRuntime({ zoom = 4 } = {}) {
 
   const context = {
     console,
-    window: {},
     DS: {
       previewMode: false,
       selection: new Set(['el-1']),
@@ -95,10 +99,19 @@ function loadSelectionOverlayRuntime({ zoom = 4 } = {}) {
   };
 
   context.globalThis = context;
+  context.window = context;
   vm.createContext(context);
 
+  // Load order matches designer/crystal-reports-designer-v4.html: the split
+  // helper/style modules must exist before the files that call into them.
+  const styleSource = fs.readFileSync('engines/PreviewOverlayStyle.js', 'utf8');
+  vm.runInContext(styleSource, context, { filename: 'engines/PreviewOverlayStyle.js' });
+  const layersSource = fs.readFileSync('engines/SelectionOverlayPreviewLayers.js', 'utf8');
+  vm.runInContext(layersSource, context, { filename: 'engines/SelectionOverlayPreviewLayers.js' });
   const previewSource = fs.readFileSync('engines/SelectionOverlayPreview.js', 'utf8');
   vm.runInContext(previewSource, context, { filename: 'engines/SelectionOverlayPreview.js' });
+  const renderHelpersSource = fs.readFileSync('engines/SelectionOverlayRenderHelpers.js', 'utf8');
+  vm.runInContext(renderHelpersSource, context, { filename: 'engines/SelectionOverlayRenderHelpers.js' });
   const renderSource = fs.readFileSync('engines/SelectionOverlayRender.js', 'utf8');
   vm.runInContext(renderSource, context, { filename: 'engines/SelectionOverlayRender.js' });
 
@@ -112,6 +125,18 @@ function loadSelectionOverlayRuntime({ zoom = 4 } = {}) {
     handlesLayer,
   };
 }
+
+// RF-PREVIEW-THIN-OVERLAY-1: proven via raw pixel raster (tools/diagnostics/
+// rf-bbox-ink/rf_thickness_raster_probe.mjs) that a div's own height/width
+// floors to a whole device pixel pre-transform in Chromium — the guide used
+// to declare "0.25px" height/width directly on itself and still painted a
+// flat 1px-at-100%/4px-at-400% band, no thinner than an unfixed flat 1px.
+// The element itself is now a small (2*GUIDE_HIT_PAD) hit-box straddling the
+// target edge; the actual hairline is a background-gradient centered inside
+// it (background-size DOES survive the transform with true sub-pixel
+// anti-aliasing) — so top/left below are edge-GUIDE_HIT_PAD, not the raw
+// edge, and height/width are the hit-box size, not the hairline width.
+const GUIDE_HIT_PAD = 3;
 
 test('SelectionOverlay renders selection guides as zoom-stable hairlines aligned to sel-box edges', () => {
   const runtime = loadSelectionOverlayRuntime({ zoom: 4 });
@@ -136,21 +161,23 @@ test('SelectionOverlay renders selection guides as zoom-stable hairlines aligned
 
   assert.deepEqual(
     horizontal.map((node) => node.style.top),
-    ['128px', '139px'],
-    'top/bottom guides must align to sel-box border starts'
+    [`${128 - GUIDE_HIT_PAD}px`, `${139 - GUIDE_HIT_PAD}px`],
+    'top/bottom guide hit-boxes must straddle the sel-box border starts'
   );
 
   assert.deepEqual(
     vertical.map((node) => node.style.left),
-    ['68px', '227px'],
-    'left/right guides must align to sel-box border starts'
+    [`${68 - GUIDE_HIT_PAD}px`, `${227 - GUIDE_HIT_PAD}px`],
+    'left/right guide hit-boxes must straddle the sel-box border starts'
   );
 
   for (const node of horizontal) {
-    assert.equal(node.style.height, '0.25px');
+    assert.equal(node.style.height, `${GUIDE_HIT_PAD * 2}px`);
+    assert.match(node.style.background, /center \/ 100% 0\.125px no-repeat/, 'hairline gradient at zoom=4 (0.5px visual / 4)');
   }
 
   for (const node of vertical) {
-    assert.equal(node.style.width, '0.25px');
+    assert.equal(node.style.width, `${GUIDE_HIT_PAD * 2}px`);
+    assert.match(node.style.background, /center \/ 0\.125px 100% no-repeat/, 'hairline gradient at zoom=4 (0.5px visual / 4)');
   }
 });
