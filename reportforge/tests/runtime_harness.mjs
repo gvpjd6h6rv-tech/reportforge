@@ -358,10 +358,13 @@ export async function getSelectionSnapshot(page) {
       const layer = document.querySelector(DS.previewMode ? '#preview-content .preview-selection-layer' : '#handles-layer');
       return layer ? layer.querySelectorAll('.sel-handle').length : 0;
     })(),
-    selectionGuideCount: (() => {
-      const layer = document.querySelector(DS.previewMode ? '#preview-content .preview-selection-layer' : '#handles-layer');
-      return layer ? layer.querySelectorAll('.selection-guide').length : 0;
-    })(),
+    // RF-CR-GUIDE-UNCLIPPED-1: guides live in the dedicated extended-guide
+    // layer on <body>, not the selection layer — a guide element parked
+    // inside #handles-layer/.preview-selection-layer would be clipped by
+    // #canvas-layer's own overflow:hidden whenever the page is smaller than
+    // the workspace (typical in Design at low/moderate zoom), so this
+    // layer exists specifically to render outside that clipped subtree.
+    selectionGuideCount: document.querySelectorAll('#rf-extended-guide-layer .selection-guide').length,
     guideLineCount: document.querySelectorAll('#guide-layer .rf-guide-line').length,
   }));
 }

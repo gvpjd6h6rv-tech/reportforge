@@ -55,6 +55,8 @@ function makeNode(tag = 'div') {
 
 function loadSelectionOverlayRuntime({ zoom = 4 } = {}) {
   const handlesLayer = makeNode('div');
+  const body = makeNode('body');
+  const registry = new Map([['handles-layer', handlesLayer]]);
   const element = {
     id: 'el-1',
     type: 'text',
@@ -79,9 +81,19 @@ function loadSelectionOverlayRuntime({ zoom = 4 } = {}) {
       },
     },
     document: {
+      body,
       createElement: () => makeNode('div'),
-      getElementById: (id) => (id === 'handles-layer' ? handlesLayer : null),
-      querySelectorAll: () => [],
+      // rf-extended-guide-layer isn't pre-registered — it's created and
+      // appended to <body> lazily by the engine itself (id set before
+      // appendChild, matching the real _ensureExtendedGuideLayer order), so
+      // this falls back to scanning body.children by id.
+      getElementById: (id) => registry.get(id) || body.children.find((c) => c.id === id) || null,
+      querySelectorAll: (sel) => {
+        // clearRulerGuideStubs' global scan — no ruler hosts registered in
+        // this test, so there is nothing to find; never throw.
+        void sel;
+        return [];
+      },
     },
     RenderScheduler: {
       allowsDomWrite: () => true,
@@ -135,6 +147,7 @@ function loadSelectionOverlayRuntime({ zoom = 4 } = {}) {
   return {
     overlay: context.__SelectionOverlay,
     handlesLayer,
+    body,
   };
 }
 
@@ -159,7 +172,15 @@ test('SelectionOverlay renders selection guides as zoom-stable hairlines aligned
     attachHandleEvent() {},
   });
 
-  const guides = runtime.handlesLayer.children.filter((node) =>
+  // RF-CR-GUIDE-UNCLIPPED-1: guides live in the dedicated extended-guide
+  // layer appended to <body>, not #handles-layer — that layer's own
+  // overflow:hidden ancestor (#canvas-layer) is exactly what used to clip
+  // them. This mock's handlesLayer.getBoundingClientRect() returns the
+  // default all-zero rect (no style ever set on it), so screen position =
+  // rawEdge * zoom directly.
+  const guideLayer = runtime.body.children.find((c) => c.id === 'rf-extended-guide-layer');
+  assert.ok(guideLayer, 'extended guide layer created on <body>');
+  const guides = guideLayer.children.filter((node) =>
     String(node.className).includes('selection-guide')
   );
 
@@ -171,20 +192,23 @@ test('SelectionOverlay renders selection guides as zoom-stable hairlines aligned
   assert.equal(horizontal.length, 2);
   assert.equal(vertical.length, 2);
 
-  // el-1 is { x:68, y:128, w:160, h:12 } -> outer edges: top=128, bottom=140
-  // (128+12), left=68, right=228 (68+160). All four guides anchor to this
-  // SAME outer/visual edge convention — bottom/right must NOT subtract a
-  // border-width inset (that was the bug: it landed them 1 unit inside the
-  // box instead of exactly on its visible line).
+  // el-1 is { x:68, y:128, w:160, h:12 } -> outer edges (model units):
+  // top=128, bottom=140 (128+12), left=68, right=228 (68+160). Converted to
+  // screen px via screenEdge = layerRect.top/left + rawEdge*zoom (layerRect
+  // is all-zero here) -> top=512, bottom=560, left=272, right=912. All four
+  // guides anchor to this SAME outer/visual edge convention — bottom/right
+  // must NOT subtract a border-width inset (that was an older bug: it
+  // landed them 1 unit inside the box instead of exactly on its visible
+  // line).
   assert.deepEqual(
     horizontal.map((node) => node.style.top),
-    [`${128 - GUIDE_HIT_PAD}px`, `${140 - GUIDE_HIT_PAD}px`],
+    [`${512 - GUIDE_HIT_PAD}px`, `${560 - GUIDE_HIT_PAD}px`],
     'top/bottom guide hit-boxes must straddle the sel-box OUTER edge, no inset'
   );
 
   assert.deepEqual(
     vertical.map((node) => node.style.left),
-    [`${68 - GUIDE_HIT_PAD}px`, `${228 - GUIDE_HIT_PAD}px`],
+    [`${272 - GUIDE_HIT_PAD}px`, `${912 - GUIDE_HIT_PAD}px`],
     'left/right guide hit-boxes must straddle the sel-box OUTER edge, no inset'
   );
 

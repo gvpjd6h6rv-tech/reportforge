@@ -82,7 +82,7 @@ test('LIVE: design — mousedown+drag shows 4 red guides, mouseup clears them', 
 
     await page.mouse.up();
     await page.waitForFunction(
-      () => document.querySelectorAll('#handles-layer .selection-guide').length === 0,
+      () => document.querySelectorAll('#rf-extended-guide-layer .selection-guide').length === 0,
       null,
       { timeout: 3000 }
     );
@@ -114,7 +114,7 @@ test('LIVE: design — resize drag also shows guides during the gesture and clea
 
     await page.mouse.up();
     await page.waitForFunction(
-      () => document.querySelectorAll('#handles-layer .selection-guide').length === 0,
+      () => document.querySelectorAll('#rf-extended-guide-layer .selection-guide').length === 0,
       null,
       { timeout: 3000 }
     );
@@ -148,7 +148,7 @@ test('LIVE: preview — current guide behavior is unchanged (0 static, 4 during 
 
     await page.mouse.up();
     await page.waitForFunction(
-      () => document.querySelectorAll('.preview-selection-layer .selection-guide').length === 0,
+      () => document.querySelectorAll('#rf-extended-guide-layer .selection-guide').length === 0,
       null,
       { timeout: 3000 }
     );

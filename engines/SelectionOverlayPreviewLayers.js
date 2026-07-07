@@ -96,28 +96,80 @@ const SelectionOverlayPreviewLayers = (() => {
     return axis === 'v' ? r.width : r.height;
   }
 
-  // Converts #workspace's visible screen rect into `layer`-local (pre-
-  // transform) units — same conversion SelectionOverlayPreview.
-  // domRectRelativeToLayer already uses for element rects, applied here to
-  // the workspace viewport instead. Returns null if #workspace/layer aren't
-  // resolvable (e.g. a non-browser test harness) so callers can fall back
-  // to the old 100%-of-layer behavior instead of drawing a broken 0-size box.
-  function _visibleWorkspaceBoundsLocal(layer, zoom) {
-    if (typeof document === 'undefined' || !layer) return null;
+  // Screen-space visible bounds — no layer/zoom conversion needed, because
+  // the extended guide layer below lives OUTSIDE the zoomed/clipped canvas
+  // subtree entirely (see RF-CR-GUIDE-UNCLIPPED-1). Returns null if
+  // #workspace isn't resolvable (e.g. a non-browser test harness) so
+  // callers can fall back to a safe default instead of a broken 0-size box.
+  //
+  // right/bottom are mode-specific. Preview has no field-explorer/status-bar
+  // to avoid, so #workspace's own edge (minus the synthetic scrollbar
+  // reserve) already IS the correct visible boundary. Design's #workspace
+  // is NOT the right contract for right/bottom, though — #panel-right (the
+  // field-explorer/properties column) is a sibling of #canvas-area, and
+  // #statusbar a sibling further out still (both outside #workspace's own
+  // box entirely, per the DOM in designer/crystal-reports-designer-v4.html)
+  // — so Design's right/bottom endpoints are read directly off those two
+  // elements instead: #panel-right's own left edge ("justo antes del panel
+  // Explorador"), and #statusbar's own top edge ("margen inferior visible
+  // antes de status/footer").
+  function _visibleWorkspaceBoundsScreen(isPreviewMode) {
+    if (typeof document === 'undefined') return null;
     const ws = document.getElementById('workspace');
     if (!ws || typeof ws.getBoundingClientRect !== 'function') return null;
-    if (typeof layer.getBoundingClientRect !== 'function') return null;
     const wsRect = ws.getBoundingClientRect();
-    const layerRect = layer.getBoundingClientRect();
-    const z = Number(zoom) > 0 ? Number(zoom) : 1;
-    const vReserve = _scrollbarReserve('v');
-    const hReserve = _scrollbarReserve('h');
-    return {
-      left: (wsRect.left - layerRect.left) / z,
-      top: (wsRect.top - layerRect.top) / z,
-      right: (wsRect.right - vReserve - layerRect.left) / z,
-      bottom: (wsRect.bottom - hReserve - layerRect.top) / z,
-    };
+
+    let rightScreen = wsRect.right - _scrollbarReserve('v');
+    let bottomScreen = wsRect.bottom - _scrollbarReserve('h');
+    if (!isPreviewMode) {
+      const panelRight = document.getElementById('panel-right');
+      const statusbar = document.getElementById('statusbar');
+      if (panelRight && typeof panelRight.getBoundingClientRect === 'function') {
+        rightScreen = panelRight.getBoundingClientRect().left;
+      }
+      if (statusbar && typeof statusbar.getBoundingClientRect === 'function') {
+        bottomScreen = statusbar.getBoundingClientRect().top;
+      }
+    }
+
+    return { left: wsRect.left, top: wsRect.top, right: rightScreen, bottom: bottomScreen };
+  }
+
+  // RF-CR-GUIDE-UNCLIPPED-1: #canvas-layer has `overflow: hidden` (canvas.css)
+  // and is sized to the PAGE, not the workspace. A guide element living
+  // inside it (the old architecture: appended to `layer`, itself a
+  // descendant of #canvas-layer) reports the CORRECT position via
+  // getBoundingClientRect — that's pure geometry, unaffected by clipping —
+  // but its PAINT gets cut off at #canvas-layer's own edge whenever the
+  // page is smaller than the workspace (typical in Design at low/moderate
+  // zoom). Proven live: DOM rect said the guide reached #panel-right/
+  // #statusbar exactly (delta 0), while the actual selection LAYER rect
+  // (also inside #canvas-layer) measured far smaller than that — the ink
+  // was being silently clipped despite the geometry being right.
+  //
+  // Fix: the extended guide lines live in their own `position: fixed`
+  // layer appended to <body>, entirely outside #canvas-layer/#viewport/
+  // #workspace's clip subtrees — fixed positioning is immune to ANY
+  // ancestor's overflow. Positioned in SCREEN coordinates computed from the
+  // selection box's own on-screen rect (same technique paintRulerHighlight
+  // already uses), not layer-local pre-transform units.
+  const EXTENDED_GUIDE_LAYER_ID = 'rf-extended-guide-layer';
+
+  function _ensureExtendedGuideLayer() {
+    if (typeof document === 'undefined' || !document.body) return null;
+    let layer = document.getElementById(EXTENDED_GUIDE_LAYER_ID);
+    if (!layer) {
+      layer = document.createElement('div');
+      layer.id = EXTENDED_GUIDE_LAYER_ID;
+      layer.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:9997;overflow:visible';
+      document.body.appendChild(layer);
+    }
+    return layer;
+  }
+
+  function clearExtendedGuides() {
+    const layer = typeof document !== 'undefined' ? document.getElementById(EXTENDED_GUIDE_LAYER_ID) : null;
+    if (layer) layer.innerHTML = '';
   }
 
   // RF-CR-GUIDE-RULER-CROSS-1: a guide element lives inside #workspace's own
@@ -199,32 +251,47 @@ const SelectionOverlayPreviewLayers = (() => {
     document.querySelectorAll(`.${RULER_GUIDE_STUB_CLASS}`).forEach((el) => el.remove());
   }
 
-  function appendSelectionGuide(layer, rect, axis, edge, bounds, rulerStubKey) {
-    const guide = document.createElement('div');
+  function _guideLineEl(hostLayer, axis, key) {
+    const cls = `selection-guide-key-${key}`;
+    let el = hostLayer.querySelector(`:scope > .${cls}`);
+    if (!el) {
+      el = document.createElement('div');
+      el.className = `selection-guide selection-guide-${axis} ${cls}`;
+      el.style.position = 'absolute';
+      el.style.pointerEvents = 'none';
+      el.style.zIndex = '27';
+      hostLayer.appendChild(el);
+    }
+    return el;
+  }
+
+  // hostLayer/screenEdge/screenBounds are all SCREEN coordinates — this
+  // paints directly into the unclipped extended-guide layer (RF-CR-GUIDE-
+  // UNCLIPPED-1). `key` makes repeated calls during an ongoing drag update
+  // the SAME element in place instead of accumulating duplicates (the old
+  // architecture got this for free because the whole selection layer was
+  // wiped before every render; this layer is separate and persistent, so it
+  // needs its own get-or-create, same pattern as the ruler stubs/highlight).
+  function appendSelectionGuide(hostLayer, axis, screenEdge, screenBounds, key) {
+    const guide = _guideLineEl(hostLayer, axis, key);
     const thickness = selectionGuideThickness();
     const color = 'rgba(255, 32, 32, 0.9)';
-    guide.className = `selection-guide selection-guide-${axis}`;
-    guide.dataset.edge = edge;
-    guide.style.position = 'absolute';
-    guide.style.pointerEvents = 'none';
-    guide.style.zIndex = '27';
     if (axis === 'h') {
-      const spanW = bounds ? bounds.right - bounds.left : NaN;
-      guide.style.left = `${bounds ? bounds.left : 0}px`;
+      const spanW = screenBounds ? screenBounds.right - screenBounds.left : NaN;
+      guide.style.left = `${screenBounds ? screenBounds.left : 0}px`;
       guide.style.width = spanW > 0 ? `${spanW}px` : '100%';
-      guide.style.top = `${edge - GUIDE_HIT_PAD}px`;
+      guide.style.top = `${screenEdge - GUIDE_HIT_PAD}px`;
       guide.style.height = `${GUIDE_HIT_PAD * 2}px`;
       guide.style.background = `linear-gradient(${color},${color}) center / 100% ${thickness}px no-repeat`;
     } else {
-      const spanH = bounds ? bounds.bottom - bounds.top : NaN;
-      guide.style.top = `${bounds ? bounds.top : 0}px`;
+      const spanH = screenBounds ? screenBounds.bottom - screenBounds.top : NaN;
+      guide.style.top = `${screenBounds ? screenBounds.top : 0}px`;
       guide.style.height = spanH > 0 ? `${spanH}px` : '100%';
-      guide.style.left = `${edge - GUIDE_HIT_PAD}px`;
+      guide.style.left = `${screenEdge - GUIDE_HIT_PAD}px`;
       guide.style.width = `${GUIDE_HIT_PAD * 2}px`;
       guide.style.background = `linear-gradient(${color},${color}) center / ${thickness}px 100% no-repeat`;
     }
-    layer.appendChild(guide);
-    if (rulerStubKey) _paintRulerGuideStub(guide, axis, thickness, color, rulerStubKey);
+    _paintRulerGuideStub(guide, axis, thickness, color, key);
   }
 
   // All four guides anchor to the rect's own OUTER/visual edge — the same
@@ -243,23 +310,40 @@ const SelectionOverlayPreviewLayers = (() => {
   // already IS the visible boundary (before the field-explorer panel / the
   // visible bottom margin), nothing further to reach
   // (RF-CR-GUIDE-RULER-CROSS-1 is a left/top-only correction).
+  //
+  // `layer`/`rects` stay in the SAME layer-local pre-transform units every
+  // caller (SelectionOverlayRender.js, SelectionOverlayRenderHelpers.js)
+  // already passes — converted to SCREEN units here via layer's own
+  // getBoundingClientRect() + zoom, once, then handed to the unclipped
+  // extended-guide layer (RF-CR-GUIDE-UNCLIPPED-1).
   function renderSelectionGuides(layer, rects) {
+    if (typeof document === 'undefined' || !layer) return;
     const zoom = globalThis.SelectionOverlayPreview.selectionOverlayZoom();
-    const bounds = _visibleWorkspaceBoundsLocal(layer, zoom);
+    const isPreviewMode = !!(typeof DS !== 'undefined' && DS.previewMode);
+    const guideLayer = _ensureExtendedGuideLayer();
+    if (!guideLayer) return;
+    const layerRect = layer.getBoundingClientRect();
+    const screenBounds = _visibleWorkspaceBoundsScreen(isPreviewMode);
     rects.forEach((rect, i) => {
       if (!rect) return;
-      appendSelectionGuide(layer, rect, 'h', rect.top, bounds, `${i}-h-top`);
-      appendSelectionGuide(layer, rect, 'h', rect.top + rect.height, bounds, `${i}-h-bottom`);
-      appendSelectionGuide(layer, rect, 'v', rect.left, bounds, `${i}-v-left`);
-      appendSelectionGuide(layer, rect, 'v', rect.left + rect.width, bounds, `${i}-v-right`);
+      const screenTop = layerRect.top + rect.top * zoom;
+      const screenBottom = layerRect.top + (rect.top + rect.height) * zoom;
+      const screenLeft = layerRect.left + rect.left * zoom;
+      const screenRight = layerRect.left + (rect.left + rect.width) * zoom;
+      appendSelectionGuide(guideLayer, 'h', screenTop, screenBounds, `${i}-h-top`);
+      appendSelectionGuide(guideLayer, 'h', screenBottom, screenBounds, `${i}-h-bottom`);
+      appendSelectionGuide(guideLayer, 'v', screenLeft, screenBounds, `${i}-v-left`);
+      appendSelectionGuide(guideLayer, 'v', screenRight, screenBounds, `${i}-v-right`);
     });
   }
 
   // RF-CR-RULER-HIGHLIGHT-1: Crystal shades the top ruler orange across the
   // selected element's width, and the left ruler orange across its height —
-  // in BOTH Design and Preview, for any selection (not gesture-gated like
-  // the guide lines above — CR-PARITY-1 keeps that restriction, this is a
-  // separate, persistent-while-selected indicator). One shared
+  // in BOTH Design and Preview, gesture-gated exactly like the guide lines
+  // above (CR-PARITY-1): shown only while a move/resize is in progress,
+  // gone on mouseup. (An earlier version made this persistent-while-
+  // selected instead — corrected against real Crystal Reports behavior,
+  // which hides it on mouseup same as the guides.) One shared
   // implementation for both modes: #ruler-h-row/#ruler-v are the SAME
   // elements regardless of DS.previewMode, so there is nothing to branch on.
   // Positioned from the box's own SCREEN rect (getBoundingClientRect, post-
@@ -331,6 +415,7 @@ const SelectionOverlayPreviewLayers = (() => {
     selectionGuideThickness,
     appendSelectionGuide,
     renderSelectionGuides,
+    clearExtendedGuides,
     clearRulerGuideStubs,
     paintRulerHighlight,
     clearRulerHighlight,

@@ -63,9 +63,14 @@ const SelectionOverlay = (() => {
     if (branch === 'none') {
       _preview().clearRulerHighlight();
       _preview().clearRulerGuideStubs();
+      _preview().clearExtendedGuides();
       _uiTrace('select', { phase: 'after', before: beforeUI, after: _uiSnapshot('#handles-layer'), event: DS.previewMode ? 'preview-select-none' : 'design-select-none', source: 'SelectionOverlay.renderHandles', selection: [], previewMode: !!DS.previewMode, focus: '#handles-layer' });
       return;
     }
+    // CR-PARITY-1 also governs the ruler highlight: Crystal shows it only
+    // while a move/resize gesture is in progress, gone on mouseup — same
+    // condition as the guide lines, not "persistent while selected" (an
+    // earlier assumption, corrected against real Crystal Reports behavior).
     const R = globalThis.SelectionOverlayRender;
     if (!R) throw new Error('SelectionOverlayRender is required for SelectionOverlay.renderHandles');
     const { previewOverlayVisible, hasPreviewSelection, previewOverlayFrozen } = _ensurePreviewOverlay(engine, renderSelectionIds);
@@ -75,17 +80,23 @@ const SelectionOverlay = (() => {
     }
     if (DS.previewMode && !previewOverlayVisible && !hasPreviewSelection) { engine.updateSelectionInfo(); return; }
     const showGuides = _shouldShowGuides(engine);
-    if (!showGuides) _preview().clearRulerGuideStubs();
+    if (!showGuides) {
+      _preview().clearRulerGuideStubs();
+      _preview().clearRulerHighlight();
+      _preview().clearExtendedGuides();
+    }
     if (branch === 'single') {
       R.renderSingleSelection(engine, layer, renderSelectionIds[0], showGuides);
     } else {
       R.renderMultiSelection(layer, selectedElements, showGuides);
     }
-    // RF-CR-RULER-HIGHLIGHT-1: persistent-while-selected (not gesture-gated
-    // like showGuides above) — one call site for both branches and both
-    // Design/Preview, matching the box that was just rendered into `layer`.
-    const _selBoxEl = layer.querySelector(':scope > .sel-box');
-    if (_selBoxEl) _preview().paintRulerHighlight(_selBoxEl.getBoundingClientRect());
+    // RF-CR-RULER-HIGHLIGHT-1: gesture-gated exactly like the guide lines —
+    // one call site for both branches and both Design/Preview, matching the
+    // box that was just rendered into `layer`.
+    if (showGuides) {
+      const _selBoxEl = layer.querySelector(':scope > .sel-box');
+      if (_selBoxEl) _preview().paintRulerHighlight(_selBoxEl.getBoundingClientRect());
+    }
     _uiTrace('select', { phase: 'after', before: beforeUI, after: _uiSnapshot('#handles-layer .sel-box'), event: DS.previewMode ? 'preview-select' : 'design-select', source: 'SelectionOverlay.renderHandles', selection: [...S.selectedIds()], previewMode: !!DS.previewMode, focus: '#handles-layer .sel-box' });
     engine.updateSelectionInfo();
   }

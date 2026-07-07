@@ -30,6 +30,14 @@ _JS_OF_INTEREST = [
     "SelectionOverlayRender.js",
     "PreviewHoverOutline.js",
     "PreviewOverlayStyle.js",
+    # UDS 4.1 guide-extent/ruler-highlight owners — reported explicitly so a
+    # cache/staleness dispute can be settled from the live process instead of
+    # asserted: these are the files that own DESIGN's right/bottom guide
+    # bound (panel-right/statusbar, not workspace) and the guide/highlight
+    # gesture lifecycle, both corrected after live smoke contradicted an
+    # earlier headless-only verification.
+    "SelectionOverlay.js",
+    "SelectionOverlayPreviewLayers.js",
 ]
 
 # opt-in diagnostics reported only when present in engines/ (see enabled_diagnostics)
@@ -45,6 +53,14 @@ _FIX_MARKERS = {
     "SelectionOverlayRender.js": "RF-PREVIEW-SELECTION-RECT-1",
     "PreviewHoverOutline.js": "RF-PREVIEW-BBOX-INK-1",
     "PreviewOverlayStyle.js": "RF-PREVIEW-BBOX-HUG-1",
+    # UDS 4.1: DESIGN's right/bottom guide bound reads #panel-right/#statusbar
+    # directly (not #workspace) — this exact call is the marker, since it can
+    # only be present if the panel-right/statusbar fix is the file on disk.
+    "SelectionOverlayPreviewLayers.js": "getElementById('panel-right')",
+    # UDS 4.1: paintRulerHighlight is only called inside `if (showGuides)` in
+    # the corrected (gesture-gated, disappears on mouseup) version — an
+    # earlier version called it unconditionally (persistent-while-selected).
+    "SelectionOverlay.js": "if (showGuides) {",
 }
 
 

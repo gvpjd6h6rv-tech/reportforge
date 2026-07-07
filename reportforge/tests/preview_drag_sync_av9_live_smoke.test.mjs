@@ -30,7 +30,7 @@ const __dirname = path.dirname(__filename);
 const TARGET_ELEMENT_ID = 'rh-company-matriz';
 const PV_SELECTOR = `#preview-content .pv-el[data-origin-id="${TARGET_ELEMENT_ID}"]`;
 const SEL_BOX_SELECTOR = '.preview-selection-layer .sel-box';
-const GUIDE_SELECTOR = '.preview-selection-layer .selection-guide';
+const GUIDE_SELECTOR = '#rf-extended-guide-layer .selection-guide';
 
 const DRAG_STEPS = 12;
 const DRAG_DX = 80;

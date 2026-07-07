@@ -96,7 +96,7 @@ test('factura_a4 preview interactive smoke', { timeout: 120000 }, async () => {
         selection: [...DS.selection],
         boxCount: document.querySelectorAll('#preview-content .preview-selection-layer .sel-box').length,
         handleCount: document.querySelectorAll('#preview-content .preview-selection-layer .sel-handle').length,
-        guideCount: document.querySelectorAll('#preview-content .preview-selection-layer .selection-guide').length,
+        guideCount: document.querySelectorAll('#rf-extended-guide-layer .selection-guide').length,
         layerOpacity: hs?.opacity || null,
         boxDisplay: cs?.display || null,
       };
@@ -121,7 +121,7 @@ test('factura_a4 preview interactive smoke', { timeout: 120000 }, async () => {
         selection: [...DS.selection],
         boxCount: document.querySelectorAll('#preview-content .preview-selection-layer .sel-box').length,
         handleCount: document.querySelectorAll('#preview-content .preview-selection-layer .sel-handle').length,
-        guideCount: document.querySelectorAll('#preview-content .preview-selection-layer .selection-guide').length,
+        guideCount: document.querySelectorAll('#rf-extended-guide-layer .selection-guide').length,
         layerOpacity: layerStyle?.opacity || null,
         boxDisplay: boxStyle?.display || null,
         boxVisibility: boxStyle?.visibility || null,
@@ -157,7 +157,7 @@ test('factura_a4 preview interactive smoke', { timeout: 120000 }, async () => {
     await page.waitForTimeout(120);
 
     const duringDrag = await page.evaluate(() => {
-      const guides = [...document.querySelectorAll('#preview-content .preview-selection-layer .selection-guide')];
+      const guides = [...document.querySelectorAll('#rf-extended-guide-layer .selection-guide')];
       return {
         guideCount: guides.length,
         visibleGuides: guides.map((guide) => {
@@ -204,7 +204,7 @@ test('factura_a4 preview interactive smoke', { timeout: 120000 }, async () => {
     const afterRelease = await page.evaluate(() => ({
       boxCount: document.querySelectorAll('#preview-content .preview-selection-layer .sel-box').length,
       handleCount: document.querySelectorAll('#preview-content .preview-selection-layer .sel-handle').length,
-      guideCount: document.querySelectorAll('#preview-content .preview-selection-layer .selection-guide').length,
+      guideCount: document.querySelectorAll('#rf-extended-guide-layer .selection-guide').length,
     }));
     assert.equal(afterRelease.boxCount, 1, 'preview release must keep the selection box');
     assert.equal(afterRelease.handleCount, 8, 'preview release must keep resize handles');
