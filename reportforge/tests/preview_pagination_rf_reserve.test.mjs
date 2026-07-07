@@ -54,3 +54,24 @@ test('single page: rf fits with the rows -> 1 page', () => {
   assert.equal(plan.pages[0].first, true);
   assert.equal(plan.pages[0].last, true);
 });
+
+test('N-page safe: >=5 pages split like the server formula (no magic offset)', () => {
+  // usable=975; page1 avail=575 -> 41 rows; other pages avail=975 -> 69 rows.
+  // 350 rows -> 41, 69, 69, 69, 69, 33 => 6 pages (rf fits on the 33-row page).
+  const plan = paginate(SECTIONS, rows(350), METRICS);
+  assert.equal(plan.totalPages, 6);
+  const bounds = plan.pages.map((p) => [p.rowStart, p.rowEnd]);
+  assert.deepEqual(bounds, [[0, 41], [41, 110], [110, 179], [179, 248], [248, 317], [317, 350]]);
+  assert.equal(plan.pages[0].first, true);
+  assert.equal(plan.pages[5].last, true);
+});
+
+test('doubling rows never desyncs the split boundaries (page 10 aligns like page 1)', () => {
+  const a = paginate(SECTIONS, rows(700), METRICS);
+  assert.ok(a.totalPages >= 10, `expected >=10 pages, got ${a.totalPages}`);
+  // every non-first page carries exactly 69 rows until the tail -> uniform,
+  // no accumulated drift across pages.
+  for (let i = 1; i < a.totalPages - 1; i++) {
+    assert.equal(a.pages[i].rowEnd - a.pages[i].rowStart, 69, `page ${i} width drifted`);
+  }
+});

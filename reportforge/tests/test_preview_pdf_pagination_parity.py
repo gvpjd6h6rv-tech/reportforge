@@ -48,6 +48,12 @@ def _page_count(html):
     return html.count('class="rpt-page"')
 
 
+def _per_page_rows(html):
+    # one list of detail data-row ids per rendered .rpt-page, in order
+    parts = re.split(r'<div class="rpt-page', html)[1:]
+    return [re.findall(r'data-row="(\d+)"', p) for p in parts]
+
+
 class TestPreviewPdfPaginationParity(unittest.TestCase):
     def test_preview_and_pdf_page1_cut_identical(self):
         eng = lambda: AdvancedHtmlEngine(_layout(), DATA)
@@ -74,6 +80,25 @@ class TestPreviewPdfPaginationParity(unittest.TestCase):
         rows_a = _page1_rows(AdvancedHtmlEngine(_layout({"top": 15, "right": 5, "bottom": 15, "left": 5}), DATA).render_preview())
         rows_b = _page1_rows(AdvancedHtmlEngine(_layout({"top": 15, "right": 60, "bottom": 15, "left": 60}), DATA).render_preview())
         self.assertEqual(rows_a, rows_b)
+
+    def test_long_doc_preview_equals_pdf_per_page(self):
+        # N-page safety: a >=5-page document must cut IDENTICALLY on every page
+        # (not just page 1/2) in preview and PDF -> per-page hit-layer alignment
+        # has a matching render page for every page.
+        data = {"items": [{"codigo": f"IT{i:04d}"} for i in range(350)]}
+        prev = _per_page_rows(AdvancedHtmlEngine(_layout(), data).render_preview())
+        pdf = _per_page_rows(AdvancedHtmlEngine(_layout(), data).render())
+        self.assertGreaterEqual(len(prev), 5)
+        self.assertEqual(prev, pdf)  # same page count AND same rows on each page
+
+    def test_doubling_rows_keeps_alignment_contract(self):
+        # metamorphic: doubling the data doubles pages without desyncing preview
+        # vs PDF (no accumulated drift across many pages).
+        for n in (120, 240, 480):
+            data = {"items": [{"codigo": f"IT{i:04d}"} for i in range(n)]}
+            prev = _per_page_rows(AdvancedHtmlEngine(_layout(), data).render_preview())
+            pdf = _per_page_rows(AdvancedHtmlEngine(_layout(), data).render())
+            self.assertEqual(prev, pdf, f"desync at {n} rows")
 
     def test_explicit_pageheight_is_honored(self):
         # a layout that DOES bring pageHeight overrides the 1123 default
