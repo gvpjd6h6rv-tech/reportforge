@@ -138,28 +138,36 @@
   }
 
   function _alignHitLayerToRenderedPage(content, hitLayer, firstPage) {
-    if (!firstPage) {
-      hitLayer.style.transform = '';
-      return;
-    }
-
-    const pageW = _previewPageWidth();
-    const pageH = _previewPageHeight(pageW);
-    firstPage.style.width = `${pageW}px`;
-    firstPage.style.height = `${pageH}px`;
-    firstPage.style.minHeight = `${pageH}px`;
-    firstPage.style.boxSizing = 'border-box';
-    firstPage.style.backgroundColor = '#fff';
+    // no whole-layer transform: each pv-page is placed on its own render page
+    hitLayer.style.transform = '';
+    if (!firstPage) return;
 
     _centerPreviewPageInWorkspace(content, firstPage);
 
+    // RF-PREVIEW-OVERLAY-PAGINATE-1: align EACH hit-layer .pv-page onto its
+    // matching rendered .rpt-page (the paginated content box), instead of
+    // translating the whole hit layer to page 1 only. The hit layer's own
+    // vertical stacking (content-height pv-pages, no A4 sheet sizing / no
+    // inter-page gap) diverges from the render sheets (page_h + margins + 14px
+    // gap) by page 2+, which drifted a footer element's (Resumen) selection
+    // bbox onto the wrong page. Per-page absolute placement, recomputed from
+    // the LIVE render rects on every render, keeps every page glued and is
+    // inherently zoom/scroll invariant (rects are read post-transform).
     const contentRect = content.getBoundingClientRect();
-    const pageRect = firstPage.getBoundingClientRect();
     const zoom = _previewLayerZoom();
-    const offsetX = (pageRect.left - contentRect.left) / zoom;
-    const offsetY = (pageRect.top - contentRect.top) / zoom;
-
-    hitLayer.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+    const renderPages = [...content.querySelectorAll('.preview-render-layer .rpt-page')];
+    const hitPages = [...hitLayer.querySelectorAll('.pv-page')];
+    hitLayer.querySelectorAll('.pv-page-break').forEach((b) => { b.style.display = 'none'; });
+    hitPages.forEach((pv, i) => {
+      pv.style.position = 'absolute';
+      const rp = renderPages[i];
+      if (!rp) { pv.style.display = 'none'; return; }
+      pv.style.display = '';
+      const r = rp.getBoundingClientRect();
+      pv.style.left = `${(r.left - contentRect.left) / zoom}px`;
+      pv.style.top = `${(r.top - contentRect.top) / zoom}px`;
+      pv.style.width = `${r.width / zoom}px`;
+    });
   }
 
   function _applyCleanHtml(html, content, data) {

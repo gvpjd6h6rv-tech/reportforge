@@ -49,6 +49,7 @@
     const phH = _sumH(_byType(sections, 'ph'));
     const pfH = _sumH(_byType(sections, 'pf'));
     const rhH = _sumH(_byType(sections, 'rh'));
+    const rfH = _sumH(_byType(sections, 'rf'));
     const usable = pageH - mTop - mBot - phH - pfH;
 
     const pages = [];
@@ -70,6 +71,23 @@
       count++;
     }
     pages.push({ rowStart: curStart, rowEnd: rowHeights.length });
+
+    // RF-PREVIEW-OVERLAY-PAGINATE-1: reserve the report-footer height on the
+    // last page exactly like the server (advanced_engine._pages RF-PAGINATION-
+    // RF-HEIGHT-1). Without it the hit layer could keep the footer on a page
+    // the render pushed to the next one, so page counts (and the footer's
+    // page) diverged and its selection bbox landed on the wrong page.
+    if (rfH > 0) {
+      const last = pages[pages.length - 1];
+      const availLast = usable - (pages.length === 1 ? rhH : 0);
+      let lastCy = 0;
+      for (let i = last.rowStart; i < last.rowEnd; i++) {
+        lastCy += Math.round(Number(rowHeights[i].height) || 0);
+      }
+      if (lastCy + rfH > availLast) {
+        pages.push({ rowStart: rowHeights.length, rowEnd: rowHeights.length });
+      }
+    }
 
     const totalPages = pages.length;
     return {
