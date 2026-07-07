@@ -19,9 +19,14 @@
   }
 
   function _previewPageHeight(pageW = _previewPageWidth()) {
+    // RF-GEOMETRY-UNIFY-1: page height comes from the layout (via CFG.PAGE_H,
+    // synced from layout.pageHeight on load) with the server's 1123 default as
+    // the ONLY fallback. Never pageW*sqrt(2): that assumes pageW is the true A4
+    // width and clips custom-width layouts (e.g. factura 671 -> 949 vs 1123),
+    // which cut the last page-1 row while the PDF (server page_h=1123) kept it.
     const pageH = Number(CFG?.PAGE_H);
     if (Number.isFinite(pageH) && pageH > 0) return pageH;
-    return Math.round(pageW * Math.SQRT2);
+    return 1123;
   }
 
   function _workspaceViewportWidth() {

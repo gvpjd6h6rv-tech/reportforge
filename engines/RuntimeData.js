@@ -8,6 +8,7 @@ const RuntimeData = (() => {
     return {
       GRID:            _rc ? _rc.canvas.grid : 4,
       PAGE_W:          _rc ? _rc.canvas.pageW : 754,
+      PAGE_H:          _rc ? _rc.canvas.pageH : 1123,
       MODEL_GRID:      _rc ? _rc.canvas.modelGrid : 0.01 * 96 / 25.4,
       PAGE_MARGIN_LEFT: _rc ? _rc.canvas.pageMarginLeft : 0,
       PAGE_MARGIN_TOP:  _rc ? _rc.canvas.pageMarginTop : 0,

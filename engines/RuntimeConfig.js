@@ -26,6 +26,12 @@ const _RC = Object.freeze({
 
   canvas: Object.freeze({
     pageW:         754,
+    // RF-GEOMETRY-UNIFY-1: fallback page height in px only. The source of
+    // truth is layout.pageHeight; when absent the server (advanced_engine
+    // _page_h) defaults to 1123 (A4 @96dpi), so this fallback MUST match it.
+    // NOT pageW*sqrt(2): that only holds when pageW is the true A4 width, and
+    // custom layouts (e.g. factura pageWidth=671) would derive a wrong height.
+    pageH:         1123,
     grid:          4,
     modelGrid:     0.01 * 96 / 25.4,
     pageMarginLeft: 0,

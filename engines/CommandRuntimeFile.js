@@ -4,7 +4,8 @@
   const { renderSectionsAndSelection, setStatus } = global.CommandRuntimeShared;
   let _currentLayout = {
     name: 'Factura Electrónica', version: '1.0',
-    pageWidth: typeof CFG !== 'undefined' ? CFG.PAGE_W : 754, pageSize: 'A4',
+    pageWidth: typeof CFG !== 'undefined' ? CFG.PAGE_W : 754,
+    pageHeight: typeof CFG !== 'undefined' ? CFG.PAGE_H : 1123, pageSize: 'A4',
     docType: typeof DS !== 'undefined' ? DS._docType || null : null, margins: null,
   };
   let _currentLayoutFileHandle = null;
@@ -56,6 +57,15 @@
       CFG.PAGE_W = nextWidth;
       _currentLayout.pageWidth = nextWidth;
     }
+
+    // RF-GEOMETRY-UNIFY-1: sync page HEIGHT from the layout too (source of
+    // truth), mirroring pageWidth. When the layout omits pageHeight, keep the
+    // server default (advanced_engine _page_h = 1123, seeded in CFG.PAGE_H) so
+    // Design, Preview and PDF all resolve the same page box.
+    const nextHeight = Number(layout.pageHeight);
+    CFG.PAGE_H = (Number.isFinite(nextHeight) && nextHeight > 0) ? nextHeight
+      : (Number.isFinite(Number(CFG.PAGE_H)) && Number(CFG.PAGE_H) > 0 ? CFG.PAGE_H : 1123);
+    _currentLayout.pageHeight = CFG.PAGE_H;
 
     if (layout.pageSize) _currentLayout.pageSize = layout.pageSize;
     if (layout.margins && typeof layout.margins === 'object') {
@@ -145,6 +155,7 @@
       name: _currentLayout.name || 'Reporte',
       version: _currentLayout.version || '1.0',
       pageWidth: Number.isFinite(CFG.PAGE_W) ? CFG.PAGE_W : _currentLayout.pageWidth,
+      pageHeight: Number.isFinite(CFG.PAGE_H) ? CFG.PAGE_H : _currentLayout.pageHeight,
       pageSize: _currentLayout.pageSize || 'A4',
       docType: DS._docType || _currentLayout.docType || null,
       margins: _liveMargins(),
