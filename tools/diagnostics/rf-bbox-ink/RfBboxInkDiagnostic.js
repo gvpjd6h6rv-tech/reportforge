@@ -74,6 +74,151 @@
       magnification: MAG,
     };
   }
+
+  // ── THICKNESS / RASTER INK SCAN (RF-PREVIEW-THIN-OVERLAY-1 verification) ──
+  // Answers "is the hairline fix actually visible?", not just "is the box in
+  // the right place?" (the geometry scan above only ever proved position,
+  // never stroke weight). In-page JS can read declared/computed CSS but
+  // CANNOT rasterize the compositor's real paint — that needs an external
+  // screenshot (see tools/diagnostics/rf-bbox-ink/rf_thickness_raster_probe.mjs,
+  // a Playwright script). measuredVisualPx* below is filled in by that probe;
+  // when run standalone in-browser it stays null with a note, never fabricated.
+  //
+  // status classification:
+  //   CSS_DECLARED_OK      — computed outline/guide width matches the live
+  //                          thinStrokeWidth(zoom) formula exactly.
+  //   CSS_NOT_APPLIED      — computed width is 0/missing/doesn't match at all
+  //                          (fix code not reached, wrong element, etc).
+  //   CSS_OVERRIDDEN       — a stylesheet paints its own frame via
+  //                          background-image (gradient), independent of
+  //                          outline-width — e.g. .sel-box's own 1px
+  //                          background gradient lines in elements-selection.css,
+  //                          which the outline-width fix never touches.
+  //   BROWSER_PIXEL_FLOOR  — computed width is a whole device pixel (>=1)
+  //                          while the formula asked for less than 1 — the
+  //                          browser likely floored a sub-pixel stroke.
+  //   CACHE_OR_SERVER_STALE — the live function isn't present at all (old
+  //                          build served / cache not busted).
+  let _fingerprintCache = null;
+  function _fetchFingerprint() {
+    if (typeof fetch !== 'function') return Promise.resolve(null);
+    return fetch('/runtime-fingerprint').then((r) => r.json()).then((j) => { _fingerprintCache = j; return j; }).catch(() => null);
+  }
+
+  function _liveZoom() {
+    if (typeof SelectionOverlayPreview !== 'undefined' && typeof SelectionOverlayPreview.selectionOverlayZoom === 'function') {
+      try { return SelectionOverlayPreview.selectionOverlayZoom(); } catch (_) { /* fall through */ }
+    }
+    return (typeof DS !== 'undefined' && Number(DS.zoom) > 0) ? Number(DS.zoom) : 1;
+  }
+
+  function _elementThicknessFacts(el) {
+    if (!el) return { present: false };
+    const cs = getComputedStyle(el);
+    const bg = cs.backgroundImage || '';
+    return {
+      present: true,
+      className: el.className,
+      rect: _round(el.getBoundingClientRect()),
+      inlineOutline: el.style.outline || null,
+      inlineBorder: el.style.border || null,
+      computedOutlineWidth: cs.outlineWidth,
+      computedOutlineColor: cs.outlineColor,
+      computedOutlineStyle: cs.outlineStyle,
+      computedBorderTopWidth: cs.borderTopWidth,
+      computedBackgroundImage: bg && bg !== 'none' ? bg.slice(0, 300) : null,
+      hasBackgroundGradientPaint: /gradient/i.test(bg),
+    };
+  }
+
+  function _guideElementFacts(el) {
+    if (!el) return { present: false };
+    const cs = getComputedStyle(el);
+    return {
+      present: true,
+      rect: _round(el.getBoundingClientRect()),
+      styleHeight: el.style.height || null,
+      styleWidth: el.style.width || null,
+      computedHeight: cs.height,
+      computedWidth: cs.width,
+      computedBackgroundColor: cs.backgroundColor,
+    };
+  }
+
+  // "route servida" proof: the ACTUAL loaded function source, not a version
+  // string — a stale cache/server serves an OLD function body even if the
+  // filename and even the fingerprint's file hash look right to a casual
+  // check, so this compares the executing code's own toString().
+  function _sourceFingerprint() {
+    const P = (typeof PreviewOverlayStyle !== 'undefined') ? PreviewOverlayStyle : null;
+    const L = (typeof SelectionOverlayPreviewLayers !== 'undefined') ? SelectionOverlayPreviewLayers : null;
+    return {
+      thinStrokeWidthPresent: !!(P && typeof P.thinStrokeWidth === 'function'),
+      thinStrokeWidthSource: (P && typeof P.thinStrokeWidth === 'function') ? P.thinStrokeWidth.toString() : null,
+      thinStrokeWidthAtZoom1: (P && typeof P.thinStrokeWidth === 'function') ? P.thinStrokeWidth(1) : null,
+      thinStrokeWidthAtZoom4: (P && typeof P.thinStrokeWidth === 'function') ? P.thinStrokeWidth(4) : null,
+      selectionGuideThicknessPresent: !!(L && typeof L.selectionGuideThickness === 'function'),
+      selectionGuideThicknessSource: (L && typeof L.selectionGuideThickness === 'function') ? L.selectionGuideThickness.toString() : null,
+    };
+  }
+
+  function _classifyOverlayStatus(facts, expectedWidth) {
+    if (!facts.present) return 'ELEMENT_NOT_FOUND';
+    if (facts.hasBackgroundGradientPaint) return 'CSS_OVERRIDDEN';
+    const declared = parseFloat(facts.computedOutlineWidth);
+    if (!Number.isFinite(expectedWidth)) return 'CACHE_OR_SERVER_STALE';
+    if (!Number.isFinite(declared) || declared === 0) return 'CSS_NOT_APPLIED';
+    if (Math.abs(declared - expectedWidth) < 0.01) return 'CSS_DECLARED_OK';
+    if (declared >= 1 && expectedWidth < 1) return 'BROWSER_PIXEL_FLOOR';
+    return 'CSS_NOT_APPLIED';
+  }
+
+  function thicknessScan() {
+    const zoom = _liveZoom();
+    const dpr = (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
+    const source = _sourceFingerprint();
+    const expected = source.thinStrokeWidthPresent
+      ? (typeof PreviewOverlayStyle.thinStrokeWidth === 'function' ? PreviewOverlayStyle.thinStrokeWidth(zoom) : null)
+      : null;
+
+    const selBoxEl = document.querySelector('.preview-selection-layer .sel-box, #handles-layer .sel-box');
+    const hoverBoxEl = document.querySelector('.preview-hover-box');
+    const guideH = document.querySelector('.selection-guide-h');
+    const guideV = document.querySelector('.selection-guide-v');
+    const selFacts = _elementThicknessFacts(selBoxEl);
+    const hoverFacts = _elementThicknessFacts(hoverBoxEl);
+    const RASTER_NOTE = 'raster measurement requires the external Playwright probe (tools/diagnostics/rf-bbox-ink/rf_thickness_raster_probe.mjs) — in-page JS cannot read the compositor paint, only declared/computed CSS.';
+
+    return {
+      zoom,
+      devicePixelRatio: dpr,
+      expectedCssWidth: expected,
+      source,
+      runtimeFingerprintCached: _fingerprintCache,
+      selectionBox: Object.assign({}, selFacts, {
+        expectedCssWidth: expected,
+        status: _classifyOverlayStatus(selFacts, expected),
+        measuredVisualPxTop: null, measuredVisualPxLeft: null, measuredVisualPxRight: null, measuredVisualPxBottom: null,
+        measuredVisualNote: RASTER_NOTE,
+      }),
+      hoverBox: Object.assign({}, hoverFacts, {
+        expectedCssWidth: expected,
+        status: _classifyOverlayStatus(hoverFacts, expected),
+        measuredVisualPxTop: null, measuredVisualPxLeft: null, measuredVisualPxRight: null, measuredVisualPxBottom: null,
+        measuredVisualNote: RASTER_NOTE,
+      }),
+      guideLines: {
+        countH: document.querySelectorAll('.selection-guide-h').length,
+        countV: document.querySelectorAll('.selection-guide-v').length,
+        sampleH: _guideElementFacts(guideH),
+        sampleV: _guideElementFacts(guideV),
+        expectedCssWidth: expected,
+        guideVisualPxNote: RASTER_NOTE,
+        browserPixelFloorNote: 'if the raster probe measures exactly 1 device px regardless of the CSS value, classify BROWSER_PIXEL_FLOOR — some browsers refuse to rasterize a sub-device-pixel stroke and round up.',
+      },
+    };
+  }
+
   function _export() {
     const hover = _events.filter((e) => e && e.kind === 'hover');
     const selection = _events.filter((e) => e && e.kind === 'selection');
@@ -81,6 +226,7 @@
       lastHoverTarget: _lastHoverTarget,
       selectedElementIds: _selIds(),
       blueBoxDomNow: _blueBoxes(),
+      thicknessScan: thicknessScan(),
       counts: { total: _events.length, hover: hover.length, selection: selection.length },
       hoverReports: hover,        // kind:hover only — hoverOverlay vs hover renderInk
       selectionReports: selection, // kind:selection only — sel-box vs selected renderInk
@@ -139,6 +285,12 @@
     const footer = document.createElement('div');
     footer.style.cssText = 'flex:0 0 auto;display:flex;gap:6px;padding:6px 8px;border-top:1px solid #555';
     footer.appendChild(_mkBtn('EXPORT JSON', '#06c', _export));
+    footer.appendChild(_mkBtn('THICKNESS SCAN', '#b8860b', () => {
+      const scan = thicknessScan();
+      console.log('[RF_BBOX_INK][THICKNESS]', scan);
+      const p = document.getElementById('rf-bbox-out');
+      if (p) p.textContent = JSON.stringify(scan, null, 2);
+    }));
     footer.appendChild(_mkBtn('CLEAR', '#a33', () => { _events.length = 0; _clear(); const p = document.getElementById('rf-bbox-out'); if (p) p.textContent = 'cleared'; }));
     body.appendChild(pre); body.appendChild(footer);
     panel.appendChild(header); panel.appendChild(body);
@@ -408,6 +560,16 @@
       previewRect_delegates: /getPreviewVisualBBox/.test(String(P.previewRect || '')),
     });
   } catch (_) { /* noop */ }
+  // RF-PREVIEW-THIN-OVERLAY-1: cache runtime-fingerprint once at load so
+  // THICKNESS SCAN / EXPORT JSON can prove which SHA is actually serving —
+  // "route servida" proof, not just a filename/version string.
+  _fetchFingerprint().then(() => {
+    console.log('[RF_BBOX_INK][THICKNESS] initial scan', thicknessScan());
+  });
+  // Exposed so an external driver (e.g. the Playwright raster probe,
+  // rf_thickness_raster_probe.mjs) can call the exact same in-page scan
+  // instead of re-deriving CSS facts from outside.
+  global.RfBboxInkDiagnostic = { thicknessScan, fetchFingerprint: _fetchFingerprint };
   if (document.body) _buildUi(); else document.addEventListener('DOMContentLoaded', _buildUi);
-  console.log('[RF_BBOX_INK] active — hover/select an element (RED=visual DOM, BLUE=overlay). Buttons: EXPORT/CLEAR BBOX JSON');
+  console.log('[RF_BBOX_INK] active — hover/select an element (RED=visual DOM, BLUE=overlay). Buttons: EXPORT/CLEAR/THICKNESS SCAN BBOX JSON');
 })(typeof window !== 'undefined' ? window : globalThis);
