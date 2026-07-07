@@ -35,6 +35,11 @@ def _sheet_min_height(html):
     return int(re.search(r"\.rpt-sheet\{[^}]*min-height:(\d+)px", html).group(1))
 
 
+def _page_content_height(html):
+    # the preview-only .rpt-page rule carries the content-box min-height
+    return int(re.search(r"\.rpt-page\{min-height:(\d+)px", html).group(1))
+
+
 def _layout(margins):
     return {
         "name": "m-test",
@@ -77,10 +82,28 @@ class TestPreviewMargins(unittest.TestCase):
         pdf = AdvancedHtmlEngine(_layout(m), DATA).render()
         self.assertEqual(_preview_padding(prev), _pdf_at_page_margin(pdf))
 
-    def test_increasing_top_increases_sheet_height(self):
-        small = AdvancedHtmlEngine(_layout({**DEF, "top": 5}), DATA).render_preview()
-        big = AdvancedHtmlEngine(_layout({**DEF, "top": 60}), DATA).render_preview()
-        self.assertGreater(_sheet_min_height(big), _sheet_min_height(small))
+    def test_sheet_is_a4_regardless_of_margins(self):
+        # RF-PREVIEW-MARGINS-2: sheet is a full A4 page; margins live INSIDE it
+        # (like PDF @page), so the sheet height is constant.
+        a = AdvancedHtmlEngine(_layout({**DEF, "top": 5, "bottom": 5}), DATA).render_preview()
+        b = AdvancedHtmlEngine(_layout({**DEF, "top": 60, "bottom": 60}), DATA).render_preview()
+        self.assertEqual(_sheet_min_height(a), _sheet_min_height(b))
+
+    def test_increasing_bottom_shrinks_content_area(self):
+        small_b = AdvancedHtmlEngine(_layout({**DEF, "bottom": 5}), DATA).render_preview()
+        big_b = AdvancedHtmlEngine(_layout({**DEF, "bottom": 60}), DATA).render_preview()
+        self.assertLess(_page_content_height(big_b), _page_content_height(small_b))
+
+    def test_bottom_zero_gives_largest_content_area(self):
+        # bottom=0 -> no bottom inset eaten -> content box is taller
+        b0 = AdvancedHtmlEngine(_layout({**DEF, "bottom": 0}), DATA).render_preview()
+        b40 = AdvancedHtmlEngine(_layout({**DEF, "bottom": 40}), DATA).render_preview()
+        self.assertGreater(_page_content_height(b0), _page_content_height(b40))
+
+    def test_top_change_does_not_alter_bottom_margin(self):
+        a = _preview_padding(AdvancedHtmlEngine(_layout({**DEF, "top": 5, "bottom": 20}), DATA).render_preview())
+        b = _preview_padding(AdvancedHtmlEngine(_layout({**DEF, "top": 50, "bottom": 20}), DATA).render_preview())
+        self.assertEqual(a[2], b[2])  # bottom (index 2) unchanged when top changes
 
     def test_per_side_margins_render_distinctly(self):
         m = {"top": 5, "right": 40, "bottom": 5, "left": 10}

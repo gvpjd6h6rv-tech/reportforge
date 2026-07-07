@@ -90,15 +90,25 @@ class AdvancedHtmlEngine:
             r_px = round(margins["right"] * _MM)
             t_px = round(margins["top"] * _MM)
             b_px = round(margins["bottom"] * _MM)
+            # RF-PREVIEW-MARGINS-2 (bottom parity): the sheet is a full A4 page
+            # (page_h) with margins INSIDE it, exactly like the PDF @page (whose
+            # content box is page_h - top - bottom; pagination reserves the same
+            # via `usable`). The earlier sheet_h = page_h + t + b made the sheet
+            # taller than A4 while .rpt-page still filled a full page_h, adding
+            # ~(top+bottom) of extra bottom space vs. the PDF. Now the .rpt-page
+            # content box is page_h - top - bottom, so the bottom margin equals
+            # the PDF's. Width keeps margins as an outer inset (elements span the
+            # full page_width horizontally, unlike the vertical usable area).
             sheet_w = page_width + l_px + r_px
-            sheet_h = self._page_h + t_px + b_px
+            sheet_h = self._page_h
+            page_content_h = max(0, self._page_h - t_px - b_px)
             page_shadow = (
                 f".rpt-sheet{{box-sizing:border-box;background:#fff;"
                 f"box-shadow:0 2px 8px rgba(0,0,0,.25);margin:14px auto;"
                 f"width:{sheet_w}px;min-height:{sheet_h}px;"
                 f"padding:{margins['top']}mm {margins['right']}mm "
                 f"{margins['bottom']}mm {margins['left']}mm}}"
-                f".rpt-page{{min-height:{self._page_h}px;background:transparent}}"
+                f".rpt-page{{min-height:{page_content_h}px;background:transparent}}"
             )
         else:
             page_shadow = ""
