@@ -161,9 +161,11 @@ test('TANDA 7 — KB-001..020', { timeout: 300000 }, async (t) => {
       await selectById(page, 'e101');
       const beforeX = await page.evaluate(() => DS.getElementById('e101').x);
       await focusCanvas(page);
-      // Usar Shift+ArrowRight (paso 10) para garantizar movimiento a pesar del snap de cuadrícula
-      // snap(4 + 10) = round(14/4)*4 = 4*4 = 16
-      await page.keyboard.press('Shift+ArrowRight');
+      // Plain ArrowRight (Shift+Arrow no longer nudges — see KB-009, it
+      // resizes now for Crystal Reports parity). Plain nudge does not
+      // grid-snap (KeyboardEngine.js's _nudgeSelected writes el.x+dx
+      // directly), so a single press reliably moves by exactly 1.
+      await page.keyboard.press('ArrowRight');
       await page.waitForTimeout(180);
       const afterX = await page.evaluate(() => DS.getElementById('e101').x);
       assert.ok(afterX >= 0, `KB-008: x debe ser >= 0 (got=${afterX})`);
@@ -171,18 +173,25 @@ test('TANDA 7 — KB-001..020', { timeout: 300000 }, async (t) => {
     });
 
     // ── KB-009 ────────────────────────────────────────────────────────────
-    // cubre: design | valida: DS/modelo (Shift+Arrow usa paso mayor que Arrow simple)
-    await t.test('KB-009 shift-arrow nudging uses alternate step if supported', async () => {
+    // cubre: design | valida: DS/modelo (RF-CR-KEYBOARD-RESIZE-1 — Crystal
+    // Reports parity: Shift+Arrow resizes the selected element instead of
+    // the old "nudge by 10 units", which contradicted CR's own contract and
+    // is deliberately retired — see engines/KeyboardEngine.js's
+    // _resizeSelected and reportforge/tests/design_keyboard_resize_shift_arrow.test.mjs
+    // for the full behavior coverage; this live test only proves the
+    // contract survives a real browser + real server, not every edge case)
+    await t.test('KB-009 shift-arrow resizes the selected element (width grows, x/y unchanged)', async () => {
       await reloadRuntime(page, server.baseUrl);
       await selectById(page, 'e101');
-      const originalX = await page.evaluate(() => DS.getElementById('e101').x);
+      const before = await page.evaluate(() => { const e = DS.getElementById('e101'); return { x: e.x, y: e.y, w: e.w, h: e.h }; });
       await focusCanvas(page);
-      // Paso Shift = 10 → snap(4+10)=16; delta esperado >= 4 (al menos 1 grid unit)
       await page.keyboard.press('Shift+ArrowRight');
       await page.waitForTimeout(180);
-      const shiftX = await page.evaluate(() => DS.getElementById('e101').x);
-      const shiftDelta = shiftX - originalX;
-      assert.ok(shiftDelta >= 4, `KB-009: Shift+ArrowRight debe mover >= 4 unidades de modelo (delta=${shiftDelta})`);
+      const after = await page.evaluate(() => { const e = DS.getElementById('e101'); return { x: e.x, y: e.y, w: e.w, h: e.h }; });
+      assert.equal(after.x, before.x, `KB-009: Shift+ArrowRight no debe mover x (before=${before.x}, after=${after.x})`);
+      assert.equal(after.y, before.y, `KB-009: Shift+ArrowRight no debe mover y (before=${before.y}, after=${after.y})`);
+      assert.ok(after.w > before.w, `KB-009: Shift+ArrowRight debe agrandar w (before=${before.w}, after=${after.w})`);
+      assert.equal(after.h, before.h, `KB-009: Shift+ArrowRight no debe cambiar h (before=${before.h}, after=${after.h})`);
     });
 
     // ── KB-010 ────────────────────────────────────────────────────────────
@@ -192,10 +201,11 @@ test('TANDA 7 — KB-001..020', { timeout: 300000 }, async (t) => {
       await selectById(page, 'e101');
       const originalX = await page.evaluate(() => DS.getElementById('e101').x);
       await focusCanvas(page);
-      await page.keyboard.press('Shift+ArrowRight');
+      // Plain ArrowRight — Shift+Arrow no longer nudges x (see KB-009).
+      await page.keyboard.press('ArrowRight');
       await page.waitForTimeout(180);
       const movedX = await page.evaluate(() => DS.getElementById('e101').x);
-      assert.ok(movedX > originalX, `KB-010: pre-undo: Shift+ArrowRight debe mover x (original=${originalX}, moved=${movedX})`);
+      assert.ok(movedX > originalX, `KB-010: pre-undo: ArrowRight debe mover x (original=${originalX}, moved=${movedX})`);
       await page.keyboard.press('Control+z');
       await page.waitForTimeout(250);
       const undoneX = await page.evaluate(() => DS.getElementById('e101').x);
@@ -209,10 +219,11 @@ test('TANDA 7 — KB-001..020', { timeout: 300000 }, async (t) => {
       await selectById(page, 'e101');
       const originalX = await page.evaluate(() => DS.getElementById('e101').x);
       await focusCanvas(page);
-      await page.keyboard.press('Shift+ArrowRight');
+      // Plain ArrowRight — Shift+Arrow no longer nudges x (see KB-009).
+      await page.keyboard.press('ArrowRight');
       await page.waitForTimeout(180);
       const movedX = await page.evaluate(() => DS.getElementById('e101').x);
-      assert.ok(movedX > originalX, 'KB-011: pre-undo: Shift+ArrowRight debe mover x');
+      assert.ok(movedX > originalX, 'KB-011: pre-undo: ArrowRight debe mover x');
       await page.keyboard.press('Control+z');
       await page.waitForTimeout(200);
       assert.equal(await page.evaluate(() => DS.getElementById('e101').x), originalX, 'KB-011: Ctrl+Z debe deshacer');
@@ -336,7 +347,7 @@ test('TANDA 7 — KB-001..020', { timeout: 300000 }, async (t) => {
       await reloadRuntime(page, server.baseUrl);
       await selectById(page, 'e101');
       await focusCanvas(page);
-      // Secuencia rápida: move → undo → undo → redo
+      // Secuencia rápida: resize (Shift+Arrow, see KB-009) → undo → undo → redo
       await page.keyboard.press('Shift+ArrowRight');
       await page.waitForTimeout(80);
       await page.keyboard.press('Control+z');

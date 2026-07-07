@@ -14,7 +14,10 @@
  *   Ctrl+A        → select all
  *   Delete/Bksp   → delete selected
  *   Escape        → deselect / cancel drag
- *   Arrow keys    → nudge (1 model unit; +Shift = 10 units)
+ *   Arrow keys    → nudge (1 model unit)
+ *   Shift+Arrow   → resize selected element(s) (1 model unit; Right/Down
+ *                   grow, Left/Up shrink; x/y unchanged — Crystal Reports
+ *                   parity, replaces the old "nudge 10 units" behavior)
  *   Ctrl++/-      → zoom in/out
  *   Ctrl+0        → zoom reset
  *   Ctrl+G        → toggle grid
@@ -244,19 +247,96 @@ const KeyboardEngine = (() => {
 
   function _registerNudgeShortcuts() {
     const NUDGE = 1;
-    const NUDGE_BIG = 10;
     [
       ['arrowleft',       -NUDGE,     0],
       ['arrowright',       NUDGE,     0],
       ['arrowup',          0,    -NUDGE],
       ['arrowdown',        0,     NUDGE],
-      ['shift+arrowleft', -NUDGE_BIG, 0],
-      ['shift+arrowright', NUDGE_BIG, 0],
-      ['shift+arrowup',    0, -NUDGE_BIG],
-      ['shift+arrowdown',  0,  NUDGE_BIG],
     ].forEach(([k, dx, dy]) => {
       _nudgeCombos.add(k);
       _register(k, () => _nudgeSelected(dx, dy));
+    });
+  }
+
+  // RF-CR-KEYBOARD-RESIZE-1: Crystal Reports parity — Shift+Arrow resizes
+  // the selected element(s) (Right/Down grow, Left/Up shrink; x/y never
+  // change, growth/shrink is anchored at the top-left corner) instead of
+  // RF's earlier "nudge by 10 units" behavior, which contradicted that
+  // contract and is retired (deliberate decision, not an oversight — see
+  // reportforge/tests/design_keyboard_resize_shift_arrow.test.mjs and the
+  // updated KB-009 in tanda7.test.mjs). Mirrors _nudgeSelected's structure
+  // and reuses its SAME coalesced-history/keyup-gesture-end machinery
+  // (_nudgeCombos/_scheduleNudgeCommit/_onNudgeKeyUp) — a resize is just
+  // another arrow-key gesture as far as that machinery cares, only the
+  // mutation (w/h instead of x/y) differs.
+  //
+  // Canonical write path, same one CommandRuntimeSelection.js's sameWidth/
+  // sameHeight already use: DS.updateElementLayout(id, {w|h}, source) then
+  // _canonicalCanvasWriter().updateElementPosition(id) (despite the name,
+  // it syncs left/top/width/height together — confirmed in
+  // CanvasLayoutElements.js).
+  //
+  // Clamp is intentionally NOT SelectionInteractionMotion's own
+  // _clampRectToSection (the one mouse-drag resize uses) — that helper runs
+  // x/y/w/h ALL through SelectionState.snap(), and this session's live
+  // DS.snapToGrid=true with a tiny MODEL_GRID (~0.0378) makes snap() drift
+  // even values that shouldn't move at all (verified live: snap(4) →
+  // 4.0063, snap(16) → 15.9874 — confirmed mouse-drag resize from the 'e'
+  // handle exhibits the exact same x/y/h drift on this element, so it's a
+  // pre-existing property of that helper, not something this introduces).
+  // The contract here is stricter — "x/y NO cambian" is an explicit,
+  // tested requirement — so only the ONE dimension actually being resized
+  // is touched, floored at MIN_EL_W/MIN_EL_H and capped at the page width /
+  // section height (same limits _clampRectToSection enforces), with no
+  // snap() round-trip and the other dimension (and x/y) passed through
+  // untouched.
+  function _resizeSelected(dw, dh) {
+    if (typeof DS === 'undefined' || DS.previewMode) return; // design-only — Preview must never edit
+    const sel = [...DS.selection];
+    if (!sel.length) return;
+    sel.forEach(id => {
+      const el = DS.getElementById(id);
+      if (!el) return;
+      const patch = {};
+      if (dw !== 0) {
+        const pageWidth = Number(CFG.PAGE_W) || Infinity;
+        patch.w = Math.max(CFG.MIN_EL_W, Math.min(el.w + dw, pageWidth));
+      }
+      if (dh !== 0) {
+        const section = (typeof DS.getSection === 'function') ? DS.getSection(el.sectionId) : null;
+        const sectionHeight = (section && Number(section.height) > 0) ? Number(section.height) : Infinity;
+        patch.h = Math.max(CFG.MIN_EL_H, Math.min(el.h + dh, sectionHeight));
+      }
+      if (typeof DS.updateElementLayout === 'function') {
+        DS.updateElementLayout(el.id, patch, 'KeyboardEngine.resize');
+        const writer = (typeof _canonicalCanvasWriter === 'function') ? _canonicalCanvasWriter() : null;
+        if (writer && writer.updateElementPosition) writer.updateElementPosition(el.id);
+      } else {
+        Object.assign(el, patch);
+      }
+    });
+    _renderHandlesAfterNudge();
+    if (sel.length === 1) {
+      const el = DS.getElementById(sel[0]);
+      if (el) {
+        const sbSize = document.getElementById('sb-size');
+        if (sbSize) { sbSize.textContent = `W: ${el.w}  H: ${el.h}`; sbSize.style.display = 'flex'; }
+        if (typeof PropertiesEngine !== 'undefined' && PropertiesEngine.updatePositionFields) PropertiesEngine.updatePositionFields(el);
+      }
+    }
+    _scheduleNudgeCommit();
+  }
+
+  function _registerResizeShortcuts() {
+    const STEP = 1;
+    [
+      ['shift+arrowright',  STEP,     0],
+      ['shift+arrowleft',  -STEP,     0],
+      ['shift+arrowdown',   0,     STEP],
+      ['shift+arrowup',     0,    -STEP],
+    ].forEach(([k, dw, dh]) => {
+      _nudgeCombos.add(k);
+      _register(k, () => _resizeSelected(dw, dh));
     });
   }
 
@@ -313,6 +393,7 @@ const KeyboardEngine = (() => {
     _register('delete', _deleteSelected);
     _register('backspace', _deleteSelected);
     _registerNudgeShortcuts();
+    _registerResizeShortcuts();
     _registerZoomShortcuts();
     _registerGridShortcuts();
     _registerFileShortcuts();
