@@ -101,6 +101,8 @@ const SelectionOverlayPreview = (() => {
     selectionGuideThickness: L.selectionGuideThickness,
     appendSelectionGuide: L.appendSelectionGuide,
     renderSelectionGuides: L.renderSelectionGuides,
+    paintRulerHighlight: L.paintRulerHighlight,
+    clearRulerHighlight: L.clearRulerHighlight,
   };
 })();
 

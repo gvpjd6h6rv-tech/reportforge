@@ -61,6 +61,7 @@ const SelectionOverlay = (() => {
       window.__rfBranchAudit.push({ branch, selectedIds, renderSelectionIds: [...renderSelectionIds] });
     }
     if (branch === 'none') {
+      _preview().clearRulerHighlight();
       _uiTrace('select', { phase: 'after', before: beforeUI, after: _uiSnapshot('#handles-layer'), event: DS.previewMode ? 'preview-select-none' : 'design-select-none', source: 'SelectionOverlay.renderHandles', selection: [], previewMode: !!DS.previewMode, focus: '#handles-layer' });
       return;
     }
@@ -78,6 +79,11 @@ const SelectionOverlay = (() => {
     } else {
       R.renderMultiSelection(layer, selectedElements, showGuides);
     }
+    // RF-CR-RULER-HIGHLIGHT-1: persistent-while-selected (not gesture-gated
+    // like showGuides above) — one call site for both branches and both
+    // Design/Preview, matching the box that was just rendered into `layer`.
+    const _selBoxEl = layer.querySelector(':scope > .sel-box');
+    if (_selBoxEl) _preview().paintRulerHighlight(_selBoxEl.getBoundingClientRect());
     _uiTrace('select', { phase: 'after', before: beforeUI, after: _uiSnapshot('#handles-layer .sel-box'), event: DS.previewMode ? 'preview-select' : 'design-select', source: 'SelectionOverlay.renderHandles', selection: [...S.selectedIds()], previewMode: !!DS.previewMode, focus: '#handles-layer .sel-box' });
     engine.updateSelectionInfo();
   }

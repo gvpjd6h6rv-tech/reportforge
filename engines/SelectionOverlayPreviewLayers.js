@@ -74,7 +74,53 @@ const SelectionOverlayPreviewLayers = (() => {
   // not the hairline itself.
   const GUIDE_HIT_PAD = 3;
 
-  function appendSelectionGuide(layer, rect, axis, edge) {
+  // RF-CR-GUIDE-EXTENT-1: Crystal's guides run the full visible workspace,
+  // not just the selected element's own bbox — before this, `left:0;
+  // width:100%`/`top:0;height:100%` were 100% of `layer` itself, which in
+  // Preview is sized to the PAGE content div, not the scrollable workspace
+  // viewport, so guides fell short of the rulers/right edge whenever the
+  // workspace was wider than the page. #workspace (flex:1, the single
+  // scrollable container shared by Design and Preview — see canvas.css) is
+  // the visible-bounds ground truth for BOTH modes: its own edges already
+  // land exactly at the ruler (flex sibling of #ruler-v) and exactly before
+  // the field-explorer panel (flex:1 fills the remaining row) with no extra
+  // lookup needed. The synthetic vertical/horizontal scrollbars are
+  // position:fixed overlays (not flex siblings, so they don't shrink
+  // #workspace's own box) — their reserved space is subtracted explicitly
+  // so guides stop before the scrollbar, not under it.
+  function _scrollbarReserve(axis) {
+    if (typeof document === 'undefined') return 0;
+    const track = document.querySelector(`.rf-scrollbar-track--${axis}`);
+    if (!track || getComputedStyle(track).display === 'none') return 0;
+    const r = track.getBoundingClientRect();
+    return axis === 'v' ? r.width : r.height;
+  }
+
+  // Converts #workspace's visible screen rect into `layer`-local (pre-
+  // transform) units — same conversion SelectionOverlayPreview.
+  // domRectRelativeToLayer already uses for element rects, applied here to
+  // the workspace viewport instead. Returns null if #workspace/layer aren't
+  // resolvable (e.g. a non-browser test harness) so callers can fall back
+  // to the old 100%-of-layer behavior instead of drawing a broken 0-size box.
+  function _visibleWorkspaceBoundsLocal(layer, zoom) {
+    if (typeof document === 'undefined' || !layer) return null;
+    const ws = document.getElementById('workspace');
+    if (!ws || typeof ws.getBoundingClientRect !== 'function') return null;
+    if (typeof layer.getBoundingClientRect !== 'function') return null;
+    const wsRect = ws.getBoundingClientRect();
+    const layerRect = layer.getBoundingClientRect();
+    const z = Number(zoom) > 0 ? Number(zoom) : 1;
+    const vReserve = _scrollbarReserve('v');
+    const hReserve = _scrollbarReserve('h');
+    return {
+      left: (wsRect.left - layerRect.left) / z,
+      top: (wsRect.top - layerRect.top) / z,
+      right: (wsRect.right - vReserve - layerRect.left) / z,
+      bottom: (wsRect.bottom - hReserve - layerRect.top) / z,
+    };
+  }
+
+  function appendSelectionGuide(layer, rect, axis, edge, bounds) {
     const guide = document.createElement('div');
     const thickness = selectionGuideThickness();
     const color = 'rgba(255, 32, 32, 0.9)';
@@ -84,14 +130,16 @@ const SelectionOverlayPreviewLayers = (() => {
     guide.style.pointerEvents = 'none';
     guide.style.zIndex = '27';
     if (axis === 'h') {
-      guide.style.left = '0px';
-      guide.style.width = '100%';
+      const spanW = bounds ? bounds.right - bounds.left : NaN;
+      guide.style.left = `${bounds ? bounds.left : 0}px`;
+      guide.style.width = spanW > 0 ? `${spanW}px` : '100%';
       guide.style.top = `${edge - GUIDE_HIT_PAD}px`;
       guide.style.height = `${GUIDE_HIT_PAD * 2}px`;
       guide.style.background = `linear-gradient(${color},${color}) center / 100% ${thickness}px no-repeat`;
     } else {
-      guide.style.top = '0px';
-      guide.style.height = '100%';
+      const spanH = bounds ? bounds.bottom - bounds.top : NaN;
+      guide.style.top = `${bounds ? bounds.top : 0}px`;
+      guide.style.height = spanH > 0 ? `${spanH}px` : '100%';
       guide.style.left = `${edge - GUIDE_HIT_PAD}px`;
       guide.style.width = `${GUIDE_HIT_PAD * 2}px`;
       guide.style.background = `linear-gradient(${color},${color}) center / ${thickness}px 100% no-repeat`;
@@ -107,13 +155,75 @@ const SelectionOverlayPreviewLayers = (() => {
   // correctly. Removed: rect.top+rect.height and rect.left+rect.width are
   // themselves already the box's bottom/right edge, nothing to subtract.
   function renderSelectionGuides(layer, rects) {
+    const zoom = globalThis.SelectionOverlayPreview.selectionOverlayZoom();
+    const bounds = _visibleWorkspaceBoundsLocal(layer, zoom);
     rects.forEach(rect => {
       if (!rect) return;
-      appendSelectionGuide(layer, rect, 'h', rect.top);
-      appendSelectionGuide(layer, rect, 'h', rect.top + rect.height);
-      appendSelectionGuide(layer, rect, 'v', rect.left);
-      appendSelectionGuide(layer, rect, 'v', rect.left + rect.width);
+      appendSelectionGuide(layer, rect, 'h', rect.top, bounds);
+      appendSelectionGuide(layer, rect, 'h', rect.top + rect.height, bounds);
+      appendSelectionGuide(layer, rect, 'v', rect.left, bounds);
+      appendSelectionGuide(layer, rect, 'v', rect.left + rect.width, bounds);
     });
+  }
+
+  // RF-CR-RULER-HIGHLIGHT-1: Crystal shades the top ruler orange across the
+  // selected element's width, and the left ruler orange across its height —
+  // in BOTH Design and Preview, for any selection (not gesture-gated like
+  // the guide lines above — CR-PARITY-1 keeps that restriction, this is a
+  // separate, persistent-while-selected indicator). One shared
+  // implementation for both modes: #ruler-h-row/#ruler-v are the SAME
+  // elements regardless of DS.previewMode, so there is nothing to branch on.
+  // Positioned from the box's own SCREEN rect (getBoundingClientRect, post-
+  // transform) rather than the layer-local pre-transform rect used above —
+  // the rulers live outside the zoomed #canvas-layer/#viewport subtree
+  // entirely, so this is a plain screen-to-screen offset, no zoom division.
+  const RULER_HIGHLIGHT_CLASS = 'rf-ruler-highlight';
+  const RULER_HIGHLIGHT_COLOR = 'rgba(255, 153, 0, 0.35)';
+
+  function _rulerHighlightEl(hostId, side) {
+    if (typeof document === 'undefined') return null;
+    const host = document.getElementById(hostId);
+    if (!host) return null;
+    const cls = `${RULER_HIGHLIGHT_CLASS}-${side}`;
+    let el = host.querySelector(`:scope > .${cls}`);
+    if (!el) {
+      el = document.createElement('div');
+      el.className = `${RULER_HIGHLIGHT_CLASS} ${cls}`;
+      el.style.position = 'absolute';
+      el.style.pointerEvents = 'none';
+      el.style.background = RULER_HIGHLIGHT_COLOR;
+      el.style.zIndex = '5';
+      host.appendChild(el);
+    }
+    return { host, el };
+  }
+
+  function paintRulerHighlight(screenRect) {
+    if (typeof document === 'undefined' || !screenRect) return;
+    const h = _rulerHighlightEl('ruler-h-row', 'h');
+    if (h) {
+      const hostRect = h.host.getBoundingClientRect();
+      h.el.style.left = `${screenRect.left - hostRect.left}px`;
+      h.el.style.width = `${screenRect.width}px`;
+      h.el.style.top = '0px';
+      h.el.style.height = '100%';
+    }
+    const v = _rulerHighlightEl('ruler-v', 'v');
+    if (v) {
+      const hostRect = v.host.getBoundingClientRect();
+      v.el.style.top = `${screenRect.top - hostRect.top}px`;
+      v.el.style.height = `${screenRect.height}px`;
+      v.el.style.left = '0px';
+      v.el.style.width = '100%';
+    }
+  }
+
+  function clearRulerHighlight() {
+    if (typeof document === 'undefined') return;
+    const h = document.querySelector(`#ruler-h-row > .${RULER_HIGHLIGHT_CLASS}-h`);
+    const v = document.querySelector(`#ruler-v > .${RULER_HIGHLIGHT_CLASS}-v`);
+    if (h) h.remove();
+    if (v) v.remove();
   }
 
   return {
@@ -122,6 +232,8 @@ const SelectionOverlayPreviewLayers = (() => {
     selectionGuideThickness,
     appendSelectionGuide,
     renderSelectionGuides,
+    paintRulerHighlight,
+    clearRulerHighlight,
   };
 })();
 
