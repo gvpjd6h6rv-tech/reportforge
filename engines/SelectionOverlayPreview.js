@@ -101,6 +101,7 @@ const SelectionOverlayPreview = (() => {
     selectionGuideThickness: L.selectionGuideThickness,
     appendSelectionGuide: L.appendSelectionGuide,
     renderSelectionGuides: L.renderSelectionGuides,
+    clearRulerGuideStubs: L.clearRulerGuideStubs,
     paintRulerHighlight: L.paintRulerHighlight,
     clearRulerHighlight: L.clearRulerHighlight,
   };

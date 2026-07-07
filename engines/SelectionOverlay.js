@@ -62,6 +62,7 @@ const SelectionOverlay = (() => {
     }
     if (branch === 'none') {
       _preview().clearRulerHighlight();
+      _preview().clearRulerGuideStubs();
       _uiTrace('select', { phase: 'after', before: beforeUI, after: _uiSnapshot('#handles-layer'), event: DS.previewMode ? 'preview-select-none' : 'design-select-none', source: 'SelectionOverlay.renderHandles', selection: [], previewMode: !!DS.previewMode, focus: '#handles-layer' });
       return;
     }
@@ -74,6 +75,7 @@ const SelectionOverlay = (() => {
     }
     if (DS.previewMode && !previewOverlayVisible && !hasPreviewSelection) { engine.updateSelectionInfo(); return; }
     const showGuides = _shouldShowGuides(engine);
+    if (!showGuides) _preview().clearRulerGuideStubs();
     if (branch === 'single') {
       R.renderSingleSelection(engine, layer, renderSelectionIds[0], showGuides);
     } else {

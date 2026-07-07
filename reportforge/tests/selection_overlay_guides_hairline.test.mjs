@@ -37,6 +37,18 @@ function makeNode(tag = 'div') {
       return this.children.find((c) => String(c.className).split(' ').includes(cls)) || null;
     },
     remove() {},
+    // Minimal stand-in: parses this node's own inline left/top/width/height
+    // (set as plain px strings elsewhere in this mock) into a rect — good
+    // enough for code that only needs the guide's own on-screen position
+    // (e.g. the ruler-guide-stub crossing), not real layout/scroll/transform.
+    getBoundingClientRect() {
+      const num = (v) => Number.parseFloat(v) || 0;
+      const left = num(node.style.left);
+      const top = num(node.style.top);
+      const width = num(node.style.width);
+      const height = num(node.style.height);
+      return { left, top, width, height, right: left + width, bottom: top + height };
+    },
   };
   return node;
 }

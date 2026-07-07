@@ -31,7 +31,36 @@ function makeRectEl(rect, { display = 'block' } = {}) {
   return el;
 }
 
-function loadRuntime({ workspaceRect, scrollbarV, scrollbarH, zoom = 1 }) {
+// For elements created via document.createElement() — no rect is known
+// upfront, so getBoundingClientRect derives from whatever left/top/width/
+// height this mock's own code later assigns as plain px strings (same
+// trick used in selection_overlay_guides_hairline.test.mjs's makeNode).
+function makeDynamicEl() {
+  const children = [];
+  const node = {
+    style: {},
+    className: '',
+    dataset: {},
+    children,
+    appendChild(child) { children.push(child); return child; },
+    querySelector(sel) {
+      const cls = sel.replace(':scope > .', '').replace('.', '');
+      return children.find((c) => String(c.className).split(' ').includes(cls)) || null;
+    },
+    remove() {},
+    getBoundingClientRect() {
+      const num = (v) => Number.parseFloat(v) || 0;
+      const left = num(node.style.left);
+      const top = num(node.style.top);
+      const width = num(node.style.width);
+      const height = num(node.style.height);
+      return { left, top, width, height, right: left + width, bottom: top + height };
+    },
+  };
+  return node;
+}
+
+function loadRuntime({ workspaceRect, scrollbarV, scrollbarH, zoom = 1, rulerHCanvasRect }) {
   const registry = new Map();
   const ws = makeRectEl(workspaceRect);
   registry.set('workspace', ws);
@@ -40,6 +69,7 @@ function loadRuntime({ workspaceRect, scrollbarV, scrollbarH, zoom = 1 }) {
   registry.set('ruler-h-row', rulerHRow);
   const rulerV = makeRectEl({ left: 0, top: 22, right: 20, bottom: 622, width: 20, height: 600 });
   registry.set('ruler-v', rulerV);
+  if (rulerHCanvasRect) registry.set('ruler-h-canvas', makeRectEl(rulerHCanvasRect));
 
   const scrollbarTrackV = scrollbarV
     ? makeRectEl(scrollbarV.rect, { display: scrollbarV.visible ? 'block' : 'none' })
@@ -60,7 +90,19 @@ function loadRuntime({ workspaceRect, scrollbarV, scrollbarH, zoom = 1 }) {
         if (m) { const host = registry.get(m[1]); return host ? host.querySelector(m[2]) : null; }
         return null;
       },
-      createElement: () => makeRectEl({ left: 0, top: 0, right: 0, bottom: 0, width: 0, height: 0 }),
+      // clearRulerGuideStubs scans across all possible hosts (ruler-v /
+      // ruler-h-row) for the shared stub class, mirroring the real DOM's
+      // document.querySelectorAll (not scoped to one host).
+      querySelectorAll: (sel) => {
+        const cls = sel.replace('.', '');
+        const all = [];
+        for (const host of registry.values()) {
+          if (!host.children) continue;
+          all.push(...host.children.filter((c) => String(c.className).split(' ').includes(cls)));
+        }
+        return all;
+      },
+      createElement: () => makeDynamicEl(),
     },
     SelectionOverlayPreview: { selectionOverlayZoom: () => zoom },
     PreviewOverlayStyle: { thinStrokeWidth: (z) => Math.max(0.125, 0.5 / (Number(z) > 0 ? Number(z) : 1)) },
@@ -183,4 +225,96 @@ test('clearRulerHighlight: removes both ruler highlights, no-ops if absent', () 
   L.clearRulerHighlight();
   assert.ok(removed.h, 'top ruler highlight removed');
   assert.doesNotThrow(() => L.clearRulerHighlight());
+});
+
+// ---------- ruler-crossing guide stubs (RF-CR-GUIDE-RULER-CROSS-1) ----------
+// A guide element lives inside #workspace's own clipped subtree, so it can
+// never visually cross INTO a ruler (a sibling entirely outside #workspace).
+// Left ('h' guides) and top ('v' guides) ends get a separate stub painted
+// directly on the ruler host instead; right/bottom need none — #workspace's
+// own edge there is already the correct visible boundary.
+
+test('renderSelectionGuides: paints a ruler-v stub for EACH horizontal guide (top-of-box and bottom-of-box)', () => {
+  const { L, registry } = loadRuntime({
+    workspaceRect: { left: 100, top: 50, right: 900, bottom: 700, width: 800, height: 650 },
+  });
+  const layer = makeRectEl({ left: 0, top: 0, right: 1000, bottom: 1000, width: 1000, height: 1000 });
+  L.renderSelectionGuides(layer, [{ left: 300, top: 200, width: 150, height: 40 }]);
+
+  const rulerV = registry.get('ruler-v');
+  const stubs = rulerV.children.filter((c) => c.className.includes('rf-ruler-guide-stub'));
+  assert.equal(stubs.length, 2, 'one stub for the top-of-box guide, one for the bottom-of-box guide');
+});
+
+test('renderSelectionGuides: paints a ruler-h-row stub for EACH vertical guide (left-of-box and right-of-box)', () => {
+  const { L, registry } = loadRuntime({
+    workspaceRect: { left: 100, top: 50, right: 900, bottom: 700, width: 800, height: 650 },
+  });
+  const layer = makeRectEl({ left: 0, top: 0, right: 1000, bottom: 1000, width: 1000, height: 1000 });
+  L.renderSelectionGuides(layer, [{ left: 300, top: 200, width: 150, height: 40 }]);
+
+  const rulerHRow = registry.get('ruler-h-row');
+  const stubs = rulerHRow.children.filter((c) => c.className.includes('rf-ruler-guide-stub'));
+  assert.equal(stubs.length, 2, 'one stub for the left-of-box guide, one for the right-of-box guide');
+});
+
+test('renderSelectionGuides: multi-selection rects each get their own uniquely-keyed stubs (no collision)', () => {
+  const { L, registry } = loadRuntime({
+    workspaceRect: { left: 0, top: 0, right: 1000, bottom: 1000, width: 1000, height: 1000 },
+  });
+  const layer = makeRectEl({ left: 0, top: 0, right: 1000, bottom: 1000, width: 1000, height: 1000 });
+  L.renderSelectionGuides(layer, [
+    { left: 100, top: 100, width: 50, height: 20 },
+    { left: 300, top: 300, width: 50, height: 20 },
+  ]);
+  const rulerV = registry.get('ruler-v');
+  const rulerHRow = registry.get('ruler-h-row');
+  assert.equal(rulerV.children.filter((c) => c.className.includes('rf-ruler-guide-stub')).length, 4, '2 rects x 2 horizontal guides each');
+  assert.equal(rulerHRow.children.filter((c) => c.className.includes('rf-ruler-guide-stub')).length, 4, '2 rects x 2 vertical guides each');
+});
+
+test('clearRulerGuideStubs: removes stubs from both ruler hosts', () => {
+  const { L, registry } = loadRuntime({
+    workspaceRect: { left: 0, top: 0, right: 1000, bottom: 1000, width: 1000, height: 1000 },
+  });
+  const layer = makeRectEl({ left: 0, top: 0, right: 1000, bottom: 1000, width: 1000, height: 1000 });
+  L.renderSelectionGuides(layer, [{ left: 100, top: 100, width: 50, height: 20 }]);
+  const rulerV = registry.get('ruler-v');
+  const rulerHRow = registry.get('ruler-h-row');
+  [...rulerV.children, ...rulerHRow.children].forEach((c) => {
+    const host = rulerV.children.includes(c) ? rulerV : rulerHRow;
+    c.remove = () => { host.children.splice(host.children.indexOf(c), 1); };
+  });
+  L.clearRulerGuideStubs();
+  assert.equal(rulerV.children.filter((c) => c.className.includes('rf-ruler-guide-stub')).length, 0);
+  assert.equal(rulerHRow.children.filter((c) => c.className.includes('rf-ruler-guide-stub')).length, 0);
+  assert.doesNotThrow(() => L.clearRulerGuideStubs());
+});
+
+// ---------- top ruler highlight clamp (corner exclusion) ----------
+
+test('paintRulerHighlight: clamps the top highlight to #ruler-h-canvas, excluding #ruler-corner', () => {
+  const { L, registry } = loadRuntime({
+    workspaceRect: { left: 20, top: 22, right: 620, bottom: 622, width: 600, height: 600 },
+    rulerHCanvasRect: { left: 20, top: 0, right: 620, bottom: 22, width: 600, height: 22 },
+  });
+  // box extends to the LEFT of ruler-h-canvas's own start (simulating a
+  // selection whose screen rect would otherwise spill into the corner square)
+  L.paintRulerHighlight({ left: 5, top: 200, right: 100, bottom: 240, width: 95, height: 40 });
+  const rulerHRow = registry.get('ruler-h-row');
+  const hHighlight = rulerHRow.children.find((c) => c.className.includes('rf-ruler-highlight-h'));
+  const rulerHRowRect = rulerHRow.getBoundingClientRect();
+  assert.equal(hHighlight.style.left, `${20 - rulerHRowRect.left}px`, 'clamped to ruler-h-canvas left, not the box left');
+  assert.equal(hHighlight.style.width, '80px', 'clamped width: canvas.right(620) capped, box.right(100) - canvas.left(20)');
+});
+
+test('paintRulerHighlight: unaffected when the box is fully within #ruler-h-canvas bounds', () => {
+  const { L, registry } = loadRuntime({
+    workspaceRect: { left: 20, top: 22, right: 620, bottom: 622, width: 600, height: 600 },
+    rulerHCanvasRect: { left: 20, top: 0, right: 620, bottom: 22, width: 600, height: 22 },
+  });
+  L.paintRulerHighlight({ left: 120, top: 200, right: 270, bottom: 240, width: 150, height: 40 });
+  const rulerHRow = registry.get('ruler-h-row');
+  const hHighlight = rulerHRow.children.find((c) => c.className.includes('rf-ruler-highlight-h'));
+  assert.equal(hHighlight.style.width, '150px', 'no clamping needed, box already inside canvas bounds');
 });

@@ -120,7 +120,86 @@ const SelectionOverlayPreviewLayers = (() => {
     };
   }
 
-  function appendSelectionGuide(layer, rect, axis, edge, bounds) {
+  // RF-CR-GUIDE-RULER-CROSS-1: a guide element lives inside #workspace's own
+  // subtree (#viewport > #canvas-layer > layer), so it is clipped by
+  // #workspace's `overflow:auto` at #workspace's own edge — it can be
+  // positioned exactly UP TO that edge (RF-CR-GUIDE-EXTENT-1 above) but can
+  // never visually cross INTO the ruler, a sibling element entirely outside
+  // #workspace's box. Crystal's left/top guide ends visibly overlap the
+  // ruler's own interior, so that portion has to be a SEPARATE stub painted
+  // directly on the ruler host (#ruler-v / #ruler-h-row), at the guide's own
+  // on-screen position — taken from the already-appended guide element's
+  // getBoundingClientRect() (post-transform, matches paintRulerHighlight's
+  // approach below) rather than re-deriving the zoom/scroll math a second
+  // time. Right/bottom guide ends need no such stub — #workspace's own edge
+  // there already IS the visible boundary (before the field-explorer panel /
+  // the visible bottom margin), nothing further to reach.
+  const RULER_GUIDE_STUB_CLASS = 'rf-ruler-guide-stub';
+
+  // #ruler-v already has `position: relative` in its own CSS rule
+  // (canvas.css), but #ruler-h-row does not (only display:flex) — an
+  // absolutely-positioned child of a `position: static` host escapes to
+  // whatever positioned ancestor is further up the tree instead (proven
+  // live: a ruler-h-row child rendered `height: 1000` — the full page
+  // height — instead of ruler-h-row's own 22px). Idempotent either way, so
+  // this is set unconditionally on every host used for these overlays
+  // rather than only on the one CSS is missing it for.
+  function _ensureRulerHostPositioned(host) {
+    host.style.position = 'relative';
+  }
+
+  function _rulerGuideStubEl(hostId, key) {
+    if (typeof document === 'undefined') return null;
+    const host = document.getElementById(hostId);
+    if (!host) return null;
+    _ensureRulerHostPositioned(host);
+    const cls = `${RULER_GUIDE_STUB_CLASS}-${key}`;
+    let el = host.querySelector(`:scope > .${cls}`);
+    if (!el) {
+      el = document.createElement('div');
+      el.className = `${RULER_GUIDE_STUB_CLASS} ${cls}`;
+      el.style.position = 'absolute';
+      el.style.pointerEvents = 'none';
+      el.style.zIndex = '6';
+      host.appendChild(el);
+    }
+    return { host, el };
+  }
+
+  function _paintRulerGuideStub(guideEl, axis, thickness, color, key) {
+    if (typeof document === 'undefined' || !guideEl) return;
+    const guideRect = guideEl.getBoundingClientRect();
+    if (axis === 'h') {
+      // left endpoint only -> crosses into the LEFT (vertical) ruler
+      const stub = _rulerGuideStubEl('ruler-v', key);
+      if (!stub) return;
+      const hostRect = stub.host.getBoundingClientRect();
+      const cy = guideRect.top + guideRect.height / 2;
+      Object.assign(stub.el.style, {
+        left: '0px', width: '100%',
+        top: `${cy - hostRect.top - GUIDE_HIT_PAD}px`, height: `${GUIDE_HIT_PAD * 2}px`,
+        background: `linear-gradient(${color},${color}) center / 100% ${thickness}px no-repeat`,
+      });
+    } else {
+      // top endpoint only -> crosses into the TOP (horizontal) ruler
+      const stub = _rulerGuideStubEl('ruler-h-row', key);
+      if (!stub) return;
+      const hostRect = stub.host.getBoundingClientRect();
+      const cx = guideRect.left + guideRect.width / 2;
+      Object.assign(stub.el.style, {
+        top: '0px', height: '100%',
+        left: `${cx - hostRect.left - GUIDE_HIT_PAD}px`, width: `${GUIDE_HIT_PAD * 2}px`,
+        background: `linear-gradient(${color},${color}) center / ${thickness}px 100% no-repeat`,
+      });
+    }
+  }
+
+  function clearRulerGuideStubs() {
+    if (typeof document === 'undefined' || typeof document.querySelectorAll !== 'function') return;
+    document.querySelectorAll(`.${RULER_GUIDE_STUB_CLASS}`).forEach((el) => el.remove());
+  }
+
+  function appendSelectionGuide(layer, rect, axis, edge, bounds, rulerStubKey) {
     const guide = document.createElement('div');
     const thickness = selectionGuideThickness();
     const color = 'rgba(255, 32, 32, 0.9)';
@@ -145,6 +224,7 @@ const SelectionOverlayPreviewLayers = (() => {
       guide.style.background = `linear-gradient(${color},${color}) center / ${thickness}px 100% no-repeat`;
     }
     layer.appendChild(guide);
+    if (rulerStubKey) _paintRulerGuideStub(guide, axis, thickness, color, rulerStubKey);
   }
 
   // All four guides anchor to the rect's own OUTER/visual edge — the same
@@ -154,15 +234,24 @@ const SelectionOverlayPreviewLayers = (() => {
   // visible line, while top/left (which never had that subtraction) landed
   // correctly. Removed: rect.top+rect.height and rect.left+rect.width are
   // themselves already the box's bottom/right edge, nothing to subtract.
+  //
+  // Both horizontal guides (top-of-box and bottom-of-box) get their own
+  // ruler-v stub — Crystal marks each one's own height on the left ruler
+  // separately, same as the pair of red lines already drawn in the
+  // workspace. Same for both vertical guides against the top ruler. The
+  // guides' RIGHT/BOTTOM ends need no stub — #workspace's own edge there
+  // already IS the visible boundary (before the field-explorer panel / the
+  // visible bottom margin), nothing further to reach
+  // (RF-CR-GUIDE-RULER-CROSS-1 is a left/top-only correction).
   function renderSelectionGuides(layer, rects) {
     const zoom = globalThis.SelectionOverlayPreview.selectionOverlayZoom();
     const bounds = _visibleWorkspaceBoundsLocal(layer, zoom);
-    rects.forEach(rect => {
+    rects.forEach((rect, i) => {
       if (!rect) return;
-      appendSelectionGuide(layer, rect, 'h', rect.top, bounds);
-      appendSelectionGuide(layer, rect, 'h', rect.top + rect.height, bounds);
-      appendSelectionGuide(layer, rect, 'v', rect.left, bounds);
-      appendSelectionGuide(layer, rect, 'v', rect.left + rect.width, bounds);
+      appendSelectionGuide(layer, rect, 'h', rect.top, bounds, `${i}-h-top`);
+      appendSelectionGuide(layer, rect, 'h', rect.top + rect.height, bounds, `${i}-h-bottom`);
+      appendSelectionGuide(layer, rect, 'v', rect.left, bounds, `${i}-v-left`);
+      appendSelectionGuide(layer, rect, 'v', rect.left + rect.width, bounds, `${i}-v-right`);
     });
   }
 
@@ -184,6 +273,7 @@ const SelectionOverlayPreviewLayers = (() => {
     if (typeof document === 'undefined') return null;
     const host = document.getElementById(hostId);
     if (!host) return null;
+    _ensureRulerHostPositioned(host);
     const cls = `${RULER_HIGHLIGHT_CLASS}-${side}`;
     let el = host.querySelector(`:scope > .${cls}`);
     if (!el) {
@@ -203,8 +293,17 @@ const SelectionOverlayPreviewLayers = (() => {
     const h = _rulerHighlightEl('ruler-h-row', 'h');
     if (h) {
       const hostRect = h.host.getBoundingClientRect();
-      h.el.style.left = `${screenRect.left - hostRect.left}px`;
-      h.el.style.width = `${screenRect.width}px`;
+      // Clamp to #ruler-h-canvas's own real tick/number area (a flex sibling
+      // of #ruler-corner INSIDE #ruler-h-row) so the shading never spills
+      // over the corner square, which is decorative and not part of the
+      // actual horizontal ruler.
+      const canvasBox = document.getElementById('ruler-h-canvas');
+      const canvasRect = canvasBox ? canvasBox.getBoundingClientRect() : hostRect;
+      const left = Math.max(screenRect.left, canvasRect.left);
+      const right = Math.min(screenRect.left + screenRect.width, canvasRect.right);
+      const width = Math.max(0, right - left);
+      h.el.style.left = `${left - hostRect.left}px`;
+      h.el.style.width = `${width}px`;
       h.el.style.top = '0px';
       h.el.style.height = '100%';
     }
@@ -232,6 +331,7 @@ const SelectionOverlayPreviewLayers = (() => {
     selectionGuideThickness,
     appendSelectionGuide,
     renderSelectionGuides,
+    clearRulerGuideStubs,
     paintRulerHighlight,
     clearRulerHighlight,
   };
