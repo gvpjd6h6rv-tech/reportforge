@@ -72,9 +72,18 @@
     const pageModelWidth = firstPage.getBoundingClientRect().width / zoom;
     const contentStyle = getComputedStyle(content);
     const paddingLeft = Number.parseFloat(contentStyle.paddingLeft) || 0;
+    // RF-PREVIEW-CENTER-STAGE-PADDING-1: `stage` (#preview-layer) has its
+    // own CSS padding-left (16px) that offsets `content`'s flow position
+    // before marginLeft is applied — omitting it here left the page
+    // systematically off-center by exactly that padding (+ a few px of
+    // border/subpixel residue), confirmed live: 19px delta vs the 12px
+    // tolerance. Subtract it the same way contentStyle's own paddingLeft
+    // already was.
+    const stageStyle = getComputedStyle(stage);
+    const stagePaddingLeft = Number.parseFloat(stageStyle.paddingLeft) || 0;
 
     const targetPageLeftModel = Math.max(0, (workspaceModelWidth - pageModelWidth) / 2);
-    const contentMarginLeft = Math.max(0, targetPageLeftModel - paddingLeft);
+    const contentMarginLeft = Math.max(0, targetPageLeftModel - paddingLeft - stagePaddingLeft);
 
     content.style.marginLeft = `${Math.round(contentMarginLeft * 100) / 100}px`;
     content.style.marginRight = '0px';

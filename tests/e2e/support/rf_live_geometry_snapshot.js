@@ -5,6 +5,7 @@ async function captureCanvasGeometry(page, label) {
     const px = (n) => Math.round(Number(n || 0) * 100) / 100;
 
     const canvas = document.getElementById('canvas-layer');
+    const viewport = document.getElementById('viewport');
     const workspace = document.getElementById('workspace');
     const rect = canvas.getBoundingClientRect();
     const computed = getComputedStyle(canvas);
@@ -20,6 +21,13 @@ async function captureCanvasGeometry(page, label) {
       computedWidth: computed.width,
       rectWidth: px(rect.width),
       expectedRectWidth: px(pageW * zoom),
+      // RF-ZOOM-VIEWPORT-OWNER-1: DesignZoomEngine._apply() (since
+      // 333fc920, "Stabilize preview parity and harden overlay
+      // ownership") applies scale(z) to #viewport and deliberately
+      // leaves #canvas-layer's own transform at 'none' to avoid double
+      // scaling — #viewport is the real owner of the zoom transform.
+      // `transform` (canvas-layer) is kept as supporting evidence only.
+      viewportTransform: viewport ? viewport.style.transform : null,
       transform: canvas.style.transform,
       workspaceClientWidth: workspace.clientWidth,
       workspaceScrollWidth: workspace.scrollWidth,

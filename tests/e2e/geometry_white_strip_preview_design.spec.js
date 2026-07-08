@@ -39,7 +39,13 @@ test.describe('RF live geometry contract: canvas anti double-scale', () => {
       expect(after.mode).toBe('design');
       expect(after.inlineWidth).toBe(`${after.pageW}px`);
       expect(after.computedWidth).toBe(`${after.pageW}px`);
-      expect(after.transform).toContain(`scale(${WHITE_STRIP_ZOOM})`);
+      // #viewport is the real owner of the zoom transform (DesignZoomEngine
+      // applies scale(z) there, not on #canvas-layer — see
+      // RF-ZOOM-VIEWPORT-OWNER-1 in rf_live_geometry_snapshot.js).
+      expect(after.viewportTransform).toContain(`scale(${WHITE_STRIP_ZOOM})`);
+      // Anti double-scale: #canvas-layer must stay untransformed — if the
+      // zoom leaked onto it too, the page would render at zoom² size.
+      expect(after.transform).toBe('none');
       expect(Math.abs(after.rectWidth - after.expectedRectWidth)).toBeLessThanOrEqual(2);
 
       if (after.expectedRectWidth <= after.workspaceClientWidth) {
