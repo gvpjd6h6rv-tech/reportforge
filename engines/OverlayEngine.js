@@ -12,6 +12,7 @@ const OverlayEngine = {
     RF.Geometry.invalidate();
     this.renderHRuler();
     this.renderVRuler();
+    if (typeof SectionSeparatorOverlay !== 'undefined') SectionSeparatorOverlay.render();
   },
   renderHRuler(){
     return;

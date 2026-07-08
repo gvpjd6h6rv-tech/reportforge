@@ -147,10 +147,21 @@
     inline-size: 100%;
     overflow: visible;
     z-index: 2;
-    border-block-end: 2px solid var(--rf-border-mid);
     /* Layer invalidation: prevents layout thrashing between sections */
     contain: layout paint;
     will-change: contents;
+    /* RF-CR-SECTION-SEPARATOR-1: the Crystal-like hairline separator is
+       rendered by engines/SectionSeparatorOverlay.js, a screen-space
+       `position: fixed` overlay outside this element's own scaled/clipped
+       subtree — NOT a CSS rule here. A CSS gradient declared inside
+       #viewport (which carries zoom's transform:scale) has to divide its
+       thickness by --geo-zoom to stay visually stable, and a multi-stop
+       gradient sized that way was found to blend away or misrender at some
+       zoom fractions since the whole thing paints at a sub-device-pixel
+       size pre-transform. Reading the section's own POST-transform
+       getBoundingClientRect instead means the overlay's line thickness is
+       already a final screen measurement — see that file for the full
+       rationale. This element itself keeps no visible bottom border. */
   }
   /* Section deferred rendering */
   .section-wrap {

@@ -147,10 +147,12 @@ document.addEventListener('DOMContentLoaded', () => {
     OverlayEngine.render = function() {
       RF.Geometry.invalidate();
       RulerEngine.render();
+      if (typeof SectionSeparatorOverlay !== 'undefined') SectionSeparatorOverlay.render();
     };
     OverlayEngine.renderSync = function() {
       RF.Geometry.invalidate();
       RulerEngine.renderSync();
+      if (typeof SectionSeparatorOverlay !== 'undefined') SectionSeparatorOverlay.render();
     };
     OverlayEngine.updateCursor = (x, y) => RulerEngine.updateCursor(x, y);
   }
@@ -173,6 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (typeof GridEngine !== 'undefined') GridEngine.init();
   if (typeof WorkspaceScrollEngine !== 'undefined') WorkspaceScrollEngine.init();
   if (typeof SyntheticScrollbarEngine !== 'undefined') SyntheticScrollbarEngine.init();
+  if (typeof SectionSeparatorOverlay !== 'undefined') SectionSeparatorOverlay.init();
 
   if (typeof DesignZoomEngine !== 'undefined') {
     DesignZoomEngine.set(DS.zoom || 1.0);
