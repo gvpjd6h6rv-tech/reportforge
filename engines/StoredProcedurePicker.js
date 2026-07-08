@@ -170,7 +170,7 @@ const StoredProcedurePicker = {
           + '\n\nParámetros: ' + parameters.map((p) => p.name).join(', ');
       }
       if (typeof SqlCommandEditor !== 'undefined' && typeof SqlCommandEditor.open === 'function') {
-        SqlCommandEditor.open(command.name, command.sql);
+        SqlCommandEditor.open(command.name, command.sql, alias);
       }
     } catch (err) {
       if (resultEl) resultEl.textContent = 'Error de red: ' + err;

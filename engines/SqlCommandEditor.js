@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * SqlCommandEditor — UDS 4.1 Fase 8 (extendido en Fase 12).
+ * SqlCommandEditor — UDS 4.1 Fase 8 (extendido en Fase 12, Fase 17A).
  *
  * Modal para editar un SQL command crudo (estilo Crystal, {?Param}).
  * POST /sql-commands/parse detecta parámetros y da SQL preparado;
@@ -12,11 +12,10 @@
  * SqlCommandModel.sql — solo el prepared_sql (:Name) del backend.
  */
 const SqlCommandEditor = {
-  _el: null,
-  _lastBuilt: null,
+  _el: null, _lastBuilt: null, _datasourceAlias: null,
 
-  open(existingName = '', existingSql = '') {
-    this.close();
+  open(existingName = '', existingSql = '', existingAlias = null) {
+    this.close(); this._datasourceAlias = existingAlias;
     const ov = document.createElement('div');
     ov.id = 'sql-command-editor-overlay';
     ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9900;display:flex;align-items:center;justify-content:center;';
@@ -188,7 +187,7 @@ const SqlCommandEditor = {
         name: paramName, type: 'string', default: null, required: false, source: 'sql_param',
       })),
       result_schema: [],
-      max_rows_preview: 100,
+      max_rows_preview: 100, datasource_alias: this._datasourceAlias,
     });
   },
 

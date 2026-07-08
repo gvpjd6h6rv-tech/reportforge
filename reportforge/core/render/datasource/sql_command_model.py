@@ -42,6 +42,11 @@ class SqlCommandModel:
     parameters: list[dict] = field(default_factory=list)
     result_schema: list[dict] = field(default_factory=list)
     max_rows_preview: int = 100
+    # UDS 4.1 Fase 17A: which registered datasource this command belongs
+    # to — optional, no fallback, no fabricated value. None means "not
+    # known" (e.g. a command built before this field existed, or never
+    # associated with one), never guessed at.
+    datasource_alias: str | None = None
 
     def __post_init__(self) -> None:
         if _RAW_CRYSTAL_PLACEHOLDER.search(self.sql):
@@ -60,6 +65,7 @@ class SqlCommandModel:
             "parameters": list(self.parameters),
             "result_schema": list(self.result_schema),
             "max_rows_preview": self.max_rows_preview,
+            "datasource_alias": self.datasource_alias,
         }
 
     @classmethod
@@ -72,4 +78,5 @@ class SqlCommandModel:
             parameters=list(data.get("parameters") or []),
             result_schema=list(data.get("result_schema") or []),
             max_rows_preview=data.get("max_rows_preview", 100),
+            datasource_alias=data.get("datasource_alias"),
         )

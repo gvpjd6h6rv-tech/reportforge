@@ -51,6 +51,23 @@ class TestSqlCommandModelRoundtrip(unittest.TestCase):
         d["parameters"].append({"name": "b"})
         self.assertEqual(len(original.parameters), 1)
 
+    def test_datasource_alias_roundtrips_when_present(self):
+        # UDS 4.1 Fase 17A (BLOCK-F17-1 resolution).
+        original = SqlCommandModel(id="cmd-5", name="X", sql="SELECT 1", datasource_alias="myds")
+        restored = SqlCommandModel.from_dict(original.to_dict())
+        self.assertEqual(restored.datasource_alias, "myds")
+
+    def test_datasource_alias_defaults_to_none_for_old_commands_without_it(self):
+        # An old command saved before Fase 17A never had this key — must
+        # not break, must not fabricate a value.
+        restored = SqlCommandModel.from_dict({"id": "cmd-6", "name": "Old", "sql": "SELECT 1"})
+        self.assertIsNone(restored.datasource_alias)
+
+    def test_to_dict_always_includes_datasource_alias_key_even_when_none(self):
+        original = SqlCommandModel(id="cmd-7", name="X", sql="SELECT 1")
+        self.assertIn("datasource_alias", original.to_dict())
+        self.assertIsNone(original.to_dict()["datasource_alias"])
+
 
 if __name__ == "__main__":
     unittest.main()
