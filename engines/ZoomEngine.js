@@ -290,9 +290,17 @@ const ZoomWidget={
 };
 
 const ZoomEngine={
-  set(z){DesignZoomEngine.set(z);},
-  get(){return DesignZoomEngine.get();},
-  step(d, source = 'step'){d>0?DesignZoomEngine.zoomIn(undefined, undefined, { event: source, fn: 'ZoomEngine.step' }):DesignZoomEngine.zoomOut(undefined, undefined, { event: source, fn: 'ZoomEngine.step' });}
+  // RF-ZOOM-MODE-ROUTING-1: mirrors ZoomWidget._eng() — these are called by
+  // mode-agnostic entry points (toolbar/menu zoom-in/out, Ctrl+0 reset) that
+  // fire in either Design or Preview. Hardcoding DesignZoomEngine here meant
+  // clicking the toolbar magnifiers in Preview visibly zoomed the shared
+  // #viewport transform (Design and Preview render into the same DOM) while
+  // leaving DS.previewZoom/PreviewZoomEngine's own state untouched — the
+  // zw-slider (bound to PreviewZoomEngine in Preview) then never moved.
+  _eng(){return (typeof DS !== 'undefined' && DS.previewMode) ? PreviewZoomEngine : DesignZoomEngine;},
+  set(z){this._eng().set(z);},
+  get(){return this._eng().get();},
+  step(d, source = 'step'){d>0?this._eng().zoomIn(undefined, undefined, { event: source, fn: 'ZoomEngine.step' }):this._eng().zoomOut(undefined, undefined, { event: source, fn: 'ZoomEngine.step' });}
 };
 
 const ZoomEngineV19 = (() => {
