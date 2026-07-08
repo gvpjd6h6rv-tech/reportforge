@@ -140,6 +140,7 @@
         FieldExplorerEngine._activeTree = DS.fieldTree;
         FieldExplorerEngine.render();
       }
+      if (typeof LeftParametersPanel !== 'undefined') LeftParametersPanel.render();
 
       // Diagnostic warning (never breaks Preview)
       if (DS.missingLayoutPaths && DS.missingLayoutPaths.length > 0) {

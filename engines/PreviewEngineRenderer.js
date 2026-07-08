@@ -16,7 +16,13 @@
       layout = typeof structuredClone === 'function' ? structuredClone(DM.layout) : JSON.parse(JSON.stringify(DM.layout ?? {}));
     }
     const sampleData = (DM && DM._sampleData) || (typeof SAMPLE_DATA !== 'undefined' ? SAMPLE_DATA : {});
-    return { layout, data: sampleData, params: Array.isArray(layout.parameters) ? Object.fromEntries(layout.parameters.map((p) => [p.name, p.defaultValue])) : {} };
+    // RF-CR-PARAMS-PANEL-1 (Fase 9): prefer the current in-memory value
+    // (DS.parameterValues, set by ParameterValueController) over
+    // defaultValue when the user has edited it — falls back to
+    // defaultValue exactly as before when no current value exists, so a
+    // report with no parameters/no panel interaction is unaffected.
+    const currentValues = (DM && DM.parameterValues) || {};
+    return { layout, data: sampleData, params: Array.isArray(layout.parameters) ? Object.fromEntries(layout.parameters.map((p) => [p.name, currentValues[p.name] !== undefined ? currentValues[p.name] : p.defaultValue])) : {} };
   }
 
   function clear() {

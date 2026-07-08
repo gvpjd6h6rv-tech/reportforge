@@ -26,6 +26,7 @@
       Object.entries(tree).forEach(([k, node]) => treeEl.appendChild(this._buildNode(k, node, 0)));
     };
     FieldExplorerEngine.render();
+    if (typeof LeftParametersPanel !== 'undefined') LeftParametersPanel.render();
 
     DS._sampleData = dt.sampleData || SAMPLE_DATA;
 

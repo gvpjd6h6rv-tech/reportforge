@@ -19,6 +19,7 @@
     });
 
     FieldExplorerEngine.render();
+    if (typeof LeftParametersPanel !== 'undefined') LeftParametersPanel.render();
     DS._sampleData = DOC_TYPES[docType].sampleData || SAMPLE_DATA;
   }
 
