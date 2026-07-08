@@ -718,6 +718,27 @@
       "maxDecisionPoints": 20
     },
     {
+      "path": "tools/salad-score/bin/salad-score-ratchet.mjs",
+      "owner": "salad-score-ratchet-cli",
+      "responsibility": "RF-ARCH-SP-SCORE-RATCHET-1: CI entry point — orchestrates run+load+compare+report+exit code only, no scoring formulas or comparison logic of its own.",
+      "maxLines": 100,
+      "maxDecisionPoints": 15
+    },
+    {
+      "path": "tools/salad-score/ci/salad_score_ratchet_check.mjs",
+      "owner": "salad-score-ratchet-check",
+      "responsibility": "RF-ARCH-SP-SCORE-RATCHET-1: pure regression-vs-baseline comparison, no file I/O, no CLI/process concerns.",
+      "maxLines": 60,
+      "maxDecisionPoints": 15
+    },
+    {
+      "path": "tools/salad-score/ci/salad_score_baseline_store.mjs",
+      "owner": "salad-score-ratchet-store",
+      "responsibility": "RF-ARCH-SP-SCORE-RATCHET-1: load/save the committed baseline JSON only, no scoring or comparison logic.",
+      "maxLines": 50,
+      "maxDecisionPoints": 10
+    },
+    {
       "path": "tools/salad-score/dashboard/template_dashboard.mjs",
       "owner": "salad-score-dashboard",
       "responsibility": "SPD1B: pure HTML template builder for the static SP Score dashboard. No I/O, no fetch, no eval, no subprocess. Larger cap than other pure layers: 10 mandatory sections + embedded dark-theme CSS + minimal DOM-only filter/copy script (real precedent: scripts/rf_e2r_dashboard.mjs is 200+ lines for fewer sections).",

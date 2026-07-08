@@ -38,6 +38,9 @@ jobs:
       - name: Governance guardrails
         run: npm run test:governance
 
+      - name: Salad Score ratchet (modularity regression gate, not a hard ceiling)
+        run: npm run salad-score:ratchet
+
   # ── Job 2: runtime-suite ──────────────────────────────────────────────────
   # Architecture regression suite (265 tests). Needs Python server + chromium.
   # Runs after fast-checks so we don't waste browser time on basic failures.
