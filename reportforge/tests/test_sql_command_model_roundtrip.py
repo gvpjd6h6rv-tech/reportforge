@@ -19,10 +19,12 @@ from reportforge.core.render.datasource.sql_command_model import SqlCommandModel
 class TestSqlCommandModelRoundtrip(unittest.TestCase):
 
     def test_roundtrip_preserves_all_fields(self):
+        # .sql is already-prepared (bind marker :FechaDesde), not raw
+        # Crystal-style {?FechaDesde} — see RF-SQL-COMMAND-MODEL-SQL-FORMAT-1.
         original = SqlCommandModel(
             id="cmd-1",
             name="Ventas por fecha",
-            sql="SELECT DocNum FROM OINV WHERE DocDate >= {?FechaDesde}",
+            sql="SELECT DocNum FROM OINV WHERE DocDate >= :FechaDesde",
             command_type="query",
             parameters=[{"name": "FechaDesde", "type": "date"}],
             result_schema=[{"name": "DocNum", "db_type": "int", "rf_type": "number", "nullable": False, "ordinal": 0}],
