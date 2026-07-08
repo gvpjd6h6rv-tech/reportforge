@@ -14,9 +14,9 @@
   };
   let _currentLayoutFileHandle = null;
 
-  // mkEl fills these for in-app elements; a loaded external JSON skipping
-  // a field (e.g. borderStyle) stayed undefined, breaking _setBorder()'s
-  // CSS. lineDir excluded: must stay falsy for aspect-ratio inference.
+  // mkEl fills these in-app; a loaded external JSON skipping a field
+  // (e.g. borderStyle) stayed undefined, breaking _setBorder()'s CSS.
+  // lineDir excluded: must stay falsy to keep aspect-ratio inference correct.
   const _ELEMENT_DEFAULTS = {
     fontFamily: 'Arial', fontSize: 8, bold: false, italic: false, underline: false,
     align: 'left', color: '#000000', bgColor: 'transparent',
@@ -27,6 +27,7 @@
 
   function _cloneSection(section) { return { ...section }; }
   function _cloneElement(element) { return { ..._ELEMENT_DEFAULTS, ...element }; }
+  function _arrayOr(value) { return Array.isArray(value) ? value : []; }
 
   function _normalizeLayout(raw) {
     const layout = raw && typeof raw === 'object' && !Array.isArray(raw) && raw.layout && typeof raw.layout === 'object'
@@ -37,8 +38,8 @@
       throw new Error('El archivo no contiene un layout JSON válido');
     }
 
-    const sections = Array.isArray(layout.sections) ? layout.sections.map(_cloneSection) : [];
-    const elements = Array.isArray(layout.elements) ? layout.elements.map(_cloneElement) : [];
+    const sections = _arrayOr(layout.sections).map(_cloneSection);
+    const elements = _arrayOr(layout.elements).map(_cloneElement);
 
     if (!sections.length) {
       throw new Error('El archivo no contiene secciones');
@@ -65,11 +66,8 @@
     SelectionEngine.clearSelection();
     if (typeof DS.saveHistory === 'function') DS.saveHistory();
 
-    // RF-CR-PARAMS-PANEL-2 (Fase 10): non-destructive sync so
-    // LeftParametersPanel.render() (Fase 9) reads the parameters that
-    // were just loaded — DS.layout has no other producer, so this only
-    // ever adds/overwrites the `parameters` key, never drops unrelated
-    // fields a future producer might set on DS.layout.
+    // RF-CR-PARAMS-PANEL-2 (Fase 10): non-destructive sync — DS.layout has
+    // no other producer, so this only ever overwrites `parameters`.
     DS.layout = { ...(DS.layout || {}), parameters: layout.parameters || [] };
     if (typeof LeftParametersPanel !== 'undefined') LeftParametersPanel.render();
   }
@@ -85,10 +83,13 @@
       margins: layout.margins && typeof layout.margins === 'object' ? { ...layout.margins } : _currentLayout.margins,
     };
     _currentLayoutFileHandle = fileHandle;
-    // Fase 10: restore parameter VALUES separately from DS.layout
-    // (definitions) — old files without parameterValues fall back to {},
-    // never inheriting whatever was in memory from a previously open doc.
+    // Fase 10: restore VALUES separately from DS.layout (definitions) —
+    // old files without parameterValues fall back to {}, never inheriting
+    // whatever was in memory from a previously open doc.
     DS.parameterValues = (layout.parameterValues && typeof layout.parameterValues === 'object') ? { ...layout.parameterValues } : {};
+    // Fase 12: SqlCommandStore owns DS.sqlCommands, firm dependency (like SectionEngine).
+    SqlCommandStore.clear();
+    _arrayOr(layout.sqlCommands).forEach(SqlCommandStore.add);
     if (typeof DocumentTabManager !== 'undefined' && typeof DocumentTabManager._switchToNewTab === 'function') {
       DocumentTabManager._switchToNewTab(name, fileHandle);
     }
@@ -134,6 +135,7 @@
       // reload restores both, not just layout/sections/elements.
       parameters: (DS.layout && Array.isArray(DS.layout.parameters)) ? DS.layout.parameters : [],
       parameterValues: { ...(DS.parameterValues || {}) },
+      sqlCommands: SqlCommandStore.list(), // Fase 12: DS.sqlCommands read API.
       savedAt: new Date().toISOString(),
     };
     return JSON.stringify(payload, null, 2);

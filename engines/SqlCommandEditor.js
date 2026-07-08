@@ -1,24 +1,15 @@
 'use strict';
 
 /**
- * SqlCommandEditor — UDS 4.1 Fase 8.
+ * SqlCommandEditor — UDS 4.1 Fase 8 (extendido en Fase 12).
  *
- * Responsabilidad única: editor modal de un SQL command crudo (estilo
- * Crystal, con placeholders {?Param}). Llama a POST /sql-commands/parse
- * (backend) para detectar parámetros y obtener SQL preparado, muestra el
- * resultado o el error, y al "Aceptar" solo CONSTRUYE un objeto en
- * memoria — nunca lo persiste en el documento ni en ningún store.
- *
- * NO hace:
- *   - no ejecuta SQL (nunca llama a ningún endpoint de ejecución/query).
- *   - no renderiza ni previsualiza nada.
- *   - no toca Field Explorer.
- *   - no persiste en el documento (CommandRuntimeFile no se importa ni
- *     se referencia).
- *   - el SQL crudo con {?Param} vive solo en el textarea de este editor;
- *     nunca se asigna directo a SqlCommandModel.sql — solo el
- *     prepared_sql que devuelve el backend (ya con :Name) se usa para
- *     construir el comando.
+ * Modal para editar un SQL command crudo (estilo Crystal, {?Param}).
+ * POST /sql-commands/parse detecta parámetros y da SQL preparado;
+ * "Aceptar" construye el SqlCommandModel-shaped payload y lo entrega a
+ * SqlCommandStore.add() — nunca toca el array de comandos ni
+ * serializa/ejecuta nada por su cuenta. No renderiza, no previsualiza,
+ * no toca Field Explorer. Raw {?Param} nunca se asigna a
+ * SqlCommandModel.sql — solo el prepared_sql (:Name) del backend.
  */
 const SqlCommandEditor = {
   _el: null,
@@ -90,7 +81,7 @@ const SqlCommandEditor = {
 
     const noteRow = document.createElement('div');
     noteRow.style.cssText = 'font-size:10px;color:#7D1F1F;font-style:italic;';
-    noteRow.textContent = 'Nota: "Aceptar" solo construye el comando en memoria — no se guarda permanentemente en el documento todavía.';
+    noteRow.textContent = 'Nota: "Aceptar" agrega el comando a los comandos del documento (en memoria) — se persiste en disco recién al usar Guardar/Guardar como.';
     body.appendChild(noteRow);
 
     dlg.appendChild(body);
@@ -182,10 +173,23 @@ const SqlCommandEditor = {
     const name = (nameEl?.value || '').trim() || '(sin nombre)';
     const msgEl = document.getElementById('sce-result');
     if (msgEl) {
-      msgEl.textContent = 'Comando "' + name + '" construido en memoria (NO guardado permanentemente):\n'
+      msgEl.textContent = 'Comando "' + name + '" agregado a los comandos del documento (se persiste al guardar el archivo):\n'
         + this._lastBuilt.preparedSql
         + '\n\nParámetros: ' + (this._lastBuilt.parameters.join(', ') || '(ninguno)');
     }
+    // Fase 12: SqlCommandStore owns the commands array — this editor only
+    // builds the SqlCommandModel-shaped payload and hands it off.
+    SqlCommandStore.add({
+      id: name,
+      name,
+      sql: this._lastBuilt.preparedSql,
+      command_type: 'query',
+      parameters: this._lastBuilt.parameters.map((paramName) => ({
+        name: paramName, type: 'string', default: null, required: false, source: 'sql_param',
+      })),
+      result_schema: [],
+      max_rows_preview: 100,
+    });
   },
 
   close() {

@@ -182,6 +182,7 @@
       DS.parameterValues = {};
       DS.layout = { parameters: [] };
       if (typeof LeftParametersPanel !== 'undefined') LeftParametersPanel.render();
+      if (typeof SqlCommandStore !== 'undefined') SqlCommandStore.clear();
       if (DS.state) {
         DS.state.history        = [];
         DS.state.historyIndex   = -1;
