@@ -5,6 +5,7 @@ from pathlib import Path
 from .db_source_cache import cache_get, cache_key, cache_set, _DEFAULT_TTL
 from .db_source_errors import DbSourceError
 from .db_source_queries import sa_query, sqlite_query
+from .sql_error_sanitizer import sanitize
 
 
 def load_spec(spec: dict, base_path: Path | None = None) -> dict:
@@ -44,7 +45,10 @@ def load_spec(spec: dict, base_path: Path | None = None) -> dict:
         else:
             rows = sa_query(url, query, params)
     except Exception as e:
-        raise DbSourceError(f"Query failed [{url}]: {e}") from e
+        # sanitize() runs on the WHOLE composed message, not just str(e) —
+        # url may itself carry embedded credentials (e.g. mssql+pymssql://
+        # user:password@host), and the sanitizer's regex redacts that too.
+        raise DbSourceError(sanitize(f"Query failed [{url}]: {e}")) from e
 
     if ttl > 0:
         cache_set(ckey, rows, ttl)

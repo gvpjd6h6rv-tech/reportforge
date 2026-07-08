@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from .db_source_errors import DbSourceError
 from .db_source_loader import load_spec
+from .sql_query_limits import resolve_max_rows, truncate_rows
+from .sql_safety_guard import check as guard_check
 
 _REGISTRY: dict[str, dict] = {}
 
@@ -35,7 +37,12 @@ def get_registered(alias: str) -> dict | None:
     return _REGISTRY.get(alias)
 
 
-def query_registered(alias: str, query: str | None = None, params: dict | None = None) -> list[dict]:
+def query_registered(
+    alias: str,
+    query: str | None = None,
+    params: dict | None = None,
+    max_rows: int | None = None,
+) -> list[dict]:
     spec = _REGISTRY.get(alias)
     if not spec:
         raise DbSourceError(f"No registered datasource: {alias!r}")
@@ -44,5 +51,13 @@ def query_registered(alias: str, query: str | None = None, params: dict | None =
         run_spec["query"] = query
     if params:
         run_spec["params"] = params
+
+    effective_query = run_spec.get("query")
+    if effective_query:
+        verdict = guard_check(effective_query)
+        if not verdict["allowed"]:
+            raise DbSourceError(f"SQL command rejected ({verdict['kind']}): {verdict['reason']}")
+
     result = load_spec(run_spec)
-    return result.get(run_spec.get("dataset", "items"), [])
+    rows = result.get(run_spec.get("dataset", "items"), [])
+    return truncate_rows(rows, resolve_max_rows(max_rows))

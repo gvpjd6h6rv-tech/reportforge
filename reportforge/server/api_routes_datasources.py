@@ -53,12 +53,24 @@ def register_datasource_routes(app):
     @app.post("/datasources/{alias}/query", tags=["Datasources"], summary="Execute a query against a registered datasource")
     async def _post_ds_query(alias: str, body: dict):
         from reportforge.core.render.datasource.db_source import query_registered, DbSourceError
+        from reportforge.core.render.datasource.sql_error_sanitizer import sanitize_exception
         try:
-            rows = query_registered(alias, query=body.get("query"), params=body.get("params", {}))
+            rows = query_registered(
+                alias,
+                query=body.get("query"),
+                params=body.get("params", {}),
+                max_rows=body.get("max_rows"),
+            )
         except DbSourceError as e:
+            # DbSourceError messages are already sanitized at their source
+            # (sql_safety_guard's own reasons never echo raw SQL/values;
+            # db_source_loader.py runs sanitize() before raising) — no
+            # further processing needed here, just the HTTP mapping.
             raise HTTPException(status_code=400, detail=str(e))
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Query error: {e}")
+            # Defense in depth: an unexpected, not-yet-wrapped exception
+            # must still never surface a raw connection URL or password.
+            raise HTTPException(status_code=500, detail=f"Query error: {sanitize_exception(e)}")
         return {"alias": alias, "count": len(rows), "rows": rows}
 
     @app.get("/datasources/{alias}/tables", tags=["Datasources"], summary="List tables in a registered datasource")
