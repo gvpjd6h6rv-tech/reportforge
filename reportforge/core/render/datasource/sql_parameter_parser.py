@@ -3,6 +3,8 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
+from .sql_string_literal_mask import string_literal_mask
+
 """
 sql_parameter_parser — detects Crystal-like {?ParamName} placeholders in a
 SQL template. Nothing else.
@@ -23,8 +25,11 @@ Responsibility:
   - ignore ANYTHING inside a single-quoted SQL string literal entirely —
     valid-shaped or not. 'Comentario = {?NoParametro}' is literal string
     content, not a placeholder to bind, so it is neither extracted nor
-    validated nor rewritten. Escaped quotes ('') inside a literal are
-    tracked so a string boundary isn't miscounted.
+    validated nor rewritten. String-literal boundaries (including ''
+    escaped quotes) are detected via sql_string_literal_mask.py — a small
+    shared module extracted from this file (RF-SQL-GUARD-STRING-AWARE-1)
+    so sql_safety_guard.py and sql_procedure_allowlist.py can reuse the
+    exact same scan instead of each doing their own naive text search.
 
 Does NOT:
   - execute SQL
@@ -48,38 +53,11 @@ class ParsedSqlCommand:
     bind_order: list[str] = field(default_factory=list)
 
 
-def _string_literal_mask(sql: str) -> list[bool]:
-    """One bool per character: True if that position is inside a single-
-    quoted SQL string literal ('' is the standard SQL escape for a literal
-    quote inside such a string)."""
-    mask = [False] * len(sql)
-    in_string = False
-    i = 0
-    n = len(sql)
-    while i < n:
-        ch = sql[i]
-        if in_string:
-            mask[i] = True
-            if ch == "'":
-                if i + 1 < n and sql[i + 1] == "'":
-                    mask[i + 1] = True
-                    i += 2
-                    continue
-                in_string = False
-            i += 1
-            continue
-        if ch == "'":
-            in_string = True
-            mask[i] = True
-        i += 1
-    return mask
-
-
 def parse_parameters(sql: str) -> ParsedSqlCommand:
     if sql is None:
         raise ValueError("sql must not be None")
 
-    mask = _string_literal_mask(sql)
+    mask = string_literal_mask(sql)
 
     def _inside_string(pos: int) -> bool:
         return pos < len(mask) and mask[pos]

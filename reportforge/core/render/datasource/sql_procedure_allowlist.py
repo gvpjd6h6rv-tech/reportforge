@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import re
 
+from .sql_string_literal_mask import string_literal_mask
+
 """
 sql_procedure_allowlist — decides whether a specific EXEC target or SQL
 construct is permitted. Nothing else.
@@ -57,12 +59,17 @@ def is_procedure_allowed(name: str) -> bool:
 
 
 def is_dangerous_construct(sql_text: str) -> bool:
-    """True if OPENROWSET/OPENDATASOURCE appear anywhere in the given SQL
-    text — these are ordinary functions usable inside a plain SELECT, not
-    just an EXEC target, so this is checked against the whole statement."""
+    """True if OPENROWSET/OPENDATASOURCE appear anywhere OUTSIDE a string
+    literal in the given SQL text — these are ordinary functions usable
+    inside a plain SELECT, not just an EXEC target, so this is checked
+    against the whole statement. RF-SQL-GUARD-STRING-AWARE-1: a match
+    fully inside a '...' literal (e.g. a comment field whose VALUE happens
+    to mention "OPENROWSET" as plain text) is not a real construct and is
+    ignored — only a match starting outside any string literal counts."""
     if not sql_text:
         return False
-    return bool(_DANGEROUS_CONSTRUCTS.search(sql_text))
+    mask = string_literal_mask(sql_text)
+    return any(not mask[m.start()] for m in _DANGEROUS_CONSTRUCTS.finditer(sql_text))
 
 
 def get_allowlist() -> list[str]:

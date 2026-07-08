@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 
 from .sql_procedure_allowlist import is_dangerous_construct, is_procedure_allowed
+from .sql_string_literal_mask import string_literal_mask
 
 """
 sql_safety_guard — read-only SQL admission control.
@@ -54,10 +55,19 @@ def _strip_comments(sql: str) -> str:
 
 
 def _split_statements(sql: str) -> list[str]:
-    # Not a real SQL tokenizer — a bare split on ';' is sufficient here: the
-    # only thing that matters is whether a SECOND non-empty statement
-    # exists after the first, which alone is enough to reject the input.
-    return [p.strip() for p in sql.split(";") if p.strip()]
+    # RF-SQL-GUARD-STRING-AWARE-1: a bare split on ';' would misfire on a
+    # perfectly legitimate single statement like SELECT 'a;b' AS x — the
+    # ';' is inside a string literal, not a statement separator. Only a
+    # ';' OUTSIDE any string literal counts as a real separator.
+    mask = string_literal_mask(sql)
+    parts: list[str] = []
+    start = 0
+    for i, ch in enumerate(sql):
+        if ch == ";" and not mask[i]:
+            parts.append(sql[start:i])
+            start = i + 1
+    parts.append(sql[start:])
+    return [p.strip() for p in parts if p.strip()]
 
 
 def _first_keyword(stmt: str) -> str:
