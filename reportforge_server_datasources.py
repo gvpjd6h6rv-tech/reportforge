@@ -76,3 +76,53 @@ def _post_ds_query(handler, alias: str, body: dict):
         _json(handler, {"alias": alias, "count": len(rows), "rows": rows})
     except Exception as exc:
         _error(handler, 400, str(exc))
+
+def _get_ds_procedures(handler, alias: str):
+    from reportforge.core.render.datasource.db_source_registry import get_registered
+    from reportforge.core.render.datasource.stored_procedure_catalog import list_procedures
+    from reportforge.core.render.datasource.sql_error_sanitizer import sanitize_exception
+    spec = get_registered(alias)
+    if not spec:
+        _error(handler, 404, f"Datasource '{alias}' not found")
+        return
+    try:
+        names, warnings = list_procedures(spec)
+    except Exception as e:
+        _error(handler, 400, sanitize_exception(e))
+        return
+    _json(handler, {"alias": alias, "procedures": names, "warnings": warnings})
+
+def _get_ds_procedure_parameters(handler, alias: str, name: str):
+    from reportforge.core.render.datasource.db_source_registry import get_registered
+    from reportforge.core.render.datasource.stored_procedure_catalog import read_procedure_parameters
+    from reportforge.core.render.datasource.sql_error_sanitizer import sanitize_exception
+    spec = get_registered(alias)
+    if not spec:
+        _error(handler, 404, f"Datasource '{alias}' not found")
+        return
+    try:
+        parameters, warnings = read_procedure_parameters(spec, name)
+    except ValueError as e:
+        _error(handler, 400, str(e))
+        return
+    except Exception as e:
+        _error(handler, 400, sanitize_exception(e))
+        return
+    _json(handler, {"alias": alias, "procedure": name, "parameters": [p.to_dict() for p in parameters], "warnings": warnings})
+
+def _post_ds_procedure_build_command(handler, alias: str, name: str, body: dict):
+    from reportforge.core.render.datasource.db_source_registry import get_registered
+    from reportforge.core.render.datasource.stored_procedure_catalog import build_stored_procedure_command
+    from reportforge.core.render.datasource.sql_parameter_model import SqlParameterModel
+    spec = get_registered(alias)
+    if not spec:
+        _error(handler, 404, f"Datasource '{alias}' not found")
+        return
+    raw_parameters = body.get("parameters", [])
+    try:
+        parameters = [SqlParameterModel.from_dict(p) for p in raw_parameters]
+        command = build_stored_procedure_command(name, parameters)
+    except ValueError as e:
+        _error(handler, 400, str(e))
+        return
+    _json(handler, command.to_dict())

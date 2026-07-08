@@ -3,7 +3,9 @@ from __future__ import annotations
 import urllib.parse
 
 from reportforge_server_datasources import (
-    _delete_ds, _get_ds_list, _post_ds_connect, _post_ds_query, _post_ds_test, _post_register_ds,
+    _delete_ds, _get_ds_list, _get_ds_procedure_parameters, _get_ds_procedures,
+    _post_ds_connect, _post_ds_procedure_build_command, _post_ds_query, _post_ds_test,
+    _post_register_ds,
 )
 from reportforge_server_http_utils import _cors_headers, _not_found
 from reportforge_server_route_barcode import _get_barcode, _post_barcode
@@ -44,6 +46,10 @@ def handle_get(handler):
     if len(parts) == 4 and parts[1] == "document":
         from reportforge_server_route_document import _get_document
         return _get_document(handler, parts[2], parts[3])
+    if len(parts) == 4 and parts[1] == "datasources" and parts[3] == "procedures":
+        return _get_ds_procedures(handler, parts[2])
+    if len(parts) == 6 and parts[1] == "datasources" and parts[3] == "procedures" and parts[5] == "parameters":
+        return _get_ds_procedure_parameters(handler, parts[2], parts[4])
     if path.startswith("/static/") or path.startswith("/reports/") or path.endswith((".js", ".css", ".svg", ".png", ".html", ".json")):
         return _serve_static(handler, path)
     _not_found(handler, path)
@@ -80,6 +86,9 @@ def handle_post(handler):
     if path.startswith("/datasources/") and path.endswith("/query"):
         alias = path.split("/")[2]
         return _post_ds_query(handler, alias, body)
+    parts = path.split("/")
+    if len(parts) == 6 and parts[1] == "datasources" and parts[3] == "procedures" and parts[5] == "build-command":
+        return _post_ds_procedure_build_command(handler, parts[2], parts[4], body)
     _not_found(handler, path)
 
 
