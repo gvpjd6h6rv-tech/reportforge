@@ -17,7 +17,7 @@ from reportforge_server_route_static import _serve_static
 from reportforge_server_routes_preview import _post_preview
 from reportforge_server_routes_render import _post_render
 from reportforge_server_routes_validate import _post_validate_formula, _post_validate_layout
-from reportforge_server_route_sql_commands import _post_sql_command_parse
+from reportforge_server_route_sql_commands import _post_sql_command_parse, _post_sql_command_schema
 from reportforge_server_route_tests import _post_tests_full, _post_tests_quick, _get_tests_stream
 
 
@@ -70,6 +70,8 @@ def handle_post(handler):
         return _post_validate_formula(handler, body)
     if path == "/sql-commands/parse":
         return _post_sql_command_parse(handler, body)
+    if path == "/sql-commands/schema":
+        return _post_sql_command_schema(handler, body)
     if path == "/rf-audit":
         return _post_audit(handler, body)
     if path == "/tests/quick":

@@ -2,9 +2,16 @@
 test_reportforge_server_route_sql_commands_no_forbidden_imports.py
 
 Contract: reportforge_server_route_sql_commands.py (stdlib dev-server
-wiring, Fase 8 scope extension) never imports sql_executor,
-sql_schema_inspector, stored_procedure_catalog, Field Explorer, Preview,
-the document serializer, or any exporter.
+wiring) never imports sql_executor directly, stored_procedure_catalog,
+Field Explorer, Preview, the document serializer, or any exporter.
+
+NOTE: sql_schema_inspector and db_source_registry were originally
+forbidden here too (Fase 8: no schema/datasource concept existed in this
+file yet). Fase 16 added POST /sql-commands/schema, which legitimately
+uses both — see test_reportforge_server_sql_commands_schema.py and
+test_fase16_sql_command_schema_no_forbidden_tokens.py for that route's
+own contract (never imports sql_executor directly). Same pattern as
+Fase 12 superseding Fase 10's narrower "no sqlCommands" restriction.
 """
 from __future__ import annotations
 
@@ -18,9 +25,9 @@ sys.path.insert(0, str(ROOT))
 MODULE_PATH = ROOT / "reportforge_server_route_sql_commands.py"
 
 _FORBIDDEN_TOKENS = [
-    "sql_executor", "sql_schema_inspector", "stored_procedure_catalog",
+    "sql_executor", "stored_procedure_catalog",
     "FieldExplorer", "PreviewEngine", "CommandRuntimeFile",
-    "db_source_registry", "export/", "docx_export", "xlsx_export",
+    "export/", "docx_export", "xlsx_export",
     "pdf_generator", "csv_export", "png_export", "rtf_export",
 ]
 
