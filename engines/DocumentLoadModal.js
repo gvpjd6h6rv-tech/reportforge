@@ -26,11 +26,22 @@
     liquidacion:  'Liquidación de Compras',
   };
 
-  let _modal    = null;
-  let _statusEl = null;
-  let _dsSelEl  = null;
+  let _modal      = null;
+  let _statusEl   = null;
+  let _dsSelEl    = null;
+  let _recentEl   = null;
 
   const _LAST_DATASOURCE_KEY = 'rf.dlm.lastDatasource';
+
+  // RF-DLM-RECENT-DOCS-1: an app-owned "last 10 documents" list, rendered
+  // via a <datalist> bound to the Número input — not the browser's native
+  // form-autofill history. Chrome's own autofill only remembered the last
+  // couple of entries and ungoogled-chromium doesn't show any at all (it
+  // ships with autofill/form-history disabled) — a <datalist> is a plain
+  // HTML feature whose content is entirely ours, so both browsers show the
+  // identical list regardless of their autofill settings.
+  const _RECENT_DOCS_KEY = 'rf.dlm.recentDocs';
+  const _MAX_RECENT_DOCS = 10;
 
   // ── DOM helpers ───────────────────────────────────────────────────────────
 
@@ -136,8 +147,11 @@
     });
     inpNum.setAttribute('inputmode', 'numeric');
     inpNum.setAttribute('placeholder', 'DocNum (ej: 12345)');
+    inpNum.setAttribute('list', 'dlm-recent-nums');
+    const recentList = _el('datalist', { id: 'dlm-recent-nums' });
     rowNum.appendChild(lblNum);
     rowNum.appendChild(inpNum);
+    rowNum.appendChild(recentList);
 
     /* Datasource row */
     const rowDs = _el('div', { style: 'display:flex;align-items:center;gap:8px;' });
@@ -199,6 +213,7 @@
 
     _statusEl = statusEl;
     _dsSelEl  = selDs;
+    _recentEl = recentList;
     return backdrop;
   }
 
@@ -232,6 +247,32 @@
 
   function _rememberDatasource(value) {
     try { global.localStorage && global.localStorage.setItem(_LAST_DATASOURCE_KEY, value); } catch (_) { /* ignore */ }
+  }
+
+  // ── Recent documents (localStorage, non-critical: fails silently) ────────
+
+  function _loadRecentDocs() {
+    try {
+      const raw = global.localStorage && global.localStorage.getItem(_RECENT_DOCS_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (_) { return []; }
+  }
+
+  function _rememberRecentDoc(type, num) {
+    try {
+      const list = _loadRecentDocs().filter(d => !(d.type === type && d.num === num));
+      list.unshift({ type, num });
+      global.localStorage && global.localStorage.setItem(_RECENT_DOCS_KEY, JSON.stringify(list.slice(0, _MAX_RECENT_DOCS)));
+    } catch (_) { /* ignore */ }
+  }
+
+  function _refreshRecentDocsDatalist(type) {
+    if (!_recentEl) return;
+    _recentEl.innerHTML = '';
+    _loadRecentDocs()
+      .filter(d => d.type === type)
+      .forEach(d => _recentEl.appendChild(_option(String(d.num), String(d.num))));
   }
 
   // ── Status renderer ───────────────────────────────────────────────────────
@@ -288,6 +329,8 @@
 
     if (result.ok) {
       _setStatus({ type: 'success', docType: type, docNumber: num });
+      _rememberRecentDoc(type, num);
+      _refreshRecentDocsDatalist(type);
     } else {
       _setStatus({ type: 'error', code: result.error.code, message: result.error.message });
     }
@@ -306,10 +349,13 @@
     const cancelBtn = _modal.querySelector('#dlm-cancel');
     const loadBtn   = _modal.querySelector('#dlm-load');
     const numInput  = _modal.querySelector('#dlm-num');
+    const typeSel   = _modal.querySelector('#dlm-type');
 
     if (closeBtn)  closeBtn.addEventListener('click',  close);
     if (cancelBtn) cancelBtn.addEventListener('click', close);
     if (loadBtn)   loadBtn.addEventListener('click',   _handleLoad);
+    if (typeSel)   typeSel.addEventListener('change',  () => _refreshRecentDocsDatalist(typeSel.value));
+    if (typeSel)   _refreshRecentDocsDatalist(typeSel.value);
 
     // Enter anywhere in the dialog (except on a button, which already
     // handles its own Enter/click) triggers the same action as "Cargar".
@@ -331,6 +377,7 @@
     _modal    = null;
     _statusEl = null;
     _dsSelEl  = null;
+    _recentEl = null;
   }
 
   // ── Export ────────────────────────────────────────────────────────────────
