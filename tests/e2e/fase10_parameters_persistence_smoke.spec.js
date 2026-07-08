@@ -7,10 +7,22 @@
  * LeftParametersPanel.render() muestre datos reales, "Archivo > Nuevo"
  * limpia todo sin dejar el panel stale, y archivos viejos sin esos
  * campos siguen cargando sin romper (C-F10-008).
+ *
+ * Fase 15: waits post-goto/post-acción son condiciones reales, no sleeps
+ * fijos — robusto bajo carga concurrente del servidor de dev.
  */
 import { test, expect } from '@playwright/test';
 
 const BASE = process.env.RF_LIVE_URL || 'http://127.0.0.1:5001';
+
+async function waitReady(page) {
+  await page.waitForFunction(() => (
+    typeof DS !== 'undefined'
+    && typeof LeftParametersPanel !== 'undefined'
+    && typeof CommandRuntimeFile !== 'undefined'
+    && !!document.getElementById('params-list')
+  ));
+}
 
 async function seedParameters(page) {
   await page.evaluate(() => {
@@ -25,7 +37,7 @@ async function seedParameters(page) {
 test.describe('Fase 10 — parameter persistence', () => {
   test('C-F10-001/002: toJSON() includes parameters and parameterValues', async ({ page }) => {
     await page.goto(BASE + '/');
-    await page.waitForTimeout(500);
+    await waitReady(page);
     await seedParameters(page);
     const json = await page.evaluate(() => CommandRuntimeFile.toJSON());
     const parsed = JSON.parse(json);
@@ -37,7 +49,7 @@ test.describe('Fase 10 — parameter persistence', () => {
 
   test('C-F10-003/004/006/007: loading a saved file restores parameters, values, panel, and preview payload', async ({ page }) => {
     await page.goto(BASE + '/');
-    await page.waitForTimeout(500);
+    await waitReady(page);
     await seedParameters(page);
     const json = await page.evaluate(() => CommandRuntimeFile.toJSON());
 
@@ -48,7 +60,7 @@ test.describe('Fase 10 — parameter persistence', () => {
       const layout = CommandRuntimeFile._normalizeLayout(JSON.parse(savedJson));
       CommandRuntimeFile._applyLoadedLayout(layout, null, null, 'test-reload');
     }, json);
-    await page.waitForTimeout(200);
+    await page.waitForFunction(() => DS.parameterValues && DS.parameterValues.FechaDesde === '2026-05-20');
 
     const restored = await page.evaluate(() => DS.parameterValues);
     expect(restored).toEqual({ FechaDesde: '2026-05-20' });
@@ -65,13 +77,13 @@ test.describe('Fase 10 — parameter persistence', () => {
     });
     await page.evaluate(() => DS.setPreviewMode(true, 'fase10-smoke-test'));
     await page.evaluate(() => PreviewEngineRenderer.refresh());
-    await page.waitForTimeout(300);
+    await expect.poll(() => capturedBody !== null).toBe(true);
     expect(capturedBody.params.FechaDesde).toBe('2026-05-20');
   });
 
   test('C-F10-008: loading an old file with no parameters/parameterValues does not break', async ({ page }) => {
     await page.goto(BASE + '/');
-    await page.waitForTimeout(500);
+    await waitReady(page);
     const oldFileJson = JSON.stringify({
       name: 'Reporte Viejo', version: '1.0', pageWidth: 794, pageHeight: 1123, pageSize: 'A4',
       sections: [{ id: 's1', type: 'header', height: 100 }], elements: [],
@@ -94,7 +106,7 @@ test.describe('Fase 10 — parameter persistence', () => {
 
   test('C-F10-005/009: "Archivo > Nuevo" clears parameterValues AND layout.parameters, panel not stale, no SQL commands touched', async ({ page }) => {
     await page.goto(BASE + '/');
-    await page.waitForTimeout(500);
+    await waitReady(page);
     page.on('dialog', (d) => d.accept());
     await seedParameters(page);
 
@@ -102,7 +114,10 @@ test.describe('Fase 10 — parameter persistence', () => {
     expect(before).toContain('Fecha Desde');
 
     await page.click('button.tb-icon[data-action="new"]');
-    await page.waitForTimeout(300);
+    await page.waitForFunction(() => (
+      DS.parameterValues && Object.keys(DS.parameterValues).length === 0
+      && document.getElementById('params-list').textContent.includes('no tiene par')
+    ));
 
     const valuesAfter = await page.evaluate(() => DS.parameterValues);
     const layoutAfter = await page.evaluate(() => DS.layout);

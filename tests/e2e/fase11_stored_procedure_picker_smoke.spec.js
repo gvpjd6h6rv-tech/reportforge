@@ -10,11 +10,35 @@
  * end-to-end contra el backend real (solo el listado de procedures se
  * mockea, ya que ningún datasource de este entorno tiene procedures
  * reales listables).
+ *
+ * Fase 15: waits post-goto/post-acción son condiciones reales, no sleeps
+ * fijos — robusto bajo carga concurrente del servidor de dev.
  */
 import { test, expect } from '@playwright/test';
 
 const BASE = process.env.RF_LIVE_URL || 'http://127.0.0.1:5001';
 const TEST_ALIAS = 'fase11_e2e_test_alias';
+
+async function waitReady(page) {
+  await page.waitForFunction(() => (
+    typeof StoredProcedurePicker !== 'undefined'
+    && !!document.getElementById('btn-stored-procedure-picker')
+  ));
+}
+
+async function waitDatasourceOptionsLoaded(page) {
+  await page.waitForFunction(() => {
+    const sel = document.getElementById('spp-datasource');
+    return !!sel && sel.options.length > 0 && sel.options[0].textContent !== '(cargando…)';
+  });
+}
+
+async function waitProceduresListSettled(page) {
+  await page.waitForFunction(() => {
+    const list = document.getElementById('spp-procedures');
+    return !!list && list.children.length > 0;
+  });
+}
 
 test.describe('Fase 11 — Stored Procedure Picker', () => {
   test.beforeEach(async ({ request }) => {
@@ -31,10 +55,10 @@ test.describe('Fase 11 — Stored Procedure Picker', () => {
     const failedRequests = [];
     page.on('requestfailed', (req) => failedRequests.push(req.url()));
     await page.goto(BASE + '/');
-    await page.waitForTimeout(500);
+    await waitReady(page);
 
     await page.click('#btn-stored-procedure-picker');
-    await page.waitForTimeout(300);
+    await waitDatasourceOptionsLoaded(page);
     expect(await page.locator('#stored-procedure-picker-overlay').count()).toBe(1);
 
     const options = await page.locator('#spp-datasource option').all();
@@ -46,7 +70,7 @@ test.describe('Fase 11 — Stored Procedure Picker', () => {
     for (const alias of values) {
       if (!alias) continue;
       await page.selectOption('#spp-datasource', alias);
-      await page.waitForTimeout(300);
+      await waitProceduresListSettled(page);
     }
     expect(failedRequests).toEqual([]);
   });
@@ -67,13 +91,13 @@ test.describe('Fase 11 — Stored Procedure Picker', () => {
     // build-command is NOT mocked — exercises the real backend route.
 
     await page.goto(BASE + '/');
-    await page.waitForTimeout(500);
+    await waitReady(page);
     await page.click('#btn-stored-procedure-picker');
-    await page.waitForTimeout(300);
+    await waitDatasourceOptionsLoaded(page);
     await page.selectOption('#spp-datasource', TEST_ALIAS);
-    await page.waitForTimeout(300);
+    await waitProceduresListSettled(page);
     await page.click('#spp-procedures div');
-    await page.waitForTimeout(500);
+    await page.waitForSelector('#sql-command-editor-overlay');
 
     const resultText = await page.locator('#spp-result').textContent();
     expect(resultText).toContain('NO guardado permanentemente');
@@ -96,13 +120,13 @@ test.describe('Fase 11 — Stored Procedure Picker', () => {
     }));
 
     await page.goto(BASE + '/');
-    await page.waitForTimeout(500);
+    await waitReady(page);
     await page.click('#btn-stored-procedure-picker');
-    await page.waitForTimeout(300);
+    await waitDatasourceOptionsLoaded(page);
     await page.selectOption('#spp-datasource', TEST_ALIAS);
-    await page.waitForTimeout(300);
+    await waitProceduresListSettled(page);
     await page.click('#spp-procedures div');
-    await page.waitForTimeout(500);
+    await page.waitForFunction(() => (document.getElementById('spp-result')?.textContent || '').includes('No se pudo construir'));
 
     const resultText = await page.locator('#spp-result').textContent();
     expect(resultText).toContain('No se pudo construir el comando');

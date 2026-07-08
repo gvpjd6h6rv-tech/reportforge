@@ -53,6 +53,14 @@ export default defineConfig({
   timeout: 60000,
   expect: { timeout: 10000 },
   reporter: [['line']],
+  // Fase 15 (EVIDENCE-F14-1): reportforge_server.py is a stdlib
+  // http.server.HTTPServer — single-threaded, no ThreadingMixIn. Running
+  // these specs in parallel saturates it under concurrent page loads
+  // (~160 <script> tags each), causing intermittent timeouts even with
+  // real-condition waits (no fixed sleeps left in the specs). Until the
+  // dev server itself is made concurrent (out of scope here), this suite
+  // is a sequential-only contract.
+  workers: 1,
   use: {
     baseURL: process.env.RF_LIVE_URL || 'http://127.0.0.1:5001',
     trace: 'retain-on-failure',

@@ -7,26 +7,40 @@
  * lo restaura sin arrastrar comandos de otro documento, archivos viejos
  * sin sqlCommands cargan sin romper, y "Archivo > Nuevo" limpia la
  * colección.
+ *
+ * Fase 15: waits post-goto/post-acción son condiciones reales, no sleeps
+ * fijos — robusto bajo carga concurrente del servidor de dev.
  */
 import { test, expect } from '@playwright/test';
 
 const BASE = process.env.RF_LIVE_URL || 'http://127.0.0.1:5001';
 
+async function waitReady(page) {
+  await page.waitForFunction(() => (
+    typeof DS !== 'undefined'
+    && typeof SqlCommandEditor !== 'undefined'
+    && typeof CommandRuntimeFile !== 'undefined'
+  ));
+}
+
 async function acceptCommandInEditor(page, name, sql) {
   await page.evaluate(() => SqlCommandEditor.open());
-  await page.waitForTimeout(200);
+  await page.waitForSelector('#sce-sql');
   await page.fill('#sce-sql', sql);
   await page.fill('#sce-name', name);
   await page.click('button:has-text("Detectar parámetros")');
-  await page.waitForTimeout(300);
+  await page.waitForFunction(() => {
+    const btn = document.getElementById('sce-accept');
+    return !!btn && !btn.disabled;
+  });
   await page.click('#sce-accept');
-  await page.waitForTimeout(150);
+  await page.waitForFunction(() => (document.getElementById('sce-result')?.textContent || '').includes('agregado a los comandos'));
 }
 
 test.describe('Fase 12 — SQL command persistence', () => {
   test('C-F12-001/002: accepting a command in the editor adds it to DS.sqlCommands via SqlCommandStore', async ({ page }) => {
     await page.goto(BASE + '/');
-    await page.waitForTimeout(500);
+    await waitReady(page);
     await acceptCommandInEditor(page, 'VentasPorFecha', 'SELECT DocNum FROM OINV WHERE DocDate >= {?FechaDesde}');
 
     const commands = await page.evaluate(() => DS.sqlCommands);
@@ -38,7 +52,7 @@ test.describe('Fase 12 — SQL command persistence', () => {
 
   test('C-F12-003: toJSON() persists sqlCommands', async ({ page }) => {
     await page.goto(BASE + '/');
-    await page.waitForTimeout(500);
+    await waitReady(page);
     await acceptCommandInEditor(page, 'CmdA', 'SELECT 1');
 
     const json = await page.evaluate(() => CommandRuntimeFile.toJSON());
@@ -49,7 +63,7 @@ test.describe('Fase 12 — SQL command persistence', () => {
 
   test('C-F12-004/005: loading a saved file restores sqlCommands without carrying over a different document\'s commands', async ({ page }) => {
     await page.goto(BASE + '/');
-    await page.waitForTimeout(500);
+    await waitReady(page);
 
     const savedJson = JSON.stringify({
       name: 'Reporte con comandos', version: '1.0', pageWidth: 794, pageHeight: 1123, pageSize: 'A4',
@@ -71,7 +85,7 @@ test.describe('Fase 12 — SQL command persistence', () => {
 
   test('C-F12-006: loading an old file without sqlCommands does not break', async ({ page }) => {
     await page.goto(BASE + '/');
-    await page.waitForTimeout(500);
+    await waitReady(page);
 
     const oldFileJson = JSON.stringify({
       name: 'Reporte Viejo', version: '1.0', pageWidth: 794, pageHeight: 1123, pageSize: 'A4',
@@ -93,14 +107,14 @@ test.describe('Fase 12 — SQL command persistence', () => {
 
   test('C-F12-005 (New document): "Archivo > Nuevo" clears DS.sqlCommands', async ({ page }) => {
     await page.goto(BASE + '/');
-    await page.waitForTimeout(500);
+    await waitReady(page);
     page.on('dialog', (d) => d.accept());
 
     await page.evaluate(() => {
       DS.sqlCommands = [{ id: 'X', name: 'X', sql: 'SELECT 1' }];
     });
     await page.click('button.tb-icon[data-action="new"]');
-    await page.waitForTimeout(300);
+    await page.waitForFunction(() => Array.isArray(DS.sqlCommands) && DS.sqlCommands.length === 0);
 
     const after = await page.evaluate(() => DS.sqlCommands);
     expect(after).toEqual([]);
@@ -108,7 +122,7 @@ test.describe('Fase 12 — SQL command persistence', () => {
 
   test('C-F12-009: no listing UI was created, no Field Explorer/Preview touched by accepting a command', async ({ page }) => {
     await page.goto(BASE + '/');
-    await page.waitForTimeout(500);
+    await waitReady(page);
     await acceptCommandInEditor(page, 'CmdB', 'SELECT 1');
 
     // No new listing panel exists.
