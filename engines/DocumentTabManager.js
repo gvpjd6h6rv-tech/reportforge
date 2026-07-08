@@ -179,6 +179,9 @@
       DS.setSections(defSections, 'DocumentTabManager.create');
       DS.setElements([],          'DocumentTabManager.create');
       DS.clearSelectionState('DocumentTabManager.create');
+      DS.parameterValues = {};
+      DS.layout = { parameters: [] };
+      if (typeof LeftParametersPanel !== 'undefined') LeftParametersPanel.render();
       if (DS.state) {
         DS.state.history        = [];
         DS.state.historyIndex   = -1;

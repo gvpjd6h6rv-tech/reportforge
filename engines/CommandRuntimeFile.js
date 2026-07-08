@@ -64,6 +64,14 @@
     SectionEngine.render();
     SelectionEngine.clearSelection();
     if (typeof DS.saveHistory === 'function') DS.saveHistory();
+
+    // RF-CR-PARAMS-PANEL-2 (Fase 10): non-destructive sync so
+    // LeftParametersPanel.render() (Fase 9) reads the parameters that
+    // were just loaded — DS.layout has no other producer, so this only
+    // ever adds/overwrites the `parameters` key, never drops unrelated
+    // fields a future producer might set on DS.layout.
+    DS.layout = { ...(DS.layout || {}), parameters: layout.parameters || [] };
+    if (typeof LeftParametersPanel !== 'undefined') LeftParametersPanel.render();
   }
 
   function _applyLoadedLayout(layout, file, fileHandle = null, statusMessage = null) {
@@ -77,6 +85,10 @@
       margins: layout.margins && typeof layout.margins === 'object' ? { ...layout.margins } : _currentLayout.margins,
     };
     _currentLayoutFileHandle = fileHandle;
+    // Fase 10: restore parameter VALUES separately from DS.layout
+    // (definitions) — old files without parameterValues fall back to {},
+    // never inheriting whatever was in memory from a previously open doc.
+    DS.parameterValues = (layout.parameterValues && typeof layout.parameterValues === 'object') ? { ...layout.parameterValues } : {};
     if (typeof DocumentTabManager !== 'undefined' && typeof DocumentTabManager._switchToNewTab === 'function') {
       DocumentTabManager._switchToNewTab(name, fileHandle);
     }
@@ -116,6 +128,12 @@
       ..._liveLayoutMeta(),
       sections: DS.sections.map((s) => ({ ...s })),
       elements: DS.elements.map((e) => ({ ...e })),
+      // Fase 10: persist parameter definitions (DS.layout.parameters —
+      // synced by _refreshEditor, Fase 9's only producer/consumer) and
+      // their current in-memory values (DS.parameterValues) so a
+      // reload restores both, not just layout/sections/elements.
+      parameters: (DS.layout && Array.isArray(DS.layout.parameters)) ? DS.layout.parameters : [],
+      parameterValues: { ...(DS.parameterValues || {}) },
       savedAt: new Date().toISOString(),
     };
     return JSON.stringify(payload, null, 2);
