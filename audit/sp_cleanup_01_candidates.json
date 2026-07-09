@@ -99,7 +99,8 @@
     "STRUCTURAL_WARNING": "Applies only within a WARNING band per the rule above matching the metric type, AND all of: ratchet passes (current <= baseline); no regression; the LOC-normalization concern is already resolved for this file (RF-SP-SCORE-HARDENING-1 / SP-HARDENING-NESTING-01 applied); a real compensating improvement or genuine cleanup was already made; further reduction would require artificial compaction, artificial abstraction, breaking the shared architectural pattern, or a behavior change; and explicit line-level evidence is recorded.",
     "FAIL": "sp_total_score > baseline — a real ratchet regression.",
     "BLOCKED": "A real refactor attempt was measured and rejected before touching the real file, because it would cause a FAIL (score > baseline) with no further real compensating reduction available.",
-    "DEFERRED_NO_CLEAN_GAIN": "The file has no registered baseline (so the ratchet cannot fail on it), but a full reformat-to-readable measured no compensating drop in any real metric (complexity/nesting/responsibilities/globals/topLevelSideEffects all stayed identical) — only loc rose. Per explicit user rule, absence of a baseline is never used as license to raise a score with no real gain. Left untouched."
+    "DEFERRED_NO_CLEAN_GAIN": "The file has no registered baseline (so the ratchet cannot fail on it), but a full reformat-to-readable measured no compensating drop in any real metric (complexity/nesting/responsibilities/globals/topLevelSideEffects all stayed identical) — only loc rose. Per explicit user rule, absence of a baseline is never used as license to raise a score with no real gain. Left untouched.",
+    "DEFERRED_HIGH_RISK_INTERPRETER": "Ratchet passes (current == baseline exactly, zero margin), does not meet the tiered small-score margin target, and a real (non-cosmetic) compensating refactor DOES exist in principle (flattening genuine nesting sites) but was deferred by explicit user decision because: the file is a production formula-language tokenizer/parser/evaluator where a subtle behavior error would silently corrupt evaluated report formulas; the viable fix requires touching 5 independent genuine nesting sites across 3 different scopes (tokenizer, parser, evaluator/context), not a single-owner extraction like the other STRUCTURAL_WARNING files; complexity is separately saturated far beyond its cap and has no safe low-scope reduction without deleting real interpreter functions; and a naive reformat alone carries high risk of raising the score (raw LOC currently only 27.5% of its cap). Left untouched pending a dedicated future phase with an expanded real-formula test suite."
   },
   "cleanupProgress": [
     {
@@ -146,6 +147,16 @@
       "classification": "DEFERRED_NO_CLEAN_GAIN",
       "reclassifiedNote": "No baseline registered for this file — the ratchet cannot fail on it regardless. A full reformat-to-1-statement-per-line draft (plus deduplicating the two row buttons, which differ only in a 2px padding value) was measured before touching the real file: score rose 31 -> 32, and NOT ONE real metric (complexity, nesting, responsibilities, globals, topLevelSideEffects) dropped — only loc rose, because the button dedup had no conditional logic to remove. Per explicit user rule, the absence of a baseline is never license to raise a score with no compensating real gain. Left untouched, draft discarded (never applied to the real file).",
       "realImprovementMade": "none — decision was to defer, not apply."
+    },
+    {
+      "path": "engines/FormulaEngine.js",
+      "baseline": 37,
+      "marginTarget": 35,
+      "currentScore": 37,
+      "classification": "WARNING / DEFERRED_HIGH_RISK_INTERPRETER",
+      "reclassifiedNote": "Ratchet passes exactly at the limit (37 == baseline 37, zero margin) but misses the tiered small-score target (baseline 20-39 -> target <= baseline-2 = 35). raw_loc=110, normalized_loc=151 (delta +41, deuda_vieja per prior candidates entry). complexity is saturated far beyond cap (raw=361 vs cap=80) with no safe low-scope reduction available without deleting real interpreter functions. A real (non-cosmetic) nesting reduction exists in principle but requires flattening 5 independent genuine depth>=6 sites across 3 separate scopes: tokenize() (L11, L12), P.prim() (L82), and Ctx._n()'s decl case (L88), plus the deepest point at L15 (depth 7, quote-escape lookahead) inside tokenize(). Deferred by explicit user decision: this is the production Crystal-style formula tokenizer/parser/evaluator — a subtle error here would silently corrupt evaluated report formulas, and a naive full reformat carries high risk of raising the score (raw LOC currently only 27.5% of its 400 cap). No urgency: does not exceed baseline.",
+      "realImprovementMade": "none — decision was to defer, not apply.",
+      "nextStep": "Dedicated future phase with an expanded real-formula test suite before attempting any tokenizer/parser/evaluator refactor."
     }
   ]
 }
