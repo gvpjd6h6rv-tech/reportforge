@@ -45,16 +45,15 @@ const FormulaEditorDialog = {
     body.appendChild(ta);
     const helper=document.createElement('div');
     helper.style.cssText='display:flex;gap:8px;max-height:200px;';
-    const mkCol=(title,items,onClick)=>{const c=document.createElement('div');c.style.cssText='flex:1;min-width:0;border:1px inset #ACA899;background:#FFF;display:flex;flex-direction:column;';const lbl=document.createElement('div');lbl.style.cssText='background:#0A246A;color:#FFF;padding:2px 4px;font-size:10px;font-weight:bold;flex-shrink:0;';lbl.textContent=title;const list=document.createElement('div');list.style.cssText='overflow-y:auto;flex:1;';items.forEach(item=>{const d=document.createElement('div');d.textContent=item;d.style.cssText='padding:1px 4px;cursor:pointer;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';d.title=item;d.style.color='#000';d.onmouseenter=()=>{d.style.background='#316AC5';d.style.color='#FFF';};d.onmouseleave=()=>{d.style.background='';d.style.color='#000';};d.onclick=()=>onClick(item);list.appendChild(d);});c.appendChild(lbl);c.appendChild(list);return c;};
     const ins=(text)=>{const s=ta.selectionStart,e=ta.selectionEnd;ta.value=ta.value.slice(0,s)+text+ta.value.slice(e);ta.selectionStart=ta.selectionEnd=s+text.length;ta.focus();this._validate();};
-    helper.appendChild(mkCol('Fields & Parameters', fields, f=>ins(`{${f}}`)));
-    helper.appendChild(mkCol('Functions', funcs, f=>ins(f+'(')));
-    helper.appendChild(mkCol('Operators', ops, o=>ins(` ${o} `)));
+    helper.appendChild(this._buildHelperColumn('Fields & Parameters', fields, f=>ins(`{${f}}`)));
+    helper.appendChild(this._buildHelperColumn('Functions', funcs, f=>ins(f+'(')));
+    helper.appendChild(this._buildHelperColumn('Operators', ops, o=>ins(` ${o} `)));
     body.appendChild(helper);
     const timingRow=document.createElement('div');
     timingRow.style.cssText='display:flex;align-items:center;gap:8px;font-size:10px;color:#666;';
     timingRow.innerHTML='<span>Evaluation timing:</span>';
-    ['WhileReadingRecords','WhilePrintingRecords'].forEach(t=>{const btn=document.createElement('button');btn.textContent=t;btn.style.cssText='padding:1px 6px;font-size:10px;cursor:pointer;border:1px solid #ACA899;background:#D4D0C8;';btn.onclick=()=>{ const cv=ta.value; ta.value=(cv?cv+'\n':'')+t+';'; ta.focus(); this._validate(); };timingRow.appendChild(btn);});
+    ['WhileReadingRecords','WhilePrintingRecords'].forEach(t=>timingRow.appendChild(this._buildTimingButton(t, ta)));
     body.appendChild(timingRow); dlg.appendChild(body);
     const ftr=document.createElement('div');
     ftr.style.cssText='padding:6px 8px;border-top:1px solid #ACA899;display:flex;justify-content:flex-end;gap:6px;flex-shrink:0;background:#D4D0C8;';
@@ -64,9 +63,13 @@ const FormulaEditorDialog = {
     ov.appendChild(dlg); document.body.appendChild(ov); this._el=ov;
     ta.addEventListener('input',()=>this._validate()); nameInput.focus(); this._validate();
   },
-  _getFields(){const out=[];const walk=(node)=>{if(!node)return;if(node.path){out.push(node.path);return;}for(const[k,v]of Object.entries(node)){if(k==='label'||k==='icon')continue;if(typeof v==='object'&&v!==null)walk(v);}};if(typeof FIELD_TREE!=='undefined'){const db=FIELD_TREE.database?.children||FIELD_TREE.database||{};walk(db);}Object.keys(DS.formulas||{}).forEach(nm=>out.push(nm));return out;},
+  _buildHelperColumn(title,items,onClick){const c=document.createElement('div');c.style.cssText='flex:1;min-width:0;border:1px inset #ACA899;background:#FFF;display:flex;flex-direction:column;';const lbl=document.createElement('div');lbl.style.cssText='background:#0A246A;color:#FFF;padding:2px 4px;font-size:10px;font-weight:bold;flex-shrink:0;';lbl.textContent=title;const list=document.createElement('div');list.style.cssText='overflow-y:auto;flex:1;';items.forEach(item=>{const d=document.createElement('div');d.textContent=item;d.style.cssText='padding:1px 4px;cursor:pointer;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';d.title=item;d.style.color='#000';d.onmouseenter=()=>{d.style.background='#316AC5';d.style.color='#FFF';};d.onmouseleave=()=>{d.style.background='';d.style.color='#000';};d.onclick=()=>onClick(item);list.appendChild(d);});c.appendChild(lbl);c.appendChild(list);return c;},
+  _buildTimingButton(label,ta){const btn=document.createElement('button');btn.textContent=label;btn.style.cssText='padding:1px 6px;font-size:10px;cursor:pointer;border:1px solid #ACA899;background:#D4D0C8;';btn.onclick=()=>{ const cv=ta.value; ta.value=(cv?cv+'\n':'')+label+';'; ta.focus(); this._validate(); };return btn;},
+  _walkFieldNode(node,out){if(!node)return;if(node.path){out.push(node.path);return;}for(const[k,v]of Object.entries(node)){if(k==='label'||k==='icon')continue;if(typeof v==='object'&&v!==null)this._walkFieldNode(v,out);}},
+  _getFields(){const out=[];if(typeof FIELD_TREE!=='undefined'){const db=FIELD_TREE.database?.children||FIELD_TREE.database||{};this._walkFieldNode(db,out);}Object.keys(DS.formulas||{}).forEach(nm=>out.push(nm));return out;},
   _validate(){const expr=(document.getElementById('fe-expr')?.value||'').trim();const badge=document.getElementById('fe-valid');if(!badge)return;if(!expr){badge.textContent='';badge.style.background='';return;}const r=FormulaEngine.validate(expr);if(r.valid){badge.textContent='✓ Syntax OK';badge.style.cssText='font-size:10px;padding:1px 6px;border-radius:2px;background:#1E5F4A;color:#FFF;';}else{badge.textContent='⚠ '+r.error;badge.style.cssText='font-size:10px;padding:1px 6px;border-radius:2px;background:#7D1F1F;color:#FFF;';}},
-  save(){const name=(document.getElementById('fe-name')?.value||'').trim();const expr=(document.getElementById('fe-expr')?.value||'').trim();if(!name){alert('Formula name required');return;}if(!expr){alert('Expression required');return;}const r=FormulaEngine.validate(expr);if(!r.valid){if(!confirm('Syntax warning: '+r.error+'\n\nSave anyway?'))return;}DS.saveHistory();if(!DS.formulas) DS.formulas={};DS.formulas[name]=expr;if(FIELD_TREE&&FIELD_TREE.formula){FIELD_TREE.formula.children=FIELD_TREE.formula.children||{};FIELD_TREE.formula.children[name]={path:name,label:name,vtype:'formula'};}FieldExplorerEngine.init();document.getElementById('sb-msg').textContent=`Formula added: ${name}`;this.close();},
+  _registerFormulaFieldNode(name){if(FIELD_TREE&&FIELD_TREE.formula){FIELD_TREE.formula.children=FIELD_TREE.formula.children||{};FIELD_TREE.formula.children[name]={path:name,label:name,vtype:'formula'};}},
+  save(){const name=(document.getElementById('fe-name')?.value||'').trim();const expr=(document.getElementById('fe-expr')?.value||'').trim();if(!name){alert('Formula name required');return;}if(!expr){alert('Expression required');return;}const r=FormulaEngine.validate(expr);if(!r.valid){if(!confirm('Syntax warning: '+r.error+'\n\nSave anyway?'))return;}DS.saveHistory();if(!DS.formulas) DS.formulas={};DS.formulas[name]=expr;this._registerFormulaFieldNode(name);FieldExplorerEngine.init();document.getElementById('sb-msg').textContent=`Formula added: ${name}`;this.close();},
   close(){ this._el?.remove(); this._el=null; },
 };
 
