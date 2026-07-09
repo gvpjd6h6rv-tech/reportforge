@@ -508,6 +508,13 @@
       "maxDecisionPoints": 8
     },
     {
+      "path": "tools/salad-score/metrics/metric_nesting_normalized.mjs",
+      "owner": "salad-score-metrics",
+      "responsibility": "RF-SP-HARDENING-NESTING-01: anti-false-positive metrics layer, single responsibility per file.",
+      "maxLines": 40,
+      "maxDecisionPoints": 8
+    },
+    {
       "path": "tools/salad-score/metrics/metric_loc_normalized.mjs",
       "owner": "salad-score-metrics",
       "responsibility": "RF-SP-SCORE-HARDENING-1: anti-gaming metrics layer, single responsibility per file.",

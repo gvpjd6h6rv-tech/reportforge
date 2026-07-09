@@ -9,7 +9,7 @@ import { metricComplexity } from '../metrics/metric_complexity.mjs';
 import { metricImports } from '../metrics/metric_imports.mjs';
 import { metricFunctions } from '../metrics/metric_functions.mjs';
 import { metricClasses } from '../metrics/metric_classes.mjs';
-import { metricNesting } from '../metrics/metric_nesting.mjs';
+import { metricNestingNormalized } from '../metrics/metric_nesting_normalized.mjs';
 import { metricResponsibilities } from '../metrics/metric_responsibilities.mjs';
 import { metricGlobals } from '../metrics/metric_globals.mjs';
 import { metricTopLevelSideEffects } from '../metrics/metric_top_level_side_effects.mjs';
@@ -53,7 +53,10 @@ export function runSaladScore({ roots, config, ownershipMapPath }) {
     const imports = metricImports(text);
     const fns = metricFunctions(text);
     const classes = metricClasses(text);
-    const nesting = metricNesting(text);
+    // RF-SP-HARDENING-NESTING-01: scrubbed via scrub_non_code.mjs first —
+    // a literal brace inside a string/template/comment (e.g. Crystal-style
+    // "{FieldName}" interpolation) is not real code nesting.
+    const nesting = metricNestingNormalized(text);
     const responsibilities = metricResponsibilities(text);
     const globals = metricGlobals(text, config.globalIdentifiers);
     const topLevel = metricTopLevelSideEffects(text);
