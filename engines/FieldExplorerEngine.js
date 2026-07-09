@@ -48,10 +48,11 @@ const FieldExplorerEngine = {
   },
 
   _buildField(field){
-    const div=document.createElement('div');div.className='tree-field';
+    const div=document.createElement('div');div.className='tree-field'+(field.readOnly?' tree-field-readonly':'');
     const typeIcon={'string':'abc','number':'#','currency':'$','date':'📅'}[field.vtype]||'•';
     div.innerHTML=`<span style="font-size:10px">⬚</span><span class="tree-text">${field.label}</span><span class="tree-field-type">${typeIcon}</span>`;
     div.title=field.path;
+    if(field.readOnly)return div;
     div.draggable=true;
     div.addEventListener('dblclick',()=>this._insertField(field));
     div.addEventListener('dragstart',e=>{

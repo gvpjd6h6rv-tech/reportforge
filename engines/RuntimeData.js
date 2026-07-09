@@ -96,6 +96,7 @@ const RuntimeData = (() => {
       }},
       formula:{label:'Campos de fórmula',icon:'ƒ',children:{}},
       parameter:{label:'Campos de parámetro',icon:'?',children:{}},
+      sqlCommand:{label:'Campos de SQL Command',icon:'🗄️',children:{}},
       running:{label:'Totales acumulados',icon:'Σ',children:{}},
       group:{label:'Campos de grupo',icon:'G',children:{}},
       // RF-FIELD-EXPLORER-SPECIAL-FIELDS-PARITY-1: full CR Special Fields

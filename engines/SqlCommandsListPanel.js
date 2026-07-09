@@ -1,10 +1,10 @@
 'use strict';
 
 /**
- * SqlCommandsListPanel — UDS 4.1 Fase 13. Modal de solo ver + eliminar
- * comandos guardados (SqlCommandStore.list()/remove(id)); re-renderiza
- * tras cada eliminación. No edita, no ejecuta SQL, no toca Preview/Field
- * Explorer, no serializa (el serializer lee la colección en vivo).
+ * SqlCommandsListPanel — UDS 4.1 Fase 13 (extendido Fase 17). Modal de
+ * ver + eliminar comandos guardados; cada fila también dispara
+ * SqlCommandSchemaDiscovery.discover(cmd) (fail-closed delegado a F16) y
+ * muestra su resultado. No edita, no ejecuta SQL, no serializa.
  */
 const SqlCommandsListPanel = {
   _el: null,
@@ -53,12 +53,21 @@ const SqlCommandsListPanel = {
     const sqlEl = document.createElement('div');
     sqlEl.style.cssText = 'font-family:Courier New,monospace;font-size:10px;color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
     sqlEl.textContent = cmd.sql; sqlEl.title = cmd.sql;
-    info.appendChild(nameEl); info.appendChild(sqlEl); row.appendChild(info);
+    const statusEl = document.createElement('div'); statusEl.className = 'scl-schema-status'; statusEl.style.cssText = 'font-size:9px;color:#666;';
+    info.appendChild(nameEl); info.appendChild(sqlEl); info.appendChild(statusEl); row.appendChild(info);
+    const discoverBtn = document.createElement('button');
+    discoverBtn.textContent = 'Discover schema'; discoverBtn.className = 'scl-discover-btn';
+    discoverBtn.style.cssText = 'padding:2px 8px;border:1px solid #ACA899;background:#D4D0C8;cursor:pointer;font-family:Tahoma;font-size:10px;flex-shrink:0;';
+    discoverBtn.onclick = async () => {
+      statusEl.textContent = 'Descubriendo columnas…';
+      const r = await SqlCommandSchemaDiscovery.discover(cmd);
+      statusEl.textContent = r.ok ? `✓ ${r.columns.length} columna(s)` : `⚠ ${r.error}`;
+    };
     const delBtn = document.createElement('button');
     delBtn.textContent = 'Eliminar'; delBtn.className = 'scl-remove-btn';
     delBtn.style.cssText = 'padding:2px 10px;border:1px solid #ACA899;background:#D4D0C8;cursor:pointer;font-family:Tahoma;font-size:10px;flex-shrink:0;';
     delBtn.onclick = () => { SqlCommandStore.remove(cmd.id); this.render(); };
-    row.appendChild(delBtn);
+    row.appendChild(discoverBtn); row.appendChild(delBtn);
     return row;
   },
 

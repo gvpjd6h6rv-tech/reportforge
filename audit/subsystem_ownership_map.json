@@ -1293,6 +1293,34 @@
         "reason": "backlog",
         "justification": "AlignEngine.js requires DS, CommandEngine, and _canonicalCanvasWriter() to unit test meaningfully — covered integration-level by governance_guardrails.test.mjs. AlignmentEngine.js's compute()/computeSpacing()/THRESHOLD are unit-tested directly (no DOM/CommandEngine needed) by reportforge/tests/alignment_geometry.test.mjs since P17D; align()/distribute() remain untested (require DS.getSectionTop + element mutation context) — backlog."
       }
+    },
+    {
+      "id": "SS-37",
+      "name": "sql-command-schema-discovery",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "owner": "designer-runtime/sql-command-schema-discovery",
+      "allowedFiles": [
+        "SqlCommandFieldTreeMap.js",
+        "SqlCommandSchemaDiscovery.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [
+        "FIELD_TREE.sqlCommand.children (SqlCommandSchemaDiscovery only, via SqlCommandFieldTreeMap.buildCommandNode)"
+      ],
+      "selectors": [],
+      "events": [
+        "SqlCommandSchemaDiscovery.discover(command)",
+        "SqlCommandFieldTreeMap.buildCommandNode(command, columns)"
+      ],
+      "existingTests": [
+        "reportforge/tests/sql_command_field_tree_map.test.mjs",
+        "reportforge/tests/sql_command_schema_discovery.test.mjs"
+      ],
+      "requiredGuardCI": [],
+      "risk": "low",
+      "notes": "justification: UDS 4.1 Fase 17 (connect F16's safe schema discovery to Field Explorer). SqlCommandFieldTreeMap.js is a pure data transform (columns -> FIELD_TREE-shaped read-only node, no fetch/DOM) — SqlCommandSchemaDiscovery.js is the orchestrator (resolves known parameter values, calls POST /sql-commands/schema, writes FIELD_TREE.sqlCommand.children via the map, triggers FieldExplorerEngine.init()). Two distinct roles kept in two separate files (1 file = 1 responsibility); grouped under one subsystem since both exist solely to serve this one capability.",
+      "unresolvedAmbiguities": []
     }
   ]
 }

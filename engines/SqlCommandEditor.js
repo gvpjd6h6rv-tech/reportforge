@@ -12,10 +12,10 @@
  * SqlCommandModel.sql — solo el prepared_sql (:Name) del backend.
  */
 const SqlCommandEditor = {
-  _el: null, _lastBuilt: null, _datasourceAlias: null,
+  _el: null, _lastBuilt: null, _datasourceAlias: null, _existingParameters: null,
 
-  open(existingName = '', existingSql = '', existingAlias = null) {
-    this.close(); this._datasourceAlias = existingAlias;
+  open(existingName = '', existingSql = '', existingAlias = null, existingParameters = null) {
+    this.close(); this._datasourceAlias = existingAlias; this._existingParameters = existingParameters;
     const ov = document.createElement('div');
     ov.id = 'sql-command-editor-overlay';
     ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9900;display:flex;align-items:center;justify-content:center;';
@@ -178,16 +178,15 @@ const SqlCommandEditor = {
     }
     // Fase 12: SqlCommandStore owns the commands array — this editor only
     // builds the SqlCommandModel-shaped payload and hands it off.
+    // Fase 17: prefer already-known parameters (real required flags) over
+    // re-detecting, since re-detection only finds raw {?Param} and always
+    // yields zero matches against already-prepared (:Name) SQL.
     SqlCommandStore.add({
-      id: name,
-      name,
-      sql: this._lastBuilt.preparedSql,
-      command_type: 'query',
-      parameters: this._lastBuilt.parameters.map((paramName) => ({
+      id: name, name, sql: this._lastBuilt.preparedSql, command_type: 'query',
+      parameters: this._existingParameters || this._lastBuilt.parameters.map((paramName) => ({
         name: paramName, type: 'string', default: null, required: false, source: 'sql_param',
       })),
-      result_schema: [],
-      max_rows_preview: 100, datasource_alias: this._datasourceAlias,
+      result_schema: [], max_rows_preview: 100, datasource_alias: this._datasourceAlias,
     });
   },
 
