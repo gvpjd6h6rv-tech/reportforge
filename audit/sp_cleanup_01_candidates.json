@@ -1,0 +1,85 @@
+{
+  "generatedAt": "2026-07-08",
+  "purpose": "RF-SP-SCORE-HARDENING-1 evidence snapshot for a future SP-CLEANUP-01 phase — files whose sp_total_score would regress against audit/salad_score_baseline.json if metricLocNormalized (max(raw LOC, logical statements)) replaced the raw-LOC-only metric in the real scoring pipeline. Report-only today: this file is NOT read by run_salad_score.mjs, the ratchet, or any score calculation.",
+  "method": "Measured in isolation (isolated impact script, not wired into runSaladScore's scoreFile/scoreRepo), then each flagged file was read directly to classify the cause with evidence — never assumed.",
+  "classificationLegend": {
+    "deuda_vieja": "Real pre-existing dense code — multiple genuine statements were already fused per physical line since the file's original authorship, not compacted afterward from a more readable version to game the score.",
+    "gaming_reciente": "Code that was demonstrably more readable before and was recently compacted to lower its measured score.",
+    "falso_positivo": "The metric flags it but the pattern is not actually a problem (e.g. a legitimate single-expression facade)."
+  },
+  "candidates": [
+    {
+      "path": "engines/AlignEngine.js",
+      "raw_loc": 21,
+      "normalized_loc": 49,
+      "delta": 28,
+      "baseline_score": 11,
+      "normalized_score": 12,
+      "classification": "deuda_vieja",
+      "evidence": "Every alignLeft/Right/Top/Bottom/Center method fuses an if/else branch + DS.saveHistory() call onto one physical line (e.g. L4: \"alignLeft() { if (typeof CommandEngine !== 'undefined') CommandEngine.alignLefts?.(); else this._fallback('left'); DS.saveHistory(); }\"). Confirmed via direct read — this is the file's original authored style (subsystem SS-36 'alignment-runtime', historical P17E refactor per architecture/ownership-map.json notes), not a recent compaction."
+    },
+    {
+      "path": "engines/DebugTrace.js",
+      "raw_loc": 25,
+      "normalized_loc": 80,
+      "delta": 55,
+      "baseline_score": 25,
+      "normalized_score": 26,
+      "classification": "deuda_vieja",
+      "evidence": "_ensureState() fuses a let + try/catch + 2 assignments + a method call + a return onto one physical line. Every other method (getState, isEnabled, setEnabled, setChannel) follows the same dense one-line-per-method style throughout the whole file. Confirmed via direct read."
+    },
+    {
+      "path": "engines/DebugTraceToggle.js",
+      "raw_loc": 16,
+      "normalized_loc": 52,
+      "delta": 36,
+      "baseline_score": 25,
+      "normalized_score": 26,
+      "classification": "deuda_vieja",
+      "evidence": "_isDebugConsoleCall/_installConsoleGate/_handleHomeClick/init all fuse multiple if-statements, assignments, and calls onto single physical lines. Same dense native style as DebugTrace.js (the two files are companions). Confirmed via direct read."
+    },
+    {
+      "path": "engines/FormatEngine.js",
+      "raw_loc": 48,
+      "normalized_loc": 51,
+      "delta": 3,
+      "baseline_score": null,
+      "normalized_score": null,
+      "classification": "deuda_vieja",
+      "evidence": "Small delta — a handful of lines with 2-3 real statements each (declare + configure pattern). Same established dense style as the rest of this codebase's engine files, not a recent compaction. Did not cause a baseline regression at the time of this measurement."
+    },
+    {
+      "path": "engines/FormulaEditorDialog.js",
+      "raw_loc": 74,
+      "normalized_loc": 175,
+      "delta": 101,
+      "baseline_score": 30,
+      "normalized_score": 32,
+      "classification": "deuda_vieja",
+      "evidence": "L48 alone is 926 characters: the mkCol() helper builds ~4 DOM elements, assigns ~10 style/content properties, and wires 2 event handlers, all on one physical line. This density is the file's original authored style (confirmed via direct read of the surrounding lines, all similarly dense: L57, L61, L62, L67-69 all exceed 250 characters) — not something compacted down from a more readable prior version."
+    },
+    {
+      "path": "engines/FormulaEngine.js",
+      "raw_loc": 110,
+      "normalized_loc": 151,
+      "delta": 41,
+      "baseline_score": 37,
+      "normalized_score": 38,
+      "classification": "deuda_vieja",
+      "evidence": "A hand-written formula tokenizer/parser (Crystal-like expressions) with a deliberately compact native style throughout: e.g. \"const tok=[]; let i=0,n=src.length;\" and \"if(/\\s/.test(src[i])){i++;continue;}\" — many real statements per line since this file's original authorship. Confirmed via direct read."
+    },
+    {
+      "path": "engines/SqlCommandsListPanel.js",
+      "raw_loc": 81,
+      "normalized_loc": 90,
+      "delta": 9,
+      "baseline_score": null,
+      "normalized_score": null,
+      "classification": "deuda_vieja",
+      "evidence": "Follows the SAME 'create element; set property;' one-line-per-widget style already established since Fase 13 (this repo's UDS 4.1 epic) and shared by sibling dialog files (SqlCommandEditor.js, StoredProcedurePicker.js) since Fase 8/11 — a project-wide established convention for compact dialog construction, not something introduced to lower this specific file's score. Did not cause a baseline regression at the time of this measurement."
+    }
+  ],
+  "excludedByDesign": {
+    "engines/SelectionEngine.js": "Initially flagged by an EARLIER, less precise version of countLogicalStatements (a facade method like 'm() { return Other.m(this, args); }' was incorrectly counted as a 2-unit block regardless of its single statement). Fixed: a function-kind block only adds its +2 when it wraps MORE THAN ONE real statement; a control-kind block (if/for/while/etc.) always does, since control flow is conventionally always multi-line. Re-measured after the fix: no longer flagged. Kept here as a documented false-positive precedent, not a cleanup candidate."
+  }
+}

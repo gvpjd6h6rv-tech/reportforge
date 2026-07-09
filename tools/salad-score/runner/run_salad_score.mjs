@@ -4,6 +4,7 @@ import { collectFileList } from '../collectors/collect_file_list.mjs';
 import { collectFileText } from '../collectors/collect_file_text.mjs';
 import { collectOwner } from '../collectors/collect_owner.mjs';
 import { metricLoc } from '../metrics/metric_loc.mjs';
+import { metricLocNormalized } from '../metrics/metric_loc_normalized.mjs';
 import { metricComplexity } from '../metrics/metric_complexity.mjs';
 import { metricImports } from '../metrics/metric_imports.mjs';
 import { metricFunctions } from '../metrics/metric_functions.mjs';
@@ -18,6 +19,7 @@ import { checkRoleViolation } from '../checkers/check_role_violation.mjs';
 import { checkCrossLayerDependency } from '../checkers/check_cross_layer_dependency.mjs';
 import { checkHiddenSideEffect } from '../checkers/check_hidden_side_effect.mjs';
 import { checkCoupling } from '../checkers/check_coupling.mjs';
+import { checkLocNormalizationWarning } from '../checkers/check_loc_normalization_warning.mjs';
 import { scoreFile } from '../scoring/score_file.mjs';
 import { scoreBehavior } from '../scoring/score_behavior.mjs';
 import { scoreTotal } from '../scoring/score_total.mjs';
@@ -42,6 +44,11 @@ export function runSaladScore({ roots, config, ownershipMapPath }) {
     const fileType = metricFileType(file);
 
     const loc = metricLoc(text);
+    // RF-SP-SCORE-HARDENING-1: report-only, non-blocking — never fed into
+    // fileMetrics.loc/scoreFile/scoreRepo below. Surfaces evidence for a
+    // future SP-CLEANUP-01 phase without changing any score today.
+    const locNormalized = metricLocNormalized(text);
+    const locNormalizationWarning = checkLocNormalizationWarning(loc.value, locNormalized.value);
     const complexity = metricComplexity(text);
     const imports = metricImports(text);
     const fns = metricFunctions(text);
@@ -90,6 +97,11 @@ export function runSaladScore({ roots, config, ownershipMapPath }) {
       owner,
       file_type: fileType,
       loc: loc.value,
+      // RF-SP-SCORE-HARDENING-1 (report-only, non-blocking): never read by
+      // scoreFile/scoreRepo/the ratchet — informational only, evidence for
+      // a future SP-CLEANUP-01 phase before this ever becomes a gate.
+      loc_normalized: locNormalized.value,
+      loc_normalization_warning: locNormalizationWarning.evidence,
       responsibilities_detected: responsibilities.value,
       sp_file_score: spFileScore,
       sp_behavior_score: spBehaviorScore,

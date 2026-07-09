@@ -10,5 +10,17 @@ export function reporterConsole(results, repoScore, top = 20) {
   for (const r of sorted) {
     lines.push(`${String(r.sp_total_score).padStart(3)}  ${r.level.padEnd(20)}  ${r.path}`);
   }
+
+  // RF-SP-SCORE-HARDENING-1 (report-only, non-blocking): surfaces
+  // normalized-LOC evidence without affecting sp_total_score/the ratchet.
+  const warned = results.filter((r) => (r.loc_normalization_warning || []).length > 0);
+  if (warned.length) {
+    lines.push('');
+    lines.push(`LOC NORMALIZATION WARNINGS (report-only, not blocking): ${warned.length} file(s)`);
+    for (const r of warned) {
+      lines.push(`  ${r.path}: ${r.loc_normalization_warning[0]}`);
+    }
+  }
+
   return lines.join('\n');
 }

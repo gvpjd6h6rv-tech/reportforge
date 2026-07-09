@@ -508,6 +508,13 @@
       "maxDecisionPoints": 8
     },
     {
+      "path": "tools/salad-score/metrics/metric_loc_normalized.mjs",
+      "owner": "salad-score-metrics",
+      "responsibility": "RF-SP-SCORE-HARDENING-1: anti-gaming metrics layer, single responsibility per file.",
+      "maxLines": 40,
+      "maxDecisionPoints": 8
+    },
+    {
       "path": "tools/salad-score/metrics/metric_responsibilities.mjs",
       "owner": "salad-score-metrics",
       "responsibility": "SP1A-FIX4 architecture: metrics layer, single responsibility per file.",
@@ -592,6 +599,34 @@
       "maxDecisionPoints": 10
     },
     {
+      "path": "tools/salad-score/checkers/check_no_multi_statement_line.mjs",
+      "owner": "salad-score-checkers",
+      "responsibility": "RF-SP-SCORE-HARDENING-1: anti-gaming checker layer, single responsibility per file.",
+      "maxLines": 50,
+      "maxDecisionPoints": 10
+    },
+    {
+      "path": "tools/salad-score/checkers/check_no_minified_source.mjs",
+      "owner": "salad-score-checkers",
+      "responsibility": "RF-SP-SCORE-HARDENING-1: anti-gaming checker layer, single responsibility per file.",
+      "maxLines": 50,
+      "maxDecisionPoints": 10
+    },
+    {
+      "path": "tools/salad-score/checkers/check_no_responsibility_merge.mjs",
+      "owner": "salad-score-checkers",
+      "responsibility": "RF-SP-SCORE-HARDENING-1: anti-gaming checker layer, single responsibility per file.",
+      "maxLines": 50,
+      "maxDecisionPoints": 10
+    },
+    {
+      "path": "tools/salad-score/checkers/check_loc_normalization_warning.mjs",
+      "owner": "salad-score-checkers",
+      "responsibility": "RF-SP-SCORE-HARDENING-1: anti-gaming checker layer, single responsibility per file.",
+      "maxLines": 50,
+      "maxDecisionPoints": 10
+    },
+    {
       "path": "tools/salad-score/checkers/check_no_hidden_side_effects.mjs",
       "owner": "salad-score-checkers",
       "responsibility": "SP1A-FIX4 architecture: checkers layer, single responsibility per file.",
@@ -672,6 +707,13 @@
       "path": "tools/salad-score/scoring/score_total.mjs",
       "owner": "salad-score-scoring",
       "responsibility": "SP1A-FIX4 architecture: scoring layer, single responsibility per file.",
+      "maxLines": 60,
+      "maxDecisionPoints": 12
+    },
+    {
+      "path": "tools/salad-score/scoring/score_delta_explainer.mjs",
+      "owner": "salad-score-scoring",
+      "responsibility": "RF-SP-SCORE-HARDENING-1: anti-gaming scoring layer, single responsibility per file.",
       "maxLines": 60,
       "maxDecisionPoints": 12
     },
