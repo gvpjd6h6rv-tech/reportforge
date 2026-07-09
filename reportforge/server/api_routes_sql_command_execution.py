@@ -41,7 +41,12 @@ Responsibility: orchestrate ONLY.
     sql_executor.execute_command (never re-implements limits/sanitization
     here); record EXACTLY ONE audit log entry per request, on every
     reachable outcome (blocked/error/timeout/empty/success — no return
-    path skips it), via sql_execution_audit_log.record().
+    path skips it), via sql_execution_audit_log.record(). F19B-1B: every
+    response from the point max_rows/timeout are resolved onward also
+    echoes max_rows_effective/timeout_effective back to the caller — the
+    UI needs the ACTUALLY-applied values (not a guess/duplicate of the
+    resolution policy) to satisfy its own "show max_rows/timeout
+    effective" contract requirement.
   - Stored procedures stay out (F19A/F19B-0 decision): a SqlCommandModel
     with command_type == "stored_procedure" is rejected explicitly, as a
     readable POLICY gate — independent of (and in addition to) the fact
@@ -143,7 +148,10 @@ def register_sql_command_execution_routes(app):
                 max_rows_effective=max_rows_effective, timeout_effective=timeout_effective,
                 sql_fingerprint_value=fp,
             )
-            return {"status": "blocked", "reason": guard_verdict["reason"]}
+            return {
+                "status": "blocked", "reason": guard_verdict["reason"],
+                "max_rows_effective": max_rows_effective, "timeout_effective": timeout_effective,
+            }
 
         start = time.perf_counter()
         try:
@@ -161,7 +169,10 @@ def register_sql_command_execution_routes(app):
                 max_rows_effective=max_rows_effective, timeout_effective=timeout_effective,
                 duration_ms=duration_ms, safe_error=safe_error, sql_fingerprint_value=fp,
             )
-            return {"status": status, "safe_error": safe_error}
+            return {
+                "status": status, "safe_error": safe_error,
+                "max_rows_effective": max_rows_effective, "timeout_effective": timeout_effective,
+            }
 
         duration_ms = (time.perf_counter() - start) * 1000
         status = "empty" if result.row_count == 0 else "success"
@@ -177,4 +188,6 @@ def register_sql_command_execution_routes(app):
             "rows": result.rows,
             "row_count": result.row_count,
             "warnings": result.warnings,
+            "max_rows_effective": max_rows_effective,
+            "timeout_effective": timeout_effective,
         }

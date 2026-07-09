@@ -191,6 +191,30 @@ class TestApiRoutesSqlCommandExecution(unittest.TestCase):
         self.assertEqual(body["status"], "success")
         self.assertEqual(body["row_count"], 2)
 
+    def test_response_echoes_max_rows_and_timeout_effective_on_success(self):
+        # F19B-1B gap fix: the UI's own contract requires showing the
+        # ACTUALLY-applied max_rows/timeout, so the response must carry
+        # them — not just the internal audit log.
+        reg.register("ds1", _STRUCTURED_MSSQL_SPEC)
+        with _mock_pymssql_success([{"DocNum": 1}]):
+            resp = self.client.post("/sql-commands/execute", json={
+                "alias": "ds1", "confirm": True,
+                "sql_command": _select_command(max_rows_preview=50), "timeout": 22,
+            })
+        body = resp.json()
+        self.assertEqual(body["max_rows_effective"], 50)
+        self.assertEqual(body["timeout_effective"], 22)
+
+    def test_response_echoes_max_rows_and_timeout_effective_when_guard_blocked(self):
+        reg.register("ds1", _STRUCTURED_MSSQL_SPEC)
+        resp = self.client.post("/sql-commands/execute", json={
+            "alias": "ds1", "confirm": True,
+            "sql_command": _select_command(sql="DROP TABLE OINV"),
+        })
+        body = resp.json()
+        self.assertIn("max_rows_effective", body)
+        self.assertIn("timeout_effective", body)
+
     def test_empty_result_is_classified_as_empty_not_success(self):
         reg.register("ds1", _STRUCTURED_MSSQL_SPEC)
         with _mock_pymssql_success([]):
