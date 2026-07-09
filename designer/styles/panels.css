@@ -139,10 +139,22 @@
   }
   .tree-node-label:hover { background: var(--rf-accent-hover); }
   .tree-node-label.selected { background: var(--rf-accent); color: #FFF; }
-  .tree-arrow { font-size: 9px; inline-size: 10px; text-align: center; flex-shrink: 0; color: #444; }
+  /* F18: top-level group headers (Campos de base de datos, de fórmula, de
+     SQL Command, etc.) get a subtle raised-bar treatment so they read as
+     section headers at a glance, CR-style — #field-tree's direct .tree-node
+     children are exactly the 7 top-level groups (see FieldExplorerEngine.
+     render()), so this needs no new class/DOM. */
+  #field-tree > .tree-node > .tree-node-label {
+    font-weight: bold;
+    background: linear-gradient(180deg, var(--rf-bg-light), var(--rf-bg-dark));
+    border-block-end: 1px solid var(--rf-border-mid);
+  }
+  .tree-arrow { font-size: 9px; inline-size: 10px; text-align: center; flex-shrink: 0; color: var(--rf-border-dark); }
   .tree-icon { font-size: var(--rf-font-size-base); flex-shrink: 0; }
   .tree-text { overflow: hidden; text-overflow: ellipsis; flex: 1; }
-  .tree-children { padding-inline-start: 14px; display: none; }
+  /* F18: faint vertical guide line under each expanded group — classic
+     tree-view hierarchy cue, CR-style, purely visual (no layout shift). */
+  .tree-children { padding-inline-start: 14px; display: none; border-inline-start: 1px solid var(--rf-border-mid); margin-inline-start: 5px; }
   .tree-children.open { display: block; }
   .tree-field {
     display: flex;
@@ -158,6 +170,20 @@
   .tree-field:hover { background: var(--rf-accent-hover); }
   .tree-field.dragging { opacity: .5; }
   .tree-field-type { font-size: 9px; color: #666; margin-inline-start: auto; flex-shrink: 0; }
+  /* F18: read-only fields (SQL Command columns, F17) must look distinct
+     but not "broken" — italic + muted ink + a small left tag border, and
+     a neutral (not accent-blue) hover, signaling "not draggable" without
+     removing all interactivity feedback. Behavior itself (no draggable,
+     no dblclick) is already enforced in JS — this is presentation only. */
+  .tree-field-readonly {
+    cursor: default;
+    font-style: italic;
+    color: var(--rf-border-dark);
+    border-inline-start: 2px solid var(--rf-border-mid);
+    padding-inline-start: calc(var(--rf-gap-sm) - 2px);
+  }
+  .tree-field-readonly:hover { background: var(--rf-bg-dark); }
+  .tree-field-readonly .tree-field-type { color: var(--rf-border-mid); }
 
   /* Properties panel */
   #properties-panel {
