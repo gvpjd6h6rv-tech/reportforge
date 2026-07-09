@@ -35,6 +35,18 @@
     });
   }
 
+  // FACTORY-MOCKUP-RFDJSON-EXPORT-01: a .js source file (e.g. an engines/*.js
+  // module) is never a loadable layout — surface that plainly instead of the
+  // raw JSON.parse "Unexpected token" message.
+  function _parseLayoutJSON(text, fileName) {
+    try { return JSON.parse(text); } catch (error) {
+      if (/\.js$/i.test(fileName || '') || /^\s*['"]use strict['"]/.test(text)) {
+        throw new Error(`"${fileName}" es un archivo JavaScript, no un layout JSON. Usa un .json o .rfd.json.`);
+      }
+      throw error;
+    }
+  }
+
   async function _ensureWritablePermission(fileHandle) {
     if (!fileHandle) return false;
     if (typeof fileHandle.queryPermission !== 'function') return true;
@@ -62,7 +74,7 @@
       });
       if (!fileHandle) return;
       const file = await fileHandle.getFile();
-      const layout = CRF._normalizeLayout(JSON.parse(await _readFileAsText(file)));
+      const layout = CRF._normalizeLayout(_parseLayoutJSON(await _readFileAsText(file), file.name));
       CRF._applyLoadedLayout(layout, file, fileHandle, `✓ Abierto: ${file.name}`);
     } catch (error) {
       if (error && error.name !== 'AbortError') alert(`Error al cargar: ${error.message}`);
@@ -118,7 +130,7 @@
       if (!file) return;
       try {
         const text = await _readFileAsText(file);
-        const layout = CRF._normalizeLayout(JSON.parse(text));
+        const layout = CRF._normalizeLayout(_parseLayoutJSON(text, file.name));
         CRF._applyLoadedLayout(layout, file, null, `✓ Abierto: ${file.name}`);
       } catch (error) {
         alert(`Error al cargar: ${error.message}`);
@@ -208,7 +220,7 @@
     const CRF = global.CommandRuntimeFile;
     _readFileAsText(file)
       .then((text) => {
-        const parsed = JSON.parse(text);
+        const parsed = _parseLayoutJSON(text, file.name);
         const layout = CRF._normalizeLayout(parsed);
         CRF._applyLoadedLayout(layout, file, null, '✓ Diseño importado');
       })

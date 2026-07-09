@@ -4,6 +4,7 @@ Document state, selectors, actions, and history are separate owners.
 
 - `DocumentStore.js` is facade-only.
 - `DocumentState.js` owns the canonical document state and bootstrap helpers.
+- `FactoryInvoiceMockupLayout.js` owns the default/initial mockup data (sections + elements) shown before any real layout is opened — pure data, no behavior. `DocumentState.createState()` consumes it via `build(mkEl)`.
 - `DocumentSelectors.js` owns reads only.
 - `DocumentActions.js` owns state mutations and does not touch the DOM directly.
 - `DocumentHistory.js` owns undo/redo, snapshots, and view sync after history changes.

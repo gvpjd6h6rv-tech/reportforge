@@ -533,7 +533,7 @@ test('command runtime split stays modular, thin, and contract-stable', () => {
     'engines/CommandRuntimeView.js': 140,
     'engines/CommandRuntimeSections.js': 220,
     'engines/CommandRuntimeFile.js': 220,
-    'engines/CommandRuntimeFileIO.js': 225,  // 221 after splitting save-as notify onto 3 lines (MDI tabs)
+    'engines/CommandRuntimeFileIO.js': 235,  // 233 after adding _parseLayoutJSON friendly .js-load error (FACTORY-MOCKUP-RFDJSON-EXPORT-01)
     'engines/CommandRuntimeDocType.js': 260,
     'engines/CommandRuntimeHandlers.js': 240,
     'engines/CommandRuntimeHandlersFile.js': 40,
@@ -848,6 +848,7 @@ test('critical boundary files stay below growth thresholds', () => {
     [path.join(ROOT, 'reportforge/core/render/datasource/multi_dataset.py'), 2_500],
     [path.join(ROOT, 'engines/DocumentStore.js'), 3_500],
     [path.join(ROOT, 'engines/DocumentState.js'), 10_000],
+    [path.join(ROOT, 'engines/FactoryInvoiceMockupLayout.js'), 10_000],
     [path.join(ROOT, 'engines/DocumentSelectors.js'), 3_000],
     [path.join(ROOT, 'engines/DocumentHistory.js'), 5_000],
     [path.join(ROOT, 'engines/DocumentActions.js'), 7_000],
@@ -984,6 +985,7 @@ test('document store split stays modular, thin, and contract-stable', () => {
     'engines/DocumentStore.js',
     'engines/DocumentStoreUtils.js',
     'engines/DocumentState.js',
+    'engines/FactoryInvoiceMockupLayout.js',
     'engines/DocumentSelectors.js',
     'engines/DocumentHistory.js',
     'engines/DocumentActions.js',
@@ -997,6 +999,7 @@ test('document store split stays modular, thin, and contract-stable', () => {
   const facade = fs.readFileSync(path.join(ROOT, 'engines/DocumentStore.js'), 'utf8');
   const utils = fs.readFileSync(path.join(ROOT, 'engines/DocumentStoreUtils.js'), 'utf8');
   const state = fs.readFileSync(path.join(ROOT, 'engines/DocumentState.js'), 'utf8');
+  const mockup = fs.readFileSync(path.join(ROOT, 'engines/FactoryInvoiceMockupLayout.js'), 'utf8');
   const selectors = fs.readFileSync(path.join(ROOT, 'engines/DocumentSelectors.js'), 'utf8');
   const history = fs.readFileSync(path.join(ROOT, 'engines/DocumentHistory.js'), 'utf8');
   const actions = fs.readFileSync(path.join(ROOT, 'engines/DocumentActions.js'), 'utf8');
@@ -1006,6 +1009,7 @@ test('document store split stays modular, thin, and contract-stable', () => {
   assert.ok(facade.split('\n').length <= 120, 'DocumentStore.js should remain facade-only');
   assert.ok(utils.split('\n').length <= 20, 'DocumentStoreUtils.js should remain bounded');
   assert.ok(state.split('\n').length <= 180, 'DocumentState.js should remain bounded');
+  assert.ok(mockup.split('\n').length <= 90, 'FactoryInvoiceMockupLayout.js should remain bounded');
   assert.ok(selectors.split('\n').length <= 120, 'DocumentSelectors.js should remain bounded');
   assert.ok(history.split('\n').length <= 120, 'DocumentHistory.js should remain bounded');
   assert.ok(actions.split('\n').length <= 120, 'DocumentActions.js should remain bounded');
@@ -1020,6 +1024,14 @@ test('document store split stays modular, thin, and contract-stable', () => {
   assert.match(selectors, /getSelectedElements/);
   assert.match(history, /saveHistory/);
   assert.match(contract, /facade-only/i);
+  assert.match(state, /FactoryInvoiceMockupLayout/);
+  assert.doesNotMatch(state, /mkEl\('field', 's-rh'/, 'DocumentState.js should no longer hardcode the factory mockup elements');
+  assert.match(mockup, /function build\(mkEl\)/);
+  assert.match(html, /<script src="\/engines\/FactoryInvoiceMockupLayout\.js"><\/script>/);
+  assert.ok(
+    html.indexOf('"/engines/FactoryInvoiceMockupLayout.js"') < html.indexOf('"/engines/DocumentState.js"'),
+    'FactoryInvoiceMockupLayout.js must load before DocumentState.js',
+  );
   assert.match(contract, /DS\.state/i);
 
   assert.ok(html.indexOf('DocumentStoreUtils.js') < html.indexOf('"/engines/DocumentStore.js"'),

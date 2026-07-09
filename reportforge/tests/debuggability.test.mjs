@@ -646,9 +646,11 @@ test('visual contract guard — structural snapshot and pixel diff wiring verifi
 // ---------------------------------------------------------------------------
 
 function loadDocumentState() {
+  const mockupSrc = fs.readFileSync(path.join(ROOT, 'engines/FactoryInvoiceMockupLayout.js'), 'utf8');
   const src = fs.readFileSync(path.join(ROOT, 'engines/DocumentState.js'), 'utf8');
   const ctx = { module: { exports: {} } };
-  vm.runInNewContext(src, ctx);
+  // concatenated so both share one top-level scope, same as two <script> tags
+  vm.runInNewContext(`${mockupSrc}\n${src}`, ctx);
   return ctx.module.exports;
 }
 
