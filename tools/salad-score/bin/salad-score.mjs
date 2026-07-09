@@ -8,6 +8,7 @@ import { reporterConsole } from '../reporters/reporter_console.mjs';
 import { reporterJson } from '../reporters/reporter_json.mjs';
 import { reporterMarkdown } from '../reporters/reporter_markdown.mjs';
 import { reporterDashboard } from '../reporters/reporter_dashboard.mjs';
+import { loadBaseline } from '../ci/salad_score_baseline_store.mjs';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 
@@ -62,12 +63,19 @@ function main() {
     }
   }
 
+  // SP-MARGIN-01 (report-only): baseline keys are repo-relative (see
+  // salad-score-ratchet.mjs) — re-key to absolute to match the runner.
+  const relativeBaseline = loadBaseline(path.join(REPO_ROOT, 'audit/salad_score_baseline.json'));
+  const baselineScores = Object.fromEntries(
+    Object.entries(relativeBaseline).map(([p, s]) => [path.join(REPO_ROOT, p), s]));
+
   let result;
   try {
     result = runSaladScore({
       roots,
       config,
       ownershipMapPath: path.join(REPO_ROOT, 'audit/subsystem_ownership_map.json'),
+      baselineScores,
     });
   } catch (err) {
     console.error(`Internal error: ${err.message}`);

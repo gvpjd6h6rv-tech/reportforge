@@ -22,5 +22,18 @@ export function reporterConsole(results, repoScore, top = 20) {
     }
   }
 
+  // SP-MARGIN-01 (report-only, non-blocking): only WARNING/FAIL/
+  // STRUCTURAL_WARNING are surfaced — OK and NOT_APPLICABLE stay silent.
+  const marginIssues = results.flatMap((r) => (r.metric_margins || [])
+    .filter((m) => m.status === 'WARNING' || m.status === 'FAIL' || m.status === 'STRUCTURAL_WARNING')
+    .map((m) => ({ path: r.path, ...m })));
+  if (marginIssues.length) {
+    lines.push('');
+    lines.push(`METRIC MARGIN WARNINGS (report-only, not blocking): ${marginIssues.length} issue(s)`);
+    for (const m of marginIssues) {
+      lines.push(`  ${m.path}: ${m.label} = ${m.status} (value=${m.value}, limit=${m.limit}, ok<=${m.okTarget})`);
+    }
+  }
+
   return lines.join('\n');
 }

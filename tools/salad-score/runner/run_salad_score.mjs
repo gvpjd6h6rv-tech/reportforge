@@ -20,6 +20,8 @@ import { checkCrossLayerDependency } from '../checkers/check_cross_layer_depende
 import { checkHiddenSideEffect } from '../checkers/check_hidden_side_effect.mjs';
 import { checkCoupling } from '../checkers/check_coupling.mjs';
 import { checkLocNormalizationWarning } from '../checkers/check_loc_normalization_warning.mjs';
+import { computeFileMetricMargins } from '../scoring/metric_margin.mjs';
+import { METRIC_MARGIN_POLICY } from '../scoring/metric_margin_policy.mjs';
 import { scoreFile } from '../scoring/score_file.mjs';
 import { scoreBehavior } from '../scoring/score_behavior.mjs';
 import { scoreTotal } from '../scoring/score_total.mjs';
@@ -29,7 +31,7 @@ import { suggestSplit } from '../scoring/suggest_split.mjs';
 import { buildReasons } from '../scoring/build_reasons.mjs';
 
 /** Pure orchestration: collectors -> metrics -> checkers -> scoring, per file, then repo aggregate. No formulas live here. */
-export function runSaladScore({ roots, config, ownershipMapPath }) {
+export function runSaladScore({ roots, config, ownershipMapPath, baselineScores = {} }) {
   const fileSet = new Set();
   for (const root of roots) {
     for (const f of collectFileList(root, config.excludedDirs)) fileSet.add(f);
@@ -87,6 +89,16 @@ export function runSaladScore({ roots, config, ownershipMapPath }) {
     const spTotalScore = scoreTotal(spFileScore, spBehaviorScore, config.weights.totalScore);
     const level = classifyLevel(spTotalScore, config.levelScale);
 
+    // SP-MARGIN-01 (report-only, non-blocking): never fed back into
+    // scoreFile/scoreTotal/scoreRepo or the ratchet — evidence only.
+    const metricMarginValues = {
+      loc: loc.value, loc_normalized: locNormalized.value,
+      complexity: complexity.value, nesting: nesting.value,
+      sp_file_score: spFileScore, sp_behavior_score: spBehaviorScore,
+      sp_total_score: spTotalScore, bytes: null,
+    };
+    const metricMargins = computeFileMetricMargins(metricMarginValues, METRIC_MARGIN_POLICY, config.caps, baselineScores[file]);
+
     const reasons = buildReasons([
       { rule: 'metric_loc', pass: loc.value <= (config.caps.loc ?? Infinity), message: `${loc.value} LOC`, evidence: loc.evidence },
       { rule: 'check_ownership_violation', pass: !ownershipViolation.value, message: 'archivo no reclamado en ownership map', evidence: ownershipViolation.evidence },
@@ -110,6 +122,10 @@ export function runSaladScore({ roots, config, ownershipMapPath }) {
       sp_behavior_score: spBehaviorScore,
       sp_total_score: spTotalScore,
       level,
+      // SP-MARGIN-01 (report-only, non-blocking): OK/WARNING/FAIL/
+      // NOT_APPLICABLE/UNKNOWN per metric — never STRUCTURAL_WARNING,
+      // which requires explicit human-documented evidence outside this tool.
+      metric_margins: metricMargins,
       reasons,
       suggested_split: suggestSplit(responsibilities.value),
       violated_rules: reasons.map((r) => r.rule),

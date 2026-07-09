@@ -732,6 +732,20 @@
       "maxDecisionPoints": 12
     },
     {
+      "path": "tools/salad-score/scoring/metric_margin.mjs",
+      "owner": "salad-score-scoring",
+      "responsibility": "SP-MARGIN-01: pure per-metric margin classification (OK/WARNING/FAIL/NOT_APPLICABLE/UNKNOWN) — never assigns STRUCTURAL_WARNING.",
+      "maxLines": 65,
+      "maxDecisionPoints": 30
+    },
+    {
+      "path": "tools/salad-score/scoring/metric_margin_policy.mjs",
+      "owner": "salad-score-scoring",
+      "responsibility": "SP-MARGIN-01: declarative policy map — which metrics get a margin and where their limit comes from. Data only.",
+      "maxLines": 35,
+      "maxDecisionPoints": 5
+    },
+    {
       "path": "tools/salad-score/reporters/reporter_console.mjs",
       "owner": "salad-score-reporters",
       "responsibility": "SP1A-FIX4 architecture: reporters layer, single responsibility per file.",
