@@ -81,5 +81,71 @@
   ],
   "excludedByDesign": {
     "engines/SelectionEngine.js": "Initially flagged by an EARLIER, less precise version of countLogicalStatements (a facade method like 'm() { return Other.m(this, args); }' was incorrectly counted as a 2-unit block regardless of its single statement). Fixed: a function-kind block only adds its +2 when it wraps MORE THAN ONE real statement; a control-kind block (if/for/while/etc.) always does, since control flow is conventionally always multi-line. Re-measured after the fix: no longer flagged. Kept here as a documented false-positive precedent, not a cleanup candidate."
-  }
+  },
+  "marginClassificationLegend": {
+    "note": "Revised 2026-07-09. floor(limit * 0.90) applied blindly is correct for large-cap metrics (LOC, normalized LOC, bytes) but too noisy for small integer sp_total_score values — at baseline=11 it demanded target<=9, i.e. a 2-point drop, when a genuine 1-point improvement is already meaningful. Replaced with a tiered rule keyed to baseline magnitude for sp_total_score specifically; large-cap metrics keep the original floor(limit*0.90) rule unchanged.",
+    "largeMetricRule": {
+      "appliesTo": "LOC, normalized LOC, byte counts, and any other high-cap raw metric — NOT sp_total_score.",
+      "OK": "value <= floor(limit * 0.90)",
+      "WARNING": "value > floor(limit * 0.90) and <= limit",
+      "FAIL": "value > limit"
+    },
+    "smallScoreRule": {
+      "appliesTo": "sp_total_score only.",
+      "baselineUnder20": { "OK": "current <= baseline - 1", "WARNING": "current == baseline", "FAIL": "current > baseline" },
+      "baseline20to39": { "OK": "current <= baseline - 2", "WARNING": "baseline - 1 <= current <= baseline", "FAIL": "current > baseline" },
+      "baseline40plus": { "OK": "current <= floor(baseline * 0.90)", "WARNING": "current > floor(baseline * 0.90) and current <= baseline", "FAIL": "current > baseline" }
+    },
+    "STRUCTURAL_WARNING": "Applies only within a WARNING band per the rule above matching the metric type, AND all of: ratchet passes (current <= baseline); no regression; the LOC-normalization concern is already resolved for this file (RF-SP-SCORE-HARDENING-1 / SP-HARDENING-NESTING-01 applied); a real compensating improvement or genuine cleanup was already made; further reduction would require artificial compaction, artificial abstraction, breaking the shared architectural pattern, or a behavior change; and explicit line-level evidence is recorded.",
+    "FAIL": "sp_total_score > baseline — a real ratchet regression.",
+    "BLOCKED": "A real refactor attempt was measured and rejected before touching the real file, because it would cause a FAIL (score > baseline) with no further real compensating reduction available.",
+    "DEFERRED_NO_CLEAN_GAIN": "The file has no registered baseline (so the ratchet cannot fail on it), but a full reformat-to-readable measured no compensating drop in any real metric (complexity/nesting/responsibilities/globals/topLevelSideEffects all stayed identical) — only loc rose. Per explicit user rule, absence of a baseline is never used as license to raise a score with no real gain. Left untouched."
+  },
+  "cleanupProgress": [
+    {
+      "path": "engines/AlignEngine.js",
+      "baseline": 11,
+      "marginTarget": 10,
+      "currentScore": 11,
+      "classification": "STRUCTURAL_WARNING",
+      "reclassifiedNote": "Originally reported as a clean pass under the pre-margin-rule contract (score == baseline, no regression). Under the tiered small-score margin rule (baseline<20 -> OK requires current<=baseline-1=10), current==11==baseline falls in the WARNING band, not OK — reclassified honestly. nesting=4 (cap 6) dominates sp_file_score; the 4 alignX/_fallback if-blocks each build a small patch object ({x:...}/{y:...}) passed to DS.updateElementLayout, reaching root+method+if-block+object-literal = depth 4 structurally.",
+      "realImprovementMade": "complexity 16 -> 12 via _dispatch() dedup (real, not cosmetic)."
+    },
+    {
+      "path": "engines/DebugTrace.js",
+      "baseline": 25,
+      "marginTarget": 23,
+      "currentScore": 24,
+      "classification": "STRUCTURAL_WARNING",
+      "reclassifiedNote": "Same structural cause: nesting=4 (cap 6) dominant, at L30-32 (_ensureState's channels construction inside the _safeStorage callback) and L74 (setEnabled's { ...this.PRESETS.elements } inside its if-block) — same object-literal-inside-control-block-inside-method depth-4 pattern. Under the tiered small-score margin rule (baseline 20-39 -> OK requires current<=baseline-2=23), current==24 falls in the WARNING band (baseline-1<=current<=baseline).",
+      "realImprovementMade": "complexity 24 -> 23 (_safeStorage dedup), nesting 7 -> 4 (channels/savedChannels variable extraction)."
+    },
+    {
+      "path": "engines/DebugTraceToggle.js",
+      "baseline": 25,
+      "marginTarget": 23,
+      "currentScore": 24,
+      "classification": "STRUCTURAL_WARNING",
+      "reclassifiedNote": "BLOCKED_FOR_MARGIN accepted by user decision (2026-07-09). nesting=3 (cap 6) at 4 independent points (L27 config object, L43 closure, L66 template-literal false positive, L77 multi-statement if-block) — none reducible without flattening the shared architecture pattern, deleting a real closure, or re-fusing a multi-statement block. Under the tiered small-score margin rule (baseline 20-39 -> OK requires current<=baseline-2=23), current==24 falls in the WARNING band.",
+      "realImprovementMade": "nesting 5 -> 3 (_gateConsoleMethod extraction), complexity unchanged at 28 (matches original after fixing my own comment false-positive)."
+    },
+    {
+      "path": "engines/FormatEngine.js",
+      "baseline": 11,
+      "marginTarget": 10,
+      "currentScore": 11,
+      "classification": "STRUCTURAL_WARNING",
+      "reclassifiedNote": "Same structural cause as AlignEngine.js/DebugTrace.js/DebugTraceToggle.js: nesting=3 (cap 6) at root+method+block (updateToolbar's no-selection guard, _selectMatchingOption's inner if, _commitFormat's forEach callback) — the minimum for any non-trivial method in this shared pattern. Under the tiered small-score margin rule (baseline<20 -> OK requires current<=baseline-1=10), current==11==baseline falls in the WARNING band.",
+      "realImprovementMade": "complexity 15 -> 13 (_selectMatchingOption + _commitFormat dedup, real not cosmetic), nesting held at 3 (kept the original bare for(...)if(...){} shape to avoid adding a brace level). Verified byte-for-byte identical behavior via vm comparison across 4 scenarios; 16 live Playwright failures investigated and confirmed pre-existing (identical pass/fail counts against a clean HEAD worktree) — none caused by this change."
+    },
+    {
+      "path": "engines/SqlCommandsListPanel.js",
+      "baseline": null,
+      "marginTarget": null,
+      "currentScore": 31,
+      "classification": "DEFERRED_NO_CLEAN_GAIN",
+      "reclassifiedNote": "No baseline registered for this file — the ratchet cannot fail on it regardless. A full reformat-to-1-statement-per-line draft (plus deduplicating the two row buttons, which differ only in a 2px padding value) was measured before touching the real file: score rose 31 -> 32, and NOT ONE real metric (complexity, nesting, responsibilities, globals, topLevelSideEffects) dropped — only loc rose, because the button dedup had no conditional logic to remove. Per explicit user rule, the absence of a baseline is never license to raise a score with no compensating real gain. Left untouched, draft discarded (never applied to the real file).",
+      "realImprovementMade": "none — decision was to defer, not apply."
+    }
+  ]
 }
