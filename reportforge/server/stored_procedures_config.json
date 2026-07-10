@@ -1,0 +1,22 @@
+{
+  "storedProcedures": [
+    {
+      "id": "demo_customer_lookup",
+      "label": "Demo Customer Lookup",
+      "datasourceId": "main_mssql",
+      "procedure": "dbo.usp_DemoCustomerLookup",
+      "enabled": false,
+      "readOnly": true,
+      "timeoutSeconds": 10,
+      "maxRows": 100,
+      "params": [
+        {
+          "name": "CardCode",
+          "type": "string",
+          "required": true,
+          "maxLength": 30
+        }
+      ]
+    }
+  ]
+}

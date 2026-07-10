@@ -40,6 +40,7 @@ from .api_routes_document import register_document_routes
 from .api_routes_render import register_render_routes
 from .api_routes_sql_command_execution import register_sql_command_execution_routes
 from .api_routes_sql_commands import register_sql_command_routes
+from .api_routes_stored_procedures import register_stored_procedure_routes
 from .api_routes_system import register_system_routes
 from .api_routes_templates import register_template_routes
 from .api_routes_tenants import register_tenant_routes
@@ -104,6 +105,7 @@ def create_app(*, rate_limit_rpm: int = 0) -> "FastAPI":
     register_document_routes(app)
     register_sql_command_routes(app)
     register_sql_command_execution_routes(app)
+    register_stored_procedure_routes(app)
 
     return app
 
