@@ -55,10 +55,14 @@ const SelectionInteractionMotion = (() => {
       // can cross the boundary. normalizeElementLayout re-owns sectionId by the
       // element's vertical center and clamps relative to the DESTINATION band.
       const newY = SelectionState.snap(orig.y + dy);
-      engine.updateElementLayout(el.id, {
-        x: newX,
-        y: newY,
-      }, 'SelectionInteraction.move');
+      // DESIGNER-DRAG-LINE-SECTION-LOCK-01: horizontal-only drag sends ONLY x
+      // -- an oversized element (e.g. a tall vertical line) can't get
+      // reparented by touching the next band on a pure sideways move.
+      // Compare against snap(orig.y), not raw orig.y: an unaligned stored y
+      // (external JSON, mkEl default) snaps differently even at dy=0.
+      const movePatch = { x: newX };
+      if (newY !== SelectionState.snap(orig.y)) movePatch.y = newY;
+      engine.updateElementLayout(el.id, movePatch, 'SelectionInteraction.move');
       const div = document.querySelector(`.cr-element[data-id="${orig.id}"]`);
       // RF-SECTION-MOVE-INK-1 / Policy A: the enforcer may have re-owned
       // el.sectionId to the band under the cursor. Re-parent the SAME node into

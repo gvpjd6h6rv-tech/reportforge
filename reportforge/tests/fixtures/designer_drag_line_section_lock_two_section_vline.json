@@ -1,0 +1,12 @@
+{
+  "name": "DRAG-LOCK-01 test layout", "version": "1.0",
+  "pageWidth": 400, "pageHeight": 400, "pageSize": "A4",
+  "margins": {"top": 0, "right": 0, "bottom": 0, "left": 0},
+  "sections": [
+    {"id": "s-A", "stype": "rh", "label": "Section A (small)", "height": 30},
+    {"id": "s-B", "stype": "ph", "label": "Section B (below)", "height": 150}
+  ],
+  "elements": [
+    {"id": "vline1", "type": "line", "sectionId": "s-A", "x": 50, "y": 5, "w": 2, "h": 60, "lineDir": "v", "borderColor": "#000000", "borderWidth": 2}
+  ]
+}

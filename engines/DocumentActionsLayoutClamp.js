@@ -72,7 +72,18 @@ const DocumentActionsLayoutClamp = (() => {
     // candidate y overflows the band, carry the surplus into the adjacent
     // band and clamp there -- crosses cleanly, never straddles, works up and
     // down, for both mouse drag and keyboard nudge.
-    if (!explicitSection && list && Object.prototype.hasOwnProperty.call(patch, 'y')) {
+    // DESIGNER-DRAG-LINE-SECTION-LOCK-01: real vertical intent = an explicit
+    // sectionId target (dropdown), or a patch.y that actually differs from
+    // element.y -- not just "patch has a y key". Gates BOTH the re-owning
+    // walk below AND the anti-straddle y-clamp further down: an oversized
+    // element (h > section.height) has maxY=0, so without the second gate
+    // any horizontal-only move still snapped an already out-of-band y back
+    // to 0. Confirmed live against factura_a4.json (line created at y=15,
+    // h=60 in a 30px section, snapped to y=0 on its first sideways drag).
+    const hasVerticalIntent = explicitSection
+      || (Object.prototype.hasOwnProperty.call(patch, 'y') && curY !== element.y);
+
+    if (hasVerticalIntent && !explicitSection && list) {
       let idx = list.findIndex((s) => s.id === startId);
       if (idx >= 0) {
         if (relY < 0) {
@@ -90,8 +101,10 @@ const DocumentActionsLayoutClamp = (() => {
     if (!ownerSec) return finalPatch;
     if (ownerId !== element.sectionId) finalPatch.sectionId = ownerId;
 
-    const maxY = Math.max(0, (Number(ownerSec.height) || 0) - h);
-    finalPatch.y = Math.max(0, Math.min(relY, maxY));
+    if (hasVerticalIntent) {
+      const maxY = Math.max(0, (Number(ownerSec.height) || 0) - h);
+      finalPatch.y = Math.max(0, Math.min(relY, maxY));
+    }
 
     const pageW = typeof CFG !== 'undefined' && Number.isFinite(CFG.PAGE_W) ? CFG.PAGE_W : null;
     if (pageW !== null) finalPatch.x = Math.max(0, Math.min(curX, Math.max(0, pageW - w)));

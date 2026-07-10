@@ -83,3 +83,69 @@ test('unknown target section leaves the patch untouched (auditable no-op)', () =
   assert.equal(out.sectionId, 's-nope');
   assert.ok(!('y' in out), 'no clamp applied when target section is unknown');
 });
+
+// ── DESIGNER-DRAG-LINE-SECTION-LOCK-01 ─────────────────────────────────
+// An element taller than its own section (e.g. a vertical line) overflows
+// the band-height check on EVERY move, even when y is unchanged. The fix
+// gates the overflow/carry re-owner on curY !== element.y (real vertical
+// intent), not merely "patch has a y key".
+const listSelectors = (sections) => ({
+  sections,
+  getSection: (id) => sections.find((s) => s.id === id) || null,
+});
+
+test('DRAG-LOCK-01: horizontal-only move on an oversized element does not change sectionId', () => {
+  const clamp = loadClamp();
+  // vline1: h=60 in a 30px-tall section, bottom overflows 30px into the next band
+  const el = { sectionId: 's-A', x: 50, y: 0, w: 2, h: 60 };
+  const sel = listSelectors([{ id: 's-A', height: 30 }, { id: 's-B', height: 150 }]);
+  const out = clamp.normalizeElementLayout(el, { x: 150, y: 0 }, sel);
+  assert.ok(!('sectionId' in out), `sectionId must stay owned by s-A, got patch ${JSON.stringify(out)}`);
+});
+
+test('DRAG-LOCK-01: horizontal-only move on an oversized element leaves y unchanged', () => {
+  const clamp = loadClamp();
+  const el = { sectionId: 's-A', x: 50, y: 0, w: 2, h: 60 };
+  const sel = listSelectors([{ id: 's-A', height: 30 }, { id: 's-B', height: 150 }]);
+  const out = clamp.normalizeElementLayout(el, { x: 150, y: 0 }, sel);
+  assert.equal(out.y, 0, 'y must be preserved on a horizontal-only move');
+});
+
+test('DRAG-LOCK-01: horizontal-only move on an oversized element still applies x', () => {
+  const clamp = loadClamp();
+  const el = { sectionId: 's-A', x: 50, y: 0, w: 2, h: 60 };
+  const sel = listSelectors([{ id: 's-A', height: 30 }, { id: 's-B', height: 150 }]);
+  const out = clamp.normalizeElementLayout(el, { x: 150, y: 0 }, sel);
+  assert.equal(out.x, 150, 'x must reflect the drag delta');
+});
+
+test('DRAG-LOCK-01: bottom overflow alone (no y delta) does not reparent a regular element either', () => {
+  const clamp = loadClamp();
+  // a normal-height element whose section is shorter than the element itself
+  const el = { sectionId: 's-A', x: 10, y: 0, w: 20, h: 40 };
+  const sel = listSelectors([{ id: 's-A', height: 30 }, { id: 's-B', height: 150 }]);
+  const out = clamp.normalizeElementLayout(el, { x: 20, y: 0 }, sel);
+  assert.ok(!('sectionId' in out), 'overflow alone must never re-own sectionId without a real y delta');
+});
+
+test('DRAG-LOCK-01: horizontal-only move does not snap an already out-of-band y back into range', () => {
+  // Real factura_a4.json scenario: a line created at y=15 (h=60, section
+  // height=30) via mkEl never went through this clamp at creation time.
+  // The anti-straddle y-clamp used to run unconditionally (maxY=0 for an
+  // oversized element), so even a horizontal-only move snapped y to 0.
+  const clamp = loadClamp();
+  const el = { sectionId: 's-A', x: 40, y: 15, w: 2, h: 60 };
+  const sel = listSelectors([{ id: 's-A', height: 30 }, { id: 's-B', height: 150 }]);
+  const out = clamp.normalizeElementLayout(el, { x: 140, y: 15 }, sel);
+  assert.ok(!('y' in out) || out.y === 15, `y must not be re-clamped on a horizontal-only move, got ${JSON.stringify(out)}`);
+});
+
+test('DRAG-LOCK-01: genuine vertical intent (y actually changes) still crosses the section boundary', () => {
+  const clamp = loadClamp();
+  // regression guard: the fix must not break the legitimate cross-section
+  // drag/nudge feature (Policy A) for a real vertical move.
+  const el = { sectionId: 's-A', x: 50, y: 0, w: 2, h: 60 };
+  const sel = listSelectors([{ id: 's-A', height: 30 }, { id: 's-B', height: 150 }]);
+  const out = clamp.normalizeElementLayout(el, { x: 50, y: 40 }, sel);
+  assert.equal(out.sectionId, 's-B', 'a real vertical move must still re-own into the section under the element');
+});
