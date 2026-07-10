@@ -1,6 +1,4 @@
-# core/render/engines/advanced_engine.py
-# ReportForge Advanced HTML Engine — Phase 2 upgrade
-# Pipeline: layout_dict + data → HTML (absolute positioned) → WeasyPrint → PDF
+# core/render/engines/advanced_engine.py — Advanced HTML Engine: layout_dict + data → HTML → WeasyPrint → PDF
 from __future__ import annotations
 
 import datetime
@@ -74,43 +72,63 @@ class AdvancedHtmlEngine:
         margins = self._layout.margin_mm
         page_width = self._layout.page_width
         dbg = ".cr-section,.cr-detail-row{outline:1px dashed rgba(255,0,0,.15)}" if self._debug else ""
-        # RF-PREVIEW-A4-PAGES-1 / RF-PREVIEW-MARGINS-1: in on-screen preview,
-        # render each page as a distinct A4 SHEET (gap + shadow + white bg) AND
-        # show the layout margins as an inset -- parity with the exported PDF,
-        # which gets its margins from the @page rule (ignored on screen).
-        # The margins are the OUTER wrapper's padding (.rpt-sheet), NOT padding
-        # on .rpt-page: elements are positioned relative to their .cr-section
-        # inside .rpt-page, so putting padding there would shift them and break
-        # coordinates. The wrapper insets the whole page uniformly, and the JS
-        # preview hit-layer aligns to .rpt-page dynamically, so it stays glued.
+        _MM = 3.7795
+        l_px = round(margins["left"] * _MM)
+        r_px = round(margins["right"] * _MM)
+        # PAGE-MARGIN-CONTROL-PARITY-01: printable width applies to BOTH
+        # preview and PDF — .rpt-page must shrink for left+right margins in
+        # both, or right stays inert (confirmed via WeasyPrint's box tree:
+        # tools/diagnostics/rf-page-margin-model).
+        self._printable_w = max(0, page_width - l_px - r_px)
+        # Preview renders each page as an A4 SHEET; margins are padding on
+        # .rpt-sheet (NOT .rpt-page, whose children would shift).
         if getattr(self, "_preview", False):
-            _MM = 3.7795
-            l_px = round(margins["left"] * _MM)
-            r_px = round(margins["right"] * _MM)
             t_px = round(margins["top"] * _MM)
             b_px = round(margins["bottom"] * _MM)
-            # RF-PREVIEW-MARGINS-2 (bottom parity): the sheet is a full A4 page
-            # (page_h) with margins INSIDE it, exactly like the PDF @page (whose
-            # content box is page_h - top - bottom; pagination reserves the same
-            # via `usable`). The earlier sheet_h = page_h + t + b made the sheet
-            # taller than A4 while .rpt-page still filled a full page_h, adding
-            # ~(top+bottom) of extra bottom space vs. the PDF. Now the .rpt-page
-            # content box is page_h - top - bottom, so the bottom margin equals
-            # the PDF's. Width keeps margins as an outer inset (elements span the
-            # full page_width horizontally, unlike the vertical usable area).
-            sheet_w = page_width + l_px + r_px
-            sheet_h = self._page_h
+
+            # Clamp proportionally so oversized padding never forces
+            # border-box to grow .rpt-sheet (tools/diagnostics/rf-page-margin-model).
+            def _clamp_pair_to_bound(a_px, b_px, bound_px):
+                if a_px + b_px <= bound_px or (a_px + b_px) == 0:
+                    return a_px, b_px
+                scale = bound_px / (a_px + b_px)
+                return int(a_px * scale), int(b_px * scale)
+
+            def _padding_mm(raw_mm, clamped_px):
+                if clamped_px == round(raw_mm * _MM):
+                    return raw_mm
+                return round(clamped_px / _MM, 3)
+
+            # .rpt-sheet = real A4 (matches @page{size:A4}), not page_width/
+            # self._page_h (the content's own coordinate frame).
+            if (self._norm.get("pageSize") or "A4") == "A4":
+                sheet_w = round(210.0 * _MM)
+                sheet_h = round(297.0 * _MM)
+            else:
+                sheet_w = page_width
+                sheet_h = self._page_h
+
+            l_px, r_px = _clamp_pair_to_bound(l_px, r_px, sheet_w)
+            t_px, b_px = _clamp_pair_to_bound(t_px, b_px, sheet_h)
+            left_padding_mm = _padding_mm(margins["left"], l_px)
+            right_padding_mm = _padding_mm(margins["right"], r_px)
+            top_padding_mm = _padding_mm(margins["top"], t_px)
+            bottom_padding_mm = _padding_mm(margins["bottom"], b_px)
+
             page_content_h = max(0, self._page_h - t_px - b_px)
             page_shadow = (
                 f".rpt-sheet{{box-sizing:border-box;background:#fff;"
                 f"box-shadow:0 2px 8px rgba(0,0,0,.25);margin:14px auto;"
                 f"width:{sheet_w}px;min-height:{sheet_h}px;"
-                f"padding:{margins['top']}mm {margins['right']}mm "
-                f"{margins['bottom']}mm {margins['left']}mm}}"
-                f".rpt-page{{min-height:{page_content_h}px;background:transparent}}"
+                f"padding:{top_padding_mm}mm {right_padding_mm}mm "
+                f"{bottom_padding_mm}mm {left_padding_mm}mm}}"
+                f".rpt-page{{width:{self._printable_w}px;min-height:{page_content_h}px;background:transparent}}"
             )
         else:
-            page_shadow = ""
+            # PDF gets the same .rpt-page width override — @page's margin
+            # already shrinks its own content box, but .rpt-page's width
+            # never consulted it before PAGE-MARGIN-CONTROL-PARITY-01.
+            page_shadow = f".rpt-page{{width:{self._printable_w}px}}"
         font_css = self._barcode_font_css()
         page_rule = "" if getattr(self, "_preview", False) else (
             f"@page{{size: {self._norm.get('pageSize','A4')} {self._norm.get('orientation','portrait')};"
@@ -287,19 +305,17 @@ class AdvancedHtmlEngine:
             return False
 
     def _page(self, rows, first, last, page_num, total_pages) -> str:
-        page_width = self._layout.page_width
         ctx = {
             "page_number": page_num,
             "total_pages": total_pages,
             "print_date": self._print_date,
             "print_time": self._print_time,
         }
-        # RF-PREVIEW-MARGINS-1: wrap the page in a .rpt-sheet only for on-screen
-        # preview so the sheet can carry the margin inset (see _css); PDF keeps
-        # the bare .rpt-page and gets margins from @page.
+        # .rpt-sheet wraps the page only in preview (see _css); PDF gets margins from @page.
         sheet_open = '<div class="rpt-sheet">' if getattr(self, "_preview", False) else ''
         sheet_close = '</div>' if getattr(self, "_preview", False) else ''
-        parts = [f'{sheet_open}<div class="rpt-page" style="width:{page_width}px">']
+        # inline style wins over the .rpt-page CSS rule — must match self._printable_w (both preview and PDF)
+        parts = [f'{sheet_open}<div class="rpt-page" style="width:{self._printable_w}px">']
         if first:
             for s in self._secs("rh"):
                 parts.append(self._static(s, ctx))

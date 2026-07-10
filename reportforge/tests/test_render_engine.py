@@ -274,7 +274,10 @@ class TestLayoutLoader(unittest.TestCase):
             load_layout("/nonexistent/path.rfd.json")
 
     def test_page_width_default(self):
-        self.assertEqual(self.layout.page_width, 671)
+        # PAGE-FRAME-PROD-FACTORY-RECONCILE-01: factura_a4.json migrated from
+        # the legacy content-frame width (671) to true A4 (794) so Derecho=0
+        # reaches the physical A4 edge instead of leaving a ~32mm ghost gap.
+        self.assertEqual(self.layout.page_width, 794)
 
 
 # ═════════════════════════════════════════════════════════════════
