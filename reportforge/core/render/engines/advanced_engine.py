@@ -323,11 +323,11 @@ class AdvancedHtmlEngine:
             parts.append(self._static(s, ctx))
         for row in rows:
             parts.append(self._row(row, ctx))
+        for s in self._secs("pf"):
+            parts.append(self._static(s, ctx))
         if last:
             for s in self._secs("rf"):
                 parts.append(self._static(s, ctx))
-        for s in self._secs("pf"):
-            parts.append(self._static(s, ctx))
         parts.append("</div>" + sheet_close)
         return "\n".join(parts)
 
