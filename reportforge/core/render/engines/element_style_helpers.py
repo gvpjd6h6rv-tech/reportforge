@@ -113,6 +113,14 @@ def _calc_h(engine, el, value) -> int:
     return max(el.h, max(1, math.ceil(len(txt) / cw)) * lh + 4)
 
 
+def _explicit_line_break_attr(value, wrap: bool) -> str:
+    """Preserve authored CR/LF line breaks without enabling automatic wrapping."""
+    if wrap or value is None:
+        return ""
+    text = str(value)
+    return ' style="white-space:pre"' if "\n" in text or "\r" in text else ""
+
+
 def _div(engine, el, value) -> str:
     wrap = getattr(el, "wordWrap", False) or getattr(el, "canGrow", False)
     height = _calc_h(engine, el, value) if getattr(el, "canGrow", False) else el.h
@@ -123,4 +131,5 @@ def _div(engine, el, value) -> str:
         av = "flex-start" if wrap else "center"
     cls = " wrap" if wrap else " nowrap"
     style = _sty(engine, el, height, av)
-    return f'<div class="cr-el{cls}" style="{style}"><span class="cr-el-inner">{value}</span></div>'
+    inner_attr = _explicit_line_break_attr(value, wrap)
+    return f'<div class="cr-el{cls}" style="{style}"><span class="cr-el-inner"{inner_attr}>{value}</span></div>'
