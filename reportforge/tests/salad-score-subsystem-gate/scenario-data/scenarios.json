@@ -1,0 +1,201 @@
+{
+  "ownedCleanA": {
+    "relPath": "engines/owned_clean_a.mjs",
+    "content": "'use strict';\nexport function ownedCleanA(x) { return x + 1; }\n"
+  },
+  "ownedCleanB": {
+    "relPath": "engines/owned_clean_b.mjs",
+    "content": "'use strict';\nexport function ownedCleanB(x) { return x - 1; }\n"
+  },
+  "unowned": {
+    "relPath": "engines/unowned_file.mjs",
+    "content": "'use strict';\nexport function unownedFn(x) { return x * 2; }\n"
+  },
+  "hiddenEffect": {
+    "relPath": "engines/hidden_effect_file.mjs",
+    "content": "'use strict';\nwindow.RF_FIXTURE_SIDE_EFFECT = { hit: true };\nexport function hiddenFn() { return true; }\n"
+  },
+  "widgetAlpha": {
+    "relPath": "lib/widget_alpha.mjs",
+    "content": "'use strict';\nexport function widgetAlpha() { return 'alpha'; }\n"
+  },
+  "widgetBeta": {
+    "relPath": "lib/widget_beta.mjs",
+    "content": "'use strict';\nexport function widgetBeta() { return 'beta'; }\n"
+  },
+  "bigFile": {
+    "relPath": "engines/big_file.mjs",
+    "content": "'use strict';\n\n/* SectionSeparatorOverlay — RF-CR-SECTION-SEPARATOR-1\n *\n * Renders the Crystal-like 1px-dark / 2px-gray / 1px-dark hairline relief\n * at the bottom edge of every Design-mode section, in a dedicated\n * `position: fixed` layer appended to <body> — entirely outside\n * #workspace/#viewport/#canvas-layer's scaled/clipped subtree.\n *\n * Why a screen-space overlay and not a CSS rule on .cr-section itself: a\n * CSS gradient declared inside #viewport (which carries the zoom\n * transform:scale(z)) has to divide its own thickness by --geo-zoom so the\n * POST-transform result stays constant — proven live this survives for a\n * single hairline, but a 4px-total 3-stop gradient sized that way blends\n * away or misrenders at some zoom fractions since the whole thing is\n * painted at a sub-device-pixel size pre-transform. Positioning a fixed\n * element from the section's own POST-transform getBoundingClientRect (the\n * same technique engines/SelectionOverlayPreviewLayers.js's\n * rf-extended-guide-layer already uses for the same class of problem) means\n * the 4px thickness is a REAL, already-final screen measurement — no zoom\n * division needed anywhere in this file.\n *\n * Ruler crossing: Crystal's separator visibly reaches into the interior of\n * the left (vertical) ruler gutter. #ruler-v is a sibling of #workspace,\n * outside this layer's own positioning context, so a small stub is painted\n * directly inside #ruler-v (mirroring\n * SelectionOverlayPreviewLayers.js's _paintRulerGuideStub for the\n * equivalent guide-into-ruler case) rather than trying to extend the fixed\n * line itself across a container it isn't part of.\n */\nconst SectionSeparatorOverlay = (() => {\n  const LAYER_ID = 'rf-section-separator-layer';\n  const GRIP_LAYER_ID = 'rf-section-collapse-grip-layer';\n  const LINE_CLASS = 'rf-section-sep-line';\n  const RULER_STUB_CLASS = 'rf-section-sep-ruler-stub';\n  // DESIGNER-CLEAN-SECTION-0PX-MANUAL-FLOOR-01: `section-resize-handle` is\n  // the EXACT class engines/EngineCoreRoutingPointerHelpers.js's router\n  // already matches via `closest('.section-resize-handle')` to dispatch a\n  // pointerdown to SectionResizeEngine.onPointerDown(event,\n  // node.dataset.sectionId) -- reusing it here means this grip needs ZERO\n  // router changes; it is routed by the exact same, already-correct code\n  // path a normal handle uses, just from a differently-positioned element.\n  const GRIP_ROUTER_CLASS = 'section-resize-handle';\n  const GRIP_CLASS = 'rf-section-collapse-grip';\n  const GRIP_W = 22; // matches SectionLabelOverlay.js's own gutter-tab width\n  const GRIP_H = 12; // fixed screen px, stable at any zoom (like TOTAL_PX)\n  const GRIP_GAP = 2; // breathing room above the previous section's own handle zone\n\n  const DARK_PX = 1;\n  const GRAY_PX = 2;\n  const TOTAL_PX = DARK_PX * 2 + GRAY_PX; // 4 visual px, stable at any zoom\n  const DARK = '#303030';\n  const LIGHT = '#d6d6d6';\n\n  function _gradient() {\n    return `linear-gradient(to bottom, ${DARK} 0, ${DARK} ${DARK_PX}px, ${LIGHT} ${DARK_PX}px, ${LIGHT} ${DARK_PX + GRAY_PX}px, ${DARK} ${DARK_PX + GRAY_PX}px, ${DARK} ${TOTAL_PX}px)`;\n  }\n\n  function _ensureLayer() {\n    if (typeof document === 'undefined' || !document.body) return null;\n    let layer = document.getElementById(LAYER_ID);\n    if (!layer) {\n      layer = document.createElement('div');\n      layer.id = LAYER_ID;\n      layer.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:3;overflow:visible';\n      document.body.appendChild(layer);\n    }\n    return layer;\n  }\n\n  // DESIGNER-CLEAN-SECTION-0PX-MANUAL-FLOOR-01: a SEPARATE layer from\n  // _ensureLayer()'s (kept minimal-blast-radius -- the existing\n  // separator-line layer's own parentage is untouched), appended to\n  // #workspace itself rather than document.body. #workspace has\n  // `position:relative` and no `transform`, so it does NOT establish a\n  // new containing block for `position:fixed` descendants -- coordinates\n  // computed the exact same way as the main layer (real, final,\n  // viewport-relative getBoundingClientRect values) stay correct. The\n  // ONLY reason to anchor here instead of document.body: real DOM\n  // descendants of #workspace naturally bubble pointerdown into\n  // EngineCoreRoutingWorkspace.js's existing `ws.addEventListener\n  // ('pointerdown', ...)` listener -- a document.body-level sibling\n  // (like the main separator layer) never does, since DOM event bubbling\n  // follows the actual parent chain, not visual z-index stacking.\n  // Confirmed live: a grip appended to document.body was correctly\n  // identified by real elementFromPoint() probes but its real\n  // page.mouse.down() never reached SectionResizeEngine at all (_drag\n  // stayed null) for exactly this reason. This keeps the router\n  // (engines/EngineCoreRoutingPointerHelpers.js /\n  // EngineCoreRoutingWorkspace.js) completely unchanged -- zero new\n  // geometry, zero new listeners; the grip is simply routed by the\n  // SAME, already-correct `.section-resize-handle` dispatch a normal\n  // handle uses.\n  function _ensureGripLayer() {\n    if (typeof document === 'undefined') return null;\n    const host = document.getElementById('workspace') || document.body;\n    if (!host) return null;\n    let layer = document.getElementById(GRIP_LAYER_ID);\n    if (!layer) {\n      layer = document.createElement('div');\n      layer.id = GRIP_LAYER_ID;\n      layer.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:3;overflow:visible';\n      host.appendChild(layer);\n    }\n    return layer;\n  }\n\n  function _lineEl(layer, sectionId) {\n    const cls = `${LINE_CLASS}-${sectionId}`;\n    let el = layer.querySelector(`:scope > .${cls}`);\n    if (!el) {\n      el = document.createElement('div');\n      el.className = `${LINE_CLASS} ${cls}`;\n      el.style.position = 'fixed';\n      el.style.backgroundRepeat = 'no-repeat';\n      layer.appendChild(el);\n    }\n    return el;\n  }\n\n  // DESIGNER-CLEAN-SECTION-0PX-MANUAL-FLOOR-01: a section whose real\n  // height is truly 0 has no rendered body left to grab -- its own\n  // .section-resize-handle (position:absolute inside the section,\n  // straddling ITS OWN bottom edge) becomes screen-position-IDENTICAL to\n  // the PREVIOUS section's resize handle, since this section's top and\n  // bottom edges now coincide with each other AND with that boundary\n  // line. Confirmed live via elementsFromPoint(): a real mouse click\n  // there resolves non-deterministically to whichever element the\n  // browser's native hit-test happens to pick first (the previous\n  // section's handle, a content element, or the NEXT section's body --\n  // never reliably THIS section's own handle). A 0px section must still\n  // be independently re-expandable, so it needs its OWN, exclusively-\n  // owned, real hit target -- one that shares ZERO screen pixels with\n  // any other interactive element, not merely a higher z-index (that\n  // would just move the ambiguity onto the section ABOVE, which must\n  // remain independently resizable too).\n  //\n  // Reuses the class the router already dispatches on\n  // (GRIP_ROUTER_CLASS) so SectionResizeEngine's existing pointerdown/\n  // move/up lifecycle handles it completely unchanged -- this file only\n  // ever paints the grip and sets its own data-section-id; it never\n  // decides heights, never touches DS, never implements resize logic.\n  function _gripEl(layer, sectionId) {\n    const cls = `${GRIP_CLASS}-${sectionId}`;\n    let el = layer.querySelector(`:scope > .${cls}`);\n    if (!el) {\n      el = document.createElement('div');\n      el.className = `${GRIP_ROUTER_CLASS} ${GRIP_CLASS} ${cls}`;\n      el.dataset.sectionId = sectionId;\n      el.style.position = 'fixed';\n      el.style.pointerEvents = 'auto';\n      el.style.cursor = 'ns-resize';\n      el.style.boxSizing = 'border-box';\n      el.style.border = '1px solid rgba(0,0,0,.35)';\n      el.style.borderBottom = 'none';\n      layer.appendChild(el);\n    }\n    return el;\n  }\n\n  function _removeGrip(layer, sectionId) {\n    const el = layer.querySelector(`:scope > .${GRIP_CLASS}-${sectionId}`);\n    if (el) el.remove();\n  }\n\n  // Mirrors SelectionOverlayPreviewLayers.js's _paintRulerGuideStub (the\n  // \"h axis\" branch — a horizontal line's left endpoint crossing into the\n  // vertical ruler), adapted to paint the 3-band gradient instead of a\n  // single color.\n  function _paintRulerStub(sectionId, sectionRect) {\n    const rulerV = document.getElementById('ruler-v');\n    if (!rulerV) return;\n    rulerV.style.position = rulerV.style.position || 'relative';\n    const cls = `${RULER_STUB_CLASS}-${sectionId}`;\n    let stub = rulerV.querySelector(`:scope > .${cls}`);\n    if (!stub) {\n      stub = document.createElement('div');\n      stub.className = `${RULER_STUB_CLASS} ${cls}`;\n      stub.style.position = 'absolute';\n      stub.style.pointerEvents = 'none';\n      stub.style.zIndex = '6';\n      stub.style.left = '0px';\n      stub.style.width = '100%';\n      stub.style.backgroundRepeat = 'no-repeat';\n      rulerV.appendChild(stub);\n    }\n    const hostRect = rulerV.getBoundingClientRect();\n    stub.style.top = `${sectionRect.bottom - hostRect.top - TOTAL_PX / 2}px`;\n    stub.style.height = `${TOTAL_PX}px`;\n    stub.style.backgroundImage = _gradient();\n  }\n\n  // CLEAN-SECTIONS-OVERLAY-WORKSPACE-CLIP-01: this layer is `position:\n  // fixed` on <body> specifically to escape .cr-section's own\n  // contain:layout paint (see file header) -- but that also lets it escape\n  // #workspace's OWN visible viewport. At high zoom, when the zoomed\n  // canvas is wider than #workspace's own box, an unclipped rect.left/\n  // rect.width paints the hairline straight over the right-side panels\n  // (Explorador de campos, properties) that live OUTSIDE #workspace, not\n  // over document.body/window bounds. Clip explicitly against\n  // #workspace.getBoundingClientRect() (never document.body, never\n  // window.innerWidth -- those don't know where the side panels are).\n  function _clipToWorkspace(rect) {\n    const ws = document.getElementById('workspace');\n    if (!ws) return { left: rect.left, width: rect.width, visible: rect.width > 0, wsRect: null };\n    const wsRect = ws.getBoundingClientRect();\n    const visibleLeft = Math.max(rect.left, wsRect.left);\n    const visibleRight = Math.min(rect.right, wsRect.right);\n    const visibleWidth = Math.max(0, visibleRight - visibleLeft);\n    return { left: visibleLeft, width: visibleWidth, visible: visibleWidth > 0, wsRect };\n  }\n\n  function render() {\n    if (typeof document === 'undefined' || typeof DS === 'undefined' || !Array.isArray(DS.sections)) return;\n    if (DS.previewMode) { clear(); return; }\n    const layer = _ensureLayer();\n    if (!layer) return;\n    const gripLayer = _ensureGripLayer();\n    const gradient = _gradient();\n    const zoom = (typeof DS.zoom === 'number' && DS.zoom > 0) ? DS.zoom : 1;\n    const seen = new Set();\n    const seenGrips = new Set();\n    DS.sections.forEach((sec) => {\n      if (sec.visible === false) { if (gripLayer) _removeGrip(gripLayer, sec.id); return; }\n      const div = document.querySelector(`.cr-section[data-section-id=\"${sec.id}\"]`);\n      if (!div) { if (gripLayer) _removeGrip(gripLayer, sec.id); return; }\n      const rect = div.getBoundingClientRect();\n      if (!rect.width || !rect.height) {\n        // Truly 0px: no separator to paint (nothing to draw a hairline\n        // into), but this section still needs its own exclusive resize\n        // affordance -- see _gripEl's header comment.\n        if (rect.width && gripLayer) {\n          seenGrips.add(sec.id);\n          const grip = _gripEl(gripLayer, sec.id);\n          const clip = _clipToWorkspace(rect);\n          if (!clip.visible) {\n            grip.style.display = 'none';\n          } else {\n            const boundary = rect.bottom; // === rect.top here (0px height)\n            const prevHandleZoneTop = boundary - (3 * zoom);\n            grip.style.display = '';\n            // Left-anchored, not right-anchored: the right edge of\n            // #workspace is where a vertical scrollbar track lives\n            // (.rf-scrollbar-track--v, z-index:150) whenever content\n            // overflows -- confirmed live it swallows a right-anchored\n            // grip almost entirely. The section's own LEFT edge is the\n            // same zone every real-mouse resize-handle drag in this\n            // entire phase has already used successfully (box.x+60), and\n            // is never covered by that scrollbar.\n            grip.style.left = `${clip.left}px`;\n            grip.style.width = `${Math.min(GRIP_W, clip.width)}px`;\n            grip.style.top = `${prevHandleZoneTop - GRIP_GAP - GRIP_H}px`;\n            grip.style.height = `${GRIP_H}px`;\n            grip.style.background = getComputedStyle(div).backgroundColor || '#4a90d9';\n            grip.style.zIndex = '11';\n            grip.title = `${sec.label || sec.id} (0px, arrastrar para expandir)`;\n          }\n        }\n        return;\n      }\n      seen.add(sec.id);\n      const el = _lineEl(layer, sec.id);\n      const clip = _clipToWorkspace(rect);\n      const lineTop = rect.bottom - TOTAL_PX / 2;\n      const lineBottom = lineTop + TOTAL_PX;\n      const verticallyVisible = clip.wsRect ? (lineBottom > clip.wsRect.top && lineTop < clip.wsRect.bottom) : true;\n      if (!clip.visible || !verticallyVisible) {\n        el.style.display = 'none';\n        return;\n      }\n      el.style.display = '';\n      el.style.left = `${clip.left}px`;\n      el.style.width = `${clip.width}px`;\n      el.style.top = `${lineTop}px`;\n      el.style.height = `${TOTAL_PX}px`;\n      el.style.backgroundImage = gradient;\n      _paintRulerStub(sec.id, rect);\n    });\n    layer.querySelectorAll(`.${LINE_CLASS}`).forEach((el) => {\n      const id = el.className.split(' ').find((c) => c.startsWith(`${LINE_CLASS}-`))?.slice(LINE_CLASS.length + 1);\n      if (id && !seen.has(id)) el.remove();\n    });\n    if (gripLayer) {\n      gripLayer.querySelectorAll(`.${GRIP_CLASS}`).forEach((el) => {\n        const id = el.className.split(' ').find((c) => c.startsWith(`${GRIP_CLASS}-`))?.slice(GRIP_CLASS.length + 1);\n        if (id && !seenGrips.has(id)) el.remove();\n      });\n    }\n    const rulerV = document.getElementById('ruler-v');\n    if (rulerV) {\n      rulerV.querySelectorAll(`.${RULER_STUB_CLASS}`).forEach((el) => {\n        const id = el.className.split(' ').find((c) => c.startsWith(`${RULER_STUB_CLASS}-`))?.slice(RULER_STUB_CLASS.length + 1);\n        if (id && !seen.has(id)) el.remove();\n      });\n    }\n  }\n\n  function clear() {\n    const layer = typeof document !== 'undefined' ? document.getElementById(LAYER_ID) : null;\n    if (layer) layer.innerHTML = '';\n    const gripLayer = typeof document !== 'undefined' ? document.getElementById(GRIP_LAYER_ID) : null;\n    if (gripLayer) gripLayer.innerHTML = '';\n    const rulerV = typeof document !== 'undefined' ? document.getElementById('ruler-v') : null;\n    if (rulerV) rulerV.querySelectorAll(`.${RULER_STUB_CLASS}`).forEach((el) => el.remove());\n  }\n\n  function init() {\n    if (typeof document === 'undefined') return;\n    const ws = document.getElementById('workspace');\n    if (ws) {\n      ws.addEventListener('rf:zoom-changed', render);\n    }\n    if (typeof ResizeObserver !== 'undefined') {\n      const cl = document.getElementById('canvas-layer');\n      if (cl) new ResizeObserver(render).observe(cl);\n    }\n    // PreviewEngineMode.js's show()/hide() are already at their governance\n    // byte ceiling, so this can't hook them directly — instead watch the\n    // same data-render-mode attribute show() sets synchronously before\n    // DS.setPreviewMode(true), catching the Design->Preview transition the\n    // instant it happens rather than waiting for some other trigger to\n    // eventually call OverlayEngine.render() (hide()'s own render() call\n    // already covers the Preview->Design direction).\n    if (typeof MutationObserver !== 'undefined' && document.body) {\n      new MutationObserver(render).observe(document.body, { attributes: true, attributeFilter: ['data-render-mode'] });\n    }\n    render();\n  }\n\n  // TOTAL_PX exposed read-only for SectionLayoutEngine.js's clean-section\n  // collapse floor: that value must stay small enough, IN SCREEN SPACE,\n  // that two collapsed sections' hairlines actually touch -- since this\n  // hairline is a fixed screen-px thickness (not zoom-scaled, see file\n  // header) while a collapsed section's rendered height IS zoom-scaled\n  // (raw model px x zoom, via the canvas root's own CSS transform), the\n  // model-unit floor has to be derived from THIS constant divided by the\n  // current zoom, not a fixed model-px number, or the visual gap reopens\n  // at any zoom other than 1.0.\n  return { render, clear, init, LAYER_ID, TOTAL_PX };\n})();\n\nif (typeof module !== 'undefined') module.exports = SectionSeparatorOverlay;\n"
+  },
+  "presets": {
+    "multiOwnerValid": {
+      "files": [
+        {
+          "relPath": "engines/owned_clean_a.mjs",
+          "content": "'use strict';\nexport function ownedCleanA(x) { return x + 1; }\n"
+        },
+        {
+          "relPath": "engines/owned_clean_b.mjs",
+          "content": "'use strict';\nexport function ownedCleanB(x) { return x - 1; }\n"
+        }
+      ],
+      "scopeMap": {
+        "subsystems": {
+          "SS-VALID": {
+            "files": [
+              "engines/owned_clean_a.mjs",
+              "engines/owned_clean_b.mjs"
+            ],
+            "allowedOwners": [
+              "owner-x",
+              "owner-y"
+            ],
+            "allOwnedFiles": [
+              "engines/owned_clean_a.mjs",
+              "engines/owned_clean_b.mjs"
+            ]
+          }
+        }
+      },
+      "ownershipMap": {
+        "subsystems": [
+          {
+            "owner": "owner-x",
+            "allowedFiles": [
+              "owned_clean_a.mjs"
+            ]
+          },
+          {
+            "owner": "owner-y",
+            "allowedFiles": [
+              "owned_clean_b.mjs"
+            ]
+          }
+        ]
+      },
+      "declared": [
+        "engines/owned_clean_a.mjs",
+        "engines/owned_clean_b.mjs"
+      ]
+    },
+    "structuralOnlyValid": {
+      "files": [
+        {
+          "relPath": "package.json",
+          "content": "{}"
+        },
+        {
+          "relPath": "package-lock.json",
+          "content": "{}"
+        }
+      ],
+      "scopeMap": {
+        "subsystems": {
+          "SS-STRUCTURAL": {
+            "files": [],
+            "nonScoreableFiles": [
+              "package.json",
+              "package-lock.json"
+            ],
+            "allOwnedFiles": [
+              "package.json",
+              "package-lock.json"
+            ],
+            "structuralOnly": true,
+            "allowedOwners": [
+              "repository-package-manifest"
+            ]
+          }
+        }
+      },
+      "ownershipMap": {
+        "subsystems": [
+          {
+            "owner": "repository-package-manifest",
+            "allowedFiles": [
+              "package.json",
+              "package-lock.json"
+            ]
+          }
+        ]
+      }
+    },
+    "nonScoreableDuplicateInvalid": {
+      "files": [
+        {
+          "relPath": "engines/owned_clean_a.mjs",
+          "content": "'use strict';\nexport function ownedCleanA(x) { return x + 1; }\n"
+        },
+        {
+          "relPath": "config.json",
+          "content": "{}"
+        }
+      ],
+      "scopeMap": {
+        "subsystems": {
+          "SS-NSDUP": {
+            "files": [
+              "engines/owned_clean_a.mjs"
+            ],
+            "nonScoreableFiles": [
+              "config.json",
+              "config.json"
+            ],
+            "allOwnedFiles": [
+              "engines/owned_clean_a.mjs",
+              "config.json"
+            ],
+            "allowedOwners": [
+              "owner-x"
+            ]
+          }
+        }
+      },
+      "ownershipMap": {
+        "subsystems": [
+          {
+            "owner": "owner-x",
+            "allowedFiles": [
+              "owned_clean_a.mjs",
+              "config.json"
+            ]
+          }
+        ]
+      }
+    },
+    "allOwnedDuplicateInvalid": {
+      "files": [
+        {
+          "relPath": "engines/owned_clean_a.mjs",
+          "content": "'use strict';\nexport function ownedCleanA(x) { return x + 1; }\n"
+        }
+      ],
+      "scopeMap": {
+        "subsystems": {
+          "SS-AODUP": {
+            "files": [
+              "engines/owned_clean_a.mjs"
+            ],
+            "allOwnedFiles": [
+              "engines/owned_clean_a.mjs",
+              "engines/owned_clean_a.mjs"
+            ],
+            "allowedOwners": [
+              "owner-x"
+            ]
+          }
+        }
+      },
+      "ownershipMap": {
+        "subsystems": [
+          {
+            "owner": "owner-x",
+            "allowedFiles": [
+              "owned_clean_a.mjs"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
