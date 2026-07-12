@@ -1,0 +1,25 @@
+{
+  "seeds": [
+    {
+      "path": "A"
+    }
+  ],
+  "graph": [
+    {
+      "id": "e1",
+      "kind": "IMPORT",
+      "from": "A",
+      "to": "B"
+    }
+  ],
+  "expected": [
+    {
+      "node": "A",
+      "distance": 0
+    },
+    {
+      "node": "B",
+      "distance": 1
+    }
+  ]
+}

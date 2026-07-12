@@ -30,7 +30,10 @@
     "tests:menu": "./tests-menu.sh",
     "test:preview:live:guard": "node tests/js/preview_live_smoke_guardrail_contract.test.mjs",
     "test:preview:live": "RF_BROWSER=chrome RF_HEADED=1 RF_VIEWPORT_WIDTH=1650 RF_VIEWPORT_HEIGHT=900 npx playwright test tests/e2e/live_smoke_preview_cr_parity.spec.js tests/e2e/geometry_white_strip_preview_design.spec.js tests/e2e/rulerh_preview_cycle_restore.spec.js -c pw.rf-live.config.mjs --reporter=line",
-    "salad-score:subsystem": "node tools/salad-score/subsystem-gate/bin/salad-score-subsystem.mjs --ownership-map tools/salad-score/subsystem-gate/governance/subsystem_ownership_map.json --scope-map tools/salad-score/subsystem-gate/governance/subsystem_scope_map.json"
+    "salad-score:subsystem": "node tools/salad-score/subsystem-gate/bin/salad-score-subsystem.mjs --ownership-map tools/salad-score/subsystem-gate/governance/subsystem_ownership_map.json --scope-map tools/salad-score/subsystem-gate/governance/subsystem_scope_map.json",
+    "e2r:v2": "node tools/e2r-v2/bin/e2r-v2.mjs --root . --config salad-score.config.json --capability-map tools/e2r-v2/capability-map/capability_map.json --ownership-map audit/subsystem_ownership_map.json",
+    "e2r:v2:check": "node tools/e2r-v2/bin/e2r-v2.mjs --root . --config salad-score.config.json --capability-map tools/e2r-v2/capability-map/capability_map.json --ownership-map audit/subsystem_ownership_map.json --strict",
+    "e2r:v2:html": "node tools/e2r-v2/bin/e2r-v2.mjs --root . --config salad-score.config.json --capability-map tools/e2r-v2/capability-map/capability_map.json --ownership-map audit/subsystem_ownership_map.json --write-html audit/e2r-v2/dashboard.html"
   },
   "dependencies": {
     "playwright": "1.58.2"

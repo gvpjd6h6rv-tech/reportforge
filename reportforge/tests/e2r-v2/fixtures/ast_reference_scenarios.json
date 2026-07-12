@@ -1,0 +1,36 @@
+{
+  "cases": [
+    {
+      "name": "import",
+      "source": "import x from 'y';",
+      "imports": 1
+    },
+    {
+      "name": "require",
+      "source": "const x = require('y');",
+      "requires": 1
+    },
+    {
+      "name": "global",
+      "source": "window.alert(1);",
+      "reads": [
+        "window.alert"
+      ]
+    },
+    {
+      "name": "alias",
+      "source": "const g = window;",
+      "aliases": 1
+    },
+    {
+      "name": "shadow",
+      "source": "function f(window){ return window; }",
+      "shadowed": true
+    },
+    {
+      "name": "dynamic",
+      "source": "window[foo]();",
+      "dynamic": 1
+    }
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "cases": [
+    {
+      "name": "case-0",
+      "productionFile": "engines/GeometryCore.js",
+      "evidenceStrength": "IMPORT_OR_REQUIRE_ONLY",
+      "outcome": "PASS"
+    },
+    {
+      "name": "case-1",
+      "productionFile": "engines/GeometryCore.js",
+      "evidenceStrength": "IMPORT_OR_REQUIRE_ONLY",
+      "outcome": "PASS"
+    },
+    {
+      "name": "case-2",
+      "productionFile": "engines/GeometryCore.js",
+      "evidenceStrength": "IMPORT_OR_REQUIRE_ONLY",
+      "outcome": "PASS"
+    },
+    {
+      "name": "case-3",
+      "productionFile": "engines/GeometryCore.js",
+      "evidenceStrength": "IMPORT_OR_REQUIRE_ONLY",
+      "outcome": "PASS"
+    },
+    {
+      "name": "case-4",
+      "productionFile": "engines/GeometryCore.js",
+      "evidenceStrength": "IMPORT_OR_REQUIRE_ONLY",
+      "outcome": "PASS"
+    },
+    {
+      "name": "case-5",
+      "productionFile": "engines/GeometryCore.js",
+      "evidenceStrength": "IMPORT_OR_REQUIRE_ONLY",
+      "outcome": "PASS"
+    },
+    {
+      "name": "case-6",
+      "productionFile": "engines/GeometryCore.js",
+      "evidenceStrength": "IMPORT_OR_REQUIRE_ONLY",
+      "outcome": "PASS"
+    },
+    {
+      "name": "case-7",
+      "productionFile": "engines/GeometryCore.js",
+      "evidenceStrength": "IMPORT_OR_REQUIRE_ONLY",
+      "outcome": "PASS"
+    },
+    {
+      "name": "case-8",
+      "productionFile": "engines/GeometryCore.js",
+      "evidenceStrength": "IMPORT_OR_REQUIRE_ONLY",
+      "outcome": "PASS"
+    },
+    {
+      "name": "case-9",
+      "productionFile": "engines/GeometryCore.js",
+      "evidenceStrength": "IMPORT_OR_REQUIRE_ONLY",
+      "outcome": "PASS"
+    },
+    {
+      "name": "case-10",
+      "productionFile": "engines/GeometryCore.js",
+      "evidenceStrength": "IMPORT_OR_REQUIRE_ONLY",
+      "outcome": "PASS"
+    },
+    {
+      "name": "case-11",
+      "productionFile": "engines/GeometryCore.js",
+      "evidenceStrength": "IMPORT_OR_REQUIRE_ONLY",
+      "outcome": "PASS"
+    },
+    {
+      "name": "case-12",
+      "productionFile": "engines/GeometryCore.js",
+      "evidenceStrength": "IMPORT_OR_REQUIRE_ONLY",
+      "outcome": "PASS"
+    },
+    {
+      "name": "case-13",
+      "productionFile": "engines/GeometryCore.js",
+      "evidenceStrength": "IMPORT_OR_REQUIRE_ONLY",
+      "outcome": "PASS"
+    }
+  ]
+}

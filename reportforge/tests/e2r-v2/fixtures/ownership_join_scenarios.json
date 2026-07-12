@@ -1,0 +1,12 @@
+{
+  "cases": [
+    {
+      "path": "engines/GeometryCore.js",
+      "expected": "RESOLVED"
+    },
+    {
+      "path": "engines/SelectionOverlayPreview.js",
+      "expected": "UNOWNED"
+    }
+  ]
+}

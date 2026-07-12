@@ -1,0 +1,3491 @@
+{
+  "capabilities": [
+    {
+      "boundaryDepth": 2,
+      "files": [
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/AlignEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "AlignEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/AlignEngine.js",
+          "primaryLayer": "GEOMETRY_MODEL",
+          "primaryResponsibility": "geometry_member for AlignEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-02"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/AlignmentEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "AlignmentEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/AlignmentEngine.js",
+          "primaryLayer": "GEOMETRY_MODEL",
+          "primaryResponsibility": "geometry_member for AlignmentEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-02"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/AlignmentGuides.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "AlignmentGuides",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/AlignmentGuides.js",
+          "primaryLayer": "GEOMETRY_MODEL",
+          "primaryResponsibility": "geometry_member for AlignmentGuides.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-02"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/BuildDebugPanel.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "BuildDebugPanel",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/BuildDebugPanel.js",
+          "primaryResponsibility": "geometry_excluded for BuildDebugPanel.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/CanvasGeometry.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "CanvasGeometry",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/CanvasGeometry.js",
+          "primaryLayer": "GEOMETRY_CORE",
+          "primaryResponsibility": "geometry_member for CanvasGeometry.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/CanvasLayoutContracts.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "CanvasLayoutContracts",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/CanvasLayoutContracts.js",
+          "primaryResponsibility": "geometry_excluded for CanvasLayoutContracts.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/CanvasLayoutElementContent.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "CanvasLayoutElementContent",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/CanvasLayoutElementContent.js",
+          "primaryLayer": "GEOMETRY_RENDER",
+          "primaryResponsibility": "geometry_member for CanvasLayoutElementContent.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-06"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/CanvasLayoutElements.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "CanvasLayoutElements",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/CanvasLayoutElements.js",
+          "primaryLayer": "GEOMETRY_CORE",
+          "primaryResponsibility": "geometry_member for CanvasLayoutElements.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-04"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/CanvasLayoutEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "CanvasLayoutEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/CanvasLayoutEngine.js",
+          "primaryLayer": "GEOMETRY_RENDER",
+          "primaryResponsibility": "geometry_member for CanvasLayoutEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-06"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/CanvasLayoutSize.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "CanvasLayoutSize",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/CanvasLayoutSize.js",
+          "primaryLayer": "GEOMETRY_LAYOUT",
+          "primaryResponsibility": "geometry_member for CanvasLayoutSize.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-04"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/ClipboardEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "ClipboardEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/ClipboardEngine.js",
+          "primaryResponsibility": "geometry_excluded for ClipboardEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/ClipboardState.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "ClipboardState",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/ClipboardState.js",
+          "primaryResponsibility": "geometry_excluded for ClipboardState.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/CommandRuntime.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "CommandRuntime",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/CommandRuntime.js",
+          "primaryResponsibility": "geometry_dependent for CommandRuntime.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/CommandRuntimeDocType.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "CommandRuntimeDocType",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/CommandRuntimeDocType.js",
+          "primaryResponsibility": "geometry_dependent for CommandRuntimeDocType.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/CommandRuntimeFile.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "CommandRuntimeFile",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/CommandRuntimeFile.js",
+          "primaryResponsibility": "geometry_dependent for CommandRuntimeFile.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/CommandRuntimeFileApply.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "CommandRuntimeFileApply",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/CommandRuntimeFileApply.js",
+          "primaryResponsibility": "geometry_dependent for CommandRuntimeFileApply.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/CommandRuntimeFileIO.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "CommandRuntimeFileIO",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/CommandRuntimeFileIO.js",
+          "primaryResponsibility": "geometry_dependent for CommandRuntimeFileIO.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/CommandRuntimeHandlers.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "CommandRuntimeHandlers",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/CommandRuntimeHandlers.js",
+          "primaryResponsibility": "geometry_dependent for CommandRuntimeHandlers.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/CommandRuntimeHandlersDialog.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "CommandRuntimeHandlersDialog",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/CommandRuntimeHandlersDialog.js",
+          "primaryResponsibility": "geometry_dependent for CommandRuntimeHandlersDialog.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/CommandRuntimeHandlersFile.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "CommandRuntimeHandlersFile",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/CommandRuntimeHandlersFile.js",
+          "primaryResponsibility": "geometry_dependent for CommandRuntimeHandlersFile.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/CommandRuntimeHandlersFormat.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "CommandRuntimeHandlersFormat",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/CommandRuntimeHandlersFormat.js",
+          "primaryResponsibility": "geometry_dependent for CommandRuntimeHandlersFormat.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/CommandRuntimeHandlersInsert.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "CommandRuntimeHandlersInsert",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/CommandRuntimeHandlersInsert.js",
+          "primaryResponsibility": "geometry_dependent for CommandRuntimeHandlersInsert.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/CommandRuntimeHandlersLayout.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "CommandRuntimeHandlersLayout",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/CommandRuntimeHandlersLayout.js",
+          "primaryResponsibility": "geometry_dependent for CommandRuntimeHandlersLayout.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/CommandRuntimeHandlersPreview.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "CommandRuntimeHandlersPreview",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/CommandRuntimeHandlersPreview.js",
+          "primaryResponsibility": "geometry_dependent for CommandRuntimeHandlersPreview.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/CommandRuntimeHandlersSelectionDispatch.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "CommandRuntimeHandlersSelectionDispatch",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/CommandRuntimeHandlersSelectionDispatch.js",
+          "primaryLayer": "GEOMETRY_INTERACTION",
+          "primaryResponsibility": "geometry_member for CommandRuntimeHandlersSelectionDispatch.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-07"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/CommandRuntimeHandlersSystem.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "CommandRuntimeHandlersSystem",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/CommandRuntimeHandlersSystem.js",
+          "primaryResponsibility": "geometry_dependent for CommandRuntimeHandlersSystem.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/CommandRuntimeHandlersZoom.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "CommandRuntimeHandlersZoom",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/CommandRuntimeHandlersZoom.js",
+          "primaryResponsibility": "geometry_dependent for CommandRuntimeHandlersZoom.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/CommandRuntimeInit.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "CommandRuntimeInit",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/CommandRuntimeInit.js",
+          "primaryResponsibility": "geometry_dependent for CommandRuntimeInit.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/CommandRuntimeSections.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "CommandRuntimeSections",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/CommandRuntimeSections.js",
+          "primaryResponsibility": "geometry_excluded for CommandRuntimeSections.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/CommandRuntimeSelection.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "CommandRuntimeSelection",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/CommandRuntimeSelection.js",
+          "primaryLayer": "GEOMETRY_INTERACTION",
+          "primaryResponsibility": "geometry_member for CommandRuntimeSelection.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-07"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/CommandRuntimeShared.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "CommandRuntimeShared",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/CommandRuntimeShared.js",
+          "primaryResponsibility": "geometry_dependent for CommandRuntimeShared.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/CommandRuntimeView.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "CommandRuntimeView",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/CommandRuntimeView.js",
+          "primaryResponsibility": "geometry_dependent for CommandRuntimeView.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/DebugChannelsPanel.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "DebugChannelsPanel",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/DebugChannelsPanel.js",
+          "primaryResponsibility": "geometry_excluded for DebugChannelsPanel.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/DebugHudLayout.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "DebugHudLayout",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/DebugHudLayout.js",
+          "primaryResponsibility": "geometry_excluded for DebugHudLayout.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/DebugOverlay.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "DebugOverlay",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/DebugOverlay.js",
+          "primaryLayer": "GEOMETRY_RENDER",
+          "primaryResponsibility": "geometry_member for DebugOverlay.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-06"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/DebugPanelGeometry.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "DebugPanelGeometry",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/DebugPanelGeometry.js",
+          "primaryLayer": "GEOMETRY_ADAPTER",
+          "primaryResponsibility": "geometry_member for DebugPanelGeometry.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/DebugPanelUtils.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "DebugPanelUtils",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/DebugPanelUtils.js",
+          "primaryResponsibility": "geometry_excluded for DebugPanelUtils.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/DebugTrace.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "DebugTrace",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/DebugTrace.js",
+          "primaryResponsibility": "geometry_excluded for DebugTrace.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/DebugTraceToggle.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "DebugTraceToggle",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/DebugTraceToggle.js",
+          "primaryResponsibility": "geometry_excluded for DebugTraceToggle.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/DeferredBootstrap.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "DeferredBootstrap",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/DeferredBootstrap.js",
+          "primaryResponsibility": "geometry_excluded for DeferredBootstrap.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/DesignerUI.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "DesignerUI",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/DesignerUI.js",
+          "primaryResponsibility": "geometry_dependent for DesignerUI.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/DiagnosticsGestureLoader.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "DiagnosticsGestureLoader",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/DiagnosticsGestureLoader.js",
+          "primaryResponsibility": "geometry_excluded for DiagnosticsGestureLoader.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/DocTypeAndProbes.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "DocTypeAndProbes",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/DocTypeAndProbes.js",
+          "primaryResponsibility": "geometry_dependent for DocTypeAndProbes.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/DocumentActions.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "DocumentActions",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/DocumentActions.js",
+          "primaryResponsibility": "geometry_dependent for DocumentActions.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/DocumentActionsLayoutClamp.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "DocumentActionsLayoutClamp",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/DocumentActionsLayoutClamp.js",
+          "primaryResponsibility": "geometry_dependent for DocumentActionsLayoutClamp.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/DocumentActionsSelection.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "DocumentActionsSelection",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/DocumentActionsSelection.js",
+          "primaryResponsibility": "geometry_dependent for DocumentActionsSelection.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/DocumentDataProvider.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "DocumentDataProvider",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/DocumentDataProvider.js",
+          "primaryResponsibility": "geometry_dependent for DocumentDataProvider.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/DocumentHistory.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "DocumentHistory",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/DocumentHistory.js",
+          "primaryResponsibility": "geometry_dependent for DocumentHistory.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/DocumentLoadModal.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "DocumentLoadModal",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/DocumentLoadModal.js",
+          "primaryResponsibility": "geometry_excluded for DocumentLoadModal.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/DocumentSelectors.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "DocumentSelectors",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/DocumentSelectors.js",
+          "primaryLayer": "GEOMETRY_CORE",
+          "primaryResponsibility": "geometry_member for DocumentSelectors.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-08"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/DocumentState.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "DocumentState",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/DocumentState.js",
+          "primaryResponsibility": "geometry_excluded for DocumentState.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/DocumentStore.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "DocumentStore",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/DocumentStore.js",
+          "primaryResponsibility": "geometry_dependent for DocumentStore.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/DocumentStoreUtils.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "DocumentStoreUtils",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/DocumentStoreUtils.js",
+          "primaryResponsibility": "geometry_dependent for DocumentStoreUtils.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/DocumentTabManager.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "DocumentTabManager",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/DocumentTabManager.js",
+          "primaryResponsibility": "geometry_excluded for DocumentTabManager.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/DragEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "DragEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/DragEngine.js",
+          "primaryLayer": "GEOMETRY_INTERACTION",
+          "primaryResponsibility": "geometry_member for DragEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-07"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/DragState.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "DragState",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/DragState.js",
+          "primaryLayer": "GEOMETRY_INTERACTION",
+          "primaryResponsibility": "geometry_member for DragState.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-07"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/ElementLayoutEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "ElementLayoutEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/ElementLayoutEngine.js",
+          "primaryLayer": "GEOMETRY_LAYOUT",
+          "primaryResponsibility": "geometry_member for ElementLayoutEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-04"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/EngineCore.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "EngineCore",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/EngineCore.js",
+          "primaryResponsibility": "geometry_dependent for EngineCore.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/EngineCoreContractAsserts.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "EngineCoreContractAsserts",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/EngineCoreContractAsserts.js",
+          "primaryResponsibility": "geometry_dependent for EngineCoreContractAsserts.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/EngineCoreContractSnapshots.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "EngineCoreContractSnapshots",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/EngineCoreContractSnapshots.js",
+          "primaryResponsibility": "geometry_dependent for EngineCoreContractSnapshots.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/EngineCoreContractValidators.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "EngineCoreContractValidators",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/EngineCoreContractValidators.js",
+          "primaryResponsibility": "geometry_dependent for EngineCoreContractValidators.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/EngineCoreContracts.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "EngineCoreContracts",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/EngineCoreContracts.js",
+          "primaryResponsibility": "geometry_excluded for EngineCoreContracts.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/EngineCoreRouting.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "EngineCoreRouting",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/EngineCoreRouting.js",
+          "primaryResponsibility": "geometry_dependent for EngineCoreRouting.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/EngineCoreRoutingPointer.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "EngineCoreRoutingPointer",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/EngineCoreRoutingPointer.js",
+          "primaryLayer": "GEOMETRY_ADAPTER",
+          "primaryResponsibility": "geometry_member for EngineCoreRoutingPointer.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-08"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/EngineCoreRoutingPointerHelpers.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "EngineCoreRoutingPointerHelpers",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/EngineCoreRoutingPointerHelpers.js",
+          "primaryResponsibility": "geometry_dependent for EngineCoreRoutingPointerHelpers.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/EngineCoreRoutingRegistry.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "EngineCoreRoutingRegistry",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/EngineCoreRoutingRegistry.js",
+          "primaryResponsibility": "geometry_dependent for EngineCoreRoutingRegistry.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/EngineCoreRoutingWorkspace.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "EngineCoreRoutingWorkspace",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/EngineCoreRoutingWorkspace.js",
+          "primaryLayer": "GEOMETRY_ADAPTER",
+          "primaryResponsibility": "geometry_member for EngineCoreRoutingWorkspace.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-08"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/EngineCoreRoutingZoom.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "EngineCoreRoutingZoom",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/EngineCoreRoutingZoom.js",
+          "primaryLayer": "GEOMETRY_ADAPTER",
+          "primaryResponsibility": "geometry_member for EngineCoreRoutingZoom.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-08"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/EngineCoreRuntime.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "EngineCoreRuntime",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/EngineCoreRuntime.js",
+          "primaryResponsibility": "geometry_dependent for EngineCoreRuntime.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/FactoryInvoiceMockupLayout.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "FactoryInvoiceMockupLayout",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/FactoryInvoiceMockupLayout.js",
+          "primaryResponsibility": "geometry_excluded for FactoryInvoiceMockupLayout.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/FieldExplorerDropCoords.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "FieldExplorerDropCoords",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/FieldExplorerDropCoords.js",
+          "primaryLayer": "GEOMETRY_INTERACTION",
+          "primaryResponsibility": "geometry_member for FieldExplorerDropCoords.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-07"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/FieldExplorerEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "FieldExplorerEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/FieldExplorerEngine.js",
+          "primaryLayer": "GEOMETRY_INTERACTION",
+          "primaryResponsibility": "geometry_member for FieldExplorerEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-07"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/FontStack.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "FontStack",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/FontStack.js",
+          "primaryResponsibility": "geometry_excluded for FontStack.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/FormatEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "FormatEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/FormatEngine.js",
+          "primaryResponsibility": "geometry_excluded for FormatEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/FormulaAndDebug.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "FormulaAndDebug",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/FormulaAndDebug.js",
+          "primaryResponsibility": "geometry_excluded for FormulaAndDebug.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/FormulaEditorDialog.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "FormulaEditorDialog",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/FormulaEditorDialog.js",
+          "primaryResponsibility": "geometry_excluded for FormulaEditorDialog.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/FormulaEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "FormulaEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/FormulaEngine.js",
+          "primaryResponsibility": "geometry_excluded for FormulaEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/GeometryCore.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "GeometryCore",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/GeometryCore.js",
+          "primaryLayer": "GEOMETRY_CORE",
+          "primaryResponsibility": "geometry_member for GeometryCore.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/GlobalEventHandlers.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "GlobalEventHandlers",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/GlobalEventHandlers.js",
+          "primaryResponsibility": "geometry_excluded for GlobalEventHandlers.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/GridEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "GridEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/GridEngine.js",
+          "primaryLayer": "GEOMETRY_MODEL",
+          "primaryResponsibility": "geometry_member for GridEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-02"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/GuideEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "GuideEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/GuideEngine.js",
+          "primaryResponsibility": "geometry_excluded for GuideEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/HandlesEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "HandlesEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/HandlesEngine.js",
+          "primaryLayer": "GEOMETRY_HIT_TEST",
+          "primaryResponsibility": "geometry_member for HandlesEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-05"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/HistoryEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "HistoryEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/HistoryEngine.js",
+          "primaryResponsibility": "geometry_excluded for HistoryEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/HitTestEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "HitTestEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/HitTestEngine.js",
+          "primaryLayer": "GEOMETRY_HIT_TEST",
+          "primaryResponsibility": "geometry_member for HitTestEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-05"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/HitTestGeometry.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "HitTestGeometry",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/HitTestGeometry.js",
+          "primaryLayer": "GEOMETRY_LAYOUT",
+          "primaryResponsibility": "geometry_member for HitTestGeometry.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-03"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/HitTestResolver.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "HitTestResolver",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/HitTestResolver.js",
+          "primaryLayer": "GEOMETRY_HIT_TEST",
+          "primaryResponsibility": "geometry_member for HitTestResolver.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-05"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/InsertEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "InsertEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/InsertEngine.js",
+          "primaryResponsibility": "geometry_excluded for InsertEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/KeyboardEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "KeyboardEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/KeyboardEngine.js",
+          "primaryResponsibility": "geometry_excluded for KeyboardEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/LeftParametersPanel.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "LeftParametersPanel",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/LeftParametersPanel.js",
+          "primaryResponsibility": "geometry_excluded for LeftParametersPanel.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/MenuAdapters.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "MenuAdapters",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/MenuAdapters.js",
+          "primaryResponsibility": "geometry_excluded for MenuAdapters.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/OverlayEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "OverlayEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/OverlayEngine.js",
+          "primaryLayer": "GEOMETRY_RENDER",
+          "primaryResponsibility": "geometry_member for OverlayEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-06"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/PageMarginsDefaults.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "PageMarginsDefaults",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/PageMarginsDefaults.js",
+          "primaryResponsibility": "geometry_excluded for PageMarginsDefaults.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/PageMarginsEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "PageMarginsEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/PageMarginsEngine.js",
+          "primaryLayer": "GEOMETRY_LAYOUT",
+          "primaryResponsibility": "geometry_member for PageMarginsEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-04"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/PanelResizeEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "PanelResizeEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/PanelResizeEngine.js",
+          "primaryResponsibility": "geometry_excluded for PanelResizeEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/ParameterInputRenderer.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "ParameterInputRenderer",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/ParameterInputRenderer.js",
+          "primaryResponsibility": "geometry_excluded for ParameterInputRenderer.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/ParameterValueController.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "ParameterValueController",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/ParameterValueController.js",
+          "primaryResponsibility": "geometry_excluded for ParameterValueController.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/PreviewEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "PreviewEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/PreviewEngine.js",
+          "primaryResponsibility": "geometry_excluded for PreviewEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/PreviewEngineContracts.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "PreviewEngineContracts",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/PreviewEngineContracts.js",
+          "primaryResponsibility": "geometry_excluded for PreviewEngineContracts.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/PreviewEngineData.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "PreviewEngineData",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/PreviewEngineData.js",
+          "primaryLayer": "GEOMETRY_LAYOUT",
+          "primaryResponsibility": "geometry_member for PreviewEngineData.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-03"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/PreviewEngineMode.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "PreviewEngineMode",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/PreviewEngineMode.js",
+          "primaryResponsibility": "geometry_excluded for PreviewEngineMode.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/PreviewEngineRenderer.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "PreviewEngineRenderer",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/PreviewEngineRenderer.js",
+          "primaryLayer": "GEOMETRY_RENDER",
+          "primaryResponsibility": "geometry_member for PreviewEngineRenderer.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-06"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/PreviewEngineRendererLayout.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "PreviewEngineRendererLayout",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/PreviewEngineRendererLayout.js",
+          "primaryLayer": "GEOMETRY_RENDER",
+          "primaryResponsibility": "geometry_member for PreviewEngineRendererLayout.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-06"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/PreviewEngineRendererMetrics.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "PreviewEngineRendererMetrics",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/PreviewEngineRendererMetrics.js",
+          "primaryLayer": "GEOMETRY_RENDER",
+          "primaryResponsibility": "geometry_member for PreviewEngineRendererMetrics.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-06"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/PreviewHoverOutline.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "PreviewHoverOutline",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/PreviewHoverOutline.js",
+          "primaryLayer": "GEOMETRY_RENDER",
+          "primaryResponsibility": "geometry_member for PreviewHoverOutline.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-06"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/PreviewInsertPositionResolver.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "PreviewInsertPositionResolver",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/PreviewInsertPositionResolver.js",
+          "primaryResponsibility": "geometry_excluded for PreviewInsertPositionResolver.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/PreviewOverlayStyle.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "PreviewOverlayStyle",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/PreviewOverlayStyle.js",
+          "primaryLayer": "GEOMETRY_RENDER",
+          "primaryResponsibility": "geometry_member for PreviewOverlayStyle.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-06"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/PreviewPaginationEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "PreviewPaginationEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/PreviewPaginationEngine.js",
+          "primaryLayer": "GEOMETRY_LAYOUT",
+          "primaryResponsibility": "geometry_member for PreviewPaginationEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-04"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/PropertiesEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "PropertiesEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/PropertiesEngine.js",
+          "primaryResponsibility": "geometry_excluded for PropertiesEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/RFAudit.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "RFAudit",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/RFAudit.js",
+          "primaryResponsibility": "geometry_excluded for RFAudit.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/RenderScheduler.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "RenderScheduler",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/RenderScheduler.js",
+          "primaryResponsibility": "geometry_excluded for RenderScheduler.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/RenderSchedulerFrame.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "RenderSchedulerFrame",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/RenderSchedulerFrame.js",
+          "primaryResponsibility": "geometry_excluded for RenderSchedulerFrame.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/RenderSchedulerObservability.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "RenderSchedulerObservability",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/RenderSchedulerObservability.js",
+          "primaryResponsibility": "geometry_excluded for RenderSchedulerObservability.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/RenderSchedulerQueue.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "RenderSchedulerQueue",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/RenderSchedulerQueue.js",
+          "primaryResponsibility": "geometry_excluded for RenderSchedulerQueue.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/RenderSchedulerScope.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "RenderSchedulerScope",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/RenderSchedulerScope.js",
+          "primaryResponsibility": "geometry_excluded for RenderSchedulerScope.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/RenderSchedulerState.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "RenderSchedulerState",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/RenderSchedulerState.js",
+          "primaryResponsibility": "geometry_excluded for RenderSchedulerState.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/RulerEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "RulerEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/RulerEngine.js",
+          "primaryLayer": "GEOMETRY_MODEL",
+          "primaryResponsibility": "geometry_member for RulerEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-02"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/RuntimeBootstrap.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "RuntimeBootstrap",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/RuntimeBootstrap.js",
+          "primaryResponsibility": "geometry_dependent for RuntimeBootstrap.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/RuntimeConfig.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "RuntimeConfig",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/RuntimeConfig.js",
+          "primaryResponsibility": "geometry_dependent for RuntimeConfig.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/RuntimeData.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "RuntimeData",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/RuntimeData.js",
+          "primaryResponsibility": "geometry_dependent for RuntimeData.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/RuntimeFingerprintPanel.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "RuntimeFingerprintPanel",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/RuntimeFingerprintPanel.js",
+          "primaryResponsibility": "geometry_excluded for RuntimeFingerprintPanel.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/RuntimeGlobals.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "RuntimeGlobals",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/RuntimeGlobals.js",
+          "primaryResponsibility": "geometry_excluded for RuntimeGlobals.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/RuntimeHelpers.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "RuntimeHelpers",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/RuntimeHelpers.js",
+          "primaryResponsibility": "geometry_excluded for RuntimeHelpers.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/RuntimeServices.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "RuntimeServices",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/RuntimeServices.js",
+          "primaryResponsibility": "geometry_dependent for RuntimeServices.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_DEPENDENT",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/RuntimeWriteLog.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "RuntimeWriteLog",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/RuntimeWriteLog.js",
+          "primaryResponsibility": "geometry_dependent for RuntimeWriteLog.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_DEPENDENT",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/SQLModal.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "SQLModal",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/SQLModal.js",
+          "primaryResponsibility": "geometry_excluded for SQLModal.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/SectionEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "SectionEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/SectionEngine.js",
+          "primaryResponsibility": "geometry_excluded for SectionEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/SectionLabelOverlay.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "SectionLabelOverlay",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/SectionLabelOverlay.js",
+          "primaryLayer": "GEOMETRY_RENDER",
+          "primaryResponsibility": "geometry_member for SectionLabelOverlay.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-06"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/SectionLayoutEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "SectionLayoutEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/SectionLayoutEngine.js",
+          "primaryLayer": "GEOMETRY_LAYOUT",
+          "primaryResponsibility": "geometry_member for SectionLayoutEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-04"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/SectionResizeEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "SectionResizeEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/SectionResizeEngine.js",
+          "primaryResponsibility": "geometry_excluded for SectionResizeEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/SectionSeparatorOverlay.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "SectionSeparatorOverlay",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/SectionSeparatorOverlay.js",
+          "primaryLayer": "GEOMETRY_RENDER",
+          "primaryResponsibility": "geometry_member for SectionSeparatorOverlay.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-06"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/SectionVisualLayoutModel.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "SectionVisualLayoutModel",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/SectionVisualLayoutModel.js",
+          "primaryLayer": "GEOMETRY_MODEL",
+          "primaryResponsibility": "geometry_member for SectionVisualLayoutModel.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-03"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/SelectionDragPreviewSync.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "SelectionDragPreviewSync",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/SelectionDragPreviewSync.js",
+          "primaryLayer": "GEOMETRY_INTERACTION",
+          "primaryResponsibility": "geometry_member for SelectionDragPreviewSync.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-07"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/SelectionEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "SelectionEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/SelectionEngine.js",
+          "primaryLayer": "GEOMETRY_INTERACTION",
+          "primaryResponsibility": "geometry_member for SelectionEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-07"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/SelectionEngineContracts.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "SelectionEngineContracts",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/SelectionEngineContracts.js",
+          "primaryResponsibility": "geometry_excluded for SelectionEngineContracts.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/SelectionEnginePreviewBridge.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "SelectionEnginePreviewBridge",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/SelectionEnginePreviewBridge.js",
+          "primaryLayer": "GEOMETRY_INTERACTION",
+          "primaryResponsibility": "geometry_member for SelectionEnginePreviewBridge.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-07"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/SelectionGeometry.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "SelectionGeometry",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/SelectionGeometry.js",
+          "primaryLayer": "GEOMETRY_LAYOUT",
+          "primaryResponsibility": "geometry_member for SelectionGeometry.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-03"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/SelectionHitTest.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "SelectionHitTest",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/SelectionHitTest.js",
+          "primaryLayer": "GEOMETRY_HIT_TEST",
+          "primaryResponsibility": "geometry_member for SelectionHitTest.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-05"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/SelectionInteraction.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "SelectionInteraction",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/SelectionInteraction.js",
+          "primaryLayer": "GEOMETRY_INTERACTION",
+          "primaryResponsibility": "geometry_member for SelectionInteraction.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-07"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/SelectionInteractionMotion.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "SelectionInteractionMotion",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/SelectionInteractionMotion.js",
+          "primaryLayer": "GEOMETRY_INTERACTION",
+          "primaryResponsibility": "geometry_member for SelectionInteractionMotion.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-07"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/SelectionInteractionPointer.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "SelectionInteractionPointer",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/SelectionInteractionPointer.js",
+          "primaryLayer": "GEOMETRY_INTERACTION",
+          "primaryResponsibility": "geometry_member for SelectionInteractionPointer.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-07"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/SelectionOverlay.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "SelectionOverlay",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/SelectionOverlay.js",
+          "primaryLayer": "GEOMETRY_RENDER",
+          "primaryResponsibility": "geometry_member for SelectionOverlay.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-06"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/SelectionOverlayPreview.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "SelectionOverlayPreview",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/SelectionOverlayPreview.js",
+          "primaryLayer": "GEOMETRY_RENDER",
+          "primaryResponsibility": "geometry_member for SelectionOverlayPreview.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-06"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/SelectionOverlayPreviewLayers.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "SelectionOverlayPreviewLayers",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/SelectionOverlayPreviewLayers.js",
+          "primaryLayer": "GEOMETRY_RENDER",
+          "primaryResponsibility": "geometry_member for SelectionOverlayPreviewLayers.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-06"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/SelectionOverlayRender.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "SelectionOverlayRender",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/SelectionOverlayRender.js",
+          "primaryLayer": "GEOMETRY_RENDER",
+          "primaryResponsibility": "geometry_member for SelectionOverlayRender.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-06"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/SelectionOverlayRenderHelpers.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "SelectionOverlayRenderHelpers",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/SelectionOverlayRenderHelpers.js",
+          "primaryLayer": "GEOMETRY_RENDER",
+          "primaryResponsibility": "geometry_member for SelectionOverlayRenderHelpers.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-06"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/SelectionState.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "SelectionState",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/SelectionState.js",
+          "primaryLayer": "GEOMETRY_INTERACTION",
+          "primaryResponsibility": "geometry_member for SelectionState.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-07"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/SqlCommandEditor.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "SqlCommandEditor",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/SqlCommandEditor.js",
+          "primaryResponsibility": "geometry_excluded for SqlCommandEditor.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/SqlCommandExecutionPanel.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "SqlCommandExecutionPanel",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/SqlCommandExecutionPanel.js",
+          "primaryResponsibility": "geometry_excluded for SqlCommandExecutionPanel.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/SqlCommandFieldTreeMap.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "SqlCommandFieldTreeMap",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/SqlCommandFieldTreeMap.js",
+          "primaryResponsibility": "geometry_excluded for SqlCommandFieldTreeMap.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/SqlCommandSchemaDiscovery.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "SqlCommandSchemaDiscovery",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/SqlCommandSchemaDiscovery.js",
+          "primaryResponsibility": "geometry_excluded for SqlCommandSchemaDiscovery.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/SqlCommandStore.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "SqlCommandStore",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/SqlCommandStore.js",
+          "primaryResponsibility": "geometry_excluded for SqlCommandStore.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/SqlCommandsListPanel.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "SqlCommandsListPanel",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/SqlCommandsListPanel.js",
+          "primaryResponsibility": "geometry_excluded for SqlCommandsListPanel.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/StoredProcedureExecutionPanel.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "StoredProcedureExecutionPanel",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/StoredProcedureExecutionPanel.js",
+          "primaryResponsibility": "geometry_excluded for StoredProcedureExecutionPanel.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/StoredProcedurePicker.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "StoredProcedurePicker",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/StoredProcedurePicker.js",
+          "primaryResponsibility": "geometry_excluded for StoredProcedurePicker.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/SyntheticScrollbarEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "SyntheticScrollbarEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/SyntheticScrollbarEngine.js",
+          "primaryResponsibility": "geometry_excluded for SyntheticScrollbarEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/TextAlignmentMapper.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "TextAlignmentMapper",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/TextAlignmentMapper.js",
+          "primaryResponsibility": "geometry_excluded for TextAlignmentMapper.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/ToolbarDropdown.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "ToolbarDropdown",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/ToolbarDropdown.js",
+          "primaryResponsibility": "geometry_excluded for ToolbarDropdown.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/UIAdapters.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "UIAdapters",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/UIAdapters.js",
+          "primaryResponsibility": "geometry_excluded for UIAdapters.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/WorkspaceScrollEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "WorkspaceScrollEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/WorkspaceScrollEngine.js",
+          "primaryResponsibility": "geometry_excluded for WorkspaceScrollEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/ZoomEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "ZoomEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/ZoomEngine.js",
+          "primaryLayer": "GEOMETRY_MODEL",
+          "primaryResponsibility": "geometry_member for ZoomEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-02"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/format/BorderMapper.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "BorderMapper",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/format/BorderMapper.js",
+          "primaryResponsibility": "geometry_excluded for BorderMapper.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/format/ColorConverter.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "ColorConverter",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/format/ColorConverter.js",
+          "primaryResponsibility": "geometry_excluded for ColorConverter.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/format/ColorPaletteMap.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "ColorPaletteMap",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/format/ColorPaletteMap.js",
+          "primaryResponsibility": "geometry_excluded for ColorPaletteMap.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/format/ColorPickerAdapter.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "ColorPickerAdapter",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/format/ColorPickerAdapter.js",
+          "primaryResponsibility": "geometry_excluded for ColorPickerAdapter.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/format/CustomColorStore.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "CustomColorStore",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/format/CustomColorStore.js",
+          "primaryResponsibility": "geometry_excluded for CustomColorStore.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/format/FormatBordersTab.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "FormatBordersTab",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/format/FormatBordersTab.js",
+          "primaryResponsibility": "geometry_excluded for FormatBordersTab.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/format/FormatEditorEngine.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "FormatEditorEngine",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/format/FormatEditorEngine.js",
+          "primaryResponsibility": "geometry_excluded for FormatEditorEngine.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/format/FormatNumberCustomDialog.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "FormatNumberCustomDialog",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/format/FormatNumberCustomDialog.js",
+          "primaryResponsibility": "geometry_excluded for FormatNumberCustomDialog.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/format/FormatNumberTab.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "FormatNumberTab",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/format/FormatNumberTab.js",
+          "primaryResponsibility": "geometry_excluded for FormatNumberTab.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/format/NumberFormatPresetMap.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "NumberFormatPresetMap",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/format/NumberFormatPresetMap.js",
+          "primaryResponsibility": "geometry_excluded for NumberFormatPresetMap.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        },
+        {
+          "classification": "GEOMETRY_EXCLUDED",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/format/NumberFormatter.js:1-1",
+              "reason": "Frozen reviewed geometry classification.",
+              "symbol": "NumberFormatter",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/format/NumberFormatter.js",
+          "primaryResponsibility": "geometry_excluded for NumberFormatter.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_EXCLUDED",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GX-01"
+        }
+      ],
+      "id": "CAPABILITY-GEOMETRY"
+    }
+  ],
+  "phaseId": "E2R-V2-PHASE-1-GEOMETRY-AND-FILE-SCORING",
+  "physicalScanScopes": [
+    "engines/**/*.js"
+  ],
+  "schemaVersion": "2.0.0"
+}

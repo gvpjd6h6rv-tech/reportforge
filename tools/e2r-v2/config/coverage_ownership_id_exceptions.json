@@ -1,0 +1,13 @@
+{
+  "exceptions": [
+    {
+      "canonicalOwner": "E2R-V2-TOOLING",
+      "subsystemId": "E2R-V2-TOOLING"
+    },
+    {
+      "canonicalOwner": "E2R-V2-TESTS",
+      "subsystemId": "E2R-V2-TESTS"
+    }
+  ],
+  "version": "1.0.0"
+}
