@@ -8,8 +8,7 @@
     "EngineCoreContracts.js",
     "CanvasLayoutContracts.js",
     "CommandRuntimeShared.js",
-    "CommandRuntimeInit.js",
-    "CanvasGeometry.js"
+    "CommandRuntimeInit.js"
   ],
   "subsystems": [
     {
@@ -105,7 +104,8 @@
       "tier": "core",
       "owner": "designer-runtime/geometry",
       "allowedFiles": [
-        "GeometryCore.js"
+        "GeometryCore.js",
+        "CanvasGeometry.js"
       ],
       "legacyFiles": [],
       "writableState": [],
@@ -123,7 +123,7 @@
         "audit/geometry_core_guard.mjs"
       ],
       "risk": "low",
-      "notes": "GeometryCore.js is pure math — zero DOM, zero side effects, no globals. All 19 functions are deterministic transforms over plain objects. CanvasGeometry.js is sharedFiles (used by canvas-layout and geometry). Runtime init files (RuntimeConfig, RuntimeData, RuntimeHelpers, RuntimeGeometry, RuntimeGlobals) moved to SS-33 runtime-init.",
+      "notes": "GeometryCore.js is pure math — zero DOM, zero side effects, no globals. All 19 functions are deterministic transforms over plain objects. CanvasGeometry.js is owned here and no longer shared. Runtime init files (RuntimeConfig, RuntimeData, RuntimeHelpers, RuntimeGeometry, RuntimeGlobals) moved to SS-33 runtime-init.",
       "unresolvedAmbiguities": []
     },
     {
@@ -179,7 +179,10 @@
         "HandlesEngine.js",
         "SelectionEnginePreviewBridge.js",
         "SelectionOverlayPreview.js",
-        "SelectionOverlayRender.js"
+        "SelectionOverlayRender.js",
+        "SelectionDragPreviewSync.js",
+        "SelectionOverlayPreviewLayers.js",
+        "SelectionOverlayRenderHelpers.js"
       ],
       "legacyFiles": [],
       "writableState": [
@@ -227,7 +230,10 @@
         "PreviewEngineData.js",
         "PreviewEngineContracts.js",
         "PreviewPaginationEngine.js",
-        "PreviewEngineRendererLayout.js"
+        "PreviewEngineRendererLayout.js",
+        "PreviewEngineRendererMetrics.js",
+        "PreviewHoverOutline.js",
+        "PreviewOverlayStyle.js"
       ],
       "legacyFiles": [],
       "writableState": [
@@ -723,7 +729,8 @@
       "owner": "designer-runtime/doc-types-fields",
       "allowedFiles": [
         "DocTypeAndProbes.js",
-        "FieldExplorerEngine.js"
+        "FieldExplorerEngine.js",
+        "FieldExplorerDropCoords.js"
       ],
       "legacyFiles": [],
       "writableState": [
@@ -755,7 +762,10 @@
         "GridEngine.js",
         "WorkspaceScrollEngine.js",
         "OverlayEngine.js",
-        "SectionResizeEngine.js"
+        "SectionResizeEngine.js",
+        "PageMarginsEngine.js",
+        "SectionLabelOverlay.js",
+        "SectionSeparatorOverlay.js"
       ],
       "legacyFiles": [],
       "writableState": [
@@ -1082,7 +1092,8 @@
         "EngineCoreRoutingZoom.js",
         "EngineCoreRoutingRegistry.js",
         "EngineCoreRoutingWorkspace.js",
-        "EngineCoreRoutingPointerHelpers.js"
+        "EngineCoreRoutingPointerHelpers.js",
+        "HitTestResolver.js"
       ],
       "legacyFiles": [],
       "writableState": [],
@@ -1113,7 +1124,9 @@
         "CanvasLayoutElements.js",
         "SectionEngine.js",
         "SectionLayoutEngine.js",
-        "ElementLayoutEngine.js"
+        "ElementLayoutEngine.js",
+        "CanvasLayoutElementContent.js",
+        "SectionVisualLayoutModel.js"
       ],
       "legacyFiles": [],
       "writableState": [],
