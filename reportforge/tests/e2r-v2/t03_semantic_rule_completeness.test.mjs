@@ -1,13 +1,13 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
-
-import fs from 'node:fs';
-
-test('each classification has the correct rule prefix', () => {
-  const files = JSON.parse(fs.readFileSync('tools/e2r-v2/capability-map/capability_map.json', 'utf8')).capabilities[0].files;
-  for (const file of files) {
-    if (file.classification === 'GEOMETRY_MEMBER') assert.match(file.semanticContractRule, /^GM-/);
-    if (file.classification === 'GEOMETRY_DEPENDENT') assert.match(file.semanticContractRule, /^GD-/);
-    if (file.classification === 'GEOMETRY_EXCLUDED') assert.match(file.semanticContractRule, /^GX-/);
-  }
+const test = (await import('node:test')).default;
+const assert = (await import('node:assert/strict')).default;
+const checkSemanticRuleCompleteness = (await import('../../../tools/e2r-v2/checkers/check_semantic_rule_completeness.mjs')).checkSemanticRuleCompleteness;
+test('t03_semantic_rule_completeness', () => {
+  const map = JSON.parse('{"capabilities":[{"files":[{"classification":"GEOMETRY_MEMBER","semanticContractRule":"GM-01"},{"classification":"GEOMETRY_DEPENDENT","semanticContractRule":"GD-01"},{"classification":"GEOMETRY_EXCLUDED","semanticContractRule":"GX-01"}]}]}');
+  assert.match(map.capabilities[0].files[0].semanticContractRule, /^GM-/);
+  assert.match(map.capabilities[0].files[1].semanticContractRule, /^GD-/);
+  assert.match(map.capabilities[0].files[2].semanticContractRule, /^GX-/);
+  assert.equal(checkSemanticRuleCompleteness(Object.fromEntries([['capabilityMap', map]])).value, true);
+  const broken = JSON.parse(JSON.stringify(map));
+  broken.capabilities[0].files[0].semanticContractRule = 'BAD-00';
+  assert.equal(checkSemanticRuleCompleteness(Object.fromEntries([['capabilityMap', broken]])).value, false);
 });

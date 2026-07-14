@@ -1,6 +1,20 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
-
-test("t68_validation_stage_orchestration", () => {
-  assert.equal(1, 1);
+const test = (await import('node:test')).default;
+const assert = (await import('node:assert/strict')).default;
+const buildValidationStage = (await import('../../../tools/e2r-v2/pipeline/build_validation_stage.mjs')).buildValidationStage;
+const buildValidationResult = (await import('../../../tools/e2r-v2/pipeline/build_validation_result.mjs')).buildValidationResult;
+test('t68_validation_stage_orchestration', () => {
+  const capabilityMap = JSON.parse('{"capabilities":[{"files":[{"path":"package.json","classification":"GEOMETRY_MEMBER","semanticContractRule":"GM-01","evidence":[{"type":"SOURCE_SYMBOL","symbol":"A","lines":"package.json:1-1"}],"reviewedCandidateEvidence":{"evidenceVersion":"1","reviewDecision":"REVIEWED_MEMBER","supportingEdgeIds":[]}}]}]}');
+  const inventory = JSON.parse('{"physical":[{"relative":"package.json"}],"ownership":{"rows":[{"relative":"package.json","ownerState":"RESOLVED","owners":["E2R-V2-TOOLING"],"canonicalOwner":"E2R-V2-TOOLING"}]}}');
+  const evidence = JSON.parse('{"moduleEdges":[{"path":"package.json","edges":[]}]}');
+  const report = JSON.parse('{"phaseId":"E2R-V2-PHASE-1-GEOMETRY-AND-FILE-SCORING","capabilityId":"CAPABILITY-GEOMETRY","generatedAt":"2026-07-14T00:00:00.000Z","root":".","capabilityMap":{"capabilities":[{"files":[{"path":"package.json","classification":"GEOMETRY_MEMBER","semanticContractRule":"GM-01","evidence":[{"type":"SOURCE_SYMBOL","symbol":"A","lines":"package.json:1-1"}],"reviewedCandidateEvidence":{"evidenceVersion":"1","reviewDecision":"REVIEWED_MEMBER","supportingEdgeIds":[]}}]}]},"files":[],"summary":{},"bfsCandidates":[],"reviewedBfsCandidates":[],"scopeMap":{},"ownershipMap":{},"coverageOwnershipIdExceptions":{}}');
+  const input = Object.fromEntries([['report', report], ['inventory', inventory], ['evidence', evidence]]);
+  const validation = buildValidationStage(input);
+  assert.equal(validation.schema.value, true);
+  assert.equal(validation.contract.value, true);
+  assert.equal(validation.strictFailures, 0);
+  assert.equal(validation.checks.length, 11);
+  assert.deepEqual(validation, buildValidationResult(input));
+  const invalidReport = JSON.parse(JSON.stringify(report));
+  delete invalidReport.generatedAt;
+  assert.equal(buildValidationStage(Object.fromEntries([['report', invalidReport], ['inventory', inventory], ['evidence', evidence]])).strictFailures, 1);
 });
