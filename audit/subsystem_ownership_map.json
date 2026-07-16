@@ -384,6 +384,7 @@
       "owner": "designer-runtime/command-io",
       "allowedFiles": [
         "CommandRuntimeFile.js",
+        "CommandRuntimeFileApply.js",
         "CommandRuntimeDocType.js",
         "CommandRuntimeFileIO.js"
       ],
@@ -764,7 +765,6 @@
         "OverlayEngine.js",
         "SectionResizeEngine.js",
         "PageMarginsEngine.js",
-        "SectionLabelOverlay.js",
         "SectionSeparatorOverlay.js"
       ],
       "legacyFiles": [],
@@ -1125,8 +1125,7 @@
         "SectionEngine.js",
         "SectionLayoutEngine.js",
         "ElementLayoutEngine.js",
-        "CanvasLayoutElementContent.js",
-        "SectionVisualLayoutModel.js"
+        "CanvasLayoutElementContent.js"
       ],
       "legacyFiles": [],
       "writableState": [],
