@@ -1,6 +1,19 @@
 'use strict';
 
 (function initMenuAdapters(global) {
+  function ensurePageFormatMenuItem() {
+    const menu = document.getElementById('dd-formato');
+    if (!menu || menu.querySelector('[data-action="page-format"]')) return;
+
+    const item = document.createElement('div');
+    item.className = 'dd-item';
+    item.dataset.action = 'page-format';
+    item.innerHTML = '📄 <span>Formato de página...</span>';
+
+    const margins = menu.querySelector('[data-action="page-margins"]');
+    menu.insertBefore(item, margins || menu.firstChild);
+  }
+
   const ContextMenuEngine = {
     show(x, y, context = 'canvas') {
       const menu = document.getElementById('ctx-menu');
@@ -76,6 +89,7 @@
   const MenuEngine = {
     _open: null,
     init() {
+      ensurePageFormatMenuItem();
       document.querySelectorAll('.menu-item').forEach((item) => {
         item.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -117,5 +131,6 @@
 
   global.ContextMenuEngine = ContextMenuEngine;
   global.MenuEngine = MenuEngine;
+  global.ensurePageFormatMenuItem = ensurePageFormatMenuItem;
   global.initMenuBindings = initMenuBindings;
 })(window);
