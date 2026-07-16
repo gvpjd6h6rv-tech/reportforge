@@ -17,6 +17,7 @@ from .advanced_engine_shared import _CHAR_PX, _PT_PX, _ROW_EVEN, _ROW_ODD, _SPEC
 from .barcode_renderer import _render_barcode_svg, _svg_linear_barcode, _svg_qr_placeholder
 from .crosstab_renderer import _render_crosstab
 from .element_renderers import calc_row_height, render_element
+from .page_style import build_page_rule, build_preview_chrome
 
 try:
     from ..resolvers.field_resolver import format_value as _fmt
@@ -71,73 +72,30 @@ class AdvancedHtmlEngine:
     def _css(self) -> str:
         margins = self._layout.margin_mm
         page_width = self._layout.page_width
-        dbg = ".cr-section,.cr-detail-row{outline:1px dashed rgba(255,0,0,.15)}" if self._debug else ""
-        _MM = 3.7795
-        l_px = round(margins["left"] * _MM)
-        r_px = round(margins["right"] * _MM)
-        # PAGE-MARGIN-CONTROL-PARITY-01: printable width applies to BOTH
-        # preview and PDF — .rpt-page must shrink for left+right margins in
-        # both, or right stays inert (confirmed via WeasyPrint's box tree:
-        # tools/diagnostics/rf-page-margin-model).
-        self._printable_w = max(0, page_width - l_px - r_px)
-        # Preview renders each page as an A4 SHEET; margins are padding on
-        # .rpt-sheet (NOT .rpt-page, whose children would shift).
-        if getattr(self, "_preview", False):
-            t_px = round(margins["top"] * _MM)
-            b_px = round(margins["bottom"] * _MM)
-
-            # Clamp proportionally so oversized padding never forces
-            # border-box to grow .rpt-sheet (tools/diagnostics/rf-page-margin-model).
-            def _clamp_pair_to_bound(a_px, b_px, bound_px):
-                if a_px + b_px <= bound_px or (a_px + b_px) == 0:
-                    return a_px, b_px
-                scale = bound_px / (a_px + b_px)
-                return int(a_px * scale), int(b_px * scale)
-
-            def _padding_mm(raw_mm, clamped_px):
-                if clamped_px == round(raw_mm * _MM):
-                    return raw_mm
-                return round(clamped_px / _MM, 3)
-
-            # .rpt-sheet = real A4 (matches @page{size:A4}), not page_width/
-            # self._page_h (the content's own coordinate frame).
-            if (self._norm.get("pageSize") or "A4") == "A4":
-                sheet_w = round(210.0 * _MM)
-                sheet_h = round(297.0 * _MM)
-            else:
-                sheet_w = page_width
-                sheet_h = self._page_h
-
-            l_px, r_px = _clamp_pair_to_bound(l_px, r_px, sheet_w)
-            t_px, b_px = _clamp_pair_to_bound(t_px, b_px, sheet_h)
-            left_padding_mm = _padding_mm(margins["left"], l_px)
-            right_padding_mm = _padding_mm(margins["right"], r_px)
-            top_padding_mm = _padding_mm(margins["top"], t_px)
-            bottom_padding_mm = _padding_mm(margins["bottom"], b_px)
-
-            page_content_h = max(0, self._page_h - t_px - b_px)
-            page_shadow = (
-                f".rpt-sheet{{box-sizing:border-box;background:#fff;"
-                f"box-shadow:0 2px 8px rgba(0,0,0,.25);margin:14px auto;"
-                f"width:{sheet_w}px;min-height:{sheet_h}px;"
-                f"padding:{top_padding_mm}mm {right_padding_mm}mm "
-                f"{bottom_padding_mm}mm {left_padding_mm}mm}}"
-                f".rpt-page{{width:{self._printable_w}px;min-height:{page_content_h}px;background:transparent}}"
+        mm_to_px = 3.7795
+        left_px = round(margins["left"] * mm_to_px)
+        right_px = round(margins["right"] * mm_to_px)
+        self._printable_w = max(0, page_width - left_px - right_px)
+        is_preview = getattr(self, "_preview", False)
+        page_chrome = (
+            build_preview_chrome(
+                self._norm,
+                margins,
+                page_width,
+                self._page_h,
+                self._printable_w,
             )
-        else:
-            # PDF gets the same .rpt-page width override — @page's margin
-            # already shrinks its own content box, but .rpt-page's width
-            # never consulted it before PAGE-MARGIN-CONTROL-PARITY-01.
-            page_shadow = f".rpt-page{{width:{self._printable_w}px}}"
-        font_css = self._barcode_font_css()
-        page_rule = "" if getattr(self, "_preview", False) else (
-            f"@page{{size: {self._norm.get('pageSize','A4')} {self._norm.get('orientation','portrait')};"
-            f"margin:{margins['top']}mm {margins['right']}mm {margins['bottom']}mm {margins['left']}mm;"
-            f"@bottom-center{{content:'Página 'counter(page)' de 'counter(pages);"
-            f"font-family:Arial,sans-serif;font-size:7pt;color:#888}}}}"
+            if is_preview
+            else f".rpt-page{{width:{self._printable_w}px}}"
+        )
+        page_rule = "" if is_preview else build_page_rule(self._norm, margins)
+        debug_css = (
+            ".cr-section,.cr-detail-row{outline:1px dashed rgba(255,0,0,.15)}"
+            if self._debug
+            else ""
         )
         return (
-            f"{font_css}"
+            f"{self._barcode_font_css()}"
             f"{page_rule}"
             f"*,*::before,*::after{{box-sizing:border-box;margin:0;padding:0}}"
             f"body{{font-family:Arial,Helvetica,sans-serif;font-size:8pt;color:#000;background:#fff}}"
@@ -152,8 +110,8 @@ class AdvancedHtmlEngine:
             f".cr-el-inner{{overflow:hidden;flex:1;min-width:0}}"
             f".wrap .cr-el-inner{{white-space:pre-wrap;word-break:break-word}}"
             f".nowrap .cr-el-inner{{white-space:nowrap;text-overflow:ellipsis}}"
-            f"{dbg}"
-            f"{page_shadow}"
+            f"{debug_css}"
+            f"{page_chrome}"
         )
 
     def _barcode_font_css(self) -> str:
