@@ -1,5 +1,4 @@
 const DIALOG_ID = 'rf-page-format-dialog';
-const TICKET_WIDTHS = [58, 70, 76];
 
 function closePageFormatDialog() {
   document.getElementById(DIALOG_ID)?.remove();
@@ -27,9 +26,10 @@ function select(options, value) {
   return control;
 }
 
-export function openPageFormatDialog({ current, onApply }) {
+export function openPageFormatDialog({ current, ticketWidths, onApply }) {
   closePageFormatDialog();
   const state = current || { format: 'A4', ticketWidthMm: 76 };
+  const widths = Array.isArray(ticketWidths) && ticketWidths.length ? ticketWidths : [76];
 
   const overlay = document.createElement('div');
   overlay.id = DIALOG_ID;
@@ -46,7 +46,7 @@ export function openPageFormatDialog({ current, onApply }) {
   title.style.cssText = 'font-size:17px;margin:0 0 12px';
 
   const formatSelect = select([['A4', 'A4'], ['TICKET', 'Ticket']], state.format);
-  const widthSelect = select(TICKET_WIDTHS.map((width) => [width, `${width} mm`]), state.ticketWidthMm || 76);
+  const widthSelect = select(widths.map((width) => [width, `${width} mm`]), state.ticketWidthMm || widths[0]);
   const widthRow = field('Ancho del ticket', widthSelect);
 
   const help = document.createElement('p');
