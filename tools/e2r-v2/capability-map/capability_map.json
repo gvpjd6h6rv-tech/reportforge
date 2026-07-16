@@ -1852,24 +1852,45 @@
           "semanticContractRule": "GM-06"
         },
         {
-          "classification": "GEOMETRY_EXCLUDED",
+          "classification": "GEOMETRY_DEPENDENT",
           "discoveryProvenance": "FIXED_SEED",
           "evidence": [
             {
-              "lines": "engines/PageMarginsDefaults.js:1-1",
-              "reason": "Frozen reviewed geometry classification.",
-              "symbol": "PageMarginsDefaults",
+              "lines": "engines/PageFormatCommand.js:1-1",
+              "reason": "Reviewed command orchestration that consumes canonical page-format geometry.",
+              "symbol": "PageFormatCommand",
               "type": "SOURCE_SYMBOL"
             }
           ],
-          "path": "engines/PageMarginsDefaults.js",
-          "primaryResponsibility": "geometry_excluded for PageMarginsDefaults.",
+          "path": "engines/PageFormatCommand.js",
+          "primaryResponsibility": "Command orchestration dependent on page-format geometry.",
           "reviewedCandidateEvidence": {
             "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
-            "reviewDecision": "REVIEWED_EXCLUDED",
+            "reviewDecision": "REVIEWED_DEPENDENT",
             "supportingEdgeIds": []
           },
-          "semanticContractRule": "GX-01"
+          "semanticContractRule": "GD-01"
+        },
+        {
+          "classification": "GEOMETRY_MEMBER",
+          "discoveryProvenance": "FIXED_SEED",
+          "evidence": [
+            {
+              "lines": "engines/PageFormatModel.js:1-1",
+              "reason": "Reviewed canonical page-format geometry and physical-unit transformation model.",
+              "symbol": "PageFormatModel",
+              "type": "SOURCE_SYMBOL"
+            }
+          ],
+          "path": "engines/PageFormatModel.js",
+          "primaryLayer": "GEOMETRY_MODEL",
+          "primaryResponsibility": "Canonical A4 and Ticket page-format geometry transforms.",
+          "reviewedCandidateEvidence": {
+            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
+            "reviewDecision": "REVIEWED_MEMBER",
+            "supportingEdgeIds": []
+          },
+          "semanticContractRule": "GM-02"
         },
         {
           "classification": "GEOMETRY_MEMBER",
@@ -2565,27 +2586,6 @@
           "discoveryProvenance": "FIXED_SEED",
           "evidence": [
             {
-              "lines": "engines/SectionLabelOverlay.js:1-1",
-              "reason": "Frozen reviewed geometry classification.",
-              "symbol": "SectionLabelOverlay",
-              "type": "SOURCE_SYMBOL"
-            }
-          ],
-          "path": "engines/SectionLabelOverlay.js",
-          "primaryLayer": "GEOMETRY_RENDER",
-          "primaryResponsibility": "geometry_member for SectionLabelOverlay.",
-          "reviewedCandidateEvidence": {
-            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
-            "reviewDecision": "REVIEWED_MEMBER",
-            "supportingEdgeIds": []
-          },
-          "semanticContractRule": "GM-06"
-        },
-        {
-          "classification": "GEOMETRY_MEMBER",
-          "discoveryProvenance": "FIXED_SEED",
-          "evidence": [
-            {
               "lines": "engines/SectionLayoutEngine.js:1-1",
               "reason": "Frozen reviewed geometry classification.",
               "symbol": "SectionLayoutEngine",
@@ -2642,27 +2642,6 @@
             "supportingEdgeIds": []
           },
           "semanticContractRule": "GM-06"
-        },
-        {
-          "classification": "GEOMETRY_MEMBER",
-          "discoveryProvenance": "FIXED_SEED",
-          "evidence": [
-            {
-              "lines": "engines/SectionVisualLayoutModel.js:1-1",
-              "reason": "Frozen reviewed geometry classification.",
-              "symbol": "SectionVisualLayoutModel",
-              "type": "SOURCE_SYMBOL"
-            }
-          ],
-          "path": "engines/SectionVisualLayoutModel.js",
-          "primaryLayer": "GEOMETRY_MODEL",
-          "primaryResponsibility": "geometry_member for SectionVisualLayoutModel.",
-          "reviewedCandidateEvidence": {
-            "evidenceVersion": "MEMBERSHIP-RECONCILIATION-02",
-            "reviewDecision": "REVIEWED_MEMBER",
-            "supportingEdgeIds": []
-          },
-          "semanticContractRule": "GM-03"
         },
         {
           "classification": "GEOMETRY_MEMBER",

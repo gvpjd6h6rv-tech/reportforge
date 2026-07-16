@@ -105,7 +105,8 @@
       "owner": "designer-runtime/geometry",
       "allowedFiles": [
         "GeometryCore.js",
-        "CanvasGeometry.js"
+        "CanvasGeometry.js",
+        "PageFormatModel.js"
       ],
       "legacyFiles": [],
       "writableState": [],
@@ -385,6 +386,7 @@
       "allowedFiles": [
         "CommandRuntimeFile.js",
         "CommandRuntimeFileApply.js",
+        "PageFormatCommand.js",
         "CommandRuntimeDocType.js",
         "CommandRuntimeFileIO.js"
       ],

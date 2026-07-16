@@ -9,5 +9,5 @@ test('member layer counts reconcile to the frozen totals', () => {
   for (const file of files) {
     if (file.classification === 'GEOMETRY_MEMBER') counts[file.primaryLayer] = (counts[file.primaryLayer] || 0) + 1;
   }
-  assert.deepEqual(counts, { GEOMETRY_CORE: 4, GEOMETRY_MODEL: 7, GEOMETRY_LAYOUT: 8, GEOMETRY_HIT_TEST: 4, GEOMETRY_RENDER: 16, GEOMETRY_INTERACTION: 13, GEOMETRY_ADAPTER: 4 });
+  assert.deepEqual(counts, { GEOMETRY_CORE: 4, GEOMETRY_MODEL: 7, GEOMETRY_LAYOUT: 8, GEOMETRY_HIT_TEST: 4, GEOMETRY_RENDER: 15, GEOMETRY_INTERACTION: 13, GEOMETRY_ADAPTER: 4 });
 });
