@@ -4,8 +4,7 @@ from __future__ import annotations
 import copy
 from typing import Any
 
-_PAGE_MM = {"A4":(210,297),"A3":(297,420),"Letter":(215.9,279.4),"Legal":(215.9,355.6)}
-_MM2PX = 3.7795
+from .page_geometry import normalize_page_geometry
 
 _STYPE = {"report_header":"rh","page_header":"ph","group_header":"gh","detail":"det",
           "group_footer":"gf","page_footer":"pf","report_footer":"rf",
@@ -25,19 +24,14 @@ def normalize_layout(raw: dict) -> dict:
     out: dict[str, Any] = {}
     out["name"]      = _p(raw,"name","title","reportName") or "Untitled"
     out["version"]   = str(_p(raw,"version") or "1.0")
-    page  = _p(raw,"pageSize","page_size","paper") or "A4"
-    orient= (_p(raw,"orientation","orient") or "portrait").lower()
-    out["pageSize"]    = page
-    out["orientation"] = orient
-    w_mm, h_mm = _PAGE_MM.get(page, (210,297))
-    if orient == "landscape": w_mm, h_mm = h_mm, w_mm
-    out["pageWidth"]  = int(_p(raw,"pageWidth","page_width","width")  or int(w_mm*_MM2PX))
-    out["pageHeight"] = int(_p(raw,"pageHeight","page_height","height") or round(h_mm*_MM2PX))
+    out.update(normalize_page_geometry(raw))
     rm = _p(raw,"margins","margin")
     if isinstance(rm,dict):
         out["margins"]={k:_n(rm.get(k,15 if k in("top","bottom") else 20)) for k in("top","bottom","left","right")}
     elif isinstance(rm,(int,float)):
         m=_n(rm); out["margins"]={"top":m,"bottom":m,"left":m,"right":m}
+    elif out["pageSize"] == "TICKET":
+        out["margins"]={"top":3,"bottom":3,"left":3,"right":3}
     else:
         out["margins"]={"top":15,"bottom":15,"left":20,"right":20}
     out["groups"]   = _norm_groups(_p(raw,"groups","groupBy") or [])
