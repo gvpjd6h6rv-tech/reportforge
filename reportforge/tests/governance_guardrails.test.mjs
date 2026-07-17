@@ -559,6 +559,7 @@ test('command runtime split stays modular, thin, and contract-stable', () => {
   const view = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeView.js'), 'utf8');
   const sections = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeSections.js'), 'utf8');
   const file = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeFile.js'), 'utf8');
+  const serialization = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeFileSerialization.js'), 'utf8');
   const fileIO = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeFileIO.js'), 'utf8');
   const docType = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeDocType.js'), 'utf8');
   const handlers = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeHandlers.js'), 'utf8');
@@ -582,7 +583,10 @@ test('command runtime split stays modular, thin, and contract-stable', () => {
   assert.match(selection, /function selectAll\(/);
   assert.match(view, /function zoomFitPage\(/);
   assert.match(sections, /function insertSection\(/);
-  assert.match(file, /function toJSON\(/);
+  assert.doesNotMatch(file, /\bfunction\s+toJSON\s*\(/);
+  assert.match(file, /CommandRuntimeFileSerialization\.attach\(/);
+  assert.match(serialization, /function serializeLayout\(/);
+  assert.match(serialization, /runtime\.toJSON\s*=\s*function toJSON\(/);
   assert.match(fileIO, /function exportJSON\(/);
   assert.match(docType, /function switchDocType\(/);
   assert.match(handlers, /function handleAction\(/);
@@ -598,6 +602,16 @@ test('command runtime split stays modular, thin, and contract-stable', () => {
   assert.match(handlersLayout, /function handleLayoutCommands\(/);
   assert.match(handlersDialog, /function handleDialogCommands\(/);
   assert.match(handlersSystem, /function handleSystemCommands\(/);
+
+  const html = fs.readFileSync(path.join(ROOT, 'designer/crystal-reports-designer-v4.html'), 'utf8');
+  assert.ok(
+    html.indexOf('/engines/CommandRuntimeFileSerialization.js') < html.indexOf('/engines/CommandRuntimeFile.js'),
+    'CommandRuntimeFileSerialization.js must load before CommandRuntimeFile.js in the product HTML',
+  );
+  assert.ok(
+    html.indexOf('/engines/CommandRuntimeFileLoad.js') < html.indexOf('/engines/CommandRuntimeFileSerialization.js'),
+    'CommandRuntimeFileLoad.js must load before CommandRuntimeFileSerialization.js in the product HTML',
+  );
 });
 
 test('render scheduler split stays modular, thin, and contract-stable', () => {

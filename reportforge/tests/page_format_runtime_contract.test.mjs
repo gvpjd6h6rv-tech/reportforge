@@ -51,7 +51,7 @@ test('page-format model keeps A4 and Ticket geometry in one layout contract', as
   assert.equal(model.resolvePersistedTicketWidthMm(a4), null);
 
   const html = fs.readFileSync(path.join(ROOT, 'designer/crystal-reports-designer-v4.html'), 'utf8');
-  assert.equal((html.match(/<script type="module" src="\/engines\/PageFormatModel\.js"><\/script>/g) || []).length, 1);
+  assert.equal((html.match(/<script src="\/engines\/PageFormatModel\.js" type="module"><\/script>/g) || []).length, 1);
   assert.equal((html.match(/<script src="\/engines\/CommandRuntimeFileLoad\.js"><\/script>/g) || []).length, 1);
 
   const server = await startRuntimeServer();
