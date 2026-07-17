@@ -11,6 +11,15 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function waitFor(predicate, timeoutMs = 1000, intervalMs = 20) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (predicate()) return;
+    await sleep(intervalMs);
+  }
+  throw new Error('timed out waiting for runtime readiness');
+}
+
 function makeRuntimeWithFileHandle() {
   const state = {
     writes: [],
@@ -117,6 +126,11 @@ function makeRuntimeWithFileHandle() {
     SelectionEngine: { clearSelection() {} },
     DesignZoomEngine: { set() {} },
     FieldExplorerEngine: { render() {} },
+    SqlCommandStore: {
+      clear() {},
+      add() {},
+      list() { return []; },
+    },
     FIELD_TREE: {},
     SAMPLE_DATA: {},
     FileReader: FakeFileReader,
@@ -146,10 +160,14 @@ function makeRuntimeWithFileHandle() {
   context.window.document = document;
 
   const applySource = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeFileApply.js'), 'utf8');
+  const loadSource = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeFileLoad.js'), 'utf8');
+  const serializationSource = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeFileSerialization.js'), 'utf8');
   const source = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeFile.js'), 'utf8');
   const ioSource = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeFileIO.js'), 'utf8');
   vm.createContext(context);
   vm.runInContext(applySource, context, { filename: 'engines/CommandRuntimeFileApply.js' });
+  vm.runInContext(loadSource, context, { filename: 'engines/CommandRuntimeFileLoad.js' });
+  vm.runInContext(serializationSource, context, { filename: 'engines/CommandRuntimeFileSerialization.js' });
   vm.runInContext(source, context, { filename: 'engines/CommandRuntimeFile.js' });
   vm.runInContext(ioSource, context, { filename: 'engines/CommandRuntimeFileIO.js' });
 
@@ -163,7 +181,7 @@ test('CommandRuntimeFile.save writes to the opened JSON file handle', async () =
   const runtime = makeRuntimeWithFileHandle();
 
   assert.equal(runtime.FileEngine.load(), true);
-  await sleep(30);
+  await waitFor(() => runtime.state.status.length > 0);
 
   assert.match(runtime.state.status.at(-1), /Abierto: factura_abierta\.rfd\.json/);
 

@@ -48,6 +48,15 @@ export function getPageFormatState(layout = {}) {
   };
 }
 
+export function resolvePersistedTicketWidthMm(layout = {}) {
+  const format = String(layout.pageSize || '').toUpperCase() === 'TICKET' ? 'TICKET' : 'A4';
+  if (format !== 'TICKET') return null;
+  const ticket = PAGE_FORMATS.TICKET;
+  const width = Number(layout.ticketWidthMm);
+  if (ticket.widthsMm.includes(width)) return width;
+  return getPageFormatState({ ...layout, ticketWidthMm: null }).ticketWidthMm;
+}
+
 export function buildPageFormatLayout(layout = {}, selection = {}) {
   const current = getPageFormatState(layout);
   const format = String(selection.format || '').toUpperCase() === 'TICKET' ? 'TICKET' : 'A4';
@@ -78,5 +87,15 @@ export function buildPageFormatLayout(layout = {}, selection = {}) {
     orientation: 'portrait',
     ticketWidthMm: widthMm,
     margins,
+  };
+}
+
+const runtimeGlobal = typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : null);
+if (runtimeGlobal) {
+  runtimeGlobal.PageFormatModel = {
+    PAGE_FORMATS,
+    buildPageFormatLayout,
+    getPageFormatState,
+    resolvePersistedTicketWidthMm,
   };
 }

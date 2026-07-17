@@ -383,12 +383,14 @@
       "domain": "designer-runtime",
       "tier": "supporting",
       "owner": "designer-runtime/command-io",
-      "allowedFiles": [
-        "CommandRuntimeFile.js",
-        "CommandRuntimeFileApply.js",
-        "PageFormatCommand.js",
-        "CommandRuntimeDocType.js",
-        "CommandRuntimeFileIO.js"
+    "allowedFiles": [
+      "CommandRuntimeFile.js",
+      "CommandRuntimeFileApply.js",
+      "CommandRuntimeFileLoad.js",
+      "CommandRuntimeFileSerialization.js",
+      "PageFormatCommand.js",
+      "CommandRuntimeDocType.js",
+      "CommandRuntimeFileIO.js"
       ],
       "legacyFiles": [],
       "writableState": [],
@@ -407,7 +409,7 @@
         "audit/command_runtime_guard.mjs"
       ],
       "risk": "high",
-      "notes": "File I/O (localStorage, FileReader, Blob URL) and document-type switching. CommandRuntimeDocType.js mutates FieldExplorerEngine._activeTree directly and calls confirm() when switching doc type. Risk high: browser APIs (localStorage, URL.createObjectURL, FileReader), blocking dialogs (prompt, confirm), and cross-engine mutation (FieldExplorerEngine). P31C reclaimed (confirmed <script>-loaded in designer-v4.html + real consumer, was a RULE-ORPHAN gap, not a zombie): CommandRuntimeFileIO.js (CommandRuntimeFile.js's save/load/exportJSON/exportPDF/importJSON getters all delegate directly to `global.CommandRuntimeFileIO.*` — unguarded, required dependency).",
+    "notes": "File I/O (localStorage, FileReader, Blob URL) and document-type switching. CommandRuntimeDocType.js mutates FieldExplorerEngine._activeTree directly and calls confirm() when switching doc type. Risk high: browser APIs (localStorage, URL.createObjectURL, FileReader), blocking dialogs (prompt, confirm), and cross-engine mutation (FieldExplorerEngine). P31C reclaimed (confirmed <script>-loaded in designer-v4.html + real consumer, was a RULE-ORPHAN gap, not a zombie): CommandRuntimeFileIO.js (CommandRuntimeFile.js's save/load/exportJSON/exportPDF/importJSON getters all delegate directly to `global.CommandRuntimeFileIO.*` — unguarded, required dependency). CommandRuntimeFileSerialization.js owns live-layout JSON serialization and is loaded by the designer runtime before CommandRuntimeFile.js.",
       "unresolvedAmbiguities": []
     },
     {

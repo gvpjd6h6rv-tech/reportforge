@@ -137,6 +137,11 @@ function makeRuntime() {
     SelectionEngine: { clearSelection() {} },
     DesignZoomEngine: { set() {} },
     FieldExplorerEngine: { render() {} },
+    SqlCommandStore: {
+      clear() {},
+      add() {},
+      list() { return []; },
+    },
     FIELD_TREE: {},
     SAMPLE_DATA: {},
     FileReader: FakeFileReader,
@@ -164,10 +169,14 @@ function makeRuntime() {
   context.window.document = document;
 
   const applySource = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeFileApply.js'), 'utf8');
+  const loadSource = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeFileLoad.js'), 'utf8');
+  const serializationSource = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeFileSerialization.js'), 'utf8');
   const source = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeFile.js'), 'utf8');
   const ioSource = fs.readFileSync(path.join(ROOT, 'engines/CommandRuntimeFileIO.js'), 'utf8');
   vm.createContext(context);
   vm.runInContext(applySource, context, { filename: 'engines/CommandRuntimeFileApply.js' });
+  vm.runInContext(loadSource, context, { filename: 'engines/CommandRuntimeFileLoad.js' });
+  vm.runInContext(serializationSource, context, { filename: 'engines/CommandRuntimeFileSerialization.js' });
   vm.runInContext(source, context, { filename: 'engines/CommandRuntimeFile.js' });
   vm.runInContext(ioSource, context, { filename: 'engines/CommandRuntimeFileIO.js' });
 
