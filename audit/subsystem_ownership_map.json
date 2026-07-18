@@ -383,14 +383,14 @@
       "domain": "designer-runtime",
       "tier": "supporting",
       "owner": "designer-runtime/command-io",
-    "allowedFiles": [
-      "CommandRuntimeFile.js",
-      "CommandRuntimeFileApply.js",
-      "CommandRuntimeFileLoad.js",
-      "CommandRuntimeFileSerialization.js",
-      "PageFormatCommand.js",
-      "CommandRuntimeDocType.js",
-      "CommandRuntimeFileIO.js"
+      "allowedFiles": [
+        "CommandRuntimeFile.js",
+        "CommandRuntimeFileApply.js",
+        "CommandRuntimeFileLoad.js",
+        "CommandRuntimeFileSerialization.js",
+        "PageFormatCommand.js",
+        "CommandRuntimeDocType.js",
+        "CommandRuntimeFileIO.js"
       ],
       "legacyFiles": [],
       "writableState": [],
@@ -409,7 +409,7 @@
         "audit/command_runtime_guard.mjs"
       ],
       "risk": "high",
-    "notes": "File I/O (localStorage, FileReader, Blob URL) and document-type switching. CommandRuntimeDocType.js mutates FieldExplorerEngine._activeTree directly and calls confirm() when switching doc type. Risk high: browser APIs (localStorage, URL.createObjectURL, FileReader), blocking dialogs (prompt, confirm), and cross-engine mutation (FieldExplorerEngine). P31C reclaimed (confirmed <script>-loaded in designer-v4.html + real consumer, was a RULE-ORPHAN gap, not a zombie): CommandRuntimeFileIO.js (CommandRuntimeFile.js's save/load/exportJSON/exportPDF/importJSON getters all delegate directly to `global.CommandRuntimeFileIO.*` — unguarded, required dependency). CommandRuntimeFileSerialization.js owns live-layout JSON serialization and is loaded by the designer runtime before CommandRuntimeFile.js.",
+      "notes": "File I/O (localStorage, FileReader, Blob URL) and document-type switching. CommandRuntimeDocType.js mutates FieldExplorerEngine._activeTree directly and calls confirm() when switching doc type. Risk high: browser APIs (localStorage, URL.createObjectURL, FileReader), blocking dialogs (prompt, confirm), and cross-engine mutation (FieldExplorerEngine). P31C reclaimed (confirmed <script>-loaded in designer-v4.html + real consumer, was a RULE-ORPHAN gap, not a zombie): CommandRuntimeFileIO.js (CommandRuntimeFile.js's save/load/exportJSON/exportPDF/importJSON getters all delegate directly to `global.CommandRuntimeFileIO.*` — unguarded, required dependency). CommandRuntimeFileSerialization.js owns live-layout JSON serialization and is loaded by the designer runtime before CommandRuntimeFile.js.",
       "unresolvedAmbiguities": []
     },
     {
@@ -1336,6 +1336,126 @@
       "requiredGuardCI": [],
       "risk": "low",
       "notes": "justification: UDS 4.1 Fase 17 (connect F16's safe schema discovery to Field Explorer). SqlCommandFieldTreeMap.js is a pure data transform (columns -> FIELD_TREE-shaped read-only node, no fetch/DOM) — SqlCommandSchemaDiscovery.js is the orchestrator (resolves known parameter values, calls POST /sql-commands/schema, writes FIELD_TREE.sqlCommand.children via the map, triggers FieldExplorerEngine.init()). Two distinct roles kept in two separate files (1 file = 1 responsibility); grouped under one subsystem since both exist solely to serve this one capability.",
+      "unresolvedAmbiguities": []
+    },
+    {
+      "id": "SS-38",
+      "name": "sql-connection-modal",
+      "domain": "designer-runtime",
+      "tier": "core",
+      "owner": "designer-runtime/sql-connection-modal",
+      "allowedFiles": [
+        "SQLModal.js"
+      ],
+      "legacyFiles": [],
+      "writableState": [],
+      "selectors": [],
+      "events": [
+        "SQLConnectionModal.open()",
+        "SQLConnectionModal.close()",
+        "SQLConnectionModal.runAction(mode)"
+      ],
+      "existingTests": [
+        "reportforge/tests/sql_connection_modal_lifecycle.test.mjs",
+        "reportforge/tests/sql_connection_modal_validation.test.mjs",
+        "reportforge/tests/sql_connection_modal_test_request.test.mjs",
+        "reportforge/tests/sql_connection_modal_save_request.test.mjs",
+        "reportforge/tests/sql_connection_modal_security.test.mjs",
+        "reportforge/tests/sql_connection_modal_keyboard.test.mjs",
+        "reportforge/tests/sql_connection_modal_status.test.mjs"
+      ],
+      "requiredGuardCI": [
+        "audit/subsystem_ownership_guard.mjs"
+      ],
+      "risk": "medium",
+      "notes": "justification: modal frontend subsystem has one semantic owner; audit guard plus subsystem gate are the enforcement points used by this closure.",
+      "unresolvedAmbiguities": []
+    },
+    {
+      "id": "SS-40",
+      "name": "salad-score-governance",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "owner": "salad-score-governance",
+      "allowedFiles": [],
+      "allowedPaths": [
+        "audit/subsystem_ownership_guard.mjs",
+        "audit/subsystem_ownership_map.json",
+        "audit/subsystem_ownership_checks.mjs",
+        "audit/subsystem_ownership_rule_paths.mjs",
+        "audit/subsystem_ownership_rule_engine_paths.mjs",
+        "audit/subsystem_ownership_rule_repo_claims.mjs",
+        "audit/subsystem_ownership_rule_repo_paths.mjs",
+        "audit/subsystem_ownership_rule_graph.mjs",
+        "audit/subsystem_ownership_rule_metadata.mjs"
+      ],
+      "legacyFiles": [],
+      "writableState": [],
+      "selectors": [],
+      "events": [],
+      "existingTests": [],
+      "requiredGuardCI": [
+        "npm run test:ownership"
+      ],
+      "risk": "medium",
+      "notes": "justification: ownership registry and guard tooling for repo-relative ownership claims outside engines/.",
+      "unresolvedAmbiguities": []
+    },
+    {
+      "id": "SS-41",
+      "name": "salad-score-runner",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "owner": "salad-score-runner",
+      "allowedFiles": [],
+      "allowedPaths": [
+        "tools/salad-score/collectors/collect_owner.mjs",
+        "tools/salad-score/runner/run_salad_score.mjs",
+        "tools/salad-score/ownership/ownership_paths.mjs",
+        "tools/salad-score/ownership/ownership_index.mjs",
+        "tools/salad-score/runner/score_repo_files.mjs",
+        "tools/salad-score/ownership/ownership_resolver.mjs",
+        "tools/salad-score/scoring/score_file_result.mjs",
+        "tools/salad-score/ownership/ownership_claims.mjs",
+        "tools/salad-score/scoring/file_structure_signals.mjs",
+        "tools/salad-score/scoring/file_behavior_signals.mjs"
+      ],
+      "legacyFiles": [],
+      "writableState": [],
+      "selectors": [],
+      "events": [],
+      "existingTests": [],
+      "requiredGuardCI": [],
+      "risk": "medium",
+      "notes": "justification: salad-score ownership resolver and runner must resolve repo-relative test/helper paths consistently with the ownership guard.",
+      "unresolvedAmbiguities": []
+    },
+    {
+      "id": "SS-42",
+      "name": "salad-score-subsystem-gate-tests",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "owner": "reportforge/tests/salad-score-subsystem-gate",
+      "allowedFiles": [],
+      "allowedPaths": [
+        "reportforge/tests/subsystem_ownership_guard_rule_exist.test.mjs",
+        "reportforge/tests/salad-score-subsystem-gate/t12_path_normalization.test.mjs",
+        "reportforge/tests/salad-score-subsystem-gate/t13_official_scorerepo_reused.test.mjs",
+        "reportforge/tests/salad-score-subsystem-gate/t14_empty_score_never_false_green.test.mjs",
+        "reportforge/tests/salad-score-subsystem-gate/t47_ownership_homonym_basenames_different_dirs.test.mjs",
+        "reportforge/tests/salad-score-subsystem-gate/t50_ownership_absolute_equivalent.test.mjs",
+        "reportforge/tests/salad-score-subsystem-gate/t51_ownership_escape_root.test.mjs",
+        "reportforge/tests/salad-score-subsystem-gate/t71_duplicate_all_owned_paths.test.mjs",
+        "reportforge/tests/salad-score-subsystem-gate/arch07_ownership_map_no_decorative_assignment.test.mjs"
+      ],
+      "legacyFiles": [],
+      "writableState": [],
+      "selectors": [],
+      "events": [],
+      "existingTests": [],
+      "requiredGuardCI": [],
+      "risk": "low",
+      "notes": "justification: contract suite for the ownership-path tooling; carries the gate semantics that validate legacy engine claims, canonical repo-relative claims, overlap detection, normalization, and orphan preservation.",
       "unresolvedAmbiguities": []
     }
   ]
