@@ -6,7 +6,7 @@ Backend tests for the SQL Connection from UI feature (Phase 8).
 Coverage:
   §1  list_registered_safe() — credentials never returned
   §2  build_mssql_url() — correct SQLAlchemy URL format, password URL-encoded
-  §3  ping_structured() — returns {ok, message, latency_ms}
+  §3  ping_structured() — returns {ok, message, latency_ms, details}
   §4  POST /datasources/_test (FastAPI) — happy path, missing fields
   §5  POST /datasources/{alias}/connect (FastAPI) — registers, returns no URL
   §6  GET /datasources (FastAPI) — no credentials in response
@@ -157,30 +157,47 @@ class TestPymssqlConnectSpec(unittest.TestCase):
 class TestPingStructured(unittest.TestCase):
 
     def test_returns_ok_false_on_unreachable_host(self):
+        import sys
         from reportforge.core.render.datasource.db_source_introspection import ping_structured
-        result = ping_structured("127.0.0.1", 19999, "DB", "user", "pass")
+        mock_pymssql = MagicMock()
+        mock_pymssql.connect.side_effect = ConnectionResetError(104, "Connection reset by peer")
+        with patch.dict(sys.modules, {"pymssql": mock_pymssql}):
+            result = ping_structured("127.0.0.1", 19999, "DB", "user", "pass")
         self.assertIn("ok", result)
         self.assertIn("message", result)
         self.assertIn("latency_ms", result)
         self.assertIsInstance(result["latency_ms"], float)
 
     def test_result_has_required_keys(self):
+        import sys
         from reportforge.core.render.datasource.db_source_introspection import ping_structured
-        result = ping_structured("127.0.0.1", 19999, "DB", "user", "pass")
+        mock_pymssql = MagicMock()
+        mock_pymssql.connect.side_effect = ConnectionRefusedError(111, "Connection refused")
+        with patch.dict(sys.modules, {"pymssql": mock_pymssql}):
+            result = ping_structured("127.0.0.1", 19999, "DB", "user", "pass")
         self.assertIn("ok", result)
         self.assertIn("message", result)
         self.assertIn("latency_ms", result)
 
     def test_ok_false_for_closed_port(self):
+        import sys
         from reportforge.core.render.datasource.db_source_introspection import ping_structured
-        result = ping_structured("127.0.0.1", 19999, "DB", "user", "pass")
+        mock_pymssql = MagicMock()
+        mock_pymssql.connect.side_effect = ConnectionRefusedError(111, "Connection refused")
+        with patch.dict(sys.modules, {"pymssql": mock_pymssql}):
+            result = ping_structured("127.0.0.1", 19999, "DB", "user", "pass")
         self.assertFalse(result["ok"])
 
     def test_password_not_in_message(self):
+        import sys
         from reportforge.core.render.datasource.db_source_introspection import ping_structured
-        result = ping_structured("myhost", 1433, "SBO", "sa", "s3cr3t_p@ss")
+        mock_pymssql = MagicMock()
+        mock_pymssql.connect.side_effect = Exception("Login failed. Password: s3cr3t_p@ss")
+        with patch.dict(sys.modules, {"pymssql": mock_pymssql}):
+            result = ping_structured("myhost", 1433, "SBO", "sa", "s3cr3t_p@ss")
         msg = result.get("message", "")
         self.assertNotIn("s3cr3t_p@ss", msg, "Password must not appear in message")
+        self.assertNotIn("s3cr3t_p@ss", result.get("details", {}).get("debugCode", ""), "Password must not appear in debugCode")
 
     def test_error_response_has_debugCode(self):
         """On failure, details.debugCode must contain the real exception info."""
@@ -219,6 +236,125 @@ class TestPingStructured(unittest.TestCase):
             result = ping_structured("h", 1433, "DB", "u", "p")
         self.assertTrue(result["ok"])
         self.assertNotIn("details", result)
+
+    def test_failure_response_exposes_classified_details(self):
+        import sys
+        from reportforge.core.render.datasource.db_source_introspection import ping_structured
+        mock_pymssql = MagicMock()
+        mock_pymssql.connect.side_effect = ConnectionRefusedError(111, "Connection refused")
+        with patch.dict(sys.modules, {"pymssql": mock_pymssql}):
+            result = ping_structured("srv", 1433, "SBO", "u", "p")
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["details"]["category"], "CONNECTION_REFUSED")
+        self.assertIn("suggestion", result["details"])
+        self.assertIn("debugCode", result["details"])
+
+
+class TestSqlConnectionErrorClassification(unittest.TestCase):
+
+    def _assert_classification(self, exc, category, message_fragment, suggestion_fragment, *, password=""):
+        from reportforge.core.render.datasource.sql_connection_error_classifier import classify_connection_error
+        result = classify_connection_error(exc, host="srv", port=1433, database="SBO", password=password)
+        self.assertEqual(result["category"], category)
+        self.assertIn(message_fragment, result["message"])
+        self.assertIn(suggestion_fragment, result["suggestion"])
+        self.assertIn(type(exc).__name__, result["debugCode"])
+        self.assertNotIn("traceback", result["debugCode"].lower())
+        if password:
+            self.assertNotIn(password, result["debugCode"])
+
+    def test_driver_missing(self):
+        self._assert_classification(
+            RuntimeError("pymssql not installed. Run: pip install pymssql"),
+            "DRIVER_MISSING",
+            "falta el controlador SQL Server",
+            "Instala `pymssql`",
+        )
+
+    def test_dns_failure(self):
+        import socket
+        self._assert_classification(
+            socket.gaierror(-2, "Name or service not known"),
+            "DNS_FAILURE",
+            "no se pudo resolver el host",
+            "nombre del host",
+        )
+
+    def test_connection_refused(self):
+        self._assert_classification(
+            ConnectionRefusedError(111, "Connection refused"),
+            "CONNECTION_REFUSED",
+            "rechazó la conexión",
+            "escuchando en ese puerto",
+        )
+
+    def test_connection_timeout(self):
+        self._assert_classification(
+            TimeoutError(110, "Connection timed out"),
+            "CONNECTION_TIMEOUT",
+            "conexión expiró",
+            "timeout",
+        )
+
+    def test_authentication_failed(self):
+        self._assert_classification(
+            Exception(18456, "Login failed for user 'sa'"),
+            "AUTHENTICATION_FAILED",
+            "credenciales fueron rechazadas",
+            "usuario, contraseña",
+            password="secret_pw",
+        )
+
+    def test_database_unavailable(self):
+        self._assert_classification(
+            Exception(4060, "Cannot open database requested by the login"),
+            "DATABASE_UNAVAILABLE",
+            "base de datos no está disponible",
+            "base exista",
+        )
+
+    def test_permission_denied(self):
+        self._assert_classification(
+            Exception(229, "The SELECT permission was denied"),
+            "PERMISSION_DENIED",
+            "no tiene permisos suficientes",
+            "permisos de conexión",
+        )
+
+    def test_tls_error(self):
+        import ssl
+        self._assert_classification(
+            ssl.SSLError("TLS handshake failed"),
+            "TLS_ERROR",
+            "negociación TLS/SSL",
+            "certificados",
+        )
+
+    def test_server_unavailable(self):
+        self._assert_classification(
+            ConnectionResetError(104, "Connection reset by peer"),
+            "SERVER_UNAVAILABLE",
+            "servidor no está disponible",
+            "host esté en línea",
+        )
+
+    def test_driver_error(self):
+        class OperationalError(Exception):
+            pass
+        self._assert_classification(
+            OperationalError("driver internal failure"),
+            "DRIVER_ERROR",
+            "controlador devolvió un error",
+            "logs del controlador",
+        )
+
+    def test_unknown_connection_error_fallback(self):
+        self._assert_classification(
+            Exception("unexpected boom"),
+            "UNKNOWN_CONNECTION_ERROR",
+            "No se pudo completar la conexión",
+            "vuelve a intentar",
+        )
 
 
 # ── §4 — POST /datasources/_test via stdlib ───────────────────────────────────
@@ -307,13 +443,16 @@ class TestStdlibDsConnect(unittest.TestCase):
         json_sent = []
         with patch("reportforge_server_datasources._json", side_effect=lambda h, d: json_sent.append(d)):
             with patch("reportforge_server_datasources._error"):
-                with patch("reportforge.core.render.datasource.db_source_pymssql.ping", return_value=False):
-                    _post_ds_connect(handler, "test_alias",
-                                     {"host": "srv", "port": 1433, "database": "SBO",
-                                      "username": "sa", "password": "pw"})
+                with patch("reportforge.core.render.datasource.db_source_introspection.ping_structured",
+                           return_value={"ok": True, "message": "Conectado a srv/SBO", "latency_ms": 1.2}):
+                    with patch("reportforge.server.connections_store.save"):
+                        _post_ds_connect(handler, "test_alias",
+                                         {"host": "srv", "port": 1433, "database": "SBO",
+                                          "username": "sa", "password": "pw"})
         self.assertEqual(len(json_sent), 1)
         self.assertEqual(json_sent[0]["alias"], "test_alias")
         self.assertTrue(json_sent[0]["registered"])
+        self.assertTrue(json_sent[0]["reachable"])
         spec = get_registered("test_alias")
         self.assertIsNotNone(spec, "Datasource must be registered in registry")
         self.assertNotIn("pw", str(json_sent[0]), "Password must not appear in response JSON")
@@ -324,9 +463,11 @@ class TestStdlibDsConnect(unittest.TestCase):
         json_sent = []
         with patch("reportforge_server_datasources._json", side_effect=lambda h, d: json_sent.append(d)):
             with patch("reportforge_server_datasources._error"):
-                with patch("reportforge.core.render.datasource.db_source_pymssql.ping", return_value=False):
-                    _post_ds_connect(handler, "alias2",
-                                     {"host": "h", "database": "D", "username": "u", "password": "p"})
+                with patch("reportforge.core.render.datasource.db_source_introspection.ping_structured",
+                           return_value={"ok": True, "message": "Conectado a h/D", "latency_ms": 1.2}):
+                    with patch("reportforge.server.connections_store.save"):
+                        _post_ds_connect(handler, "alias2",
+                                         {"host": "h", "database": "D", "username": "u", "password": "p"})
         self.assertNotIn("url", json_sent[0], "URL must not be returned in connect response")
 
 
@@ -425,10 +566,12 @@ class TestSecurityInvariants(unittest.TestCase):
         json_sent = []
         with patch("reportforge_server_datasources._json", side_effect=lambda h, d: json_sent.append(d)):
             with patch("reportforge_server_datasources._error"):
-                with patch("reportforge.core.render.datasource.db_source_pymssql.ping", return_value=False):
-                    _post_ds_connect(handler, "alias",
-                                     {"host": "h", "database": "D", "username": "u",
-                                      "password": "secret_pw_never_exposed"})
+                with patch("reportforge.core.render.datasource.db_source_introspection.ping_structured",
+                           return_value={"ok": True, "message": "Conectado a h/D", "latency_ms": 1.2}):
+                    with patch("reportforge.server.connections_store.save"):
+                        _post_ds_connect(handler, "alias",
+                                         {"host": "h", "database": "D", "username": "u",
+                                          "password": "secret_pw_never_exposed"})
         response_str = json.dumps(json_sent)
         self.assertNotIn("secret_pw_never_exposed", response_str)
 
@@ -641,7 +784,8 @@ class TestDsConnectPersistence(_StoreTestBase):
         handler = MagicMock()
         with patch("reportforge_server_datasources._json"):
             with patch("reportforge_server_datasources._error"):
-                with patch("reportforge.core.render.datasource.db_source_pymssql.ping", return_value=False):
+                with patch("reportforge.core.render.datasource.db_source_introspection.ping_structured",
+                           return_value={"ok": True, "message": "Conectado a h/D", "latency_ms": 1.2}):
                     _post_ds_connect(handler, "persist_alias",
                                      {"host": "h", "database": "D",
                                       "username": "u", "password": "persist_pw"})
@@ -649,12 +793,41 @@ class TestDsConnectPersistence(_StoreTestBase):
         self.assertIn("persist_alias", loaded)
         self.assertEqual(loaded["persist_alias"]["password"], "persist_pw")
 
+    def test_failed_connect_does_not_register_or_persist(self):
+        from reportforge_server_datasources import _post_ds_connect
+        from reportforge.core.render.datasource.db_source_registry import get_registered
+        handler = MagicMock()
+        json_sent = []
+        failure = {
+            "ok": False,
+            "message": "No se pudo conectar a h:1433/D",
+            "latency_ms": 12.3,
+            "details": {
+                "category": "CONNECTION_REFUSED",
+                "suggestion": "Verifica que SQL Server esté escuchando en ese puerto y que el firewall lo permita.",
+                "debugCode": "ConnectionRefusedError: [Errno 111] Connection refused",
+            },
+        }
+        with patch("reportforge_server_datasources._json", side_effect=lambda h, d: json_sent.append(d)):
+            with patch("reportforge_server_datasources._error"):
+                with patch("reportforge.core.render.datasource.db_source_introspection.ping_structured",
+                           return_value=failure):
+                    _post_ds_connect(handler, "fail_alias",
+                                     {"host": "h", "database": "D",
+                                      "username": "u", "password": "fail_pw"})
+        self.assertEqual(self._cs.load_all(), {})
+        self.assertIsNone(get_registered("fail_alias"))
+        self.assertFalse(json_sent[0]["registered"])
+        self.assertFalse(json_sent[0]["reachable"])
+        self.assertEqual(json_sent[0]["details"]["category"], "CONNECTION_REFUSED")
+
     def test_delete_removes_from_store(self):
         from reportforge_server_datasources import _post_ds_connect, _delete_ds
         handler = MagicMock()
         with patch("reportforge_server_datasources._json"):
             with patch("reportforge_server_datasources._error"):
-                with patch("reportforge.core.render.datasource.db_source_pymssql.ping", return_value=False):
+                with patch("reportforge.core.render.datasource.db_source_introspection.ping_structured",
+                           return_value={"ok": True, "message": "Conectado a h/D", "latency_ms": 1.2}):
                     _post_ds_connect(handler, "del_alias",
                                      {"host": "h", "database": "D",
                                       "username": "u", "password": "del_pw"})
@@ -670,7 +843,8 @@ class TestDsConnectPersistence(_StoreTestBase):
         json_sent = []
         with patch("reportforge_server_datasources._json", side_effect=lambda h, d: json_sent.append(d)):
             with patch("reportforge_server_datasources._error"):
-                with patch("reportforge.core.render.datasource.db_source_pymssql.ping", return_value=False):
+                with patch("reportforge.core.render.datasource.db_source_introspection.ping_structured",
+                           return_value={"ok": True, "message": "Conectado a h/D", "latency_ms": 1.2}):
                     _post_ds_connect(handler, "resp_alias",
                                      {"host": "h", "database": "D",
                                       "username": "u", "password": "resp_secret"})
@@ -681,7 +855,8 @@ class TestDsConnectPersistence(_StoreTestBase):
         handler = MagicMock()
         with patch("reportforge_server_datasources._json"):
             with patch("reportforge_server_datasources._error"):
-                with patch("reportforge.core.render.datasource.db_source_pymssql.ping", return_value=False):
+                with patch("reportforge.core.render.datasource.db_source_introspection.ping_structured",
+                           return_value={"ok": True, "message": "Conectado a h/D", "latency_ms": 1.2}):
                     _post_ds_connect(handler, "file_alias",
                                      {"host": "h", "database": "D",
                                       "username": "u", "password": "file_secret"})

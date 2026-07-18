@@ -664,6 +664,62 @@
       "allowedOwners": [
         "E2R-V2-TESTS"
       ]
+    },
+    "SQL-CONNECTION-MODAL-PROD": {
+      "files": [
+        "engines/SQLModal.js",
+        "engines/SQLConnectionModal.js",
+        "engines/SQLConnectionModalView.js",
+        "engines/SQLConnectionModalFields.js",
+        "engines/SQLConnectionModalApi.js",
+        "engines/SQLConnectionModalStorage.js",
+        "engines/SQLConnectionDiagnosis.js"
+      ],
+      "nonScoreableFiles": [],
+      "allOwnedFiles": [
+        "engines/SQLModal.js",
+        "engines/SQLConnectionModal.js",
+        "engines/SQLConnectionModalView.js",
+        "engines/SQLConnectionModalFields.js",
+        "engines/SQLConnectionModalApi.js",
+        "engines/SQLConnectionModalStorage.js",
+        "engines/SQLConnectionDiagnosis.js"
+      ],
+      "allowedOwners": [
+        "designer-runtime/sql-connection-modal"
+      ]
+    },
+    "SQL-CONNECTION-MODAL-TESTS": {
+      "files": [
+        "reportforge/tests/sql_connection_modal_dom.mjs",
+        "reportforge/tests/sql_connection_modal.fixture.mjs",
+        "reportforge/tests/sql_connection_modal_runtime.mjs",
+        "reportforge/tests/sql_connection_modal_testkit.mjs",
+        "reportforge/tests/sql_connection_modal_lifecycle.test.mjs",
+        "reportforge/tests/sql_connection_modal_validation.test.mjs",
+        "reportforge/tests/sql_connection_modal_test_request.test.mjs",
+        "reportforge/tests/sql_connection_modal_save_request.test.mjs",
+        "reportforge/tests/sql_connection_modal_security.test.mjs",
+        "reportforge/tests/sql_connection_modal_keyboard.test.mjs",
+        "reportforge/tests/sql_connection_modal_status.test.mjs"
+      ],
+      "nonScoreableFiles": [],
+      "allOwnedFiles": [
+        "reportforge/tests/sql_connection_modal_dom.mjs",
+        "reportforge/tests/sql_connection_modal.fixture.mjs",
+        "reportforge/tests/sql_connection_modal_runtime.mjs",
+        "reportforge/tests/sql_connection_modal_testkit.mjs",
+        "reportforge/tests/sql_connection_modal_lifecycle.test.mjs",
+        "reportforge/tests/sql_connection_modal_validation.test.mjs",
+        "reportforge/tests/sql_connection_modal_test_request.test.mjs",
+        "reportforge/tests/sql_connection_modal_save_request.test.mjs",
+        "reportforge/tests/sql_connection_modal_security.test.mjs",
+        "reportforge/tests/sql_connection_modal_keyboard.test.mjs",
+        "reportforge/tests/sql_connection_modal_status.test.mjs"
+      ],
+      "allowedOwners": [
+        "reportforge/tests/sql-connection-modal"
+      ]
     }
   }
 }

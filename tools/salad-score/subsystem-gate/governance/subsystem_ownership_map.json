@@ -343,6 +343,34 @@
         "reportforge/tests/e2r-v2/t92_html_reporter_uses_atomic_explicit_write.test.mjs",
         "reportforge/tests/e2r-v2/t93_json_reporter_uses_atomic_explicit_write.test.mjs"
       ]
+    },
+    {
+      "owner": "designer-runtime/sql-connection-modal",
+      "allowedFiles": [
+        "SQLModal.js",
+        "SQLConnectionModal.js",
+        "SQLConnectionModalView.js",
+        "SQLConnectionModalFields.js",
+        "SQLConnectionModalApi.js",
+        "SQLConnectionModalStorage.js",
+        "SQLConnectionDiagnosis.js"
+      ]
+    },
+    {
+      "owner": "reportforge/tests/sql-connection-modal",
+      "allowedFiles": [
+        "sql_connection_modal_dom.mjs",
+        "sql_connection_modal.fixture.mjs",
+        "sql_connection_modal_runtime.mjs",
+        "sql_connection_modal_testkit.mjs",
+        "sql_connection_modal_lifecycle.test.mjs",
+        "sql_connection_modal_validation.test.mjs",
+        "sql_connection_modal_test_request.test.mjs",
+        "sql_connection_modal_save_request.test.mjs",
+        "sql_connection_modal_security.test.mjs",
+        "sql_connection_modal_keyboard.test.mjs",
+        "sql_connection_modal_status.test.mjs"
+      ]
     }
   ]
 }
