@@ -43,10 +43,23 @@ def _post_ds_connect(handler, alias: str, body: dict):
     if not all([host, database, username, password]):
         _error(handler, 400, "host, database, username, password are required")
         return
-    from reportforge.core.render.datasource.db_source_pymssql import ping as pymssql_ping
+    from reportforge.core.render.datasource.db_source_introspection import ping_structured
     from reportforge.core.render.datasource.db_source_registry import register
     spec = {"type": "mssql", "host": host, "port": port,
             "database": database, "username": username, "password": password}
+    result = ping_structured(host, port, database, username, password)
+    reachable = bool(result.get("ok"))
+    response = {
+        "alias": alias,
+        "registered": reachable,
+        "reachable": reachable,
+        "message": result.get("message", ""),
+        "latency_ms": result.get("latency_ms"),
+    }
+    if not reachable and result.get("details"):
+        response["details"] = result["details"]
+        _json(handler, response)
+        return
     register(alias, spec)
     try:
         from reportforge.server.connections_store import save as _cs_save
@@ -54,8 +67,7 @@ def _post_ds_connect(handler, alias: str, body: dict):
     except Exception as _exc:
         import logging as _logging
         _logging.getLogger("reportforge").warning("connections_store: failed to persist %r: %s", alias, _exc)
-    reachable = pymssql_ping(spec)
-    _json(handler, {"alias": alias, "registered": True, "reachable": reachable})
+    _json(handler, response)
 
 def _delete_ds(handler, alias: str):
     from reportforge.core.render.datasource.db_source_registry import unregister

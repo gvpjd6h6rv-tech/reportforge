@@ -4,6 +4,7 @@ import logging
 
 from .db_source_engine import HAS_SA
 from .db_source_queries import sqlite_query, sqlite_target_path
+from .sql_connection_error_classifier import classify_connection_error
 
 _log = logging.getLogger(__name__)
 
@@ -31,15 +32,13 @@ def ping_structured(host: str, port: int, database: str, username: str, password
         return {"ok": True, "message": f"Conectado a {host}/{database}", "latency_ms": latency_ms}
     except Exception as exc:
         latency_ms = round((time.monotonic() - t0) * 1000, 1)
-        exc_type = type(exc).__name__
-        raw_msg = str(exc)
-        safe_msg = raw_msg.replace(password, "***") if password else raw_msg
-        _log.warning("SQL ping [%s:%s/%s] %s: %s", host, port, database, exc_type, safe_msg)
+        details = classify_connection_error(exc, host=host, port=int(port), database=database, password=password)
+        _log.warning("SQL ping [%s:%s/%s] %s: %s", host, port, database, details["category"], details["debugCode"])
         return {
             "ok": False,
-            "message": f"No se pudo conectar a {host}:{port}/{database}",
+            "message": details["message"],
             "latency_ms": latency_ms,
-            "details": {"debugCode": f"{exc_type}: {safe_msg}"},
+            "details": details,
         }
 
 

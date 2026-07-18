@@ -1345,7 +1345,13 @@
       "tier": "core",
       "owner": "designer-runtime/sql-connection-modal",
       "allowedFiles": [
-        "SQLModal.js"
+        "SQLModal.js",
+        "SQLConnectionModal.js",
+        "SQLConnectionModalView.js",
+        "SQLConnectionModalFields.js",
+        "SQLConnectionModalApi.js",
+        "SQLConnectionModalStorage.js",
+        "SQLConnectionDiagnosis.js"
       ],
       "legacyFiles": [],
       "writableState": [],
@@ -1456,6 +1462,46 @@
       "requiredGuardCI": [],
       "risk": "low",
       "notes": "justification: contract suite for the ownership-path tooling; carries the gate semantics that validate legacy engine claims, canonical repo-relative claims, overlap detection, normalization, and orphan preservation.",
+      "unresolvedAmbiguities": []
+    },
+    {
+      "id": "SS-39",
+      "name": "sql-connection-modal-tests",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "owner": "reportforge/tests/sql-connection-modal",
+      "allowedFiles": [],
+      "allowedPaths": [
+        "reportforge/tests/sql_connection_modal.fixture.mjs",
+        "reportforge/tests/sql_connection_modal_dom.mjs",
+        "reportforge/tests/sql_connection_modal_runtime.mjs",
+        "reportforge/tests/sql_connection_modal_testkit.mjs",
+        "reportforge/tests/sql_connection_modal_keyboard.test.mjs",
+        "reportforge/tests/sql_connection_modal_lifecycle.test.mjs",
+        "reportforge/tests/sql_connection_modal_save_request.test.mjs",
+        "reportforge/tests/sql_connection_modal_security.test.mjs",
+        "reportforge/tests/sql_connection_modal_status.test.mjs",
+        "reportforge/tests/sql_connection_modal_test_request.test.mjs",
+        "reportforge/tests/sql_connection_modal_validation.test.mjs"
+      ],
+      "legacyFiles": [],
+      "writableState": [],
+      "selectors": [],
+      "events": [],
+      "existingTests": [
+        "reportforge/tests/sql_connection_modal_lifecycle.test.mjs",
+        "reportforge/tests/sql_connection_modal_validation.test.mjs",
+        "reportforge/tests/sql_connection_modal_test_request.test.mjs",
+        "reportforge/tests/sql_connection_modal_save_request.test.mjs",
+        "reportforge/tests/sql_connection_modal_security.test.mjs",
+        "reportforge/tests/sql_connection_modal_keyboard.test.mjs",
+        "reportforge/tests/sql_connection_modal_status.test.mjs"
+      ],
+      "requiredGuardCI": [
+        "audit/subsystem_ownership_guard.mjs"
+      ],
+      "risk": "medium",
+      "notes": "justification: SQL connection modal test/helper contracts are owned separately from the production modal and are resolved through repo-relative allowedPaths.",
       "unresolvedAmbiguities": []
     }
   ]
