@@ -1507,7 +1507,7 @@
     {
       "id": "STRUCTURAL-TOOLING-NON-SCOREABLE-OWNERSHIP",
       "name": "structural-tooling-non-scoreable-ownership",
-      "domain": "salad-score",
+      "domain": "designer-runtime",
       "tier": "supporting",
       "owner": "salad-score-subsystem-gate",
       "allowedFiles": [],
