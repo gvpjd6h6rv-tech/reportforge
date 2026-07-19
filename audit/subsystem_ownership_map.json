@@ -1503,6 +1503,29 @@
       "risk": "medium",
       "notes": "justification: SQL connection modal test/helper contracts are owned separately from the production modal and are resolved through repo-relative allowedPaths.",
       "unresolvedAmbiguities": []
+    },
+    {
+      "id": "STRUCTURAL-TOOLING-NON-SCOREABLE-OWNERSHIP",
+      "name": "structural-tooling-non-scoreable-ownership",
+      "domain": "designer-runtime",
+      "tier": "supporting",
+      "owner": "salad-score-subsystem-gate",
+      "allowedFiles": [],
+      "allowedPaths": [
+        "tools/salad-score/subsystem-gate/checkers/check_non_scoreable_ownership.mjs",
+        "reportforge/tests/salad-score-subsystem-gate/t40_non_scoreable_ownership.test.mjs"
+      ],
+      "legacyFiles": [],
+      "writableState": [],
+      "selectors": [],
+      "events": [],
+      "existingTests": [
+        "reportforge/tests/salad-score-subsystem-gate/t40_non_scoreable_ownership.test.mjs"
+      ],
+      "requiredGuardCI": [],
+      "risk": "medium",
+      "notes": "Exact repo-relative ownership for the non-scoreable ownership checker and its existing contract test.",
+      "unresolvedAmbiguities": []
     }
   ]
 }

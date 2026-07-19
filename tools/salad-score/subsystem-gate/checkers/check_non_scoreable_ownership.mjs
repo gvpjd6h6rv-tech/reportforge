@@ -1,24 +1,43 @@
 'use strict';
 import path from 'node:path';
+import { buildOwnershipIndex } from '../../ownership/ownership_index.mjs';
 
-/** RULE: every declared NON-scoreable file (data/config the scanner never
- *  processes) must resolve to a real owner, matched by CANONICAL
- *  REPOSITORY-RELATIVE PATH -- never basename alone (two files with the
- *  same basename in different directories, e.g. repo-a/package.json vs
- *  fixtures/repo-b/package.json, must never be confused). Normalizes
- *  backslashes, resolves './'/'../' segments, and expresses every declared
- *  path relative to `root` before comparing -- the SAME normalized form the
- *  ownership map's allowedFiles are expected to declare. */
-function normalize(root, rawPath) {
+function normalizeDeclaredPath(root, rawPath) {
   const slashed = String(rawPath).replace(/\\/g, '/');
   const absolute = path.isAbsolute(slashed) ? slashed : path.resolve(root, slashed);
   return path.relative(root, absolute).replace(/\\/g, '/');
 }
 
 export function checkNonScoreableOwnership(root, declaredNonScoreableFiles, ownershipMap) {
-  const allowed = new Set((ownershipMap.subsystems || []).flatMap((s) => s.allowedFiles || []));
-  const unowned = declaredNonScoreableFiles
-    .map((f) => normalize(root, f))
-    .filter((rel) => !allowed.has(rel));
-  return { value: unowned.length === 0, evidence: unowned };
+  const index = buildOwnershipIndex({
+    ...ownershipMap,
+    subsystems: (ownershipMap.subsystems || []).map((subsystem) => ({ ...subsystem, allowedFiles: [] })),
+  });
+  const legacyClaims = new Map();
+  for (const subsystem of ownershipMap.subsystems || []) {
+    const owner = subsystem.owner || subsystem.id;
+    for (const raw of subsystem.allowedFiles || []) {
+      const pathKey = normalizeDeclaredPath(root, raw);
+      const owners = legacyClaims.get(pathKey) || [];
+      owners.push(owner);
+      legacyClaims.set(pathKey, owners);
+    }
+  }
+  const evidence = [];
+  const diagnostics = [...index.errors];
+  for (const raw of declaredNonScoreableFiles) {
+    const relative = normalizeDeclaredPath(root, raw);
+    const pathOwners = index.claims.get(relative) || [];
+    const legacyOwners = legacyClaims.get(relative) || [];
+    const owners = [...new Set([...pathOwners, ...legacyOwners])];
+    if (owners.length !== 1) {
+      evidence.push(relative);
+      diagnostics.push({
+        code: owners.length === 0 ? 'NON_SCOREABLE_PATH_UNOWNED' : 'NON_SCOREABLE_PATH_AMBIGUOUS',
+        path: relative,
+        owners,
+      });
+    }
+  }
+  return { value: evidence.length === 0 && diagnostics.every((d) => d.rule !== 'RULE-SCHEMA'), evidence, diagnostics };
 }
