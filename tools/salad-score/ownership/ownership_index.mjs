@@ -13,5 +13,17 @@ export function buildOwnershipIndex(ownershipMap) {
     collectRepoRelativeClaims(ss, claims, errors);
   }
 
+  for (const [claim, owners] of claims.entries()) {
+    if (owners.length < 2) continue;
+    const uniqueOwners = new Set(owners);
+    errors.push({
+      rule: uniqueOwners.size === 1 ? 'RULE-DUPLICATE-CLAIM' : 'RULE-AMBIGUOUS-CLAIM',
+      file: claim,
+      detail: uniqueOwners.size === 1
+        ? `ownership claim is duplicated: ${claim}`
+        : `ownership claim has multiple owners: ${claim}`,
+    });
+  }
+
   return { claims, sharedFiles, errors, hasRepoRelativeClaims };
 }

@@ -1,0 +1,394 @@
+[
+  {
+    "name": "AlignEngine.js",
+    "productionFile": "engines/AlignEngine.js",
+    "sourcePath": "engines/AlignEngine.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "AlignmentEngine.js",
+    "productionFile": "engines/AlignmentEngine.js",
+    "sourcePath": "engines/AlignmentEngine.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "AlignmentGuides.js",
+    "productionFile": "engines/AlignmentGuides.js",
+    "sourcePath": "engines/AlignmentGuides.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "CanvasGeometry.js",
+    "productionFile": "engines/CanvasGeometry.js",
+    "sourcePath": "engines/CanvasGeometry.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "CanvasLayoutElementContent.js",
+    "productionFile": "engines/CanvasLayoutElementContent.js",
+    "sourcePath": "engines/CanvasLayoutElementContent.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "CanvasLayoutElements.js",
+    "productionFile": "engines/CanvasLayoutElements.js",
+    "sourcePath": "engines/CanvasLayoutElements.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "CanvasLayoutEngine.js",
+    "productionFile": "engines/CanvasLayoutEngine.js",
+    "sourcePath": "engines/CanvasLayoutEngine.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "CanvasLayoutSize.js",
+    "productionFile": "engines/CanvasLayoutSize.js",
+    "sourcePath": "engines/CanvasLayoutSize.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "CommandRuntimeHandlersSelectionDispatch.js",
+    "productionFile": "engines/CommandRuntimeHandlersSelectionDispatch.js",
+    "sourcePath": "engines/CommandRuntimeHandlersSelectionDispatch.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "CommandRuntimeSelection.js",
+    "productionFile": "engines/CommandRuntimeSelection.js",
+    "sourcePath": "engines/CommandRuntimeSelection.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "DebugOverlay.js",
+    "productionFile": "engines/DebugOverlay.js",
+    "sourcePath": "engines/DebugOverlay.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "DebugPanelGeometry.js",
+    "productionFile": "engines/DebugPanelGeometry.js",
+    "sourcePath": "engines/DebugPanelGeometry.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "DocumentSelectors.js",
+    "productionFile": "engines/DocumentSelectors.js",
+    "sourcePath": "engines/DocumentSelectors.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "DragEngine.js",
+    "productionFile": "engines/DragEngine.js",
+    "sourcePath": "engines/DragEngine.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "DragState.js",
+    "productionFile": "engines/DragState.js",
+    "sourcePath": "engines/DragState.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "ElementLayoutEngine.js",
+    "productionFile": "engines/ElementLayoutEngine.js",
+    "sourcePath": "engines/ElementLayoutEngine.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "EngineCoreRoutingPointer.js",
+    "productionFile": "engines/EngineCoreRoutingPointer.js",
+    "sourcePath": "engines/EngineCoreRoutingPointer.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "EngineCoreRoutingWorkspace.js",
+    "productionFile": "engines/EngineCoreRoutingWorkspace.js",
+    "sourcePath": "engines/EngineCoreRoutingWorkspace.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "EngineCoreRoutingZoom.js",
+    "productionFile": "engines/EngineCoreRoutingZoom.js",
+    "sourcePath": "engines/EngineCoreRoutingZoom.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "FieldExplorerDropCoords.js",
+    "productionFile": "engines/FieldExplorerDropCoords.js",
+    "sourcePath": "engines/FieldExplorerDropCoords.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "FieldExplorerEngine.js",
+    "productionFile": "engines/FieldExplorerEngine.js",
+    "sourcePath": "engines/FieldExplorerEngine.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "GeometryCore.js",
+    "productionFile": "engines/GeometryCore.js",
+    "sourcePath": "engines/GeometryCore.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "GridEngine.js",
+    "productionFile": "engines/GridEngine.js",
+    "sourcePath": "engines/GridEngine.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "HandlesEngine.js",
+    "productionFile": "engines/HandlesEngine.js",
+    "sourcePath": "engines/HandlesEngine.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "HitTestEngine.js",
+    "productionFile": "engines/HitTestEngine.js",
+    "sourcePath": "engines/HitTestEngine.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "HitTestGeometry.js",
+    "productionFile": "engines/HitTestGeometry.js",
+    "sourcePath": "engines/HitTestGeometry.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "HitTestResolver.js",
+    "productionFile": "engines/HitTestResolver.js",
+    "sourcePath": "engines/HitTestResolver.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "OverlayEngine.js",
+    "productionFile": "engines/OverlayEngine.js",
+    "sourcePath": "engines/OverlayEngine.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "PageMarginsEngine.js",
+    "productionFile": "engines/PageMarginsEngine.js",
+    "sourcePath": "engines/PageMarginsEngine.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "PreviewEngineData.js",
+    "productionFile": "engines/PreviewEngineData.js",
+    "sourcePath": "engines/PreviewEngineData.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "PreviewEngineRenderer.js",
+    "productionFile": "engines/PreviewEngineRenderer.js",
+    "sourcePath": "engines/PreviewEngineRenderer.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "PreviewEngineRendererLayout.js",
+    "productionFile": "engines/PreviewEngineRendererLayout.js",
+    "sourcePath": "engines/PreviewEngineRendererLayout.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "PreviewEngineRendererMetrics.js",
+    "productionFile": "engines/PreviewEngineRendererMetrics.js",
+    "sourcePath": "engines/PreviewEngineRendererMetrics.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "PreviewHoverOutline.js",
+    "productionFile": "engines/PreviewHoverOutline.js",
+    "sourcePath": "engines/PreviewHoverOutline.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "PreviewOverlayStyle.js",
+    "productionFile": "engines/PreviewOverlayStyle.js",
+    "sourcePath": "engines/PreviewOverlayStyle.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "PreviewPaginationEngine.js",
+    "productionFile": "engines/PreviewPaginationEngine.js",
+    "sourcePath": "engines/PreviewPaginationEngine.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "RulerEngine.js",
+    "productionFile": "engines/RulerEngine.js",
+    "sourcePath": "engines/RulerEngine.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "SectionLabelOverlay.js",
+    "productionFile": "engines/SectionLabelOverlay.js",
+    "sourcePath": "engines/SectionLabelOverlay.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "SectionLayoutEngine.js",
+    "productionFile": "engines/SectionLayoutEngine.js",
+    "sourcePath": "engines/SectionLayoutEngine.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "SectionSeparatorOverlay.js",
+    "productionFile": "engines/SectionSeparatorOverlay.js",
+    "sourcePath": "engines/SectionSeparatorOverlay.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "SectionVisualLayoutModel.js",
+    "productionFile": "engines/SectionVisualLayoutModel.js",
+    "sourcePath": "engines/SectionVisualLayoutModel.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "SelectionDragPreviewSync.js",
+    "productionFile": "engines/SelectionDragPreviewSync.js",
+    "sourcePath": "engines/SelectionDragPreviewSync.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "SelectionEngine.js",
+    "productionFile": "engines/SelectionEngine.js",
+    "sourcePath": "engines/SelectionEngine.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "SelectionEnginePreviewBridge.js",
+    "productionFile": "engines/SelectionEnginePreviewBridge.js",
+    "sourcePath": "engines/SelectionEnginePreviewBridge.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "SelectionGeometry.js",
+    "productionFile": "engines/SelectionGeometry.js",
+    "sourcePath": "engines/SelectionGeometry.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "SelectionHitTest.js",
+    "productionFile": "engines/SelectionHitTest.js",
+    "sourcePath": "engines/SelectionHitTest.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "SelectionInteraction.js",
+    "productionFile": "engines/SelectionInteraction.js",
+    "sourcePath": "engines/SelectionInteraction.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "SelectionInteractionMotion.js",
+    "productionFile": "engines/SelectionInteractionMotion.js",
+    "sourcePath": "engines/SelectionInteractionMotion.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "SelectionInteractionPointer.js",
+    "productionFile": "engines/SelectionInteractionPointer.js",
+    "sourcePath": "engines/SelectionInteractionPointer.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "SelectionOverlay.js",
+    "productionFile": "engines/SelectionOverlay.js",
+    "sourcePath": "engines/SelectionOverlay.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "SelectionOverlayPreview.js",
+    "productionFile": "engines/SelectionOverlayPreview.js",
+    "sourcePath": "engines/SelectionOverlayPreview.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "SelectionOverlayPreviewLayers.js",
+    "productionFile": "engines/SelectionOverlayPreviewLayers.js",
+    "sourcePath": "engines/SelectionOverlayPreviewLayers.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "SelectionOverlayRender.js",
+    "productionFile": "engines/SelectionOverlayRender.js",
+    "sourcePath": "engines/SelectionOverlayRender.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "SelectionOverlayRenderHelpers.js",
+    "productionFile": "engines/SelectionOverlayRenderHelpers.js",
+    "sourcePath": "engines/SelectionOverlayRenderHelpers.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "SelectionState.js",
+    "productionFile": "engines/SelectionState.js",
+    "sourcePath": "engines/SelectionState.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  },
+  {
+    "name": "ZoomEngine.js",
+    "productionFile": "engines/ZoomEngine.js",
+    "sourcePath": "engines/ZoomEngine.js",
+    "evidenceStrength": 1,
+    "outcome": 1
+  }
+]
