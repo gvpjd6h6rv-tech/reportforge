@@ -28,11 +28,27 @@ test('t126_runner_to_report_integration', async () => {
   ownership.subsystems.push({ id: 'T126-FIXTURE', owner: 'e2r-v2-t126-fixture', allowedFiles: uncovered });
   fs.writeFileSync(ownershipPath, JSON.stringify(ownership));
   const config = JSON.parse(fs.readFileSync(path.join(root, 'salad-score.config.json'), 'utf8'));
+
+  // Explicit, caller-supplied execution records -- exactly what a real test
+  // runner integration reports after actually executing tests. The runner
+  // must transport these through collect -> validate -> persist -> load ->
+  // score unchanged; it must never derive them itself from capabilityMap.
+  const explicitRecords = capabilityMap.capabilities[0].files
+    .filter((file) => file.classification === 'GEOMETRY_MEMBER')
+    .map((file) => ({
+      name: file.path.split('/').pop(),
+      productionFile: file.path,
+      sourcePath: file.path,
+      evidenceStrength: 'DIRECT_CALL_ASSERTION',
+      outcome: 'PASS',
+    }));
+
   const result = await runE2RV2({
     root,
     config,
     capabilityMapPath: path.join(root, 'tools/e2r-v2/capability-map/capability_map.json'),
-    ownershipMapPath: path.join(root, 'audit/subsystem_ownership_map.json'),
+    ownershipMapPath: ownershipPath,
+    testEvidenceRecords: explicitRecords,
     strict: true,
   });
   assert.equal(result.exitCode, 0);
@@ -41,8 +57,8 @@ test('t126_runner_to_report_integration', async () => {
   assert.equal(result.evidence.fileTestEvidence.status, 'COMPLETE');
   const records = result.evidence.fileTestEvidence.records;
   const canonicalRecords = result.evidence.canonicalTestEvidenceRecords;
-  assert.equal(records.length, 55);
-  assert.equal(canonicalRecords.length, 55);
+  assert.equal(records.length, explicitRecords.length);
+  assert.equal(canonicalRecords.length, explicitRecords.length);
   const evidenceRecord = canonicalRecords[0];
   assert.equal(typeof evidenceRecord.productionFile, 'string');
   assert.equal(evidenceRecord.sourcePath, evidenceRecord.productionFile);
@@ -61,4 +77,6 @@ test('t126_runner_to_report_integration', async () => {
   assert.equal(result.report.publicationStatus, 'PUBLISHED');
   assert.deepEqual(result.evidence.diagnostics, []);
   assert.equal(result.report.validation.strictFailures, 0);
+
+  fs.rmSync(root, { recursive: true, force: true });
 });

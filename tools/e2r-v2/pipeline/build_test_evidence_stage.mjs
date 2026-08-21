@@ -18,9 +18,24 @@ export async function buildTestEvidenceStage({ root, physical, scoreResult, capa
   const duplicateGuard = checkTestEvidenceDuplicateRecords(produced.records);
   const ambiguityGuard = checkTestEvidenceAmbiguousRelations(produced.records);
   const relations = collectTestEvidenceRelations(produced.records);
-  const persisted = persistTestEvidenceRecords(produced.records, targetPath);
-  const loaded = loadTestEvidenceRecords(targetPath);
-  const canonicalRecords = loaded.records.length > 0 ? loaded.records : produced.records;
+
+  // Fail-closed gate (P2A contract): a batch that fails any authoritative
+  // guard is never persisted as valid evidence and never reaches scoring.
+  // No silent fallback to the unvalidated `produced.records`.
+  const guardsPassed = rawSchema.value === true && duplicateGuard.value === true && ambiguityGuard.value === true;
+  let persisted;
+  let loaded;
+  let canonicalRecords;
+  if (guardsPassed) {
+    persisted = persistTestEvidenceRecords(produced.records, targetPath);
+    loaded = loadTestEvidenceRecords(targetPath);
+    canonicalRecords = loaded.records.length > 0 ? loaded.records : produced.records;
+  } else {
+    persisted = { path: targetPath, records: [], recordCount: 0, skipped: true, reason: 'GUARD_FAILURE' };
+    loaded = { path: targetPath, records: [], status: 'NOT_OBSERVABLE', diagnostics: [{ code: 'TEST_EVIDENCE_GUARD_FAILURE_BLOCKED_PERSISTENCE' }] };
+    canonicalRecords = [];
+  }
+
   const baseEvidence = await buildEvidenceStage({ root, physical, scoreResult, testEvidenceRecords: canonicalRecords });
   const diagnostics = [
     ...(rawSchema.diagnostics || []),
@@ -33,7 +48,12 @@ export async function buildTestEvidenceStage({ root, physical, scoreResult, capa
     ...baseEvidence,
     authoritativeTestEvidencePath: targetPath,
     rawTestEvidenceRecords: produced.rawRecords,
-    canonicalTestEvidenceRecords: produced.records,
+    // canonicalTestEvidenceRecords tracks the same fail-closed set actually
+    // used for persistence/scoring (canonicalRecords), never the unvalidated
+    // produced.records -- a guard-rejected batch must not be exposed under a
+    // "canonical" label anywhere (P2A: no evidence of persisted authority
+    // for invalid input).
+    canonicalTestEvidenceRecords: canonicalRecords,
     testEvidenceRecords: canonicalRecords,
     testEvidenceRelations: relations,
     rawSchema,

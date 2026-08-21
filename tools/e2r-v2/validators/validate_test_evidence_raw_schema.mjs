@@ -34,8 +34,17 @@ function validateRecord(record, index) {
 export function validateTestEvidenceRawSchema(input = []) {
   const records = Array.isArray(input) ? input : Array.isArray(input?.records) ? input.records : [];
   const diagnostics = [];
-  for (let index = 0; index < records.length; index += 1) diagnostics.push(...validateRecord(records[index], index));
-  const invalidCount = diagnostics.length;
+  // invalidCount counts RECORDS that have at least one violation, not the
+  // number of individual diagnostics -- a record with several bad fields
+  // still counts once (P2B contract). All diagnostics are still collected
+  // and returned in full, undeduplicated, for detail.
+  const invalidIndexes = new Set();
+  for (let index = 0; index < records.length; index += 1) {
+    const recordDiagnostics = validateRecord(records[index], index);
+    if (recordDiagnostics.length > 0) invalidIndexes.add(index);
+    diagnostics.push(...recordDiagnostics);
+  }
+  const invalidCount = invalidIndexes.size;
   return {
     name: 'validate_test_evidence_raw_schema',
     value: invalidCount === 0,

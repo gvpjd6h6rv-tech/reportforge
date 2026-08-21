@@ -13,15 +13,6 @@ function normalizeRecord(record) {
   };
 }
 
-function deriveRawRecords(capabilityMap) {
-  const files = capabilityMap?.capabilities?.[0]?.files;
-  if (!Array.isArray(files)) return [];
-  return files.filter((file) => file?.classification === 'GEOMETRY_MEMBER').map((file) => {
-    const productionFile = String(file.path ?? '').replace(/\\/g, '/').trim();
-    return { name: productionFile.split('/').pop() || '', productionFile, sourcePath: productionFile, evidenceStrength: 'DIRECT_CALL_ASSERTION', outcome: 'PASS' };
-  });
-}
-
 function indexByPath(records) {
   return records.reduce((byPath, record) => {
     const key = record.productionFile || record.sourcePath || '';
@@ -32,9 +23,14 @@ function indexByPath(records) {
 
 export function collectTestEvidenceRecords(input = {}) {
   const options = Array.isArray(input) ? { records: input } : input || {};
+  // Capability-map membership is metadata, never execution evidence (P1
+  // contract): a file is never turned into a synthetic passing record just
+  // because it is classified GEOMETRY_MEMBER. Only explicit records supplied
+  // by the caller become raw records; their absence means no records, not a
+  // fabricated substitute.
   const rawRecords = Array.isArray(options.records)
     ? options.records.map(normalizeRecord)
-    : deriveRawRecords(options.capabilityMap);
+    : [];
   const records = rawRecords.map(normalizeRecord);
   return {
     rawRecords,

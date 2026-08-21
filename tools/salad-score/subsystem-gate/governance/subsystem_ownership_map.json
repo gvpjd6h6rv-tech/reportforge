@@ -364,7 +364,10 @@
         "reportforge/tests/e2r-v2/t125_test_evidence_loader_contract.test.mjs",
         "reportforge/tests/e2r-v2/t126_runner_to_report_integration.test.mjs",
         "reportforge/tests/salad-score-subsystem-gate/t127_ownership_engine_legacy_does_not_escape_to_repo_path.test.mjs",
-        "reportforge/tests/salad-score-subsystem-gate/t128_ownership_claim_duplicate_and_ambiguity_errors.test.mjs"
+        "reportforge/tests/salad-score-subsystem-gate/t128_ownership_claim_duplicate_and_ambiguity_errors.test.mjs",
+        "reportforge/tests/e2r-v2/t129_no_synthetic_test_evidence_without_execution_records.test.mjs",
+        "reportforge/tests/e2r-v2/t130_invalid_test_evidence_blocked_before_persistence_and_scoring.test.mjs",
+        "reportforge/tests/e2r-v2/t131_raw_schema_invalid_count_counts_records.test.mjs"
       ]
     },
     {

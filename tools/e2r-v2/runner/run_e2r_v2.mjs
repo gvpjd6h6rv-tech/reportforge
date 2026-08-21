@@ -12,11 +12,11 @@ import { buildReportViewModel } from '../reporters/build_report_view_model.mjs';
 import { reportJson } from '../reporters/report_json.mjs';
 import { reportHtml } from '../reporters/report_html.mjs';
 
-export async function runE2RV2({ root, config, capabilityMapPath, ownershipMapPath, writeJson = null, writeHtml = null, strict = false }) {
+export async function runE2RV2({ root, config, capabilityMapPath, ownershipMapPath, writeJson = null, writeHtml = null, strict = false, testEvidenceRecords = null }) {
   const capabilityMap = JSON.parse(fs.readFileSync(capabilityMapPath, 'utf8'));
   const scoreResult = runSaladScore({ roots: [path.resolve(root, ...config.scanRoots)], config, ownershipMapPath });
   const inventory = buildInventoryStage({ root, config, capabilityMap, ownershipMapPath });
-  const evidence = await buildTestEvidenceStage({ root, physical: inventory.physical, scoreResult, capabilityMap });
+  const evidence = await buildTestEvidenceStage({ root, physical: inventory.physical, scoreResult, capabilityMap, testEvidenceRecords });
   const scoring = buildScoringStage({ capabilityMap, ownership: inventory.ownership, evidence });
   const report = buildReportPayload({ root, capabilityMap, capabilityMapPath, ownershipMapPath, inventory, scoring });
   const validation = buildValidationStage({ report, inventory, evidence });
