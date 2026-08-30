@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "E2R v2 raw test evidence record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "name",
+    "productionFile",
+    "sourcePath",
+    "evidenceStrength",
+    "outcome"
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "productionFile": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sourcePath": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidenceStrength": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        },
+        {
+          "type": "string",
+          "enum": [
+            "IMPORT_OR_REQUIRE_ONLY",
+            "SCRIPT_LOAD_ONLY",
+            "DIRECT_CALL_ASSERTION",
+            "RUNTIME_TRACE"
+          ]
+        }
+      ]
+    },
+    "outcome": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string",
+          "enum": [
+            "PASS",
+            "PASSING",
+            "FAIL",
+            "FAILURE"
+          ]
+        }
+      ]
+    }
+  }
+}

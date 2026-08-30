@@ -233,7 +233,20 @@
         "tools/e2r-v2/schemas/capability_map.schema.json",
         "tools/e2r-v2/schemas/e2r_v2_report.schema.json",
         "tools/e2r-v2/validators/validate_capability_map.mjs",
-        "tools/e2r-v2/validators/validate_e2r_report.mjs"
+        "tools/e2r-v2/validators/validate_e2r_report.mjs",
+        "tools/e2r-v2/collectors/collect_test_evidence_records.mjs",
+        "tools/e2r-v2/collectors/collect_test_evidence_relations.mjs",
+        "tools/e2r-v2/collectors/normalize_test_evidence_records.mjs",
+        "tools/e2r-v2/io/load_test_evidence_records.mjs",
+        "tools/e2r-v2/io/persist_test_evidence_records.mjs",
+        "tools/e2r-v2/pipeline/build_test_evidence_stage.mjs",
+        "tools/e2r-v2/schemas/test_evidence_canonical_record.schema.json",
+        "tools/e2r-v2/schemas/test_evidence_raw_record.schema.json",
+        "tools/e2r-v2/validators/check_test_evidence_ambiguous_relations.mjs",
+        "tools/e2r-v2/validators/check_test_evidence_duplicate_records.mjs",
+        "tools/e2r-v2/validators/validate_test_evidence_raw_schema.mjs",
+        "audit/test_evidence_records.json",
+        "tools/e2r-v2/pipeline/build_report_payload.mjs"
       ]
     },
     {
@@ -341,7 +354,20 @@
         "reportforge/tests/e2r-v2/t90_html_document_renderer_contract.test.mjs",
         "reportforge/tests/e2r-v2/t91_html_client_script_interaction_contract.test.mjs",
         "reportforge/tests/e2r-v2/t92_html_reporter_uses_atomic_explicit_write.test.mjs",
-        "reportforge/tests/e2r-v2/t93_json_reporter_uses_atomic_explicit_write.test.mjs"
+        "reportforge/tests/e2r-v2/t93_json_reporter_uses_atomic_explicit_write.test.mjs",
+        "reportforge/tests/e2r-v2/t119_test_evidence_producer_contract.test.mjs",
+        "reportforge/tests/e2r-v2/t120_test_evidence_raw_schema_validator.test.mjs",
+        "reportforge/tests/e2r-v2/t121_test_evidence_relation_contract.test.mjs",
+        "reportforge/tests/e2r-v2/t122_test_evidence_duplicate_guard.test.mjs",
+        "reportforge/tests/e2r-v2/t123_test_evidence_ambiguity_guard.test.mjs",
+        "reportforge/tests/e2r-v2/t124_test_evidence_persistence_contract.test.mjs",
+        "reportforge/tests/e2r-v2/t125_test_evidence_loader_contract.test.mjs",
+        "reportforge/tests/e2r-v2/t126_runner_to_report_integration.test.mjs",
+        "reportforge/tests/salad-score-subsystem-gate/t127_ownership_engine_legacy_does_not_escape_to_repo_path.test.mjs",
+        "reportforge/tests/salad-score-subsystem-gate/t128_ownership_claim_duplicate_and_ambiguity_errors.test.mjs",
+        "reportforge/tests/e2r-v2/t129_no_synthetic_test_evidence_without_execution_records.test.mjs",
+        "reportforge/tests/e2r-v2/t130_invalid_test_evidence_blocked_before_persistence_and_scoring.test.mjs",
+        "reportforge/tests/e2r-v2/t131_raw_schema_invalid_count_counts_records.test.mjs"
       ]
     },
     {
